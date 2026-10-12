@@ -1,20 +1,27 @@
-import {Icon} from './Icons';
-const inputs=['Stalled growth','Unclear GTM','Weak acquisition','Low conversion','Margin leakage','Founder dependency'];
-const outputs=['More revenue','Better margins','Better systems','Stronger team','Scalable growth'];
-export default function SystemBlueprint({compact=false}){
-  return <div className={`system-blueprint ${compact?'compact':''}`}>
-    <div className="system-column inputs">
-      <span className="eyebrow">What you feel</span>
-      {inputs.map((x,i)=><div className="system-pill" key={x}><span>{String(i+1).padStart(2,'0')}</span>{x}</div>)}
+export default function SystemBlueprint(){
+  return <div className="v2-system" aria-label="The Growth Machine spans multiple executive growth functions">
+    <div className="v2-system-orbit" aria-hidden="true">
+      <span className="v2-role-chip cmo">CMO</span>
+      <span className="v2-role-chip cro">CRO</span>
+      <span className="v2-role-chip gtm">GTM</span>
+      <span className="v2-role-chip hog">GROWTH</span>
+      <span className="v2-role-chip eir">EIR</span>
+      <div className="v2-system-core">
+        <span className="v2-cog">✹</span>
+        <small>THE</small>
+        <strong>GROWTH</strong>
+        <small>MACHINE</small>
+      </div>
+      <svg className="v2-system-lines" viewBox="0 0 520 420" preserveAspectRatio="none">
+        <path d="M90 84 C160 90 190 145 232 180"/>
+        <path d="M430 80 C360 92 330 145 288 180"/>
+        <path d="M65 310 C155 300 190 255 230 230"/>
+        <path d="M455 300 C365 292 332 255 290 230"/>
+        <path d="M260 40 C260 95 260 130 260 162"/>
+      </svg>
     </div>
-    <div className="system-core-wrap" aria-label="The Growth Machine connects business problems to stronger outcomes">
-      <div className="connector left"/><div className="connector right"/>
-      <div className="system-core"><div className="cog" aria-hidden="true">✹</div><small>THE</small><strong>GROWTH</strong><small>MACHINE</small></div>
-      <div className="flow-label">Diagnose · Design · Execute · Embed</div>
-    </div>
-    <div className="system-column outputs">
-      <span className="eyebrow">What improves</span>
-      {outputs.map((x,i)=><div className="system-pill output" key={x}><Icon name={i===0?'chart':i===1?'target':i===2?'layers':i===3?'users':'arrow'} size={17}/>{x}</div>)}
+    <div className="v2-system-caption">
+      <span>Strategy</span><i>·</i><span>Revenue</span><i>·</i><span>Marketing</span><i>·</i><span>Sales</span><i>·</i><span>Ecommerce</span>
     </div>
   </div>
 }
