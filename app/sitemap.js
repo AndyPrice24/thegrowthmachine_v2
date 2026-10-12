@@ -1,0 +1,1 @@
+export default function sitemap(){const base='https://thegrowthmachine.co';return ['','/how-it-works','/ecommerce-growth','/b2b-saas-growth','/about','/insights','/contact'].map((url)=>({url:base+url,lastModified:new Date(),changeFrequency:url==='/insights'?'weekly':'monthly',priority:url===''?1:.8}))}
