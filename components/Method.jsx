@@ -1,15 +1,17 @@
-import {Icon} from './Icons';
 const stages=[
-  ['01','Diagnose','search','Find the real constraint','We look across the commercial system—not just the function you think is broken.'],
-  ['02','Design','design','Build the growth system','Set the priorities, operating model, roadmap, roles and measures that matter.'],
-  ['03','Execute','execute','Make the plan real','We work inside the business with your team and partners. Not a deck-and-disappear consultancy.'],
-  ['04','Embed','embed','Leave the business stronger','Install cadence, systems and role clarity so the next hire knows exactly what they own.']
+  ['01','Diagnose','Find what is really constraining growth.'],
+  ['02','Design','Turn the diagnosis into a focused commercial roadmap.'],
+  ['03','Execute','Get inside the business and make the work happen.'],
+  ['04','Embed','Build the rhythm, systems and capability that keep it moving.']
 ];
-export default function Method({short=false}){
-  return <div className="method-grid">
-    {stages.map(([no,title,icon,kicker,body])=><article className="method-card" key={title}>
-      <div className="method-top"><span>{no}</span><span className="icon-disc"><Icon name={icon}/></span></div>
-      <h3>{title}</h3><strong>{kicker}</strong>{!short&&<p>{body}</p>}
+
+export default function Method(){
+  return <div className="v2-method-track">
+    <div className="v2-method-line" aria-hidden="true"/>
+    {stages.map(([no,title,body])=><article className="v2-method-step" key={title}>
+      <div className="v2-method-node"><span>{no}</span></div>
+      <h3>{title}</h3>
+      <p>{body}</p>
     </article>)}
   </div>
 }
