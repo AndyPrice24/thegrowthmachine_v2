@@ -224,22 +224,63 @@
   text-anchor: middle;
 }
 
-.arcLine {
+/* A watch-like chapter ring: two hairlines, a fine minute track between
+   them, broken by the four stages, each led by a red step number. */
+.hair {
   fill: none;
-  stroke: #d8322a;
-  stroke-width: 1.7;
+  stroke: rgba(40, 34, 28, 0.42);
+  stroke-width: 0.9;
   stroke-linecap: round;
 }
 
-.arcTick {
+.tickMinor {
   fill: none;
-  stroke: #2a2622;
-  stroke-width: 2.4;
-  stroke-linecap: round;
+  stroke: rgba(60, 52, 44, 0.32);
+  stroke-width: 0.8;
 }
 
-.mobile .arcLine {
+.tickMajor {
+  fill: none;
+  stroke: rgba(40, 34, 28, 0.7);
+  stroke-width: 1.4;
+}
+
+.tickIndex {
+  fill: none;
+  stroke: #c8221c;
   stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+.arcs .stepNum {
+  fill: #c8221c;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.mobile .hair {
+  stroke-width: 1.2;
+}
+
+.mobile .tickMinor {
+  stroke-width: 1.1;
+}
+
+.mobile .tickMajor {
+  stroke-width: 1.8;
+}
+
+/* Contact shadow: drawn, not baked, so it stays smooth at any size. */
+.shadow {
+  position: absolute;
+  left: 22%;
+  width: 56%;
+  top: 87.5%;
+  height: 7%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(70, 48, 30, 0.28), rgba(70, 48, 30, 0.12) 55%, rgba(70, 48, 30, 0));
+  filter: blur(6px);
+  pointer-events: none;
 }
 
 /* ---------------------------------------------------------------- flow */

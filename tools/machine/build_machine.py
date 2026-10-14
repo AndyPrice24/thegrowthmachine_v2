@@ -46,6 +46,7 @@ CFG = {
         "crop": (0, 64, 1400, 712),
         "housing": (698.0, 386.0, 262),
         "floor": 0.86,
+        "floor_clear": 604,
         "cards_in": [(20, 177, 230, 228), (20, 243, 230, 294), (20, 309, 230, 360),
                      (20, 375, 230, 426), (20, 443, 230, 494), (20, 511, 230, 563)],
         # six outlets: the left bundle mirrored about the machine's centre
@@ -68,10 +69,16 @@ CFG = {
             # (outer red dot, inner black dot) per quadrant, measured from the art
             "dots": {"TL": [(468.9, 175.2), (602.5, 90.7)], "TR": [(945.9, 199.2), (800.0, 93.0)],
                      "BL": [(455.6, 563.6), (592.6, 658.6)], "BR": [(927.5, 578.4), (799.8, 659.4)]},
-            "style": "word-then-line",
             "measure": ("TR", -61.5, -37.0),
             # left: diagnose, design. right: execute, embed.
             "words": {"TL": "DIAGNOSE", "BL": "DESIGN", "TR": "EXECUTE", "BR": "EMBED"},
+            "steps": {"TL": "01", "BL": "02", "TR": "03", "BR": "04"},
+            # the art's whole decorative ring, and what must survive inside it
+            "erase": (272, 346),
+            "protect": [(330, 285, 482, 470), (914, 285, 1066, 470), (680, 55, 716, 128), (680, 616, 716, 705)],
+            # only the flanges break the bezel; red index marks at 12 and 6
+            "block": [(330, 285, 482, 470), (914, 285, 1066, 470)],
+            "index": [-90, 90],
         },
         "shaft_in": [(372, 375), (470, 373), (560, 372)],
         "shaft_out": [(836, 372), (928, 373), (1026, 375)],
@@ -81,6 +88,7 @@ CFG = {
         "crop": (0, 70, 800, 1310),
         "housing": (397.0, 690.0, 318),
         "floor": 0.93,
+        "floor_clear": 1296,
         "cards_in": [(25, 90, 142, 184), (150, 90, 262, 184), (270, 90, 395, 184),
                      (404, 90, 530, 184), (537, 90, 649, 184), (655, 90, 775, 184)],
         "mirror": {"axis": 684.8, "seam": 1036, "block": (250, 548), "pipes": (10, 790), "pipe_seam": 1081},
@@ -99,10 +107,17 @@ CFG = {
         "arcs": {
             "dots": {"TL": [(244.8, 350.1), (57.0, 534.6)], "TR": [(554.0, 350.0), (741.0, 535.6)],
                      "BL": [(56.3, 836.4), (245.9, 1019.4)], "BR": [(742.0, 837.0), (552.9, 1019.4)]},
-            "style": "line-word-line",
             "measure": ("TR", -54.5, -33.0),
             # top: diagnose, design. underside: execute, embed.
             "words": {"TL": "DIAGNOSE", "TR": "DESIGN", "BL": "EXECUTE", "BR": "EMBED"},
+            "steps": {"TL": "01", "TR": "02", "BL": "03", "BR": "04"},
+            "erase": (334, 410),
+            "text_scale": 1.55,
+            # between the words and the manifolds there is no room for a track
+            "min_track": 40,
+            "protect": [(270, 0, 530, 372), (270, 995, 530, 1421), (0, 585, 125, 785), (675, 585, 800, 785)],
+            "block": [(270, 0, 530, 372), (270, 995, 530, 1421), (0, 585, 125, 785), (675, 585, 800, 785)],
+            "index": [],
         },
         "shaft_in": [(400, 300), (400, 420), (397, 525)],
         "shaft_out": [(397, 845), (400, 960), (400, 1062)],
@@ -326,9 +341,12 @@ def ang_of(c, p):
 
 
 def build_arcs(I, A, cfg, crop):
-    """Erase the baked process labels (and the red lines that fit around
-    them) and lay the words out again in their new quadrants as live SVG
-    text on the same circle, in Jost to match the art's lettering."""
+    """The process ring. The art's ring (dashed circles, red arcs, dots and
+    the baked words) is cleared away completely, with soft edges so no strip
+    is left behind. In its place the page draws a bezel like a watch's
+    chapter ring: two hairlines with a fine minute track between them,
+    interrupted by the four stages, each led by a small red step number.
+    Words are Jost at the art's own measured size and spacing."""
     spec = cfg["arcs"]
     H, W, _ = I.shape
     yy, xx = np.mgrid[:H, :W]
@@ -349,78 +367,124 @@ def build_arcs(I, A, cfg, crop):
     fs = cap / 0.7
     adv = glyph_advances("DIAGNOSE")
     span = np.radians(angs.max() - angs.min()) * r_mid
-    # first and last glyph side bearings are roughly 6% of their advances
     track = (span - fs * (sum(adv) - 0.06 * (adv[0] + adv[-1]))) / (len(adv) - 1)
+    # the portrait art is shown much smaller on a phone, so its ring text is
+    # set larger than the art's own to stay readable
+    k = spec.get("text_scale", 1.0)
+    fs, cap, track = fs * k, cap * k, track * k
 
-    erase = np.zeros((H, W), np.float32)
-    glyphs, lines, ticks = [], [], []
-    gap_deg = np.degrees(0.9 * fs / r_mid)
-    for quad, (p_out, p_in) in dots.items():
-        a_out, a_in = ang_of(c, p_out), ang_of(c, p_in)
-        # unwrap so the interval does not straddle +-180
-        if abs(a_in - a_out) > 180:
-            a_in += 360 if a_in < a_out else -360
-        lo_a, hi_a = min(a_out, a_in), max(a_out, a_in)
-        top = cy > (p_out[1] + p_in[1]) / 2
-        dot_r = {"out": 7.0, "in": 4.0 if spec["style"] == "word-then-line" else 7.0}
-        d_out = np.degrees(dot_r["out"] / rc)
-        d_in = np.degrees(dot_r["in"] / rc)
-        e_lo = lo_a + (d_out if lo_a == a_out else d_in)
-        e_hi = hi_a - (d_out if hi_a == a_out else d_in)
-        a_sel = ang.copy()
-        if hi_a > 180:
-            a_sel = np.where(a_sel < 0, a_sel + 360, a_sel)
-        if lo_a < -180:
-            a_sel = np.where(a_sel > 0, a_sel - 360, a_sel)
-        band = (a_sel > e_lo) & (a_sel < e_hi) & (np.abs(d - r_mid) < cap / 2 + 7)
-        erase = np.maximum(erase, band.astype(np.float32))
+    # ---- clear the whole decorative ring, feathered at both edges
+    r0, r1 = spec["erase"]
+    ring = np.clip((d - r0) / 4, 0, 1) * np.clip((r1 + 6 - d) / 6, 0, 1)
+    keep = np.zeros((H, W), np.float32)
+    for bx0, by0, bx1, by1 in spec["protect"]:
+        keep[by0:by1, bx0:bx1] = 1
+    keep = cv2.GaussianBlur(keep, (0, 0), 2)
+    erase = (ring * (1 - keep)).astype(np.float32)
 
-        word = spec["words"][quad]
-        adv = glyph_advances(word)
-        widths = [a * fs for a in adv]
-        total = sum(widths) + track * (len(word) - 1)
-        w_deg = np.degrees(total / r_mid)
-        # reading runs clockwise along the top and anticlockwise along the bottom
+    # ---- where the ring is free to run (not behind flanges or manifolds)
+    A_after = A * (1 - erase)
+    band = np.abs(d - r_mid) < cap / 2 + 9
+    samples = np.arange(-180, 180, 0.25)
+    blocked = np.zeros(len(samples), bool)
+    angi = np.round((ang + 180) / 0.25).astype(int) % len(samples)
+    in_block = np.zeros((H, W), bool)
+    for bx0, by0, bx1, by1 in spec["block"]:
+        in_block[by0:by1, bx0:bx1] = True
+    solid_hits = np.bincount(angi[band & in_block & (A_after > 0.35)], minlength=len(samples))
+    blocked = solid_hits > 0
+    blocked = ndi.binary_dilation(blocked, np.ones(13), border_value=0)  # +-1.5 deg
+
+    # ---- word groups: red step number, then the word, centred per quadrant
+    def quad_centre(q):
+        p_out, p_in = dots[q]
+        a, b = ang_of(c, p_out), ang_of(c, p_in)
+        return (a + b) / 2
+    top_off = np.mean([abs(quad_centre(q) + 90) for q in ("TL", "TR")])
+    bot_off = np.mean([abs(quad_centre(q) - 90) for q in ("BL", "BR")])
+    centres = {"TL": -90 - top_off, "TR": -90 + top_off, "BL": 90 + bot_off, "BR": 90 - bot_off}
+
+    fs_num = fs * 0.78
+    gap = 0.55 * fs
+    glyphs, nums, word_zones = [], [], []
+    for quad, word in spec["words"].items():
+        step = spec["steps"][quad]
+        top = quad in ("TL", "TR")
         sgn = 1 if top else -1
-        if spec["style"] == "word-then-line":
-            # word sits against the red dot, a red line runs on to the black dot
-            if (a_out < a_in) == (sgn > 0):
-                start = a_out + sgn * (d_out + gap_deg * 0.6)
-            else:
-                start = a_out - sgn * (d_out + gap_deg * 0.6) - sgn * w_deg
-            end = start + sgn * w_deg
-            far = end if abs(end - a_in) < abs(start - a_in) else start
-            toward = np.sign(a_in - far)
-            lines.append(arc_d(c, rc, far + toward * gap_deg, a_in - toward * d_in * 0.6))
-        else:
-            mid = (a_out + a_in) / 2
-            start = mid - sgn * w_deg / 2
-            end = mid + sgn * w_deg / 2
-            for edge, dot in ((start, None), (end, None)):
-                near = a_out if abs(edge - a_out) < abs(edge - a_in) else a_in
-                toward = np.sign(edge - near)
-                a_from = near + toward * d_out * 0.8
-                a_to = edge - toward * gap_deg
-                lines.append(arc_d(c, rc, a_from, a_to))
-                ticks.append(arc_d(c, rc, a_to - toward * 0.9, a_to))
-        # glyph centres along the arc
-        pos = 0.0
+        n_adv = [a * fs_num for a in glyph_advances(step)]
+        w_adv = [a * fs for a in glyph_advances(word)]
+        n_w = sum(n_adv) + 0.12 * fs_num * (len(step) - 1)
+        w_w = sum(w_adv) + track * (len(word) - 1)
+        total = n_w + gap + w_w
+        mid = centres[quad]
+        start = mid - sgn * np.degrees(total / 2 / r_mid)
+        end = mid + sgn * np.degrees(total / 2 / r_mid)
+        word_zones.append((min(start, end), max(start, end)))
         r_base = r_mid - cap / 2 if top else r_mid + cap / 2
-        for ch, w in zip(word, widths):
-            centre = start + sgn * np.degrees((pos + w / 2) / r_mid)
-            th = np.radians(centre)
-            glyphs.append({"ch": ch, "x": round(cx + r_base * np.cos(th) - crop[0], 2),
-                           "y": round(cy + r_base * np.sin(th) - crop[1], 2),
-                           "rot": round(centre + (90 if top else -90), 2)})
-            pos += w + track
-    erase = cv2.GaussianBlur(erase, (0, 0), 1.2)
+
+        def place(chars, widths, spacing, offset, out, size):
+            pos = offset
+            for ch, w in zip(chars, widths):
+                a = start + sgn * np.degrees((pos + w / 2) / r_mid)
+                th = np.radians(a)
+                out.append({"ch": ch, "x": round(cx + r_base * np.cos(th) - crop[0], 2),
+                            "y": round(cy + r_base * np.sin(th) - crop[1], 2),
+                            "rot": round(a + (90 if top else -90), 2), "size": round(size, 2)})
+                pos += w + spacing
+        place(step, n_adv, 0.12 * fs_num, 0.0, nums, fs_num)
+        place(word, w_adv, track, n_w + gap, glyphs, fs)
+
+    # ---- the chapter ring: hairlines and a minute track in the free arcs
+    pad = np.degrees(0.9 * fs / r_mid)
+    free = ~blocked.copy()
+    for a0, a1 in word_zones:
+        free &= ~((samples > a0 - pad) & (samples < a1 + pad))
+    lab, n = ndi.label(free)
+    # a run that wraps around +-180 is joined
+    runs = []
+    for i in range(1, n + 1):
+        idx = np.nonzero(lab == i)[0]
+        runs.append([samples[idx[0]], samples[idx[-1]]])
+    if len(runs) > 1 and free[0] and free[-1]:
+        first = runs.pop(0)
+        runs[-1][1] = first[1] + 360
+    r_in, r_out = r_mid - cap / 2 - 6, r_mid + cap / 2 + 6
+    hair, minor, major, index = [], [], [], []
+    idx_k = {int(round(a / 2)) for a in spec["index"]}
+    for a0, a1 in runs:
+        if a1 - a0 < spec.get("min_track", 3):
+            continue
+        hair.append(arc_d(c, r_in, a0, a1))
+        hair.append(arc_d(c, r_out, a0, a1))
+        k0, k1 = int(np.ceil(a0 / 2)), int(np.floor(a1 / 2))
+        for k in range(k0, k1 + 1):
+            a = np.radians(2 * k)
+            big = k % 5 == 0
+            mark = (k in idx_k) or (k - 180 in idx_k) or (k + 180 in idx_k)
+            h = (cap / 2 + 6) if mark else (cap / 2 + 3) if big else (cap / 2 - 1)
+            p0 = (cx + (r_mid - h) * np.cos(a), cy + (r_mid - h) * np.sin(a))
+            p1 = (cx + (r_mid + h) * np.cos(a), cy + (r_mid + h) * np.sin(a))
+            seg = f"M{p0[0]:.1f} {p0[1]:.1f}L{p1[0]:.1f} {p1[1]:.1f}"
+            (index if mark else major if big else minor).append(seg)
+
     shift = lambda dstr: _shift_path(dstr, crop)
     return erase, {
         "fontSize": round(fs, 2),
         "glyphs": glyphs,
-        "lines": [shift(l) for l in lines],
-        "ticks": [shift(t) for t in ticks],
+        "nums": nums,
+        "hair": [shift(h) for h in hair],
+        "minor": _shift_lines("".join(minor), crop),
+        "major": _shift_lines("".join(major), crop),
+        "index": _shift_lines("".join(index), crop),
     }
+
+
+def _shift_lines(dstr, crop):
+    import re
+    out = []
+    for cmd, x, y in re.findall(r"([ML])(-?[\d.]+) (-?[\d.]+)", dstr):
+        out.append(f"{cmd}{float(x) - crop[0]:.1f} {float(y) - crop[1]:.1f}")
+    return "".join(out)
 
 
 def _shift_path(dstr, crop):
@@ -461,6 +525,8 @@ def build(kind, cfg):
     hx, hy, hr = cfg["housing"]
     solid = (xx - hx) ** 2 + (yy - hy) ** 2 < hr ** 2
     strong = (ink > 0.16) & (yy < cfg["floor"] * H)
+    # below the machine only the shaft cap is solid; the rest is floor shadow
+    strong &= (yy < cfg["floor_clear"]) | (np.abs(xx - cfg["housing"][0]) < 22)
     strong = cv2.morphologyEx(strong.astype(np.uint8), cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8)) > 0
     solid |= ndi.binary_fill_holes(strong)
 
@@ -498,9 +564,10 @@ def build(kind, cfg):
 
     soft_a = np.clip(ink * 1.2, 0, 1)
     soft_a[soft_a < 0.03] = 0
-    # the studio floor below the machine: let its shadow thin out with depth
-    floor_y = cfg["floor"] * H
-    soft_a *= np.clip(1 - (yy - floor_y) / (0.08 * H), 0.25, 1)
+    # the studio floor (reflection and cast shadow) goes: in 8-bit alpha it
+    # banded. The page draws its own smooth contact shadow instead.
+    fy = cfg["floor_clear"]
+    soft_a *= np.clip((fy - yy) / 12, 0, 1)
     A = np.where(solid, 1.0, soft_a).astype(np.float32)
     A *= 1 - erase
     arc_erase, arcs = build_arcs(I, A, cfg, cfg["crop"])
