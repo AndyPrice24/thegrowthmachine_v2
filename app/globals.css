@@ -23,12 +23,8 @@
 
 
 
-.v2-belief-grid{display:grid;grid-template-columns:160px 1.1fr .9fr;gap:48px;align-items:start}
-.v2-belief h2,.v2-section-intro h2,.v2-do h2,.v2-founders h2,.v2-proof h2,.v2-insights h2,.v2-final h2{font-family:Georgia,"Times New Roman",serif;font-weight:400;letter-spacing:-.035em;margin:0}
-.v2-belief h2{font-size:clamp(48px,5.6vw,78px);line-height:.98}
-.v2-belief-copy{padding-top:8px;border-top:1px solid var(--line)}
-.v2-belief-copy p{font-size:17px;line-height:1.7;color:var(--muted);margin:18px 0}
-.v2-belief-copy strong{color:var(--ink);font-weight:650}
+
+.v2-section-intro h2,.v2-do h2,.v2-founders h2,.v2-proof h2,.v2-insights h2,.v2-final h2{font-family:Georgia,"Times New Roman",serif;font-weight:400;letter-spacing:-.035em;margin:0}
 
 .v2-section-intro{display:grid;grid-template-columns:1.2fr .8fr;gap:20px 80px;align-items:end;margin-bottom:66px}
 .v2-section-intro .eyebrow{grid-column:1/-1}
@@ -110,8 +106,6 @@
   .v2-hero-head{gap:22px}
   .v2-hero-copy{grid-template-columns:1fr}
   .v2-hero-machine{margin-top:36px}
-  .v2-belief-grid{grid-template-columns:1fr;gap:24px}
-  .v2-belief-grid>.eyebrow{margin-bottom:0}
   .v2-section-intro{grid-template-columns:1fr;gap:18px}
   .v2-audience-grid{grid-template-columns:1fr}
   .v2-audience-panel{padding:42px 0!important;min-height:auto}
@@ -134,8 +128,7 @@
   .v2-hero-machine{width:calc(100% - 28px)}
   .v2-hero-lede{font-size:17px;line-height:1.55}
   .v2-hero-actions{align-items:flex-start;flex-direction:column}
-  .v2-belief h2,.v2-section-intro h2,.v2-do h2,.v2-founders h2,.v2-proof h2,.v2-insights h2,.v2-final h2{font-size:42px}
-  .v2-belief-copy p{font-size:16px}
+  .v2-section-intro h2,.v2-do h2,.v2-founders h2,.v2-proof h2,.v2-insights h2,.v2-final h2{font-size:42px}
   .v2-section-intro{margin-bottom:38px}
   .v2-audience-index{font-size:44px;top:34px;right:6px}
   .v2-audience-panel h3{font-size:36px;max-width:85%}

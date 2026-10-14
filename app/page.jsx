@@ -2,6 +2,7 @@ import Link from 'next/link';
 import GrowthMachine from '@/components/growth-machine/GrowthMachine';
 import Method from '@/components/Method';
 import AudienceSplit from '@/components/AudienceSplit';
+import TradeOff from '@/components/TradeOff';
 
 export default function Home(){
   return <div className="home-v2">
@@ -23,16 +24,7 @@ export default function Home(){
       </div>
     </section>
 
-    <section className="v2-belief section">
-      <div className="shell v2-belief-grid">
-        <span className="eyebrow">The idea</span>
-        <h2>Growth rarely fits neatly inside one job description.</h2>
-        <div className="v2-belief-copy">
-          <p>A scaling business can need positioning, sales structure, ecommerce optimisation, pricing, GTM, data, team design and hands-on execution at the same time.</p>
-          <p><strong>The Growth Machine gives you senior capability across the whole commercial system — without forcing the problem into a single functional box.</strong></p>
-        </div>
-      </div>
-    </section>
+    <TradeOff/>
 
     <section className="v2-audiences section section-ink">
       <div className="shell">

@@ -1,0 +1,446 @@
+/* "Breadth or ownership?" — editorial serif throughout, red only for The
+   Growth Machine. Desktop columns from 1024px; below that, cards on a
+   numbered timeline. */
+
+.section {
+  --serif: Georgia, 'Times New Roman', serif;
+  --grey: #8f887f;
+  --soft: #6b645c;
+  --rule: #ddd6cc;
+  padding: 110px 0 96px;
+  font-family: var(--serif);
+}
+
+.eyebrow {
+  margin: 0;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+
+.title {
+  margin: 18px 0 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(48px, 7vw, 104px);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+}
+
+.lede {
+  margin: 26px 0 0;
+  max-width: 980px;
+  font-size: clamp(21px, 2.15vw, 30px);
+  line-height: 1.38;
+  letter-spacing: -0.01em;
+  color: #2a2622;
+  text-wrap: pretty;
+}
+
+/* ---------------------------------------------------------------- steps */
+
+.steps {
+  list-style: none;
+  margin: 76px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: 26px;
+  min-width: 0;
+}
+
+.step + .step {
+  padding-left: 48px;
+}
+
+.stepNum {
+  font-size: 30px;
+  line-height: 1.1;
+  color: #aaa39a;
+}
+
+.stepText {
+  display: grid;
+  gap: 10px;
+}
+
+.stepName {
+  white-space: nowrap;
+  font-size: clamp(24px, 2.2vw, 32px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.stepSub {
+  font-size: 17px;
+  letter-spacing: 0.05em;
+  color: var(--soft);
+}
+
+.stepNote {
+  margin-top: 6px;
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  color: var(--grey);
+}
+
+.ours .stepNum {
+  color: var(--red);
+}
+
+.ours .stepSub {
+  color: var(--red);
+}
+
+.arrow {
+  flex: 0 1 120px;
+  min-width: 40px;
+  height: 10px;
+  margin: 13px 0 0 auto;
+  overflow: visible;
+}
+
+.arrow path {
+  fill: none;
+  stroke: #bfb8ae;
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+}
+
+/* ---------------------------------------------------------------- options */
+
+.options {
+  margin-top: 76px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.option {
+  display: block;
+  min-width: 0;
+  padding: 6px 16px 10px 0;
+}
+
+.option + .option {
+  padding-left: 48px;
+  border-left: 1px solid var(--rule);
+}
+
+.optionNum {
+  display: block;
+  font-size: 19px;
+  color: #aaa39a;
+}
+
+.ours .optionNum {
+  color: var(--red);
+}
+
+.optionName {
+  margin: 22px 0 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  white-space: nowrap;
+  font-size: clamp(28px, 2.75vw, 40px);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.optionSub,
+.optionNote {
+  display: none;
+}
+
+.points {
+  list-style: none;
+  margin: 38px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 26px;
+}
+
+.points li {
+  position: relative;
+  padding-left: 52px;
+  font-size: clamp(16px, 1.36vw, 19.5px);
+  line-height: 1.35;
+  color: var(--soft);
+}
+
+.points li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.68em;
+  width: 26px;
+  height: 1px;
+  background: #b7b0a6;
+}
+
+.ours .points li {
+  color: #2a2622;
+}
+
+.ours .points li::before {
+  height: 2px;
+  margin-top: -0.5px;
+  background: var(--red);
+}
+
+/* ---------------------------------------------------------------- close */
+
+.close {
+  margin: 44px 0 0;
+  padding-top: 34px;
+  border-top: 1px solid var(--rule);
+  font-size: clamp(17px, 1.5vw, 21px);
+  line-height: 1.5;
+  color: #3a3530;
+}
+
+/* ---------------------------------------------------------------- mobile */
+
+@media (max-width: 1023px) {
+  .section {
+    padding: 72px 0 64px;
+  }
+
+  .eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.18em;
+  }
+
+  .title {
+    margin-top: 14px;
+    font-size: clamp(46px, 13vw, 64px);
+  }
+
+  .lede {
+    margin-top: 20px;
+    font-size: 21px;
+    line-height: 1.4;
+  }
+
+  /* the progression: three columns, number above name, arrows between */
+  .steps {
+    margin-top: 38px;
+    grid-template-columns: max-content max-content minmax(0, 1fr);
+    gap: 30px;
+  }
+
+  .step {
+    position: relative;
+    display: block;
+  }
+
+  .step + .step {
+    padding-left: 0;
+  }
+
+  .stepNum {
+    display: block;
+    font-size: 15px;
+    margin-bottom: 8px;
+  }
+
+  .stepText {
+    gap: 6px;
+  }
+
+  .stepName {
+    font-size: 19px;
+  }
+
+  .ours .stepName {
+    white-space: normal;
+  }
+
+  .ours .stepName {
+    color: var(--red);
+  }
+
+  .stepSub {
+    font-size: 13px;
+    letter-spacing: 0.02em;
+  }
+
+  .ours .stepSub {
+    color: var(--soft);
+  }
+
+  .stepNote {
+    display: none;
+  }
+
+  .arrow {
+    position: absolute;
+    top: 30px;
+    right: -24px;
+    width: 18px;
+    min-width: 0;
+    margin: 0;
+  }
+
+  /* the options: cards on a numbered timeline */
+  .options {
+    position: relative;
+    margin-top: 32px;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .options::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 24px;
+    bottom: 60px;
+    width: 1px;
+    background: var(--rule);
+  }
+
+  .option,
+  .option + .option {
+    position: relative;
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+    padding: 0;
+    border-left: 0;
+  }
+
+  .optionNum {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border: 1px solid #d9d2c8;
+    border-radius: 50%;
+    background: var(--paper);
+    font-size: 15px;
+  }
+
+  .ours .optionNum {
+    border-color: var(--red);
+  }
+
+  .optionBody {
+    padding: 18px 20px 20px;
+    border: 1px solid #e2dbd1;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.35);
+  }
+
+  .ours .optionBody {
+    border-color: rgba(200, 34, 28, 0.55);
+    background: rgba(200, 34, 28, 0.035);
+  }
+
+  .optionName {
+    margin: 0;
+    white-space: normal;
+    font-size: 30px;
+  }
+
+  .optionSub {
+    display: block;
+    margin: 6px 0 0;
+    font-size: 18px;
+    color: var(--grey);
+  }
+
+  .ours .optionSub {
+    color: var(--red);
+  }
+
+  .points {
+    margin-top: 14px;
+    gap: 9px;
+  }
+
+  .points li {
+    padding-left: 38px;
+    font-size: 16px;
+  }
+
+  .points li::before {
+    width: 20px;
+  }
+
+  .optionNote {
+    display: block;
+    margin: 14px 0 0;
+    font-size: 16px;
+    color: var(--soft);
+  }
+
+  .close {
+    margin-top: 30px;
+    padding-top: 24px;
+    font-size: 17px;
+  }
+}
+
+/* Tablets: the same cards, with room to breathe. */
+@media (min-width: 600px) and (max-width: 1023px) {
+  .steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 56px;
+  }
+
+  .arrow {
+    top: 34px;
+    right: -44px;
+    width: 32px;
+  }
+
+  .stepNum {
+    font-size: 17px;
+  }
+
+  .stepName {
+    font-size: 25px;
+  }
+
+  .stepSub {
+    font-size: 15px;
+  }
+
+  .options {
+    gap: 24px;
+  }
+
+  .optionBody {
+    padding: 24px 30px 26px;
+  }
+
+  .optionName {
+    font-size: 36px;
+  }
+
+  .optionSub {
+    font-size: 20px;
+  }
+
+  .points {
+    gap: 11px;
+  }
+
+  .points li {
+    font-size: 19px;
+  }
+}
