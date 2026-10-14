@@ -27,7 +27,7 @@ import { LOGO_VIEWBOX, GEAR_CENTRE, WORDMARK, GEAR } from './logo-paths';
 import styles from './GrowthMachine.module.css';
 
 const INPUTS = ['Stalled growth', 'Unclear GTM', 'Weak acquisition', 'Low conversion', 'Margin leakage', 'Founder dependency'];
-const OUTPUTS = ['More revenue', 'Better margins', 'Better systems', 'Stronger team', 'Scalable growth'];
+const OUTPUTS = ['More revenue', 'Better margins', 'Better systems', 'AI-enabled operations', 'Stronger team', 'Scalable growth'];
 
 /* Timeline, in seconds from the start. Total about 4.3s. */
 const T = {
@@ -36,8 +36,8 @@ const T = {
   shaftIn: 1.12,
   gears: 1.4,
   shaftOut: 2.4,
-  pipeOut: (i) => 2.58 + i * 0.08,
-  cardOut: (i) => 3.02 + i * 0.09,
+  pipeOut: (i) => 2.58 + i * 0.07,
+  cardOut: (i) => 3.0 + i * 0.08,
   settle: 3.75,
 };
 
@@ -74,7 +74,7 @@ function Stage({ kind }) {
   return (
     <div className={`${styles.stage} ${styles[kind]}`}>
       {kind === 'mobile' && (
-        <ul className={styles.compactIn} aria-hidden="true">
+        <ul className={styles.compact} aria-hidden="true">
           {INPUTS.map((label, i) => (
             <li key={label} className={`${styles.card} ${styles.cardIn}`} style={{ '--d': `${T.cardIn(i)}s` }}>
               <span>{label}</span>
@@ -104,6 +104,20 @@ function Stage({ kind }) {
         </div>
 
         <img className={`${styles.layer} ${styles.warm}`} style={box(m.warm)} src={src('warm')} alt="" aria-hidden="true" />
+
+        <svg className={styles.arcs} viewBox={`0 0 ${W} ${H}`} aria-hidden="true" focusable="false">
+          {m.arcs.lines.map((d, i) => (
+            <path key={`l${i}`} className={styles.arcLine} d={d} />
+          ))}
+          {m.arcs.ticks.map((d, i) => (
+            <path key={`t${i}`} className={styles.arcTick} d={d} />
+          ))}
+          {m.arcs.glyphs.map((g, i) => (
+            <text key={`g${i}`} x={g.x} y={g.y} fontSize={m.arcs.fontSize} transform={`rotate(${g.rot} ${g.x} ${g.y})`}>
+              {g.ch}
+            </text>
+          ))}
+        </svg>
 
         <svg className={styles.flow} viewBox={`0 0 ${W} ${H}`} aria-hidden="true" focusable="false">
           <defs>
@@ -146,6 +160,15 @@ function Stage({ kind }) {
           {OUTPUTS.map((label, i) => card(label, m.cardsOut[i], i, 'out'))}
         </ul>
       </div>
+      {kind === 'mobile' && (
+        <ul className={styles.compact} aria-hidden="true">
+          {OUTPUTS.map((label, i) => (
+            <li key={label} className={`${styles.card} ${styles.cardOut}`} style={{ '--d': `${T.cardOut(i)}s` }}>
+              <span>{label}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
@@ -190,7 +213,8 @@ export default function GrowthMachine() {
         The Growth Machine. Growth problems go in: stalled growth, unclear go-to-market, weak acquisition, low
         conversion, margin leakage and founder dependency. Four connected functions, strategy and GTM, brand and
         demand, operations and revenue, are driven together by The Growth Machine through diagnose, design, execute
-        and embed. What comes out: more revenue, better margins, better systems, a stronger team and scalable growth.
+        and embed. What comes out: more revenue, better margins, better systems, AI-enabled operations, a stronger
+        team and scalable growth.
       </figcaption>
     </figure>
   );

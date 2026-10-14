@@ -63,7 +63,7 @@
 
 .inputs,
 .outputs,
-.compactIn {
+.compact {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -134,14 +134,15 @@
   padding: 0 0.45em;
 }
 
-/* Phones: six inputs do not fit across at a readable size, so they sit in a
-   three-by-two block above the inlet pipes, each column over its two pipes. */
-.compactIn {
+/* Portrait (phones and tablets): six cards do not fit across at a readable
+   size, so inputs and outputs each sit in a three-by-two block, each column
+   over its two pipes. */
+.compact {
   display: none;
 }
 
-@container (max-width: 560px) {
-  .compactIn {
+@container (max-width: 700px) {
+  .compact {
     display: grid;
     grid-template-rows: repeat(2, auto);
     grid-auto-flow: column;
@@ -150,27 +151,21 @@
     position: relative;
     z-index: 3;
   }
-  .compactIn .card {
+  .compact .card {
     position: relative;
-    min-height: 44px;
-    padding: 6px 4px;
-    font-size: 10.5px;
-    letter-spacing: 0.08em;
+    min-height: clamp(50px, 9cqw, 60px);
+    padding: 7px 5px;
+    font-size: clamp(12px, 2.2cqw, 14px);
+    letter-spacing: 0.07em;
     border-radius: 14px;
   }
-  .mobile .inputs {
+  .mobile .inputs,
+  .mobile .outputs {
     display: none;
   }
   .mobile .canvas {
     margin-top: calc(-108 / 800 * 100cqw);
-  }
-  .mobile .outputs .card {
-    font-size: 10px;
-    letter-spacing: 0.05em;
-    padding: 0 2px;
-    border-radius: 12px;
-    /* widen into the gaps between cards for the longer words */
-    margin-inline: -3px;
+    margin-bottom: calc(-104 / 800 * 100cqw);
   }
 }
 
@@ -209,6 +204,42 @@
   opacity: 0;
   mix-blend-mode: screen;
   pointer-events: none;
+}
+
+/* ---------------------------------------------------------------- arc labels */
+
+.arcs {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.arcs text {
+  fill: #1d1b18;
+  font-family: var(--font-label), 'Jost', ui-sans-serif, system-ui, sans-serif;
+  font-weight: 500;
+  text-anchor: middle;
+}
+
+.arcLine {
+  fill: none;
+  stroke: #d8322a;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+}
+
+.arcTick {
+  fill: none;
+  stroke: #2a2622;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.mobile .arcLine {
+  stroke-width: 2.2;
 }
 
 /* ---------------------------------------------------------------- flow */

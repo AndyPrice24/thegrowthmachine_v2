@@ -48,8 +48,10 @@ CFG = {
         "floor": 0.86,
         "cards_in": [(20, 177, 230, 228), (20, 243, 230, 294), (20, 309, 230, 360),
                      (20, 375, 230, 426), (20, 443, 230, 494), (20, 511, 230, 563)],
-        "cards_out": [(1163, 197, 1379, 254), (1163, 275, 1379, 332), (1163, 353, 1379, 409),
-                      (1163, 431, 1379, 487), (1163, 509, 1379, 567)],
+        # six outlets: the left bundle mirrored about the machine's centre
+        "mirror": {"axis": 698.0, "seam": 956, "block": (250, 492), "pipes": (150, 610), "pipe_seam": 1024},
+        # live cards are a little wider than the art's, for readable copy
+        "card_grow": (16, 0),
         "cards_side": ("left", "right"),
         "plate": (698.0, 372.3, 103),
         "red": {"c": (698.0, 372.3), "N": 28, "band": (105, 142)},
@@ -62,7 +64,15 @@ CFG = {
         "axis": "x",
         # pipe tracing: start at each card connector, walk toward the flange
         "pipes_in": {"start": 250, "end": 362, "at": [202, 268, 335, 401, 468, 537]},
-        "pipes_out": {"start": 1145, "end": 1036, "at": [225, 303, 381, 459, 538]},
+        "arcs": {
+            # (outer red dot, inner black dot) per quadrant, measured from the art
+            "dots": {"TL": [(468.9, 175.2), (602.5, 90.7)], "TR": [(945.9, 199.2), (800.0, 93.0)],
+                     "BL": [(455.6, 563.6), (592.6, 658.6)], "BR": [(927.5, 578.4), (799.8, 659.4)]},
+            "style": "word-then-line",
+            "measure": ("TR", -61.5, -37.0),
+            # left: diagnose, design. right: execute, embed.
+            "words": {"TL": "DIAGNOSE", "BL": "DESIGN", "TR": "EXECUTE", "BR": "EMBED"},
+        },
         "shaft_in": [(372, 375), (470, 373), (560, 372)],
         "shaft_out": [(836, 372), (928, 373), (1026, 375)],
     },
@@ -73,8 +83,8 @@ CFG = {
         "floor": 0.93,
         "cards_in": [(25, 90, 142, 184), (150, 90, 262, 184), (270, 90, 395, 184),
                      (404, 90, 530, 184), (537, 90, 649, 184), (655, 90, 775, 184)],
-        "cards_out": [(26, 1191, 165, 1284), (177, 1191, 317, 1284), (330, 1191, 469, 1284),
-                      (481, 1191, 622, 1284), (635, 1191, 774, 1284)],
+        "mirror": {"axis": 684.8, "seam": 1036, "block": (250, 548), "pipes": (10, 790), "pipe_seam": 1081},
+        "card_grow": (0, 0),
         "cards_side": ("top", "bottom"),
         "plate": (396.6, 684.8, 124),
         "red": {"c": (396.6, 684.8), "N": 28, "band": (126, 170)},
@@ -86,7 +96,14 @@ CFG = {
         ],
         "axis": "y",
         "pipes_in": {"start": 205, "end": 300, "at": [93, 215, 330, 466, 586, 705]},
-        "pipes_out": {"start": 1178, "end": 1062, "at": [95, 247, 400, 552, 705]},
+        "arcs": {
+            "dots": {"TL": [(244.8, 350.1), (57.0, 534.6)], "TR": [(554.0, 350.0), (741.0, 535.6)],
+                     "BL": [(56.3, 836.4), (245.9, 1019.4)], "BR": [(742.0, 837.0), (552.9, 1019.4)]},
+            "style": "line-word-line",
+            "measure": ("TR", -54.5, -33.0),
+            # top: diagnose, design. underside: execute, embed.
+            "words": {"TL": "DIAGNOSE", "TR": "DESIGN", "BL": "EXECUTE", "BR": "EMBED"},
+        },
         "shaft_in": [(400, 300), (400, 420), (397, 525)],
         "shaft_out": [(397, 845), (400, 960), (400, 1062)],
     },
@@ -248,9 +265,191 @@ def path_length(points):
     return float(np.hypot(*np.diff(a, axis=0).T).sum())
 
 
+# ---------------------------------------------------------------- six outlets
+def mirror_outlets(I, cfg):
+    """The art has six inlet pipes but five outlets. Both flanges have six
+    ports, so the sixth outlet comes from the art itself: the inlet bundle,
+    mirrored about the machine's centre line, feathered into the original."""
+    m = cfg["mirror"]
+    H, W, _ = I.shape
+    yy, xx = np.mgrid[:H, :W].astype(np.float32)
+    if cfg["axis"] == "x":
+        M = np.float32([[-1, 0, 2 * m["axis"]], [0, 1, 0]])
+        along, across = xx, yy
+    else:
+        M = np.float32([[1, 0, 0], [0, -1, 2 * m["axis"]]])
+        along, across = yy, xx
+    mir = cv2.warpAffine(I, M, (W, H), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
+    w_block = np.clip((along - m["seam"]) / 10, 0, 1) * ((across > m["block"][0]) & (across < m["block"][1]))
+    w_pipes = np.clip((along - m["pipe_seam"]) / 6, 0, 1) * ((across > m["pipes"][0]) & (across < m["pipes"][1]))
+    wgt = cv2.GaussianBlur(np.maximum(w_block, w_pipes).astype(np.float32), (0, 0), 2)
+    return I * (1 - wgt[..., None]) + mir * wgt[..., None]
+
+
+def mirror_box(box, cfg):
+    x0, y0, x1, y1 = box
+    a = cfg["mirror"]["axis"]
+    if cfg["axis"] == "x":
+        return (int(round(2 * a - x1)), y0, int(round(2 * a - x0)), y1)
+    return (x0, int(round(2 * a - y1)), x1, int(round(2 * a - y0)))
+
+
+# ---------------------------------------------------------------- arc labels
+JOST = os.path.join(ROOT, "node_modules", "@fontsource", "jost", "files", "jost-latin-500-normal.woff2")
+
+
+def glyph_advances(word):
+    from fontTools.ttLib import TTFont
+    f = TTFont(JOST)
+    cmap, hm, upm = f.getBestCmap(), f["hmtx"], f["head"].unitsPerEm
+    return [hm[cmap[ord(c)]][0] / upm for c in word]
+
+
+def fit_circle_pts(pts):
+    a = np.array(pts, np.float64)
+    A = np.c_[2 * a[:, 0], 2 * a[:, 1], np.ones(len(a))]
+    c, *_ = np.linalg.lstsq(A, (a ** 2).sum(1), rcond=None)
+    return c[0], c[1], float(np.sqrt(c[2] + c[0] ** 2 + c[1] ** 2))
+
+
+def arc_d(c, r, a0, a1):
+    """SVG arc from angle a0 to a1 (degrees, screen space, clockwise positive)."""
+    p0 = (c[0] + r * np.cos(np.radians(a0)), c[1] + r * np.sin(np.radians(a0)))
+    p1 = (c[0] + r * np.cos(np.radians(a1)), c[1] + r * np.sin(np.radians(a1)))
+    sweep = 1 if a1 > a0 else 0
+    large = 1 if abs(a1 - a0) > 180 else 0
+    return f"M{p0[0]:.1f} {p0[1]:.1f}A{r:.1f} {r:.1f} 0 {large} {sweep} {p1[0]:.1f} {p1[1]:.1f}"
+
+
+def ang_of(c, p):
+    return float(np.degrees(np.arctan2(p[1] - c[1], p[0] - c[0])))
+
+
+def build_arcs(I, A, cfg, crop):
+    """Erase the baked process labels (and the red lines that fit around
+    them) and lay the words out again in their new quadrants as live SVG
+    text on the same circle, in Jost to match the art's lettering."""
+    spec = cfg["arcs"]
+    H, W, _ = I.shape
+    yy, xx = np.mgrid[:H, :W]
+    lum = I.mean(2)
+    dots = spec["dots"]
+    cx, cy, rc = fit_circle_pts([p for q in dots.values() for p in q])
+    c = (cx, cy)
+    d = np.hypot(xx - cx, yy - cy)
+    ang = np.degrees(np.arctan2(yy - cy, xx - cx))
+
+    # measure the art's own lettering to match size and spacing
+    q, lo, hi = spec["measure"]
+    m = (lum < 130) & (ang > lo) & (ang < hi) & (np.abs(d - rc) < 22)
+    rs, angs = d[m], ang[m]
+    r_lo, r_hi = np.percentile(rs, 1), np.percentile(rs, 99)
+    cap = r_hi - r_lo
+    r_mid = (r_lo + r_hi) / 2
+    fs = cap / 0.7
+    adv = glyph_advances("DIAGNOSE")
+    span = np.radians(angs.max() - angs.min()) * r_mid
+    # first and last glyph side bearings are roughly 6% of their advances
+    track = (span - fs * (sum(adv) - 0.06 * (adv[0] + adv[-1]))) / (len(adv) - 1)
+
+    erase = np.zeros((H, W), np.float32)
+    glyphs, lines, ticks = [], [], []
+    gap_deg = np.degrees(0.9 * fs / r_mid)
+    for quad, (p_out, p_in) in dots.items():
+        a_out, a_in = ang_of(c, p_out), ang_of(c, p_in)
+        # unwrap so the interval does not straddle +-180
+        if abs(a_in - a_out) > 180:
+            a_in += 360 if a_in < a_out else -360
+        lo_a, hi_a = min(a_out, a_in), max(a_out, a_in)
+        top = cy > (p_out[1] + p_in[1]) / 2
+        dot_r = {"out": 7.0, "in": 4.0 if spec["style"] == "word-then-line" else 7.0}
+        d_out = np.degrees(dot_r["out"] / rc)
+        d_in = np.degrees(dot_r["in"] / rc)
+        e_lo = lo_a + (d_out if lo_a == a_out else d_in)
+        e_hi = hi_a - (d_out if hi_a == a_out else d_in)
+        a_sel = ang.copy()
+        if hi_a > 180:
+            a_sel = np.where(a_sel < 0, a_sel + 360, a_sel)
+        if lo_a < -180:
+            a_sel = np.where(a_sel > 0, a_sel - 360, a_sel)
+        band = (a_sel > e_lo) & (a_sel < e_hi) & (np.abs(d - r_mid) < cap / 2 + 7)
+        erase = np.maximum(erase, band.astype(np.float32))
+
+        word = spec["words"][quad]
+        adv = glyph_advances(word)
+        widths = [a * fs for a in adv]
+        total = sum(widths) + track * (len(word) - 1)
+        w_deg = np.degrees(total / r_mid)
+        # reading runs clockwise along the top and anticlockwise along the bottom
+        sgn = 1 if top else -1
+        if spec["style"] == "word-then-line":
+            # word sits against the red dot, a red line runs on to the black dot
+            if (a_out < a_in) == (sgn > 0):
+                start = a_out + sgn * (d_out + gap_deg * 0.6)
+            else:
+                start = a_out - sgn * (d_out + gap_deg * 0.6) - sgn * w_deg
+            end = start + sgn * w_deg
+            far = end if abs(end - a_in) < abs(start - a_in) else start
+            toward = np.sign(a_in - far)
+            lines.append(arc_d(c, rc, far + toward * gap_deg, a_in - toward * d_in * 0.6))
+        else:
+            mid = (a_out + a_in) / 2
+            start = mid - sgn * w_deg / 2
+            end = mid + sgn * w_deg / 2
+            for edge, dot in ((start, None), (end, None)):
+                near = a_out if abs(edge - a_out) < abs(edge - a_in) else a_in
+                toward = np.sign(edge - near)
+                a_from = near + toward * d_out * 0.8
+                a_to = edge - toward * gap_deg
+                lines.append(arc_d(c, rc, a_from, a_to))
+                ticks.append(arc_d(c, rc, a_to - toward * 0.9, a_to))
+        # glyph centres along the arc
+        pos = 0.0
+        r_base = r_mid - cap / 2 if top else r_mid + cap / 2
+        for ch, w in zip(word, widths):
+            centre = start + sgn * np.degrees((pos + w / 2) / r_mid)
+            th = np.radians(centre)
+            glyphs.append({"ch": ch, "x": round(cx + r_base * np.cos(th) - crop[0], 2),
+                           "y": round(cy + r_base * np.sin(th) - crop[1], 2),
+                           "rot": round(centre + (90 if top else -90), 2)})
+            pos += w + track
+    erase = cv2.GaussianBlur(erase, (0, 0), 1.2)
+    shift = lambda dstr: _shift_path(dstr, crop)
+    return erase, {
+        "fontSize": round(fs, 2),
+        "glyphs": glyphs,
+        "lines": [shift(l) for l in lines],
+        "ticks": [shift(t) for t in ticks],
+    }
+
+
+def _shift_path(dstr, crop):
+    import re
+    nums = re.split(r"([MA])", dstr)
+    out = []
+    for i in range(1, len(nums), 2):
+        cmd, args = nums[i], [float(v) for v in nums[i + 1].split()]
+        if cmd == "M":
+            out.append(f"M{args[0] - crop[0]:.1f} {args[1] - crop[1]:.1f}")
+        else:
+            r1, r2, rot, large, sweep, x, y = args
+            out.append(f"A{r1:.1f} {r2:.1f} 0 {int(large)} {int(sweep)} {x - crop[0]:.1f} {y - crop[1]:.1f}")
+    return "".join(out)
+
+
 # ---------------------------------------------------------------- build
 def build(kind, cfg):
-    I = load(cfg["src"])
+    I = mirror_outlets(load(cfg["src"]), cfg)
+    cfg = dict(cfg)
+    cfg["cards_out"] = [mirror_box(b, cfg) for b in cfg["cards_in"]]
+    if cfg["axis"] == "x":
+        a = cfg["mirror"]["axis"]
+        cfg["pipes_out"] = {"start": int(round(2 * a - cfg["pipes_in"]["start"])),
+                            "end": int(round(2 * a - cfg["pipes_in"]["end"])), "at": cfg["pipes_in"]["at"]}
+    else:
+        a = cfg["mirror"]["axis"]
+        cfg["pipes_out"] = {"start": int(round(2 * a - cfg["pipes_in"]["start"])),
+                            "end": int(round(2 * a - cfg["pipes_in"]["end"])), "at": cfg["pipes_in"]["at"]}
     H, W, _ = I.shape
     yy, xx = np.mgrid[:H, :W]
     B = estimate_backdrop(I)
@@ -304,6 +503,8 @@ def build(kind, cfg):
     soft_a *= np.clip(1 - (yy - floor_y) / (0.08 * H), 0.25, 1)
     A = np.where(solid, 1.0, soft_a).astype(np.float32)
     A *= 1 - erase
+    arc_erase, arcs = build_arcs(I, A, cfg, cfg["crop"])
+    A *= 1 - arc_erase
     A = cv2.GaussianBlur(A, (0, 0), 0.7)
     A = np.clip(A, 0, 1)
 
@@ -485,14 +686,25 @@ def build(kind, cfg):
     logo = {"cx": round((xs_l.min() + xs_l.max()) / 2 - x0, 1), "cy": round((ys_l.min() + ys_l.max()) / 2 - y0, 1),
             "w": int(xs_l.max() - xs_l.min())}
 
-    def cards(boxes):
-        return [[b[0] - x0, b[1] - y0, b[2] - b[0], b[3] - b[1]] for b in boxes]
+    gx, gy = cfg["card_grow"]
+    def cards(boxes, side):
+        # live cards grow away from the pipe side, for room to read
+        out = []
+        for b in boxes:
+            bx0, by0, bx1, by1 = b
+            if side == "left":
+                bx0 -= gx
+            elif side == "right":
+                bx1 += gx
+            out.append([bx0 - x0, by0 - y0, bx1 - bx0, by1 - by0])
+        return out
 
     return {
         "size": [x1 - x0, y1 - y0],
         "crop": [x0, y0],
-        "cardsIn": cards(cfg["cards_in"]),
-        "cardsOut": cards(cfg["cards_out"]),
+        "cardsIn": cards(cfg["cards_in"], cfg["cards_side"][0]),
+        "cardsOut": cards(cfg["cards_out"], cfg["cards_side"][1]),
+        "arcs": arcs,
         "plate": {"cx": round(pcx - x0, 2), "cy": round(pcy - y0, 2), "r": pr},
         "logo": logo,
         "rig": rig_box,

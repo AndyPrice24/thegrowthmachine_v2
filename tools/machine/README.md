@@ -35,6 +35,17 @@ It writes `public/machine/{desktop,mobile}/*.webp` and
    resting machine is the approved art itself.
 5. **Pipes.** Every pipe's centre-line is traced from the red in the artwork,
    so the light in the animation follows the real pipe.
+6. **Six outlets.** The art has six inlet pipes but five outlets, though
+   both flanges have six ports. The sixth outlet (for the sixth outcome card)
+   comes from the art itself: the inlet bundle is mirrored about the
+   machine's centre line and feathered in (`mirror` in `CFG`).
+7. **Process labels.** Diagnose, Design, Execute and Embed are erased from
+   the art, with the red lines that were drawn to fit around them, and set
+   again as live SVG text on the same circle, in Jost at the art's own size
+   and spacing (measured from its DIAGNOSE). Desktop: Diagnose and Design on
+   the left (inlet) side, Execute and Embed on the right. Mobile: Diagnose and
+   Design on top, Execute and Embed underneath. Change `arcs.words` in `CFG`
+   to move them. Needs `fonttools` and `brotli` for the glyph widths.
 
 ## Measurements
 
