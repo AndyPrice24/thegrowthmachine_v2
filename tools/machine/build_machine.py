@@ -586,8 +586,18 @@ def build(kind, cfg):
             # Behind the red teeth is the dark interior of the machine. The
             # gaps also show bits of the function gears, which the grey rings
             # redraw themselves, so use the plain interior tone per radius.
-            tone = np.stack([np.percentile(np.where(keep[..., None], Pb, np.nan)[i], 30, axis=0) if keep[i].any() else Pb[i].mean(0) for i in range(Pb.shape[0])])
-            tone = np.nan_to_num(tone, nan=60.0)
+            # sample only gaps away from the function gears: those show the
+            # warm, dark interior, not silver teeth
+            thg = np.linspace(0, 2 * np.pi, Pb.shape[1], endpoint=False)
+            px = g["c"][0] + rs[:, None] * np.cos(thg)[None]
+            py = g["c"][1] + rs[:, None] * np.sin(thg)[None]
+            clear = keep.copy()
+            for o in all_gears:
+                if not o["red"]:
+                    clear &= np.hypot(px - o["c"][0], py - o["c"][1]) > o["band"][1] + 4
+            masked = np.where(clear[..., None], Pb, np.nan)
+            tone = np.stack([np.nanmedian(masked[i], axis=0) if clear[i].any() else Pb[i].mean(0) for i in range(Pb.shape[0])])
+            tone = np.nan_to_num(tone, nan=50.0)
             filled = np.where(keep[..., None], Pb, tone[:, None, :])
         else:
             filled = fill_along_theta(Pb, keep)
@@ -630,6 +640,15 @@ def build(kind, cfg):
         box = (int(g["c"][0] - r_out), int(g["c"][1] - r_out), int(g["c"][0] + r_out) + 1, int(g["c"][1] + r_out) + 1)
         cart, inside = unpolar(softm, g["c"], rs, th, (H, W), box)
         bx0, by0, bx1, by1 = box
+        # Keep each gear's front layer out of the other gears: where the red
+        # gear meshes with a function gear, the silver teeth seen between the
+        # red teeth are brighter than the median red tooth and would otherwise
+        # be frozen on top while the red ring turns under them.
+        sub_y, sub_x = np.mgrid[by0:by1, bx0:bx1]
+        others = [o for o in all_gears if o["id"] != g["id"] and (g["red"] or o["red"])]
+        for o in others:
+            near = np.hypot(sub_x - o["c"][0], sub_y - o["c"][1]) < o["band"][1] + 3
+            cart = np.where(near, 0, cart)
         front_a[by0:by1, bx0:bx1] = np.maximum(front_a[by0:by1, bx0:bx1], np.where(inside, cart, 0))
     # the outer radius of the red teeth band touches the shaft glows above/below:
     front = np.dstack([clean, np.clip(front_a, 0, 1) * 255])
@@ -698,6 +717,9 @@ def build(kind, cfg):
                 bx1 += gx
             out.append([bx0 - x0, by0 - y0, bx1 - bx0, by1 - by0])
         return out
+
+    # draw order: function gears first, the red gear last (it sits in front of them)
+    gears.sort(key=lambda gb: gb["id"] == "red")
 
     return {
         "size": [x1 - x0, y1 - y0],

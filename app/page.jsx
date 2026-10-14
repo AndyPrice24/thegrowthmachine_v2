@@ -14,7 +14,7 @@ export default function Home(){
           <h1>Don’t hire the title.<br/><em>Solve the growth problem.</em></h1>
         </div>
         <div className="v2-hero-copy">
-          <p className="v2-hero-lede">A small team of senior founders and growth operators who work across strategy, revenue, marketing, sales, ecommerce and GTM — then get inside the business and do the work.</p>
+          <p className="v2-hero-lede">When growth slows, businesses often reach for a title: CMO, CRO, Head of Growth, GTM lead. But the real constraint rarely respects the org chart. It may sit in positioning, acquisition, conversion, sales, pricing, ecommerce, systems — or in the gaps between them. We diagnose the whole growth system, then step in and do the work that matters most.</p>
           <div className="v2-hero-actions">
             <Link className="button" href="/contact">Talk to The Growth Machine →</Link>
             <span className="v2-note">Fractional. Senior-led. Hands-on.</span>

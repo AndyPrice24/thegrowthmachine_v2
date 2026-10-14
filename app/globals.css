@@ -12,11 +12,12 @@
 .home-v2{background:var(--paper);overflow:hidden}
 .home-v2 .section{padding:118px 0}
 .v2-hero{padding:72px 0 0;position:relative}
-.v2-hero-head{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,.7fr);gap:28px 64px;align-items:end}
+.v2-hero-head{display:grid;grid-template-columns:1fr;gap:30px}
 .v2-hero-title h1{font-family:Georgia,"Times New Roman",serif;font-size:clamp(52px,5.3vw,84px);line-height:.95;letter-spacing:-.045em;font-weight:400;margin:14px 0 0}
-.v2-hero-copy{max-width:520px;padding-bottom:8px}
+.v2-hero-copy{display:grid;grid-template-columns:minmax(0,660px) auto;justify-content:space-between;align-items:end;gap:24px 64px}
+.v2-hero-copy .v2-hero-actions{margin-top:0;flex-direction:column;align-items:flex-start;gap:14px}
 .v2-hero-machine{width:min(1320px,100% - 32px);margin:44px auto 0}
-.v2-hero-lede{max-width:650px;font-size:19px;line-height:1.6;color:var(--muted);margin:0}
+.v2-hero-lede{max-width:660px;font-size:19px;line-height:1.6;color:var(--muted);margin:0}
 .v2-hero-actions{display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin-top:34px}
 .v2-note{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--stone)}
 
@@ -111,7 +112,8 @@
 
 @media(max-width:980px){
   .home-v2 .section{padding:90px 0}
-  .v2-hero-head{grid-template-columns:1fr;gap:22px}
+  .v2-hero-head{gap:22px}
+  .v2-hero-copy{grid-template-columns:1fr}
   .v2-hero-machine{margin-top:36px}
   .v2-role-line{grid-template-columns:1fr;justify-items:start}
   .v2-role-line>div{justify-content:flex-start}
