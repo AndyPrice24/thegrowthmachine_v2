@@ -41,82 +41,6 @@
   text-wrap: pretty;
 }
 
-/* ---------------------------------------------------------------- steps */
-
-.steps {
-  list-style: none;
-  margin: 76px 0 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.step {
-  display: flex;
-  align-items: flex-start;
-  gap: 26px;
-  min-width: 0;
-}
-
-.step + .step {
-  padding-left: 48px;
-}
-
-.stepNum {
-  font-size: 30px;
-  line-height: 1.1;
-  color: #aaa39a;
-}
-
-.stepText {
-  display: grid;
-  gap: 10px;
-}
-
-.stepName {
-  white-space: nowrap;
-  font-size: clamp(24px, 2.2vw, 32px);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  color: var(--ink);
-}
-
-.stepSub {
-  font-size: 17px;
-  letter-spacing: 0.05em;
-  color: var(--soft);
-}
-
-.stepNote {
-  margin-top: 6px;
-  font-size: 16px;
-  letter-spacing: 0.04em;
-  color: var(--grey);
-}
-
-.ours .stepNum {
-  color: var(--red);
-}
-
-.ours .stepSub {
-  color: var(--red);
-}
-
-.arrow {
-  flex: 0 1 120px;
-  min-width: 40px;
-  height: 10px;
-  margin: 13px 0 0 auto;
-  overflow: visible;
-}
-
-.arrow path {
-  fill: none;
-  stroke: #bfb8ae;
-  stroke-width: 1.2;
-  vector-effect: non-scaling-stroke;
-}
-
 /* ---------------------------------------------------------------- options */
 
 .options {
@@ -157,14 +81,27 @@
   color: var(--ink);
 }
 
-.optionSub,
+.optionSub {
+  margin: 14px 0 0;
+  font-size: 17px;
+  letter-spacing: 0.05em;
+  color: var(--soft);
+}
+
+.ours .optionSub {
+  color: var(--red);
+}
+
 .optionNote {
-  display: none;
+  margin: 34px 0 0;
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  color: var(--grey);
 }
 
 .points {
   list-style: none;
-  margin: 38px 0 0;
+  margin: 34px 0 0;
   padding: 0;
   display: grid;
   gap: 26px;
@@ -232,70 +169,10 @@
     line-height: 1.4;
   }
 
-  /* the progression: three columns, number above name, arrows between */
-  .steps {
-    margin-top: 38px;
-    grid-template-columns: max-content max-content minmax(0, 1fr);
-    gap: 30px;
-  }
-
-  .step {
-    position: relative;
-    display: block;
-  }
-
-  .step + .step {
-    padding-left: 0;
-  }
-
-  .stepNum {
-    display: block;
-    font-size: 15px;
-    margin-bottom: 8px;
-  }
-
-  .stepText {
-    gap: 6px;
-  }
-
-  .stepName {
-    font-size: 19px;
-  }
-
-  .ours .stepName {
-    white-space: normal;
-  }
-
-  .ours .stepName {
-    color: var(--red);
-  }
-
-  .stepSub {
-    font-size: 13px;
-    letter-spacing: 0.02em;
-  }
-
-  .ours .stepSub {
-    color: var(--soft);
-  }
-
-  .stepNote {
-    display: none;
-  }
-
-  .arrow {
-    position: absolute;
-    top: 30px;
-    right: -24px;
-    width: 18px;
-    min-width: 0;
-    margin: 0;
-  }
-
   /* the options: cards on a numbered timeline */
   .options {
     position: relative;
-    margin-top: 32px;
+    margin-top: 36px;
     grid-template-columns: 1fr;
     gap: 20px;
   }
@@ -357,9 +234,9 @@
   }
 
   .optionSub {
-    display: block;
     margin: 6px 0 0;
     font-size: 18px;
+    letter-spacing: 0;
     color: var(--grey);
   }
 
@@ -382,9 +259,9 @@
   }
 
   .optionNote {
-    display: block;
     margin: 14px 0 0;
     font-size: 16px;
+    letter-spacing: 0;
     color: var(--soft);
   }
 
@@ -397,29 +274,6 @@
 
 /* Tablets: the same cards, with room to breathe. */
 @media (min-width: 600px) and (max-width: 1023px) {
-  .steps {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 56px;
-  }
-
-  .arrow {
-    top: 34px;
-    right: -44px;
-    width: 32px;
-  }
-
-  .stepNum {
-    font-size: 17px;
-  }
-
-  .stepName {
-    font-size: 25px;
-  }
-
-  .stepSub {
-    font-size: 15px;
-  }
-
   .options {
     gap: 24px;
   }

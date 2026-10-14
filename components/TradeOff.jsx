@@ -3,9 +3,8 @@
  * hire, and The Growth Machine as the answer to it. Sits directly under the
  * hero machine.
  *
- * Desktop: a three-step progression line, then three columns.
- * Mobile: a compact progression line, then the three options as cards on a
- * numbered timeline, with The Growth Machine card highlighted.
+ * Desktop: three ruled columns. Mobile and tablet: the three options as cards
+ * on a numbered timeline, with The Growth Machine card highlighted.
  */
 import styles from './TradeOff.module.css';
 
@@ -32,14 +31,6 @@ const OPTIONS = [
   },
 ];
 
-function Arrow() {
-  return (
-    <svg className={styles.arrow} viewBox="0 0 120 10" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-      <path d="M0 5H118M112 1L118 5L112 9" />
-    </svg>
-  );
-}
-
 export default function TradeOff() {
   return (
     <section className={styles.section} aria-labelledby="trade-off-title">
@@ -52,22 +43,7 @@ export default function TradeOff() {
           Most businesses have had to choose. We think you should have both — with a founder’s eye on the P&amp;L.
         </p>
 
-        {/* The progression: agency, full-time hire, us. */}
-        <ol className={styles.steps} aria-label="The options">
-          {OPTIONS.map((o, i) => (
-            <li key={o.n} className={`${styles.step} ${o.ours ? styles.ours : ''}`}>
-              <span className={styles.stepNum}>{o.n}</span>
-              <span className={styles.stepText}>
-                <span className={styles.stepName}>{o.name}</span>
-                <span className={styles.stepSub}>{o.sub}</span>
-                {o.note && <span className={styles.stepNote}>{o.note}</span>}
-              </span>
-              {i < OPTIONS.length - 1 && <Arrow />}
-            </li>
-          ))}
-        </ol>
-
-        {/* The detail: columns on desktop, a numbered timeline of cards on mobile. */}
+        {/* Columns on desktop, a numbered timeline of cards on mobile. */}
         <div className={styles.options}>
           {OPTIONS.map((o) => (
             <article key={o.n} className={`${styles.option} ${o.ours ? styles.ours : ''}`}>
