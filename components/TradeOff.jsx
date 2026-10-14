@@ -25,7 +25,7 @@ const OPTIONS = [
     n: '03',
     name: 'The Growth Machine',
     sub: 'Breadth + ownership',
-    note: 'Founder-led. Profit-minded.',
+    note: 'Founder led. Focused on sustainable, profitable growth.',
     points: ['Breadth + ownership', 'Senior-only, hands-on', 'Cross-functional view', 'Finds the problem, then executes'],
     ours: true,
   },
