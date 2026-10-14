@@ -41,13 +41,12 @@ It writes `public/machine/{desktop,mobile}/*.webp` and
    machine's centre line and feathered in (`mirror` in `CFG`).
 7. **Process ring.** The art's whole decorative ring (dashed circles, red
    arcs, dots, baked words) is cleared, feathered so no strip is left, with
-   the flanges, manifolds and shaft caps protected. The page draws a
-   watch-style bezel instead: two hairlines and a fine minute track (red
-   index marks at 12 and 6 on desktop), broken by the four stages, each led
-   by a red step number, set in Jost at the art's measured size (larger on
-   mobile, which has no track: there is no room for one). Change
-   `arcs.words`/`arcs.steps` in `CFG` to move them. Needs `fonttools` and
-   `brotli` for the glyph widths.
+   the flanges, manifolds and shaft caps protected. The page draws one fine
+   line joining the four stages, which run clockwise from top left (01
+   Diagnose, 02 Design, 03 Execute, 04 Embed), each led by a red step
+   number, set in Jost at the art's measured size (larger on mobile).
+   Change `arcs.words`/`arcs.steps` in `CFG` to move them. Needs `fonttools`
+   and `brotli` for the glyph widths.
 8. **Floor.** The studio floor (reflection and cast shadow) is removed; in
    8-bit alpha it banded. The page draws a smooth contact shadow instead.
 

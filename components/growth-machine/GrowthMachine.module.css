@@ -224,50 +224,23 @@
   text-anchor: middle;
 }
 
-/* A watch-like chapter ring: two hairlines, a fine minute track between
-   them, broken by the four stages, each led by a red step number. */
-.hair {
+/* One fine line joins the four stages, clockwise; each stage is led by a
+   red step number. */
+.ringLine {
   fill: none;
-  stroke: rgba(40, 34, 28, 0.42);
-  stroke-width: 0.9;
+  stroke: rgba(40, 34, 28, 0.38);
+  stroke-width: 1;
   stroke-linecap: round;
 }
 
-.tickMinor {
-  fill: none;
-  stroke: rgba(60, 52, 44, 0.32);
-  stroke-width: 0.8;
-}
-
-.tickMajor {
-  fill: none;
-  stroke: rgba(40, 34, 28, 0.7);
+.mobile .ringLine {
   stroke-width: 1.4;
-}
-
-.tickIndex {
-  fill: none;
-  stroke: #c8221c;
-  stroke-width: 2.2;
-  stroke-linecap: round;
 }
 
 .arcs .stepNum {
   fill: #c8221c;
   font-weight: 500;
   letter-spacing: 0;
-}
-
-.mobile .hair {
-  stroke-width: 1.2;
-}
-
-.mobile .tickMinor {
-  stroke-width: 1.1;
-}
-
-.mobile .tickMajor {
-  stroke-width: 1.8;
 }
 
 /* Contact shadow: drawn, not baked, so it stays smooth at any size. */

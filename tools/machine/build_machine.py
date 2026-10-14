@@ -70,15 +70,15 @@ CFG = {
             "dots": {"TL": [(468.9, 175.2), (602.5, 90.7)], "TR": [(945.9, 199.2), (800.0, 93.0)],
                      "BL": [(455.6, 563.6), (592.6, 658.6)], "BR": [(927.5, 578.4), (799.8, 659.4)]},
             "measure": ("TR", -61.5, -37.0),
-            # left: diagnose, design. right: execute, embed.
-            "words": {"TL": "DIAGNOSE", "BL": "DESIGN", "TR": "EXECUTE", "BR": "EMBED"},
-            "steps": {"TL": "01", "BL": "02", "TR": "03", "BR": "04"},
+            # clockwise from top left, so the loop reads like a clock face
+            # and Embed (4) hands back to Diagnose (1)
+            "words": {"TL": "DIAGNOSE", "TR": "DESIGN", "BR": "EXECUTE", "BL": "EMBED"},
+            "steps": {"TL": "01", "TR": "02", "BR": "03", "BL": "04"},
             # the art's whole decorative ring, and what must survive inside it
             "erase": (272, 346),
             "protect": [(330, 285, 482, 470), (914, 285, 1066, 470), (680, 55, 716, 128), (680, 616, 716, 705)],
-            # only the flanges break the bezel; red index marks at 12 and 6
+            # only the flanges break the line
             "block": [(330, 285, 482, 470), (914, 285, 1066, 470)],
-            "index": [-90, 90],
         },
         "shaft_in": [(372, 375), (470, 373), (560, 372)],
         "shaft_out": [(836, 372), (928, 373), (1026, 375)],
@@ -108,16 +108,13 @@ CFG = {
             "dots": {"TL": [(244.8, 350.1), (57.0, 534.6)], "TR": [(554.0, 350.0), (741.0, 535.6)],
                      "BL": [(56.3, 836.4), (245.9, 1019.4)], "BR": [(742.0, 837.0), (552.9, 1019.4)]},
             "measure": ("TR", -54.5, -33.0),
-            # top: diagnose, design. underside: execute, embed.
-            "words": {"TL": "DIAGNOSE", "TR": "DESIGN", "BL": "EXECUTE", "BR": "EMBED"},
-            "steps": {"TL": "01", "TR": "02", "BL": "03", "BR": "04"},
+            "words": {"TL": "DIAGNOSE", "TR": "DESIGN", "BR": "EXECUTE", "BL": "EMBED"},
+            "steps": {"TL": "01", "TR": "02", "BR": "03", "BL": "04"},
             "erase": (334, 410),
             "text_scale": 1.55,
-            # between the words and the manifolds there is no room for a track
-            "min_track": 40,
+            "min_track": 4,
             "protect": [(270, 0, 530, 372), (270, 995, 530, 1421), (0, 585, 125, 785), (675, 585, 800, 785)],
             "block": [(270, 0, 530, 372), (270, 995, 530, 1421), (0, 585, 125, 785), (675, 585, 800, 785)],
-            "index": [],
         },
         "shaft_in": [(400, 300), (400, 420), (397, 525)],
         "shaft_out": [(397, 845), (400, 960), (400, 1062)],
@@ -343,10 +340,9 @@ def ang_of(c, p):
 def build_arcs(I, A, cfg, crop):
     """The process ring. The art's ring (dashed circles, red arcs, dots and
     the baked words) is cleared away completely, with soft edges so no strip
-    is left behind. In its place the page draws a bezel like a watch's
-    chapter ring: two hairlines with a fine minute track between them,
-    interrupted by the four stages, each led by a small red step number.
-    Words are Jost at the art's own measured size and spacing."""
+    is left behind. In its place the page draws one fine line joining the
+    four stages, clockwise, each led by a small red step number. Words are
+    Jost at the art's own measured size and spacing."""
     spec = cfg["arcs"]
     H, W, _ = I.shape
     yy, xx = np.mgrid[:H, :W]
@@ -448,43 +444,20 @@ def build_arcs(I, A, cfg, crop):
     if len(runs) > 1 and free[0] and free[-1]:
         first = runs.pop(0)
         runs[-1][1] = first[1] + 360
-    r_in, r_out = r_mid - cap / 2 - 6, r_mid + cap / 2 + 6
-    hair, minor, major, index = [], [], [], []
-    idx_k = {int(round(a / 2)) for a in spec["index"]}
+    # one fine line through the middle of the lettering joins the stages
+    lines = []
     for a0, a1 in runs:
         if a1 - a0 < spec.get("min_track", 3):
             continue
-        hair.append(arc_d(c, r_in, a0, a1))
-        hair.append(arc_d(c, r_out, a0, a1))
-        k0, k1 = int(np.ceil(a0 / 2)), int(np.floor(a1 / 2))
-        for k in range(k0, k1 + 1):
-            a = np.radians(2 * k)
-            big = k % 5 == 0
-            mark = (k in idx_k) or (k - 180 in idx_k) or (k + 180 in idx_k)
-            h = (cap / 2 + 6) if mark else (cap / 2 + 3) if big else (cap / 2 - 1)
-            p0 = (cx + (r_mid - h) * np.cos(a), cy + (r_mid - h) * np.sin(a))
-            p1 = (cx + (r_mid + h) * np.cos(a), cy + (r_mid + h) * np.sin(a))
-            seg = f"M{p0[0]:.1f} {p0[1]:.1f}L{p1[0]:.1f} {p1[1]:.1f}"
-            (index if mark else major if big else minor).append(seg)
+        lines.append(arc_d(c, r_mid, a0, a1))
 
     shift = lambda dstr: _shift_path(dstr, crop)
     return erase, {
         "fontSize": round(fs, 2),
         "glyphs": glyphs,
         "nums": nums,
-        "hair": [shift(h) for h in hair],
-        "minor": _shift_lines("".join(minor), crop),
-        "major": _shift_lines("".join(major), crop),
-        "index": _shift_lines("".join(index), crop),
+        "lines": [shift(l) for l in lines],
     }
-
-
-def _shift_lines(dstr, crop):
-    import re
-    out = []
-    for cmd, x, y in re.findall(r"([ML])(-?[\d.]+) (-?[\d.]+)", dstr):
-        out.append(f"{cmd}{float(x) - crop[0]:.1f} {float(y) - crop[1]:.1f}")
-    return "".join(out)
 
 
 def _shift_path(dstr, crop):

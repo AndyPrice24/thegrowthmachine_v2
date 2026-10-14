@@ -107,12 +107,9 @@ function Stage({ kind }) {
         <img className={`${styles.layer} ${styles.warm}`} style={box(m.warm)} src={src('warm')} alt="" aria-hidden="true" />
 
         <svg className={styles.arcs} viewBox={`0 0 ${W} ${H}`} aria-hidden="true" focusable="false">
-          {m.arcs.hair.map((d, i) => (
-            <path key={`h${i}`} className={styles.hair} d={d} />
+          {m.arcs.lines.map((d, i) => (
+            <path key={`l${i}`} className={styles.ringLine} d={d} />
           ))}
-          <path className={styles.tickMinor} d={m.arcs.minor} />
-          <path className={styles.tickMajor} d={m.arcs.major} />
-          {m.arcs.index && <path className={styles.tickIndex} d={m.arcs.index} />}
           {m.arcs.nums.map((g, i) => (
             <text key={`n${i}`} className={styles.stepNum} x={g.x} y={g.y} fontSize={g.size} transform={`rotate(${g.rot} ${g.x} ${g.y})`}>
               {g.ch}
