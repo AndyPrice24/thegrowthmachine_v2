@@ -3,18 +3,15 @@ import GrowthMachine from '@/components/growth-machine/GrowthMachine';
 import Method from '@/components/Method';
 import AudienceSplit from '@/components/AudienceSplit';
 
-const roles=['CMO','CRO','GTM Lead','Head of Growth','Entrepreneur in Residence'];
-
 export default function Home(){
   return <div className="home-v2">
     <section className="v2-hero">
       <div className="shell v2-hero-head">
         <div className="v2-hero-title">
-          <span className="eyebrow">Fractional growth leadership</span>
           <h1>Don’t hire the title.<br/><em>Solve the growth problem.</em></h1>
         </div>
         <div className="v2-hero-copy">
-          <p className="v2-hero-lede">When growth slows, businesses often reach for a title: CMO, CRO, Head of Growth, GTM lead. But the real constraint rarely respects the org chart. It may sit in positioning, acquisition, conversion, sales, pricing, ecommerce, systems — or in the gaps between them. We diagnose the whole growth system, then step in and do the work that matters most.</p>
+          <p className="v2-hero-lede">When growth slows, businesses often reach for a title: CMO, CRO, Head of Growth, GTM lead. But growth rarely fits neatly inside one role. We diagnose the whole system, then step in and do the work that matters most.</p>
           <div className="v2-hero-actions">
             <Link className="button" href="/contact">Talk to The Growth Machine →</Link>
             <span className="v2-note">Fractional. Senior-led. Hands-on.</span>
@@ -23,11 +20,6 @@ export default function Home(){
       </div>
       <div className="v2-hero-machine">
         <GrowthMachine/>
-      </div>
-      <div className="shell v2-role-line">
-        <span>You may be considering</span>
-        <div>{roles.map(r=><b key={r}>{r}</b>)}</div>
-        <strong>We work across the gaps between them.</strong>
       </div>
     </section>
 

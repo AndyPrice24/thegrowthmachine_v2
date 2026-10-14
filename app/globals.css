@@ -13,20 +13,15 @@
 .home-v2 .section{padding:118px 0}
 .v2-hero{padding:72px 0 0;position:relative}
 .v2-hero-head{display:grid;grid-template-columns:1fr;gap:30px}
-.v2-hero-title h1{font-family:Georgia,"Times New Roman",serif;font-size:clamp(52px,5.3vw,84px);line-height:.95;letter-spacing:-.045em;font-weight:400;margin:14px 0 0}
+.v2-hero-title h1{font-family:Georgia,"Times New Roman",serif;font-size:clamp(52px,5.3vw,84px);line-height:.95;letter-spacing:-.045em;font-weight:400;margin:0}
 .v2-hero-copy{display:grid;grid-template-columns:minmax(0,660px) auto;justify-content:space-between;align-items:end;gap:24px 64px}
 .v2-hero-copy .v2-hero-actions{margin-top:0;flex-direction:column;align-items:flex-start;gap:14px}
 .v2-hero-machine{width:min(1320px,100% - 32px);margin:44px auto 0}
-.v2-hero-lede{max-width:660px;font-size:19px;line-height:1.6;color:var(--muted);margin:0}
+.v2-hero-lede{max-width:660px;font-size:19px;line-height:1.6;color:var(--muted);margin:0;text-wrap:pretty}
 .v2-hero-actions{display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin-top:34px}
 .v2-note{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--stone)}
 
 
-.v2-role-line{margin-top:40px;padding:28px 0 32px;border-top:1px solid var(--line);display:grid;grid-template-columns:auto 1fr auto;gap:24px;align-items:center}
-.v2-role-line>span{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--stone)}
-.v2-role-line>div{display:flex;justify-content:center;gap:9px;flex-wrap:wrap}
-.v2-role-line b{font-size:12px;font-weight:600;border:1px solid var(--line);padding:7px 11px;border-radius:999px;background:rgba(255,255,255,.35)}
-.v2-role-line>strong{font-family:Georgia,serif;font-size:17px;font-weight:400}
 
 .v2-belief-grid{display:grid;grid-template-columns:160px 1.1fr .9fr;gap:48px;align-items:start}
 .v2-belief h2,.v2-section-intro h2,.v2-do h2,.v2-founders h2,.v2-proof h2,.v2-insights h2,.v2-final h2{font-family:Georgia,"Times New Roman",serif;font-weight:400;letter-spacing:-.035em;margin:0}
@@ -115,8 +110,6 @@
   .v2-hero-head{gap:22px}
   .v2-hero-copy{grid-template-columns:1fr}
   .v2-hero-machine{margin-top:36px}
-  .v2-role-line{grid-template-columns:1fr;justify-items:start}
-  .v2-role-line>div{justify-content:flex-start}
   .v2-belief-grid{grid-template-columns:1fr;gap:24px}
   .v2-belief-grid>.eyebrow{margin-bottom:0}
   .v2-section-intro{grid-template-columns:1fr;gap:18px}
@@ -141,10 +134,6 @@
   .v2-hero-machine{width:calc(100% - 28px)}
   .v2-hero-lede{font-size:17px;line-height:1.55}
   .v2-hero-actions{align-items:flex-start;flex-direction:column}
-  .v2-role-line{margin-top:38px;padding-top:22px}
-  .v2-role-line>div{gap:6px}
-  .v2-role-line b{font-size:10px;padding:6px 8px}
-  .v2-role-line>strong{font-size:16px}
   .v2-belief h2,.v2-section-intro h2,.v2-do h2,.v2-founders h2,.v2-proof h2,.v2-insights h2,.v2-final h2{font-size:42px}
   .v2-belief-copy p{font-size:16px}
   .v2-section-intro{margin-bottom:38px}
