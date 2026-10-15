@@ -72,7 +72,17 @@ export default function JourneyIntro({ id, eyebrow, title, lede, statement, leve
 
         <div className={styles.media}>
           {image ? (
-            <img src={image} alt={imageAlt} loading="lazy" decoding="async" />
+            <picture>
+              <source media="(max-width: 1023px)" srcSet={image.mobile} />
+              <img
+                src={image.desktop}
+                alt={imageAlt}
+                style={{ objectPosition: image.focus }}
+                width="1050"
+                height="1400"
+                decoding="async"
+              />
+            </picture>
           ) : (
             <span className={styles.placeholder} aria-hidden="true" />
           )}

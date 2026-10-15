@@ -5,8 +5,10 @@
  * ecommerce: a stand-in until the ecommerce section is designed, using the
  * copy from the previous ecommerce page; the statement is shared with B2B.
  *
- * image: a file in /public (square, at least 1400x1400; phones crop it to
- * 4:3). Leave null to show the placeholder.
+ * image: { desktop, mobile, focus }. Desktop shows a near-square crop beside
+ * the copy (a 3:4 portrait works best); phones and tablets show a 4:3
+ * landscape under the levers. focus is the desktop crop's object-position.
+ * Leave null to show the placeholder.
  */
 export const JOURNEYS = {
   b2b: {
@@ -21,8 +23,12 @@ export const JOURNEYS = {
       { icon: 'funnel', name: 'Convert pipeline', text: 'Qualification, sales process & conversion' },
       { icon: 'trend', name: 'Grow revenue', text: 'Pricing, expansion & revenue economics' },
     ],
-    image: null,
-    imageAlt: '',
+    image: {
+      desktop: '/journeys/b2b-portrait.webp',
+      mobile: '/journeys/b2b-landscape.webp',
+      focus: '50% 22%',
+    },
+    imageAlt: 'A growth leader mapping a B2B growth engine, from ICP and demand through pipeline to revenue and expansion, on a whiteboard in a sunlit meeting room.',
   },
   ecommerce: {
     id: 'ecommerce',
