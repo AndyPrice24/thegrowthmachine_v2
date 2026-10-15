@@ -6,8 +6,8 @@ export default function Header() {
   const [open, setOpen] = useState(false);
   const links = [
     ['How it works','/how-it-works'],
-    ['Ecommerce','/ecommerce-growth'],
-    ['B2B / SaaS','/b2b-saas-growth'],
+    ['Ecommerce','/ecommerce'],
+    ['B2B / SaaS','/b2b'],
     ['About','/about'],
     ['Insights','/insights']
   ];

@@ -1,11 +1,14 @@
-/* B2B page hero. Desktop from 1024px: copy | photo, levers in a ruled row
-   beneath. Below: one column, statement as a callout, levers 2x2, photo last. */
+/* Opening section of a journey. Desktop from 1024px: copy | photo, levers in
+   a ruled row beneath. Below: one column, statement as a callout, levers 2x2,
+   photo last. */
 
 .hero {
   --serif: Georgia, 'Times New Roman', serif;
   --soft: #5f5850;
   --rule: #ddd5ca;
-  padding: 56px 0 64px;
+  padding: 72px 0 80px;
+  border-top: 1px solid var(--rule);
+  scroll-margin-top: 78px;
 }
 
 .grid {

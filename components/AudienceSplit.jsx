@@ -1,10 +1,19 @@
+'use client';
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { JOURNEY_FLAG, scrollToJourney } from './JourneyStart';
 import styles from './AudienceSplit.module.css';
 
 /*
  * "How you grow depends on how you sell." Two growth systems side by side:
  * ecommerce/consumer and B2B/SaaS/sales-led, each a card with a photo and its
  * commercial levers. Stacks on narrow screens, photo on top.
+ *
+ * This is the choice at the end of the shared homepage. Choosing a card goes
+ * to /ecommerce or /b2b without scrolling to the top: the opening above stays
+ * put and the page glides on into that journey (see JourneyStart). On a
+ * journey, its card is marked current and the other stays one click away.
  *
  * Photos live in /public/systems: a 3:4 portrait for the side-by-side card
  * and a 4:3 landscape for phones, where the photo sits above the text.
@@ -21,7 +30,7 @@ const SYSTEMS = [
       'Brand & demand',
       'Margin & channel performance',
     ],
-    href: '/ecommerce-growth',
+    href: '/ecommerce',
     cta: 'Explore ecommerce growth',
     image: 'ecommerce',
     focus: '42% 50%',
@@ -38,7 +47,7 @@ const SYSTEMS = [
       'CRM, data & operating systems',
       'Team structure & accountability',
     ],
-    href: '/b2b-saas-growth',
+    href: '/b2b',
     cta: 'Explore B2B growth',
     image: 'b2b',
     focus: '66% 50%',
@@ -47,6 +56,18 @@ const SYSTEMS = [
 ];
 
 export default function AudienceSplit() {
+  const pathname = usePathname();
+  const onChoose = (href) => (event) => {
+    if (pathname === href) {
+      event.preventDefault();
+      scrollToJourney();
+      return;
+    }
+    try {
+      sessionStorage.setItem(JOURNEY_FLAG, href);
+    } catch {}
+  };
+  const chosen = SYSTEMS.some((s) => s.href === pathname);
   return (
     <section className={styles.section} aria-labelledby="systems-title">
       <div className="shell">
@@ -60,7 +81,10 @@ export default function AudienceSplit() {
 
         <div className={styles.grid}>
           {SYSTEMS.map((s) => (
-            <article key={s.href} className={styles.card}>
+            <article
+              key={s.href}
+              className={`${styles.card} ${chosen ? (pathname === s.href ? styles.current : styles.other) : ''}`}
+            >
               <div className={styles.media}>
                 {s.image ? (
                   <picture>
@@ -91,8 +115,14 @@ export default function AudienceSplit() {
                     <li key={l}>{l}</li>
                   ))}
                 </ul>
-                <Link href={s.href} className={styles.cta}>
-                  {s.cta} <span aria-hidden="true">→</span>
+                <Link
+                  href={s.href}
+                  scroll={false}
+                  className={styles.cta}
+                  onClick={onChoose(s.href)}
+                  aria-current={pathname === s.href ? 'page' : undefined}
+                >
+                  {s.cta} <span aria-hidden="true">{pathname === s.href ? '↓' : '→'}</span>
                 </Link>
               </div>
             </article>

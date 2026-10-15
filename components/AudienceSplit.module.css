@@ -165,6 +165,25 @@
   transform: translateX(3px);
 }
 
+/* On a journey: the chosen card is marked, the other recedes a little. */
+.card {
+  transition: opacity 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.current {
+  border-color: rgba(200, 34, 28, 0.55);
+  box-shadow: 0 0 0 1px rgba(200, 34, 28, 0.55);
+}
+
+.other {
+  opacity: 0.62;
+}
+
+.other:hover,
+.other:focus-within {
+  opacity: 1;
+}
+
 /* ---------------------------------------------------------------- foot */
 
 .foot {
