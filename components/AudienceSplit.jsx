@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { goToJourney } from './JourneyStart';
 import styles from './AudienceSplit.module.css';
@@ -58,6 +59,27 @@ const SYSTEMS = [
 export default function AudienceSplit() {
   const pathname = usePathname();
   const chosen = SYSTEMS.some((s) => s.href === pathname);
+
+  // On the homepage the two cards are a choice still to be made: when they
+  // first come into view, their selection markers pulse once.
+  const gridRef = useRef(null);
+  const [cue, setCue] = useState(false);
+  useEffect(() => {
+    if (chosen || cue || !gridRef.current) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setCue(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.55 }
+    );
+    io.observe(gridRef.current);
+    return () => io.disconnect();
+  }, [chosen, cue]);
+
   return (
     <section className={styles.section} aria-labelledby="systems-title">
       <div className="shell">
@@ -67,15 +89,19 @@ export default function AudienceSplit() {
             How you grow depends on how you <em>sell</em>.
           </h2>
           <p className={styles.lede}>The principles are the same. The commercial levers aren’t.</p>
-          {!chosen && <p className={styles.prompt}>Choose your route to continue.</p>}
         </header>
 
-        <div className={styles.grid}>
+        <div ref={gridRef} className={`${styles.grid} ${cue ? styles.cue : ''}`}>
           {SYSTEMS.map((s) => (
             <article
               key={s.href}
               className={`${styles.card} ${chosen ? (pathname === s.href ? styles.current : styles.other) : ''}`}
             >
+              <span className={styles.select} aria-hidden="true">
+                <svg viewBox="0 0 16 16" focusable="false">
+                  <path d="M4 8.4 6.8 11 12 5.4" />
+                </svg>
+              </span>
               <div className={styles.media}>
                 {s.image ? (
                   <picture>

@@ -158,7 +158,7 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #fff;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .levers + .cta {
@@ -198,22 +198,94 @@
   box-shadow: 0 14px 34px -18px rgba(60, 40, 25, 0.35);
 }
 
-.prompt {
-  margin: 22px 0 0;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--ink);
+/* The selection marker: an empty ring in the photo's corner, like a radio
+   button. Hover fills it; the chosen card's is filled red with a tick. */
+.select {
+  position: absolute;
+  top: 28px;
+  left: 28px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid #b8afa4;
+  background: #fffdf9;
+  box-shadow: 0 2px 8px rgba(40, 28, 18, 0.25);
+  pointer-events: none;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
 
-.prompt::after {
-  content: '↓';
-  display: block;
-  margin-top: 8px;
-  font-size: 18px;
-  letter-spacing: 0;
-  color: var(--red);
+.select::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--red);
+  transform: scale(0);
+  transition: transform 0.2s ease;
+}
+
+.select svg {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+}
+
+.card:hover .select,
+.card:focus-within .select {
+  border-color: var(--red);
+}
+
+.card:hover .select::before,
+.card:focus-within .select::before {
+  transform: scale(1);
+}
+
+.current .select {
+  border-color: var(--red);
+  background: var(--red);
+}
+
+.current .select::before {
+  transform: scale(0);
+}
+
+.current .select svg {
+  opacity: 1;
+}
+
+.current:hover .select::before {
+  transform: scale(0);
+}
+
+/* One soft pulse when the undecided choice first comes into view. */
+.cue .select {
+  animation: select-cue 1.4s ease-out;
+}
+
+.cue .card + .card .select {
+  animation-delay: 0.25s;
+}
+
+@keyframes select-cue {
+  0% { box-shadow: 0 2px 8px rgba(40, 28, 18, 0.25), 0 0 0 0 rgba(255, 250, 244, 0); border-color: #b8afa4; }
+  30% { box-shadow: 0 2px 8px rgba(40, 28, 18, 0.25), 0 0 0 0 rgba(255, 250, 244, 0.85); border-color: var(--red); }
+  100% { box-shadow: 0 2px 8px rgba(40, 28, 18, 0.25), 0 0 0 16px rgba(255, 250, 244, 0); border-color: #b8afa4; }
+}
+
+@media (max-width: 600px) {
+  .select {
+    top: 24px;
+    left: 24px;
+  }
 }
 
 /* On a journey: the chosen card is marked, the other recedes a little. */
@@ -221,10 +293,18 @@
   transition: opacity 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
-.current .cta {
+.current .cta,
+.current:hover .cta,
+.current .cta:focus-visible {
   background: transparent;
   color: var(--red);
   box-shadow: inset 0 0 0 1px var(--red);
+}
+
+.current,
+.current:hover {
+  border-color: rgba(200, 34, 28, 0.55);
+  box-shadow: 0 0 0 1px rgba(200, 34, 28, 0.55);
 }
 
 .current {
@@ -232,13 +312,40 @@
   box-shadow: 0 0 0 1px rgba(200, 34, 28, 0.55);
 }
 
-.other {
-  opacity: 0.62;
+/* The card not chosen: plainly unselected (empty marker, greyed photo,
+   muted text, neutral button) yet still one click away. Hover restores it. */
+.other .media img {
+  filter: grayscale(0.85);
+  opacity: 0.75;
+  transition: filter 0.25s ease, opacity 0.25s ease;
 }
 
-.other:hover,
-.other:focus-within {
+.other .name,
+.other .levers li {
+  color: #8a8279;
+}
+
+.other .levers li::before {
+  background: #b8afa4;
+}
+
+.other .cta {
+  background: transparent;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px #b8afa4;
+}
+
+.other:hover .media img,
+.other:focus-within .media img {
+  filter: none;
   opacity: 1;
+}
+
+.other:hover .cta,
+.other:focus-within .cta {
+  background: var(--red);
+  color: #fff;
+  box-shadow: none;
 }
 
 /* ---------------------------------------------------------------- foot */
