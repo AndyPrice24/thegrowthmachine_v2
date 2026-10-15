@@ -10,7 +10,7 @@ import TradeOff from '@/components/TradeOff';
  * routes, so choosing a direction swaps only what is below the choice: the
  * page does not reload and the reader keeps their place.
  *
- *   /            ends at the choice, with a short closing call to action
+ *   /            ends at the choice: nothing below it until one is made
  *   /b2b         continues into the B2B, SaaS & sales-led journey
  *   /ecommerce   continues into the ecommerce & consumer journey
  */
