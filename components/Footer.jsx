@@ -1,5 +1,11 @@
+'use client';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
 export default function Footer(){
+  // The homepage ends at the choice between the two growth systems, so it
+  // has no footer: nothing should suggest the site ends there.
+  if (usePathname() === '/') return null;
   return <footer className="footer">
     <div className="shell footer-grid">
       <div>

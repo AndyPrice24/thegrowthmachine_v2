@@ -67,6 +67,7 @@ export default function AudienceSplit() {
             How you grow depends on how you <em>sell</em>.
           </h2>
           <p className={styles.lede}>The principles are the same. The commercial levers aren’t.</p>
+          {!chosen && <p className={styles.prompt}>Choose your route to continue.</p>}
         </header>
 
         <div className={styles.grid}>
