@@ -6,8 +6,8 @@ import styles from './AudienceSplit.module.css';
  * ecommerce/consumer and B2B/SaaS/sales-led, each a card with a photo and its
  * commercial levers. Stacks on narrow screens, photo on top.
  *
- * Photos: set `image` to a file in /public (portrait, about 3:4, at least
- * 900x1200). Until then the card shows a quiet placeholder.
+ * Photos live in /public/systems: a 3:4 portrait for the side-by-side card
+ * and a 4:3 landscape for phones, where the photo sits above the text.
  */
 const SYSTEMS = [
   {
@@ -23,8 +23,9 @@ const SYSTEMS = [
     ],
     href: '/ecommerce-growth',
     cta: 'Explore ecommerce growth',
-    image: null,
-    alt: '',
+    image: 'ecommerce',
+    focus: '42% 50%',
+    alt: 'A botanical face oil bottle and its box on a stone plinth in warm afternoon light.',
   },
   {
     title: ['B2B, SaaS &', 'sales-led growth'],
@@ -39,8 +40,9 @@ const SYSTEMS = [
     ],
     href: '/b2b-saas-growth',
     cta: 'Explore B2B growth',
-    image: null,
-    alt: '',
+    image: 'b2b',
+    focus: '66% 50%',
+    alt: 'A leadership team in a high-rise boardroom at sunset, mapping a lead generation and conversion funnel on a whiteboard.',
   },
 ];
 
@@ -61,7 +63,18 @@ export default function AudienceSplit() {
             <article key={s.href} className={styles.card}>
               <div className={styles.media}>
                 {s.image ? (
-                  <img src={s.image} alt={s.alt} loading="lazy" decoding="async" />
+                  <picture>
+                    <source media="(max-width: 600px)" srcSet={`/systems/${s.image}-landscape.webp`} />
+                    <img
+                      src={`/systems/${s.image}-portrait.webp`}
+                      alt={s.alt}
+                      style={{ objectPosition: s.focus }}
+                      width="900"
+                      height="1200"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </picture>
                 ) : (
                   <span className={styles.placeholder} aria-hidden="true" />
                 )}
