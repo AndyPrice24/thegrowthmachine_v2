@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { JOURNEY_FLAG, scrollToJourney } from './JourneyStart';
+import { goToJourney } from './JourneyStart';
 import styles from './AudienceSplit.module.css';
 
 /*
@@ -57,16 +57,6 @@ const SYSTEMS = [
 
 export default function AudienceSplit() {
   const pathname = usePathname();
-  const onChoose = (href) => (event) => {
-    if (pathname === href) {
-      event.preventDefault();
-      scrollToJourney();
-      return;
-    }
-    try {
-      sessionStorage.setItem(JOURNEY_FLAG, href);
-    } catch {}
-  };
   const chosen = SYSTEMS.some((s) => s.href === pathname);
   return (
     <section className={styles.section} aria-labelledby="systems-title">
@@ -119,7 +109,7 @@ export default function AudienceSplit() {
                   href={s.href}
                   scroll={false}
                   className={styles.cta}
-                  onClick={onChoose(s.href)}
+                  onClick={goToJourney(pathname, s.href)}
                   aria-current={pathname === s.href ? 'page' : undefined}
                 >
                   {s.cta} <span aria-hidden="true">{pathname === s.href ? '↓' : '→'}</span>
