@@ -32,15 +32,6 @@
 .v2-section-intro>p{color:#bdb5ad;font-size:17px;line-height:1.7;margin:0}
 .v2-section-intro.dark>p{color:var(--muted)}
 
-.v2-audience-grid{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid rgba(255,255,255,.16);border-bottom:1px solid rgba(255,255,255,.16)}
-.v2-audience-panel{padding:52px 44px 48px 0;position:relative;min-height:470px;display:flex;flex-direction:column}
-.v2-audience-panel+ .v2-audience-panel{border-left:1px solid rgba(255,255,255,.16);padding-left:44px;padding-right:0}
-.v2-audience-index{position:absolute;right:30px;top:44px;color:#5c5751;font-size:64px;font-family:Georgia,serif}
-.v2-audience-panel h3{font-family:Georgia,serif;font-size:clamp(36px,4vw,54px);line-height:1.02;font-weight:400;max-width:520px;margin:20px 0 18px}
-.v2-audience-panel p{max-width:560px;color:#bfb7af;line-height:1.7;font-size:16px}
-.v2-audience-tags{display:flex;gap:8px;flex-wrap:wrap;margin:26px 0 30px}
-.v2-audience-tags span{font-size:11px;color:#d3ccc4;border-bottom:1px solid #5a5650;padding:0 0 5px}
-.v2-audience-panel>a{margin-top:auto;font-weight:700;color:#fff}
 
 .v2-method-track{display:grid;grid-template-columns:repeat(4,1fr);position:relative;margin-top:18px}
 .v2-method-line{position:absolute;height:1px;background:#cfc6bb;left:5%;right:5%;top:30px}
@@ -107,9 +98,6 @@
   .v2-hero-copy{grid-template-columns:1fr}
   .v2-hero-machine{margin-top:36px}
   .v2-section-intro{grid-template-columns:1fr;gap:18px}
-  .v2-audience-grid{grid-template-columns:1fr}
-  .v2-audience-panel{padding:42px 0!important;min-height:auto}
-  .v2-audience-panel+.v2-audience-panel{border-left:0;border-top:1px solid rgba(255,255,255,.16)}
   .v2-method-track{grid-template-columns:1fr 1fr;gap:44px 26px}
   .v2-method-line{display:none}
   .v2-do-grid,.v2-founders-grid,.v2-proof-grid{grid-template-columns:1fr;gap:50px}
@@ -130,8 +118,6 @@
   .v2-hero-actions{align-items:flex-start;flex-direction:column}
   .v2-section-intro h2,.v2-do h2,.v2-founders h2,.v2-proof h2,.v2-insights h2,.v2-final h2{font-size:42px}
   .v2-section-intro{margin-bottom:38px}
-  .v2-audience-index{font-size:44px;top:34px;right:6px}
-  .v2-audience-panel h3{font-size:36px;max-width:85%}
   .v2-method-track{grid-template-columns:1fr;gap:0;border-left:1px solid #cfc6bb;margin-left:29px}
   .v2-method-step{padding:0 0 36px 42px}
   .v2-method-node{width:48px;height:48px;position:absolute;left:-24px;top:0}

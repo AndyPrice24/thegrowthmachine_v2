@@ -26,16 +26,7 @@ export default function Home(){
 
     <TradeOff/>
 
-    <section className="v2-audiences section section-ink">
-      <div className="shell">
-        <div className="v2-section-intro">
-          <span className="eyebrow inverse">Two commercial worlds</span>
-          <h2>Different growth levers.<br/>The same operator mindset.</h2>
-          <p>We work across consumer, ecommerce and B2B businesses. The channels change. The discipline does not.</p>
-        </div>
-        <AudienceSplit/>
-      </div>
-    </section>
+    <AudienceSplit/>
 
     <section className="v2-method section">
       <div className="shell">
