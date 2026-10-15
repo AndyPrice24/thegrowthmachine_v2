@@ -1,0 +1,281 @@
+/* B2B page hero. Desktop from 1024px: copy | photo, levers in a ruled row
+   beneath. Below: one column, statement as a callout, levers 2x2, photo last. */
+
+.hero {
+  --serif: Georgia, 'Times New Roman', serif;
+  --soft: #5f5850;
+  --rule: #ddd5ca;
+  padding: 56px 0 64px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas:
+    'copy media'
+    'levers levers';
+  column-gap: 56px;
+  row-gap: 52px;
+  align-items: start;
+}
+
+.copy {
+  grid-area: copy;
+  padding-top: 26px;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+
+.title {
+  margin: 18px 0 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(44px, 5.1vw, 76px);
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.lede {
+  margin: 30px 0 0;
+  max-width: 600px;
+  font-size: 19px;
+  line-height: 1.6;
+  color: var(--soft);
+}
+
+/* The statement, underlined with a hand-drawn red stroke. */
+.statement {
+  margin: 40px 0 0;
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: clamp(30px, 3vw, 44px);
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+  color: var(--ink);
+}
+
+.statement::after {
+  content: '';
+  display: block;
+  width: min(66%, 400px);
+  height: 14px;
+  margin-top: 10px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 14' preserveAspectRatio='none'%3E%3Cpath d='M3 11C70 5 190 2.5 300 3.5c40 .4 72 1.4 97 2.6' fill='none' stroke='%23c8221c' stroke-width='3.2' stroke-linecap='round'/%3E%3C/svg%3E")
+    no-repeat center / 100% 100%;
+}
+
+/* ---------------------------------------------------------------- photo */
+
+.media {
+  grid-area: media;
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  margin-right: calc(-1 * max(20px, (100vw - 1180px) / 2));
+  background: #e5dccf;
+}
+
+.media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.placeholder {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(110% 80% at 80% 20%, rgba(255, 246, 232, 0.6), transparent 60%),
+    linear-gradient(155deg, #d8cdbf 0%, #bfae99 55%, #9e8b78 100%);
+}
+
+/* ---------------------------------------------------------------- levers */
+
+.levers {
+  grid-area: levers;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.levers li {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+  padding: 4px 28px 8px;
+}
+
+.levers li:first-child {
+  padding-left: 0;
+}
+
+.levers li + li {
+  border-left: 1px solid var(--rule);
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(200, 34, 28, 0.08);
+  color: var(--red);
+}
+
+.icon svg {
+  width: 30px;
+  height: 30px;
+}
+
+.leverText {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.leverText strong {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: clamp(24px, 2.2vw, 30px);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.leverText span {
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--soft);
+}
+
+/* ---------------------------------------------------------------- narrow */
+
+@media (max-width: 1023px) {
+  .hero {
+    padding: 40px 0 48px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'copy'
+      'levers'
+      'media';
+    row-gap: 36px;
+  }
+
+  .copy {
+    padding-top: 0;
+  }
+
+  .eyebrow {
+    font-size: 12px;
+  }
+
+  .title {
+    font-size: clamp(40px, 10.5vw, 64px);
+  }
+
+  .lede {
+    margin-top: 20px;
+    font-size: 18px;
+  }
+
+  /* the statement becomes a callout */
+  .statement {
+    margin-top: 30px;
+    padding: 22px 22px 24px 24px;
+    border-left: 3px solid var(--red);
+    border-radius: 0 10px 10px 0;
+    background: rgba(200, 34, 28, 0.045);
+    font-size: clamp(28px, 7.4vw, 40px);
+  }
+
+  .statement::after {
+    display: none;
+  }
+
+  .levers {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 30px 18px;
+  }
+
+  .levers li,
+  .levers li:first-child,
+  .levers li + li {
+    grid-template-columns: 46px minmax(0, 1fr);
+    align-items: start;
+    gap: 14px;
+    padding: 0;
+    border-left: 0;
+  }
+
+  .icon {
+    width: 46px;
+    height: 46px;
+  }
+
+  .icon svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .leverText {
+    gap: 6px;
+  }
+
+  .leverText strong {
+    font-size: 21px;
+  }
+
+  .leverText span {
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  .media {
+    aspect-ratio: 4 / 3;
+    margin-right: 0;
+    border-radius: 10px;
+  }
+}
+
+@media (max-width: 420px) {
+  .levers {
+    column-gap: 12px;
+  }
+
+  .levers li,
+  .levers li:first-child,
+  .levers li + li {
+    grid-template-columns: 40px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .leverText strong {
+    font-size: 19px;
+  }
+
+  .leverText span {
+    font-size: 14px;
+  }
+}
