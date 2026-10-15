@@ -144,9 +144,10 @@
 
 /* The way forward: a solid button, and the whole card is clickable. */
 .cta {
-  align-self: flex-start;
-  display: inline-flex;
+  align-self: stretch;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
   margin-top: auto;
   padding: 14px 18px;
@@ -161,8 +162,9 @@
   transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.levers + .cta {
-  margin-top: 28px;
+/* Both buttons: same full width, pinned to the same baseline. */
+.levers {
+  margin-bottom: 28px;
 }
 
 .cta::after {
