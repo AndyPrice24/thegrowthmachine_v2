@@ -4,10 +4,12 @@ import Method from '@/components/Method';
 /*
  * Stand-ins for the parts of each journey still to be designed. Both the B2B
  * and ecommerce journeys show these after their own opening section; replace
- * them per journey as the tailored sections arrive.
+ * them per journey as the tailored sections arrive. howWeWork={false} drops
+ * the two "how we work" stand-ins for a journey that has its own HowWeWork.
  */
-export function JourneyStandIns(){
+export function JourneyStandIns({ howWeWork = true }){
   return <>
+    {howWeWork && <>
     <section className="v2-method section">
       <div className="shell">
         <div className="v2-section-intro dark">
@@ -34,6 +36,7 @@ export function JourneyStandIns(){
         </div>
       </div>
     </section>
+    </>}
 
     <section className="v2-engage section section-soft">
       <div className="shell">
