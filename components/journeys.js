@@ -2,8 +2,7 @@
  * Copy for the opening section of each journey, below the choice.
  *
  * b2b: Andrew's B2B section (October 2026 mockups), word for word.
- * ecommerce: a stand-in until the ecommerce section is designed, using the
- * copy from the previous ecommerce page; the statement is shared with B2B.
+ * ecommerce: Andrew's ecommerce section (October 2026 mockups), word for word.
  *
  * image: { desktop, mobile, focus }. Desktop shows a near-square crop beside
  * the copy (a 3:4 portrait works best); phones and tablets show a 4:3
@@ -33,16 +32,20 @@ export const JOURNEYS = {
   ecommerce: {
     id: 'ecommerce',
     eyebrow: 'Ecommerce & consumer growth',
-    title: 'Scale the brand without losing the economics.',
-    lede: 'We connect consumer insight, brand, performance, ecommerce operations and commercial margin so growth is not just bigger — it is healthier.',
+    title: 'The next stage of growth may not start with more traffic.',
+    lede: 'The next growth opportunity may come from sharper acquisition, stronger conversion, greater customer value, or healthier unit economics.',
     statement: 'We diagnose, prioritise and execute — not just advise.',
     levers: [
-      { icon: 'target', name: 'Acquire', text: 'The right customers' },
-      { icon: 'funnel', name: 'Convert', text: 'More of the demand' },
-      { icon: 'loop', name: 'Retain', text: 'More lifetime value' },
-      { icon: 'shield', name: 'Protect', text: 'Margin as you scale' },
+      { icon: 'bars', name: 'Acquire', text: 'Customers, channels & media economics' },
+      { icon: 'cart', name: 'Convert', text: 'Offer, pricing & onsite experience' },
+      { icon: 'people', name: 'Grow customer value', text: 'AOV, retention & LTV' },
+      { icon: 'stack', name: 'Protect margin', text: 'Product mix, channel economics & profitability' },
     ],
-    image: null,
-    imageAlt: '',
+    image: {
+      desktop: '/journeys/ecommerce-portrait.webp',
+      mobile: '/journeys/ecommerce-landscape.webp',
+      focus: '50% 30%',
+    },
+    imageAlt: 'An ecommerce founder planning at a sunlit desk beside her skincare range, with a wall of campaign imagery behind her.',
   },
 };
