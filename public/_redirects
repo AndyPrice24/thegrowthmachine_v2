@@ -1,0 +1,4 @@
+# Cloudflare Pages redirects. Keep in step with redirects() in next.config.mjs,
+# which Vercel uses. The audience pages became the two homepage journeys.
+/b2b-saas-growth   /b2b         308
+/ecommerce-growth  /ecommerce   308

@@ -5,12 +5,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "machine": "python3 tools/machine/build_machine.py"
+    "machine": "python3 tools/machine/build_machine.py",
+    "build:cloudflare": "CF_PAGES=1 next build"
   },
   "dependencies": {
     "@fontsource/jost": "5.3.0",
     "next": "16.4.0",
     "react": "19.3.0",
     "react-dom": "19.3.0"
+  },
+  "engines": {
+    "node": ">=20.9"
   }
 }

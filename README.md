@@ -28,7 +28,7 @@ RESEND_API_KEY=...
 CONTACT_TO_EMAIL=you@example.com
 CONTACT_FROM_EMAIL=website@thegrowthmachine.co
 ```
-The sending domain must be verified in Resend. If you prefer HubSpot, Mailchimp, Brevo, Formspark or another CRM/form provider, replace `app/api/contact/route.js`.
+Set them wherever the site is hosted (Cloudflare Pages: Settings → Variables and Secrets; Vercel: Project → Environment Variables). The sending domain must be verified in Resend. The sending logic lives in `lib/contact.js`, used by both `functions/api/contact.js` (Cloudflare) and `app/api/contact/route.vercel.js` (Vercel). If you prefer HubSpot, Mailchimp, Brevo, Formspark or another CRM/form provider, change `lib/contact.js`.
 
 ## Content still intentionally placeholder
 - Reference brands / client logos
@@ -37,6 +37,17 @@ The sending domain must be verified in Resend. If you prefer HubSpot, Mailchimp,
 - Calendar link / booking provider
 
 No fictional client results have been inserted.
+
+## Cloudflare Pages deployment
+The site builds as plain static files for Cloudflare Pages (free plan, commercial use allowed). Cloudflare sets `CF_PAGES=1` during its builds, which switches `next.config.mjs` to a static export; Vercel and `npm run dev` are unaffected.
+
+1. Cloudflare dashboard → Workers & Pages → Create → Pages → Connect to Git, and pick this repository.
+2. Build settings: framework preset **None**, build command `npm run build`, build output directory `out`. Node comes from `.nvmrc`.
+3. Add the three contact form variables above (as secrets).
+4. Pages builds a preview for every branch and deploys the production branch to `<project>.pages.dev`.
+5. Custom domains → add `thegrowthmachine.co` and `www.thegrowthmachine.co`, and follow the DNS records Cloudflare gives. Keep existing email/MX records intact.
+
+What runs where on Cloudflare: pages are static HTML in `out/`; the contact form is the Pages Function `functions/api/contact.js`; the old audience URLs redirect via `public/_redirects` (keep it in step with `redirects()` in `next.config.mjs`). To build the same output locally: `npm run build:cloudflare`.
 
 ## GoDaddy + Vercel deployment
 Recommended path:
