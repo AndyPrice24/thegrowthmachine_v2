@@ -1,6 +1,6 @@
 /* "How we work": editorial head, then six disciplines wired into a central
-   gear. Desktop from 1024px: the hub diagram. Below: the gear over a
-   branching spine (two columns on tablets, one on phones). */
+   gear. Desktop from 1024px: the hub diagram. Below: the gear with a line
+   down each side, the disciplines alternating between them. */
 
 .section {
   --serif: Georgia, 'Times New Roman', serif;
@@ -201,8 +201,7 @@
 }
 
 .armed .node,
-.armed .items,
-.armed .branch li {
+.armed .items {
   opacity: 0;
 }
 
@@ -210,22 +209,15 @@
   transform: scale(0.88);
 }
 
-.armed .items,
-.armed .branch li {
-  transform: translateY(10px);
-}
-
 .armed .items {
   transform: translateY(calc(-50% + 10px));
 }
 
-.armed .hub,
-.armed .stackHub {
+.armed .hub {
   opacity: 0;
 }
 
-.in .hub,
-.in .stackHub {
+.in .hub {
   opacity: 1;
   transition: opacity 0.5s ease;
 }
@@ -259,13 +251,6 @@
   transition-delay: calc(1.2s + var(--i) * 0.12s);
 }
 
-.in .branch li {
-  opacity: 1;
-  transform: none;
-  transition: opacity 0.5s ease, transform 0.6s ease;
-  transition-delay: calc(0.35s + var(--i) * 0.08s);
-}
-
 @keyframes gear-turn {
   from { transform: rotate(-60deg); }
   to { transform: rotate(0deg); }
@@ -295,16 +280,39 @@
   }
 
   .stack {
+    position: relative;
     display: block;
     --dot: 15px;
-    --gap: 48px;
+  }
+
+  .spine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  .spine path {
+    fill: none;
+    stroke-linecap: round;
+  }
+
+  .spineBase {
+    stroke: var(--wire);
+    stroke-width: 1;
+  }
+
+  /* The glow only exists while the animation runs. */
+  .spineGlow {
+    display: none;
   }
 
   .stackHub {
     position: relative;
+    z-index: 2;
     width: 210px;
     margin: 0 auto;
-    padding-bottom: 34px;
     container-type: inline-size;
   }
 
@@ -312,64 +320,36 @@
     font-size: 17px;
   }
 
-  /* The stem down from the gear to the branches. */
-  .stackHub::after {
-    content: '';
-    position: absolute;
-    left: 50%;
-    bottom: 0;
-    height: 34px;
-    border-left: 1px solid var(--wire);
-  }
-
-  /* Two columns, joined to the stem by a crossbar between their spines. */
-  .branches {
+  .zig {
     position: relative;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: var(--gap);
-  }
-
-  .branches::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: calc(var(--dot) / 2);
-    width: calc(50% + var(--gap) / 2);
-    border-top: 1px solid var(--wire);
-  }
-
-  .branch {
+    z-index: 1;
     list-style: none;
-    margin: 0;
+    margin: 70px 0 0;
     padding: 0;
   }
 
-  .branch li {
+  .zig li {
     position: relative;
-    padding: 26px 0 14px calc(var(--dot) + 20px);
+    width: min(84%, 520px);
+    padding: 0 0 34px calc(var(--dot) + 18px);
   }
 
-  /* The spine, and a ringed dot for each discipline. */
-  .branch li::before {
-    content: '';
-    position: absolute;
-    left: calc(var(--dot) / 2);
-    top: 0;
-    bottom: 0;
-    border-left: 1px solid var(--wire);
+  .zig li.right {
+    margin-left: auto;
+    padding: 0 calc(var(--dot) + 18px) 34px 0;
+    text-align: right;
   }
 
-  .branch li:last-child::before {
-    bottom: auto;
-    height: 40px;
+  .zig li:last-child {
+    padding-bottom: 0;
   }
 
-  .branch li::after {
+  /* The bullet: a red ring on the line, masked from it by a paper halo. */
+  .zig li::after {
     content: '';
     position: absolute;
     left: 0;
-    top: 33px;
+    top: 8px;
     width: var(--dot);
     height: var(--dot);
     box-sizing: border-box;
@@ -379,7 +359,12 @@
     box-shadow: 0 0 0 4px var(--paper);
   }
 
-  .branch h4 {
+  .zig li.right::after {
+    left: auto;
+    right: 0;
+  }
+
+  .zig h4 {
     margin: 0;
     font-family: var(--serif);
     font-weight: 400;
@@ -389,15 +374,116 @@
     color: var(--ink);
   }
 
-  .branch p {
+  .zig p {
     margin: 8px 0 0;
     font-size: 16px;
     line-height: 1.6;
     color: var(--soft);
   }
+
+  .zig p span {
+    display: block;
+  }
+
+  /* ---- the animation: plates lock, teeth blink, glow runs down the lines */
+
+  .plateBack,
+  .plateFront,
+  .flash {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .flash {
+    opacity: 0;
+  }
+
+  .spineArmed .plateBack {
+    transform: translate(10px, 8px) rotate(15deg);
+  }
+
+  .spineArmed .plateFront {
+    transform: translate(-5px, -4px) rotate(-7deg);
+  }
+
+  .spineIn .plateBack,
+  .spineIn .plateFront {
+    transform: none;
+    transition: transform 1s cubic-bezier(0.55, 0, 0.15, 1) 0.1s;
+  }
+
+  .spineIn .flash {
+    animation: gear-flash 0.6s ease-in-out 1.05s;
+  }
+
+  .spineArmed .spineGlow {
+    display: inline;
+    stroke: var(--red);
+    stroke-width: 1.8;
+    stroke-dasharray: calc(var(--len) * 1px) calc(var(--len) * 1px);
+    stroke-dashoffset: calc(var(--len) * 1px);
+    filter: drop-shadow(0 0 3px rgba(255, 75, 43, 0.8));
+  }
+
+  .spineIn .spineGlow {
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset var(--dur) linear 1.45s;
+    animation: glow-settle 1.2s ease-in-out calc(1.45s + var(--dur)) forwards;
+  }
+
+  .spineIn .zig li::after {
+    animation: dot-pulse 0.9s ease-out var(--at) both;
+  }
 }
 
-/* Phones: one spine; the two columns run on as one. */
+@keyframes gear-flash {
+  0% { opacity: 0; }
+  30% { opacity: 0.92; }
+  100% { opacity: 0; }
+}
+
+@keyframes glow-settle {
+  to { opacity: 0.28; }
+}
+
+@keyframes dot-pulse {
+  0% {
+    background: var(--paper);
+    box-shadow: 0 0 0 4px var(--paper), 0 0 0 4px rgba(200, 34, 28, 0.55);
+  }
+  25% {
+    background: var(--red);
+  }
+  100% {
+    background: var(--paper);
+    box-shadow: 0 0 0 4px var(--paper), 0 0 0 18px rgba(200, 34, 28, 0);
+  }
+}
+
+/* Tablets: room for both sides at once, the right side dropped half a step
+   so the two still alternate. */
+@media (min-width: 601px) and (max-width: 1023px) {
+  .zig {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 48px;
+    padding-bottom: 130px;
+  }
+
+  .zig li {
+    grid-column: 1;
+    width: auto;
+  }
+
+  .zig li.right {
+    grid-column: 2;
+    top: 130px;
+    margin-left: 0;
+  }
+}
+
+/* ---------------------------------------------------------------- phone */
+
 @media (max-width: 600px) {
   .section {
     padding: 60px 0 56px;
@@ -421,41 +507,32 @@
     display: block;
   }
 
-  .stack {
-    --gap: 0px;
-  }
-
   .stackHub {
     width: 180px;
   }
 
-  .branches {
-    grid-template-columns: 1fr;
+  .zig {
+    margin-top: 64px;
   }
 
-  /* The crossbar runs from the stem back to the single spine. */
-  .branches::before {
-    width: calc(50% - var(--dot) / 2);
+  .zig li {
+    width: 88%;
+    padding-bottom: 30px;
   }
 
-  .branch:first-child li:last-child::before {
-    bottom: 0;
-    height: auto;
+  .zig li.right {
+    padding-bottom: 30px;
   }
 
-  .branch li {
-    padding-top: 22px;
+  .zig li::after {
+    top: 6px;
   }
 
-  .branch li::after {
-    top: 29px;
+  .zig h4 {
+    font-size: 22px;
   }
 
-  .branch h4 {
-    font-size: 23px;
-  }
-
-  .branch p {
+  .zig p {
     font-size: 15.5px;
   }
 }

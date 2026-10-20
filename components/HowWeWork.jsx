@@ -11,8 +11,7 @@ import styles from './HowWeWork.module.css';
  * Desktop (1024px+): the hub diagram, three nodes a side, each with what it
  * covers beside it. Everything sits in the diagram's own 1200x600 units, as
  * percentages, so the wiring stays locked at any width. Below 1024px the
- * same content as the gear over a branching spine: two columns on tablets,
- * one on phones.
+ * same content as the gear over two lines, one down each side (see Spine).
  *
  * Copy lives in journeys.js as `work`: { hub, disciplines[6] }, left column
  * first; a discipline's optional `node` gives its two lines in the circle.
@@ -55,7 +54,9 @@ function gearPath(n = 12, outer = 140, root = 119) {
 }
 const GEAR = gearPath();
 
-function Gear({ hub }) {
+// split: two plates that start out of register and lock together, plus a
+// red copy of the teeth that blinks once (the spine version's animation).
+function Gear({ hub, split = false }) {
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   return (
     <div className={styles.gear}>
@@ -70,11 +71,21 @@ function Gear({ hub }) {
             <stop offset="0" stopColor="#fffdf9" />
             <stop offset="1" stopColor="#e4dbcf" />
           </radialGradient>
+          <radialGradient id={`${id}-back`} cx="38%" cy="32%" r="75%">
+            <stop offset="0" stopColor="#f3ece2" />
+            <stop offset="1" stopColor="#cfc3b3" />
+          </radialGradient>
         </defs>
-        <g className={styles.gearTurn}>
+        {split && (
+          <g className={styles.plateBack}>
+            <path d={GEAR} fill={`url(#${id}-back)`} stroke="rgba(110, 90, 70, 0.3)" strokeWidth="1.2" />
+          </g>
+        )}
+        <g className={split ? styles.plateFront : styles.gearTurn}>
           <path d={GEAR} fill={`url(#${id}-body)`} stroke="rgba(110, 90, 70, 0.28)" strokeWidth="1.2" />
           <circle r="104" fill={`url(#${id}-well)`} stroke="rgba(110, 90, 70, 0.22)" strokeWidth="1.2" />
         </g>
+        {split && <path className={styles.flash} d={GEAR} fill="#c8221c" />}
         <circle r="88" fill="#fbf8f3" stroke="rgba(110, 90, 70, 0.16)" strokeWidth="1" />
       </svg>
       <p className={styles.hubText}>
@@ -82,6 +93,147 @@ function Gear({ hub }) {
         <br />
         {hub[1]}
       </p>
+    </div>
+  );
+}
+
+/*
+ * Below 1024px: the gear, and from the bottom of it two lines, one down each
+ * side. The disciplines alternate between them (left side as on desktop:
+ * the first three), titles on the left line left-aligned, on the right line
+ * right-aligned. The lines are drawn from measured positions so they meet
+ * each bullet exactly.
+ *
+ * Once, as the gear comes into view: its two plates slide into register,
+ * the teeth blink red, then a red glow runs down both lines and each bullet
+ * pulses as the glow reaches it, in reading order.
+ */
+const ORDER = [0, 3, 1, 4, 2, 5];
+const DOT = 15;
+const DROP = 56; // how far the lines fall while curving out to the sides
+const GLOW_START = 1.45; // s, after the plates lock and the blink
+const GLOW_TIME = 1.7; // s, for the longer of the two lines
+
+function bezierLength(p0, p1, p2, p3) {
+  let len = 0;
+  let prev = p0;
+  for (let i = 1; i <= 40; i++) {
+    const t = i / 40;
+    const u = 1 - t;
+    const pt = [0, 1].map((k) => u * u * u * p0[k] + 3 * u * u * t * p1[k] + 3 * u * t * t * p2[k] + t * t * t * p3[k]);
+    len += Math.hypot(pt[0] - prev[0], pt[1] - prev[1]);
+    prev = pt;
+  }
+  return len;
+}
+
+function Spine({ hub, disciplines }) {
+  const rootRef = useRef(null);
+  const gearRef = useRef(null);
+  const listRef = useRef(null);
+  const [geo, setGeo] = useState(null);
+  const [phase, setPhase] = useState('');
+
+  useEffect(() => {
+    const root = rootRef.current;
+    const measure = () => {
+      if (!root.offsetParent) return; // hidden on desktop
+      const r = root.getBoundingClientRect();
+      const g = gearRef.current.getBoundingClientRect();
+      const cx = g.left + g.width / 2 - r.left;
+      const gy = g.top - r.top + g.height * 0.9;
+      const items = [...listRef.current.children];
+      const sides = ['left', 'right'].map((side) => {
+        const x = side === 'left' ? DOT / 2 : r.width - DOT / 2;
+        const p0 = [cx, gy];
+        const p1 = [cx, gy + DROP * 0.75];
+        const p2 = [x, gy + DROP * 0.25];
+        const p3 = [x, gy + DROP];
+        const curve = bezierLength(p0, p1, p2, p3);
+        const dots = items
+          .map((li, k) => ({ li, k }))
+          .filter(({ k }) => (ORDER[k] >= 3) === (side === 'right'))
+          .map(({ li, k }) => {
+            const top = parseFloat(getComputedStyle(li, '::after').top) || 0;
+            const y = li.getBoundingClientRect().top - r.top + top + DOT / 2;
+            return { k, at: curve + (y - p3[1]) };
+          });
+        const end = dots[dots.length - 1].at;
+        return {
+          d: `M${p0}C${p1} ${p2} ${p3}V${p3[1] + end - curve}`,
+          len: end,
+          dots,
+        };
+      });
+      const speed = Math.max(...sides.map((sd) => sd.len)) / GLOW_TIME;
+      const at = [];
+      sides.forEach((sd) => sd.dots.forEach((d) => (at[d.k] = GLOW_START + d.at / speed)));
+      setGeo({ w: r.width, h: r.height, sides, speed, at });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(root);
+    return () => ro.disconnect();
+  }, []);
+
+  const ready = Boolean(geo);
+  useEffect(() => {
+    const el = gearRef.current;
+    if (!ready || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (el.getBoundingClientRect().top < window.innerHeight * 0.6) return;
+    setPhase(styles.spineArmed);
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setPhase(`${styles.spineArmed} ${styles.spineIn}`);
+          io.disconnect();
+        }
+      },
+      { threshold: 1, rootMargin: '0px 0px -12% 0px' }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [ready]);
+
+  return (
+    <div ref={rootRef} className={`${styles.stack} ${phase}`}>
+      {geo && (
+        <svg className={styles.spine} width={geo.w} height={geo.h} viewBox={`0 0 ${geo.w} ${geo.h}`} aria-hidden="true" focusable="false">
+          {geo.sides.map((sd) => (
+            <path key={`b${sd.d}`} className={styles.spineBase} d={sd.d} />
+          ))}
+          {geo.sides.map((sd) => (
+            <path
+              key={`g${sd.d}`}
+              className={styles.spineGlow}
+              d={sd.d}
+              style={{ '--len': sd.len, '--dur': `${sd.len / geo.speed}s` }}
+            />
+          ))}
+        </svg>
+      )}
+      <div ref={gearRef} className={styles.stackHub}>
+        <Gear hub={hub} split />
+      </div>
+      <ol ref={listRef} className={styles.zig}>
+        {ORDER.map((idx, k) => {
+          const d = disciplines[idx];
+          return (
+            <li
+              key={d.name}
+              className={idx >= 3 ? styles.right : undefined}
+              style={geo ? { '--at': `${geo.at[k]}s` } : undefined}
+            >
+              <h4>{d.name}</h4>
+              <p>
+                {d.items.map((t) => (
+                  <span key={t}>{t}</span>
+                ))}
+              </p>
+            </li>
+          );
+        })}
+      </ol>
     </div>
   );
 }
@@ -110,7 +262,6 @@ export default function HowWeWork({ work }) {
   }, []);
 
   const { hub, disciplines } = work;
-  const columns = [disciplines.slice(0, 3), disciplines.slice(3)];
 
   return (
     <section className={styles.section} aria-labelledby="work-title">
@@ -178,24 +329,8 @@ export default function HowWeWork({ work }) {
             })}
           </div>
 
-          {/* Tablets and phones: the gear over a branching spine. */}
-          <div className={styles.stack}>
-            <div className={styles.stackHub}>
-              <Gear hub={hub} />
-            </div>
-            <div className={styles.branches}>
-              {columns.map((col, c) => (
-                <ul key={c} className={styles.branch}>
-                  {col.map((d, i) => (
-                    <li key={d.name} style={{ '--i': c * 3 + i }}>
-                      <h4>{d.name}</h4>
-                      <p>{d.items.join(' · ')}</p>
-                    </li>
-                  ))}
-                </ul>
-              ))}
-            </div>
-          </div>
+          {/* Tablets and phones: the gear over two lines, one down each side. */}
+          <Spine hub={hub} disciplines={disciplines} />
         </div>
       </div>
     </section>
