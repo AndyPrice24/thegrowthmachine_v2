@@ -31,32 +31,41 @@ const W = 1200;
 const H = 600;
 const R = 86; // node radius
 const NODES = [
-  [365, 110], [355, 300], [365, 490], // left, top to bottom
-  [835, 110], [845, 300], [835, 490], // right
+  [350, 110], [346, 300], [350, 490], // left, top to bottom
+  [850, 110], [854, 300], [850, 490], // right
 ];
 const TICK = 40; // the short rule between a node and its list
 const GAP = 14;
 
-// Gear to node: out of the gear's flank, into the node's inner side, with
-// how long the red takes to run each (the curves are about four times the
-// length of the straights).
-const WIRES = [
-  ['M506 226C466 222 505 110 451 110', 1.1],
-  ['M480 300H441', 0.3],
-  ['M506 374C466 378 505 490 451 490', 1.1],
-  ['M694 226C734 222 695 110 749 110', 1.1],
-  ['M720 300H759', 0.3],
-  ['M694 374C734 378 695 490 749 490', 1.1],
-];
-const GEAR_BOX = 350; // the gear images' square canvas, in diagram units
+// The gear images' square canvas, in diagram units. The gear's tip radius
+// is 40% of it, and its ports' exits sit 1.152 tip radii out to each side,
+// three of them 0.03 tip radii apart (tools/gear/build_gear.py).
+const GEAR_BOX = 320;
+const TIP = GEAR_BOX * 0.4;
+
+// From a port exit to each node: out of the port, then round into the node
+// on the line towards the exit. With how long the red takes to run it, at
+// a steady speed.
+const SPEED = 115; // diagram units a second
+const WIRES = NODES.map(([x, y], i) => {
+  const side = i < 3 ? -1 : 1;
+  const ex = 600 + side * 1.152 * TIP;
+  const ey = 300 + Math.sign(y - 300) * 0.03 * TIP;
+  const [ux, uy] = [ex - x, ey - y].map((v, _, [a, b]) => v / Math.hypot(a, b));
+  const [nx, ny] = [x + ux * R, y + uy * R];
+  if (y === 300) return [`M${ex} ${ey}H${nx}`, Math.abs(ex - nx) / SPEED];
+  const d = `M${ex} ${ey}C${ex + side * 22} ${ey} ${nx + ux * 44} ${ny + uy * 44} ${nx} ${ny}`;
+  return [d, Math.hypot(ex - nx, ey - ny) * 1.15 / SPEED];
+});
 
 // The gear: pre-rendered layers (tools/gear/build_gear.py), the words live
-// text over the dial. state is '', 'armed' (waiting: back plate out of step,
-// ring dark) or 'in' (running the sequence).
-const LAYERS = ['shadow', 'back', 'front', 'ring', 'glow'];
-const LAYER_CLASS = { back: 'plateBack', front: 'plateFront', ring: 'ring', glow: 'glow' };
+// text over the dial. layout is where its ports are: 'sides' (desktop) or
+// 'bottom' (phones and tablets). state is '', 'armed' (waiting: back plate
+// out of step, ring dark) or 'in' (running the sequence).
+const LAYERS = ['shadow-*', 'port-*', 'back', 'front-*', 'ring-*', 'glow'];
+const LAYER_CLASS = { back: 'plateBack', 'front-*': 'plateFront', 'ring-*': 'ring', glow: 'glow' };
 
-function Gear({ hub, state = '' }) {
+function Gear({ hub, layout, state = '' }) {
   const cls = state === 'in' ? `${styles.gearArmed} ${styles.gearIn}` : state === 'armed' ? styles.gearArmed : '';
   return (
     <div className={`${styles.gear} ${cls}`}>
@@ -64,7 +73,7 @@ function Gear({ hub, state = '' }) {
         <img
           key={l}
           className={LAYER_CLASS[l] ? styles[LAYER_CLASS[l]] : undefined}
-          src={`/how-we-work/${l}.webp`}
+          src={`/how-we-work/${l.replace('*', layout)}.webp`}
           alt=""
           width="720"
           height="720"
@@ -93,7 +102,7 @@ function Gear({ hub, state = '' }) {
  */
 const ORDER = [0, 3, 1, 4, 2, 5];
 const DOT = 15;
-const DROP = 56; // how far the lines fall while curving out to the sides
+const DROP = 56; // how far the lines fall from the port while curving out
 const GLOW_TIME = 3.6; // s, for the longer of the two lines
 
 function bezierLength(p0, p1, p2, p3) {
@@ -122,13 +131,16 @@ function Spine({ hub, disciplines }) {
       if (!root.offsetParent) return; // hidden on desktop
       const r = root.getBoundingClientRect();
       const g = gearRef.current.getBoundingClientRect();
+      // The bottom port's two exits (tip radius: 40% of the gear canvas).
       const cx = g.left + g.width / 2 - r.left;
-      const gy = g.top - r.top + g.height * 0.88; // just inside the bottom tooth
+      const tip = g.width * 0.4;
+      const gy = g.top - r.top + g.height / 2 + 1.154 * tip;
       const items = [...listRef.current.children];
       const sides = ['left', 'right'].map((side) => {
         const x = side === 'left' ? DOT / 2 : r.width - DOT / 2;
-        const p0 = [cx, gy];
-        const p1 = [cx, gy + DROP * 0.75];
+        const ex = cx + (side === 'left' ? -1 : 1) * 0.02 * tip;
+        const p0 = [ex, gy];
+        const p1 = [ex, gy + DROP * 0.75];
         const p2 = [x, gy + DROP * 0.25];
         const p3 = [x, gy + DROP];
         const curve = bezierLength(p0, p1, p2, p3);
@@ -195,7 +207,7 @@ function Spine({ hub, disciplines }) {
         </svg>
       )}
       <div ref={gearRef} className={styles.stackHub}>
-        <Gear hub={hub} state={phase ? (phase.includes(styles.spineIn) ? 'in' : 'armed') : ''} />
+        <Gear hub={hub} layout="bottom" state={phase ? (phase.includes(styles.spineIn) ? 'in' : 'armed') : ''} />
       </div>
       <ol ref={listRef} className={styles.zig}>
         {ORDER.map((idx, k) => {
@@ -299,7 +311,7 @@ export default function HowWeWork({ work }) {
                 width: pct(GEAR_BOX, W),
               }}
             >
-              <Gear hub={hub} state={state} />
+              <Gear hub={hub} layout="sides" state={state} />
             </div>
 
             {disciplines.map((d, i) => {
