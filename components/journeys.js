@@ -22,22 +22,18 @@ export const JOURNEYS = {
       mobile: '/journeys/b2b-landscape.webp',
       focus: '50% 22%',
     },
-    // "How we work": the disciplines (named as on the B2B card in the
-    // choice above) and what we actually do in each, then why it compounds.
+    // "How we work": six disciplines around one hub, three a side (left
+    // column first, top to bottom), each with what it covers. `node` sets
+    // the line breaks inside the circle where the automatic ones read badly.
     work: {
+      hub: ['Profitable', 'growth'],
       disciplines: [
-        { name: 'GTM & market focus', text: 'Define who you win with and why, then rewrite the positioning to match.' },
-        { name: 'Lead generation & pipeline', text: 'Build and run the channels: outbound, content, partners, events.' },
-        { name: 'Sales process & conversion', text: 'Map the stages, tighten qualification, fix where deals stall.' },
-        { name: 'Pricing & commercial model', text: 'Rework packaging, pricing and terms.' },
-        { name: 'CRM, data & operating systems', text: 'Set up the CRM, reporting and weekly rhythm so the numbers are trusted.' },
-        { name: 'Team structure & accountability', text: 'Shape roles, targets and incentives; hire and coach where needed.' },
-      ],
-      compounding: [
-        'Sharper positioning makes demand cheaper.',
-        'Better pipeline makes sales faster.',
-        'Cleaner pricing lifts every deal.',
-        'Fix one in isolation and the gain leaks out at the next step.',
+        { name: 'Brand & Demand', items: ['Positioning & proposition', 'Differentiation', 'Messaging & sales materials'] },
+        { name: 'Sales & Conversion', items: ['Lead generation & funnels', 'Sales process & conversion', 'Tools & enablement'] },
+        { name: 'GTM & Market Expansion', items: ['ICP & market focus', 'Routes to market', 'Launch & partnerships'] },
+        { name: 'Commercial Model', items: ['Pricing & packaging', 'Revenue model', 'Growth economics'] },
+        { name: 'Data, Systems & AI', node: ['Data, Systems', '& AI'], items: ['Connected data', 'Forecasting & scenarios', 'Automation & bespoke tools'] },
+        { name: 'Team & Operating Model', items: ['Structure & accountability', 'Leadership rhythm', 'Training & capability'] },
       ],
     },
     imageAlt: 'A growth leader mapping a B2B growth engine, from ICP and demand through pipeline to revenue and expansion, on a whiteboard in a sunlit meeting room.',

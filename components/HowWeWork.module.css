@@ -1,27 +1,17 @@
-/* "How we work": editorial head, a ruled grid of disciplines (3x2 on
-   desktop, 2x3 on tablets, a ruled list on phones) with a + where tiles meet,
-   and a closing line on why the work compounds. */
+/* "How we work": editorial head, then six disciplines wired into a central
+   gear. Desktop from 1024px: the hub diagram. Below: the gear over a
+   branching spine (two columns on tablets, one on phones). */
 
 .section {
   --serif: Georgia, 'Times New Roman', serif;
   --soft: #5f5850;
   --rule: #ddd5ca;
+  --wire: #8d8478;
   padding: 104px 0 96px;
   border-top: 1px solid var(--rule);
 }
 
 /* ---------------------------------------------------------------- head */
-
-/* Desktop: the headline runs full width; the supporting line sits under it
-   on the grid's second column, as the closing line does. */
-.head {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.head > div {
-  grid-column: 1 / -1;
-}
 
 .eyebrow {
   margin: 0;
@@ -49,27 +39,21 @@
 }
 
 .lede {
-  grid-column: 2 / 4;
-  margin: 34px 0 0;
-  padding-left: 26px;
+  margin: 26px 0 0;
+  padding-left: 22px;
   border-left: 2px solid var(--red);
-  font-family: var(--serif);
-  font-size: clamp(21px, 1.9vw, 27px);
-  line-height: 1.35;
-  letter-spacing: -0.015em;
-  color: #2a2622;
-  text-wrap: pretty;
+  font-size: clamp(18px, 1.6vw, 22px);
+  line-height: 1.45;
+  color: #3a3530;
 }
 
-/* ---------------------------------------------------------------- grid */
-
 .subhead {
-  margin: 84px 0 0;
+  margin: 76px 0 0;
   font-family: var(--serif);
   font-weight: 400;
-  font-size: clamp(24px, 2.2vw, 32px);
-  line-height: 1.2;
-  letter-spacing: -0.02em;
+  font-size: clamp(28px, 3vw, 44px);
+  line-height: 1.12;
+  letter-spacing: -0.03em;
   color: var(--ink);
 }
 
@@ -78,215 +62,342 @@
   color: var(--red);
 }
 
-.grid {
+.figure {
+  margin-top: 44px;
+}
+
+/* ---------------------------------------------------------------- gear */
+
+.gear {
   position: relative;
-  margin-top: 30px;
-  border-top: 1px solid var(--rule);
-  border-bottom: 1px solid var(--rule);
+  width: 100%;
+  aspect-ratio: 1;
 }
 
-.list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-auto-rows: 1fr;
-}
-
-.item {
-  padding: 34px 36px 38px;
-  border-left: 1px solid var(--rule);
-}
-
-.item:nth-child(3n + 1) {
-  padding-left: 0;
-  border-left: 0;
-}
-
-.item:nth-child(n + 4) {
-  border-top: 1px solid var(--rule);
-}
-
-.num {
+.gear svg {
   display: block;
-  font-family: var(--serif);
-  font-size: 15px;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 14px 22px rgba(60, 40, 25, 0.16)) drop-shadow(0 2px 3px rgba(60, 40, 25, 0.1));
+}
+
+.gearTurn {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.hubText {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  margin: 0;
+  font-family: var(--font-label), 'Jost', ui-sans-serif, system-ui, sans-serif;
+  font-weight: 500;
+  font-size: clamp(15px, 1.75cqw, 22px);
+  line-height: 1.12;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  text-align: center;
   color: var(--red);
 }
 
-.name {
-  margin: 14px 0 0;
-  font-family: var(--serif);
-  font-weight: 400;
-  font-size: clamp(22px, 1.85vw, 27px);
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  color: var(--ink);
-}
-
-.text {
-  margin: 12px 0 0;
-  max-width: 330px;
-  font-size: 16px;
-  line-height: 1.55;
-  color: var(--soft);
-}
-
-/* Where four tiles meet: a small red +. Two such points on desktop and
-   tablets; none on phones. */
-.plus {
-  position: absolute;
-  width: 15px;
-  height: 15px;
-  margin: -7.5px 0 0 -7.5px;
-  pointer-events: none;
-}
-
-.plus::before,
-.plus::after {
+.hubText::after {
   content: '';
-  position: absolute;
+  justify-self: center;
+  width: 2.2em;
+  height: 1.5px;
+  margin-top: 0.45em;
   background: var(--red);
 }
 
-.plus::before {
-  left: 7px;
-  top: 0;
-  width: 1.5px;
-  height: 15px;
+/* ---------------------------------------------------------------- diagram */
+
+.diagram {
+  position: relative;
+  aspect-ratio: 1200 / 600;
+  container-type: inline-size;
 }
 
-.plus::after {
-  top: 7px;
-  left: 0;
-  width: 15px;
-  height: 1.5px;
+.wires {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
 }
 
-.p1 { left: calc(100% / 3); top: 50%; }
-.p2 { left: calc(200% / 3); top: 50%; }
+.wires path {
+  fill: none;
+  stroke: var(--wire);
+  stroke-width: 1.3;
+  stroke-linecap: round;
+}
 
-/* ---------------------------------------------------------------- close */
+.wires .tick {
+  stroke: #b9b0a4;
+  stroke-width: 1;
+}
 
-.close {
+.hub {
+  position: absolute;
+}
+
+.node {
+  position: absolute;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-top: 40px;
+  place-items: center;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 36% 30%, #fffefb 0%, #f6f1e9 58%, #ebe3d7 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(110, 90, 70, 0.2),
+    inset 0 2px 0 rgba(255, 255, 255, 0.9),
+    0 2px 4px rgba(60, 40, 25, 0.06),
+    0 14px 26px -12px rgba(60, 40, 25, 0.28);
 }
 
-.closeLabel {
-  margin: 6px 0 0;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--soft);
-}
-
-.closeText {
-  grid-column: 2 / 4;
+.node h4 {
   margin: 0;
-  padding-left: 37px;
+  max-width: 78%;
   font-family: var(--serif);
-  font-size: clamp(20px, 1.75vw, 25px);
-  line-height: 1.45;
-  letter-spacing: -0.01em;
-  color: #3a3530;
-  text-wrap: pretty;
-}
-
-.closeLast {
+  font-weight: 400;
+  font-size: clamp(15px, 1.62cqw, 20px);
+  line-height: 1.18;
+  letter-spacing: -0.015em;
+  text-align: center;
+  text-wrap: balance;
   color: var(--ink);
-  font-style: italic;
 }
 
-/* ---------------------------------------------------------------- settle in */
+.items {
+  position: absolute;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  transform: translateY(-50%);
+  font-size: clamp(13px, 1.26cqw, 15.5px);
+  line-height: 1.85;
+  color: var(--soft);
+  white-space: nowrap;
+}
 
-.armed .item {
+.itemsLeft {
+  text-align: right;
+}
+
+/* ---------------------------------------------------------------- stack */
+
+.stack {
+  display: none;
+}
+
+/* ---------------------------------------------------------------- wire up */
+
+.armed .wires path {
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 1;
+}
+
+.armed .node,
+.armed .items,
+.armed .branch li {
   opacity: 0;
-  transform: translateY(14px);
 }
 
-.armed .plus {
+.armed .node {
+  transform: scale(0.88);
+}
+
+.armed .items,
+.armed .branch li {
+  transform: translateY(10px);
+}
+
+.armed .items {
+  transform: translateY(calc(-50% + 10px));
+}
+
+.armed .hub,
+.armed .stackHub {
   opacity: 0;
-  transform: rotate(-90deg) scale(0.4);
 }
 
-.in .item {
+.in .hub,
+.in .stackHub {
+  opacity: 1;
+  transition: opacity 0.5s ease;
+}
+
+.in .gearTurn {
+  animation: gear-turn 2.2s cubic-bezier(0.45, 0, 0.2, 1) 0.15s both;
+}
+
+.in .wires path {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 0.75s cubic-bezier(0.42, 0, 0.25, 1);
+  transition-delay: calc(0.45s + var(--i) * 0.12s);
+}
+
+.in .wires .tick {
+  transition-delay: calc(1.05s + var(--i) * 0.12s);
+  transition-duration: 0.35s;
+}
+
+.in .node {
   opacity: 1;
   transform: none;
-  transition: opacity 0.6s ease, transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
-  transition-delay: calc(var(--i) * 90ms);
+  transition: opacity 0.5s ease, transform 0.65s cubic-bezier(0.3, 1.3, 0.4, 1);
+  transition-delay: calc(0.75s + var(--i) * 0.12s);
 }
 
-.in .plus {
+.in .items {
+  opacity: 1;
+  transform: translateY(-50%);
+  transition: opacity 0.5s ease, transform 0.6s ease;
+  transition-delay: calc(1.2s + var(--i) * 0.12s);
+}
+
+.in .branch li {
   opacity: 1;
   transform: none;
-  transition: opacity 0.4s ease 0.55s, transform 0.7s cubic-bezier(0.3, 1.4, 0.4, 1) 0.55s;
+  transition: opacity 0.5s ease, transform 0.6s ease;
+  transition-delay: calc(0.35s + var(--i) * 0.08s);
 }
 
-/* ---------------------------------------------------------------- tablet */
+@keyframes gear-turn {
+  from { transform: rotate(-60deg); }
+  to { transform: rotate(0deg); }
+}
+
+/* ---------------------------------------------------------------- below 1024 */
 
 @media (max-width: 1023px) {
   .section {
     padding: 72px 0 68px;
   }
 
-  .head {
-    grid-template-columns: 1fr;
-  }
-
   .title {
     font-size: clamp(40px, 7vw, 56px);
   }
 
-  .lede {
-    grid-column: auto;
-    margin-top: 26px;
-    max-width: 560px;
-  }
-
   .subhead {
-    margin-top: 60px;
+    margin-top: 56px;
   }
 
-  .list {
+  .figure {
+    margin-top: 36px;
+  }
+
+  .diagram {
+    display: none;
+  }
+
+  .stack {
+    display: block;
+    --dot: 15px;
+    --gap: 48px;
+  }
+
+  .stackHub {
+    position: relative;
+    width: 210px;
+    margin: 0 auto;
+    padding-bottom: 34px;
+    container-type: inline-size;
+  }
+
+  .stackHub .hubText {
+    font-size: 17px;
+  }
+
+  /* The stem down from the gear to the branches. */
+  .stackHub::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    height: 34px;
+    border-left: 1px solid var(--wire);
+  }
+
+  /* Two columns, joined to the stem by a crossbar between their spines. */
+  .branches {
+    position: relative;
+    display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--gap);
   }
 
-  .item,
-  .item:nth-child(3n + 1) {
-    padding: 28px 0 30px 30px;
-    border-left: 1px solid var(--rule);
+  .branches::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: calc(var(--dot) / 2);
+    width: calc(50% + var(--gap) / 2);
+    border-top: 1px solid var(--wire);
   }
 
-  .item:nth-child(2n + 1) {
-    padding-left: 0;
-    padding-right: 30px;
-    border-left: 0;
+  .branch {
+    list-style: none;
+    margin: 0;
+    padding: 0;
   }
 
-  .item:nth-child(n + 3) {
-    border-top: 1px solid var(--rule);
+  .branch li {
+    position: relative;
+    padding: 26px 0 14px calc(var(--dot) + 20px);
   }
 
-  .p1 { left: 50%; top: calc(100% / 3); }
-  .p2 { left: 50%; top: calc(200% / 3); }
-
-  .close {
-    grid-template-columns: 1fr;
-    row-gap: 12px;
+  /* The spine, and a ringed dot for each discipline. */
+  .branch li::before {
+    content: '';
+    position: absolute;
+    left: calc(var(--dot) / 2);
+    top: 0;
+    bottom: 0;
+    border-left: 1px solid var(--wire);
   }
 
-  .closeText {
-    grid-column: auto;
-    padding-left: 0;
+  .branch li:last-child::before {
+    bottom: auto;
+    height: 40px;
+  }
+
+  .branch li::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 33px;
+    width: var(--dot);
+    height: var(--dot);
+    box-sizing: border-box;
+    border-radius: 50%;
+    border: 1.5px solid var(--red);
+    background: var(--paper);
+    box-shadow: 0 0 0 4px var(--paper);
+  }
+
+  .branch h4 {
+    margin: 0;
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 25px;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+
+  .branch p {
+    margin: 8px 0 0;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--soft);
   }
 }
 
-/* ---------------------------------------------------------------- phone */
-
+/* Phones: one spine; the two columns run on as one. */
 @media (max-width: 600px) {
   .section {
     padding: 60px 0 56px;
@@ -298,61 +409,59 @@
 
   .lede {
     padding-left: 18px;
-    font-size: 20px;
+    font-size: 18px;
   }
 
   .subhead {
     margin-top: 48px;
-    font-size: 23px;
+    font-size: clamp(26px, 7.4vw, 32px);
   }
 
   .subhead em {
     display: block;
   }
 
-  .grid {
-    margin-top: 20px;
+  .stack {
+    --gap: 0px;
   }
 
-  .list {
+  .stackHub {
+    width: 180px;
+  }
+
+  .branches {
     grid-template-columns: 1fr;
-    grid-auto-rows: auto;
   }
 
-  .item,
-  .item:nth-child(3n + 1),
-  .item:nth-child(2n + 1) {
-    display: grid;
-    grid-template-columns: 34px minmax(0, 1fr);
-    padding: 20px 0 22px;
-    border-left: 0;
+  /* The crossbar runs from the stem back to the single spine. */
+  .branches::before {
+    width: calc(50% - var(--dot) / 2);
   }
 
-  .item + .item {
-    border-top: 1px solid var(--rule);
+  .branch:first-child li:last-child::before {
+    bottom: 0;
+    height: auto;
   }
 
-  .num {
-    grid-row: span 2;
-    padding-top: 4px;
+  .branch li {
+    padding-top: 22px;
   }
 
-  .name {
-    margin: 0;
-    font-size: 22px;
+  .branch li::after {
+    top: 29px;
   }
 
-  .text {
-    margin-top: 6px;
+  .branch h4 {
+    font-size: 23px;
+  }
+
+  .branch p {
     font-size: 15.5px;
   }
+}
 
-  .p1,
-  .p2 {
-    display: none;
-  }
-
-  .closeText {
-    font-size: 19px;
+@media (prefers-reduced-motion: reduce) {
+  .in .gearTurn {
+    animation: none;
   }
 }
