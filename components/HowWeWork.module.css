@@ -303,21 +303,24 @@
     stroke-width: 1;
   }
 
-  /* The glow only exists while the animation runs. */
+  /* The red over the lines: shown faint when settled (and without the
+     animation); drawn down from the gear when the animation runs. */
   .spineGlow {
-    display: none;
+    stroke: var(--red);
+    stroke-width: 1.8;
+    opacity: 0.4;
   }
 
   .stackHub {
     position: relative;
     z-index: 2;
-    width: 210px;
+    width: 260px;
     margin: 0 auto;
     container-type: inline-size;
   }
 
   .stackHub .hubText {
-    font-size: 17px;
+    font-size: 18px;
   }
 
   .zig {
@@ -329,15 +332,32 @@
   }
 
   .zig li {
+    --dot-top: 8px;
+    --tick: 18px;
     position: relative;
     width: min(84%, 520px);
-    padding: 0 0 34px calc(var(--dot) + 18px);
+    padding: 0 0 34px calc(var(--dot) + var(--tick) + 14px);
   }
 
   .zig li.right {
     margin-left: auto;
-    padding: 0 calc(var(--dot) + 18px) 34px 0;
+    padding: 0 calc(var(--dot) + var(--tick) + 14px) 34px 0;
     text-align: right;
+  }
+
+  /* The short rule from the bullet to its title. */
+  .zig li::before {
+    content: '';
+    position: absolute;
+    left: calc(var(--dot) + 6px);
+    top: calc(var(--dot-top) + var(--dot) / 2 - 0.5px);
+    width: var(--tick);
+    border-top: 1px solid var(--red);
+  }
+
+  .zig li.right::before {
+    left: auto;
+    right: calc(var(--dot) + 6px);
   }
 
   .zig li:last-child {
@@ -349,7 +369,7 @@
     content: '';
     position: absolute;
     left: 0;
-    top: 8px;
+    top: var(--dot-top);
     width: var(--dot);
     height: var(--dot);
     box-sizing: border-box;
@@ -389,13 +409,26 @@
 
   .plateBack,
   .plateFront,
-  .flash {
+  .flash,
+  .rim {
     transform-box: fill-box;
     transform-origin: center;
   }
 
   .flash {
     opacity: 0;
+  }
+
+  .rim {
+    opacity: 0.85;
+  }
+
+  .spineArmed .rim {
+    opacity: 0;
+  }
+
+  .spineArmed .zig li::before {
+    border-color: #c9c0b4;
   }
 
   .spineArmed .plateBack {
@@ -413,13 +446,16 @@
   }
 
   .spineIn .flash {
-    animation: gear-flash 0.6s ease-in-out 1.05s;
+    animation: gear-flash 0.7s ease-in-out 1.05s;
+  }
+
+  .spineIn .rim {
+    opacity: 0.85;
+    transition: opacity 0.6s ease 1.35s;
   }
 
   .spineArmed .spineGlow {
-    display: inline;
-    stroke: var(--red);
-    stroke-width: 1.8;
+    opacity: 1;
     stroke-dasharray: calc(var(--len) * 1px) calc(var(--len) * 1px);
     stroke-dashoffset: calc(var(--len) * 1px);
     filter: drop-shadow(0 0 3px rgba(255, 75, 43, 0.8));
@@ -427,12 +463,17 @@
 
   .spineIn .spineGlow {
     stroke-dashoffset: 0;
-    transition: stroke-dashoffset var(--dur) linear 1.45s;
-    animation: glow-settle 1.2s ease-in-out calc(1.45s + var(--dur)) forwards;
+    transition: stroke-dashoffset var(--dur) linear 1.6s;
+    animation: glow-settle 1.4s ease-in-out calc(1.6s + var(--dur)) forwards;
   }
 
   .spineIn .zig li::after {
-    animation: dot-pulse 0.9s ease-out var(--at) both;
+    animation: dot-pulse 1.3s ease-out var(--at) both;
+  }
+
+  .spineIn .zig li::before {
+    border-color: var(--red);
+    transition: border-color 0.5s ease var(--at);
   }
 }
 
@@ -443,7 +484,7 @@
 }
 
 @keyframes glow-settle {
-  to { opacity: 0.28; }
+  to { opacity: 0.4; }
 }
 
 @keyframes dot-pulse {
@@ -508,7 +549,11 @@
   }
 
   .stackHub {
-    width: 180px;
+    width: 236px;
+  }
+
+  .stackHub .hubText {
+    font-size: 16px;
   }
 
   .zig {
@@ -516,16 +561,14 @@
   }
 
   .zig li {
+    --dot-top: 6px;
+    --tick: 14px;
     width: 88%;
     padding-bottom: 30px;
   }
 
   .zig li.right {
     padding-bottom: 30px;
-  }
-
-  .zig li::after {
-    top: 6px;
   }
 
   .zig h4 {

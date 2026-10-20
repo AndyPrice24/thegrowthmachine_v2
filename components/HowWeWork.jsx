@@ -54,8 +54,9 @@ function gearPath(n = 12, outer = 140, root = 119) {
 }
 const GEAR = gearPath();
 
-// split: two plates that start out of register and lock together, plus a
-// red copy of the teeth that blinks once (the spine version's animation).
+// split: two plates that start out of register and lock together, a red
+// copy of the teeth that blinks once, and the red rim it leaves behind (the
+// spine version's animation).
 function Gear({ hub, split = false }) {
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   return (
@@ -86,6 +87,7 @@ function Gear({ hub, split = false }) {
           <circle r="104" fill={`url(#${id}-well)`} stroke="rgba(110, 90, 70, 0.22)" strokeWidth="1.2" />
         </g>
         {split && <path className={styles.flash} d={GEAR} fill="#c8221c" />}
+        {split && <path className={styles.rim} d={GEAR} fill="none" stroke="#c8221c" strokeWidth="2.4" />}
         <circle r="88" fill="#fbf8f3" stroke="rgba(110, 90, 70, 0.16)" strokeWidth="1" />
       </svg>
       <p className={styles.hubText}>
@@ -105,14 +107,16 @@ function Gear({ hub, split = false }) {
  * each bullet exactly.
  *
  * Once, as the gear comes into view: its two plates slide into register,
- * the teeth blink red, then a red glow runs down both lines and each bullet
- * pulses as the glow reaches it, in reading order.
+ * the teeth blink red and keep a red rim, then a red glow runs down both
+ * lines and each bullet pulses as the glow reaches it, in reading order,
+ * lighting the short rule to its title. Without the animation (reduced
+ * motion), the page shows that finished state.
  */
 const ORDER = [0, 3, 1, 4, 2, 5];
 const DOT = 15;
 const DROP = 56; // how far the lines fall while curving out to the sides
-const GLOW_START = 1.45; // s, after the plates lock and the blink
-const GLOW_TIME = 1.7; // s, for the longer of the two lines
+const GLOW_START = 1.6; // s, after the plates lock and the blink
+const GLOW_TIME = 3.6; // s, for the longer of the two lines
 
 function bezierLength(p0, p1, p2, p3) {
   let len = 0;
