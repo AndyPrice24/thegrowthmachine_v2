@@ -6,7 +6,8 @@
     "build": "next build",
     "start": "next start",
     "machine": "python3 tools/machine/build_machine.py",
-    "build:cloudflare": "CF_PAGES=1 next build"
+    "build:cloudflare": "CF_PAGES=1 next build",
+    "gear": "python3 tools/gear/build_gear.py"
   },
   "dependencies": {
     "@fontsource/jost": "5.3.0",
