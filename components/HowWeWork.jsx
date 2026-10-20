@@ -54,42 +54,44 @@ function gearPath(n = 12, outer = 140, root = 119) {
 }
 const GEAR = gearPath();
 
-// split: two plates that start out of register and lock together, a red
-// copy of the teeth that blinks once, and the red rim it leaves behind (the
-// spine version's animation).
+// A graphite gear with a red rim and a polished metal centre behind the
+// words. split (the spine version) adds a darker plate directly behind,
+// turned part of a tooth out of step so its teeth show through, which
+// clicks into register; then the teeth blink red and keep the red rim.
 function Gear({ hub, split = false }) {
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   return (
     <div className={styles.gear}>
       <svg viewBox="-150 -150 300 300" aria-hidden="true" focusable="false">
         <defs>
-          <radialGradient id={`${id}-body`} cx="38%" cy="32%" r="75%">
-            <stop offset="0" stopColor="#fffdf9" />
-            <stop offset="0.6" stopColor="#f1ebe2" />
-            <stop offset="1" stopColor="#ddd3c6" />
+          <radialGradient id={`${id}-body`} cx="36%" cy="30%" r="78%">
+            <stop offset="0" stopColor="#a8a39c" />
+            <stop offset="0.55" stopColor="#7a756e" />
+            <stop offset="1" stopColor="#56524c" />
           </radialGradient>
-          <radialGradient id={`${id}-well`} cx="62%" cy="68%" r="80%">
-            <stop offset="0" stopColor="#fffdf9" />
-            <stop offset="1" stopColor="#e4dbcf" />
+          <radialGradient id={`${id}-back`} cx="36%" cy="30%" r="78%">
+            <stop offset="0" stopColor="#6c6862" />
+            <stop offset="1" stopColor="#3b3834" />
           </radialGradient>
-          <radialGradient id={`${id}-back`} cx="38%" cy="32%" r="75%">
-            <stop offset="0" stopColor="#f3ece2" />
-            <stop offset="1" stopColor="#cfc3b3" />
-          </radialGradient>
+          <linearGradient id={`${id}-bevel`} x1="0.2" y1="0" x2="0.8" y2="1">
+            <stop offset="0" stopColor="#ebe8e3" />
+            <stop offset="0.5" stopColor="#b9b4ad" />
+            <stop offset="1" stopColor="#8d8881" />
+          </linearGradient>
         </defs>
         {split && (
           <g className={styles.plateBack}>
-            <path d={GEAR} fill={`url(#${id}-back)`} stroke="rgba(110, 90, 70, 0.3)" strokeWidth="1.2" />
+            <path d={GEAR} fill={`url(#${id}-back)`} stroke="rgba(25, 20, 15, 0.4)" strokeWidth="1.2" />
           </g>
         )}
         <g className={split ? styles.plateFront : styles.gearTurn}>
-          <path d={GEAR} fill={`url(#${id}-body)`} stroke="rgba(110, 90, 70, 0.28)" strokeWidth="1.2" />
-          <circle r="104" fill={`url(#${id}-well)`} stroke="rgba(110, 90, 70, 0.22)" strokeWidth="1.2" />
+          <path d={GEAR} fill={`url(#${id}-body)`} stroke="rgba(25, 20, 15, 0.35)" strokeWidth="1.2" />
+          <circle r="104" fill={`url(#${id}-bevel)`} stroke="rgba(25, 20, 15, 0.3)" strokeWidth="1" />
         </g>
         {split && <path className={styles.flash} d={GEAR} fill="#c8221c" />}
-        {split && <path className={styles.rim} d={GEAR} fill="none" stroke="#c8221c" strokeWidth="2.4" />}
-        <circle r="88" fill="#fbf8f3" stroke="rgba(110, 90, 70, 0.16)" strokeWidth="1" />
+        <path className={styles.rim} d={GEAR} fill="none" stroke="#c8221c" strokeWidth="2.4" />
       </svg>
+      <span className={styles.metal} aria-hidden="true" />
       <p className={styles.hubText}>
         {hub[0]}
         <br />
@@ -106,8 +108,8 @@ function Gear({ hub, split = false }) {
  * right-aligned. The lines are drawn from measured positions so they meet
  * each bullet exactly.
  *
- * Once, as the gear comes into view: its two plates slide into register,
- * the teeth blink red and keep a red rim, then a red glow runs down both
+ * Once, as the gear comes into view: its back plate clicks into register,
+ * the teeth blink red and keep a red rim, a glint crosses the metal centre, then a red glow runs down both
  * lines and each bullet pulses as the glow reaches it, in reading order,
  * lighting the short rule to its title. Without the animation (reduced
  * motion), the page shows that finished state.
