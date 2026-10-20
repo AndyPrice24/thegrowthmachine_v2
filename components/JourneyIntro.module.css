@@ -76,6 +76,16 @@
     no-repeat center / 100% 100%;
 }
 
+/* No levers: copy and photo only, the copy centred against the photo. */
+.noLevers {
+  grid-template-areas: 'copy media';
+  align-items: center;
+}
+
+.noLevers .copy {
+  padding-top: 0;
+}
+
 /* ---------------------------------------------------------------- photo */
 
 .media {
@@ -179,6 +189,12 @@
       'levers'
       'media';
     row-gap: 36px;
+  }
+
+  .noLevers {
+    grid-template-areas:
+      'copy'
+      'media';
   }
 
   .copy {

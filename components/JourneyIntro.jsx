@@ -5,7 +5,8 @@ import styles from './JourneyIntro.module.css';
  * The first section of a journey (/b2b or /ecommerce), straight after the
  * choice. Desktop: copy on the left, photo on the right, four levers in a
  * ruled row beneath. Mobile: the statement as a red-ruled callout, levers
- * two by two, then the photo. Copy lives in journeys.js.
+ * two by two, then the photo. Copy lives in journeys.js; a journey without
+ * levers (its How we work section covers them) shows just copy and photo.
  */
 function Icon({ name }) {
   const paths = {
@@ -83,7 +84,7 @@ export default function JourneyIntro({ id, eyebrow, title, lede, statement, leve
   return (
     <section id="journey" className={styles.hero} aria-labelledby={titleId}>
       <JourneyStart />
-      <div className={`shell ${styles.grid}`}>
+      <div className={`shell ${styles.grid} ${levers ? '' : styles.noLevers}`}>
         <div className={styles.copy}>
           <p className={styles.eyebrow}>{eyebrow}</p>
           <h2 id={titleId} className={styles.title}>
@@ -113,7 +114,7 @@ export default function JourneyIntro({ id, eyebrow, title, lede, statement, leve
           )}
         </div>
 
-        <ul className={styles.levers}>
+        {levers && <ul className={styles.levers}>
           {levers.map((l) => (
             <li key={l.name}>
               <span className={styles.icon}>
@@ -125,7 +126,7 @@ export default function JourneyIntro({ id, eyebrow, title, lede, statement, leve
               </span>
             </li>
           ))}
-        </ul>
+        </ul>}
       </div>
     </section>
   );

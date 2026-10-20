@@ -1,7 +1,8 @@
 /*
  * Copy for the opening section of each journey, below the choice.
  *
- * b2b: Andrew's B2B section (October 2026 mockups), word for word.
+ * b2b: Andrew's B2B section (October 2026 mockups), word for word, minus its
+ *   four-lever row: the How we work section below covers the disciplines.
  * ecommerce: Andrew's ecommerce section (October 2026 mockups), word for word.
  *
  * image: { desktop, mobile, focus }. Desktop shows a near-square crop beside
@@ -16,12 +17,6 @@ export const JOURNEYS = {
     title: 'The next stage of growth may not start with more leads.',
     lede: 'The next growth opportunity may come from optimisation, expansion, or a completely different part of the commercial system.',
     statement: 'We diagnose, prioritise and execute — not just advise.',
-    levers: [
-      { icon: 'target', name: 'Position', text: 'Market, ICP & proposition' },
-      { icon: 'bars', name: 'Create demand', text: 'Channels, messaging & lead generation' },
-      { icon: 'funnel', name: 'Convert pipeline', text: 'Qualification, sales process & conversion' },
-      { icon: 'trend', name: 'Grow revenue', text: 'Pricing, expansion & revenue economics' },
-    ],
     image: {
       desktop: '/journeys/b2b-portrait.webp',
       mobile: '/journeys/b2b-landscape.webp',
