@@ -577,7 +577,18 @@ def build(kind, cfg):
     # unpremultiply against the backdrop so the cut-out reproduces the art on cream
     F = np.where(A[..., None] > 1e-3, (clean - (1 - A[..., None]) * B) / np.maximum(A[..., None], 1e-3), 0)
     F = np.where((A[..., None] > 0.97), clean, F)
-    body = np.dstack([np.clip(F, 0, 255), A * 255])
+
+    # haze: where the backdrop estimate missed, near-transparent specks
+    # survive beside the machine and read as faint smudges on a light page.
+    # Drop them where they are clear of the machine's solid parts; the red
+    # glow round the pipes (strongly red) is kept.
+    Fc = np.clip(F, 0, 255)
+    redness = Fc[..., 0] - Fc[..., 1:].max(2)
+    away = cv2.distanceTransform((A < 0.9).astype(np.uint8), cv2.DIST_L2, 5) > 6
+    haze = (A < 0.1) & (redness < 70) & away
+    haze = cv2.GaussianBlur(haze.astype(np.float32), (0, 0), 1.5)
+    A = A * (1 - np.clip(haze * 1.6, 0, 1))
+    body = np.dstack([Fc, A * 255])
 
     x0, y0, x1, y1 = cfg["crop"]
     out_dir = os.path.join(OUT_IMG, kind)
