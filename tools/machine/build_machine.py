@@ -45,6 +45,10 @@ CFG = {
         "src": "public/growth-machine-desktop-approved.webp",
         "crop": (0, 64, 1400, 712),
         "housing": (698.0, 386.0, 262),
+        # the bottom shaft's red ring, mirrored onto the top shaft (whose
+        # ring the art got wrong): columns, source rows, and the mirror line
+        # (top cap edge 121 + bottom cap edge 636)
+        "globe": {"x": (686, 711), "rows": (637, 666), "flip": 757},
         "floor": 0.86,
         "floor_clear": 604,
         "cards_in": [(20, 177, 230, 228), (20, 243, 230, 294), (20, 309, 230, 360),
@@ -128,6 +132,8 @@ def load(path):
 
 
 def save_webp(path, rgba, quality=90):
+    """quality above 100 writes lossless (lossy WebP halves the colour
+    resolution, which softens red-on-white edges such as the gears')."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
     bgra = np.clip(rgba, 0, 255).astype(np.uint8)[:, :, [2, 1, 0, 3]]
     ok = cv2.imwrite(path, bgra, [cv2.IMWRITE_WEBP_QUALITY, quality])
@@ -219,36 +225,47 @@ def fill_along_theta(P, keep):
     return out
 
 
-def trace_pipe(red, axis, start, end, at, others_mask=None):
-    """Walk along a pipe from its connector toward the flange, following the
-    red run nearest the predicted position. Returns a list of (x, y)."""
-    pts = []
-    pos, vel = float(at), 0.0
-    step = 1 if end > start else -1
-    lab_cols = red if axis == "x" else red.T
-    for s in range(start, end, step):
-        col = lab_cols[:, s]
-        lab, runs = ndi.label(col)
-        if runs == 0:
-            pos += vel
-            continue
-        cents = ndi.center_of_mass(col, lab, range(1, runs + 1))
-        cents = np.array([c[0] for c in cents])
-        pred = pos + vel
-        j = np.argmin(np.abs(cents - pred))
-        if abs(cents[j] - pred) > 9:
-            pos = pred
-            continue
-        new = cents[j]
-        vel = 0.7 * vel + 0.3 * (new - pos)
-        pos = new
-        pts.append((s, pos) if axis == "x" else (pos, s))
-    # smooth
-    a = np.array(pts, np.float32)
+def trace_tube(mask, start_xy):
+    """Follow one tube from its connector end: take the tube's connected
+    region, find its far end (the point furthest along the tube) and return
+    the cheapest route there, which hugs the tube's centre-line. Works at
+    any angle, unlike a scanline walk. Returns (x, y) points."""
+    from scipy.sparse import coo_matrix
+    from scipy.sparse.csgraph import dijkstra
+    lab, n = ndi.label(mask, structure=np.ones((3, 3)))
+    sx, sy = start_xy
+    ys, xs = np.nonzero(lab)
+    k = int(np.argmin((xs - sx) ** 2 + (ys - sy) ** 2))
+    comp = lab == lab[ys[k], xs[k]]
+    cy, cx = np.nonzero(comp)
+    idx = -np.ones(mask.shape, np.int64)
+    idx[cy, cx] = np.arange(len(cy))
+    dt = ndi.distance_transform_edt(comp)
+    rows, cols, w = [], [], []
+    for dy, dx in ((0, 1), (1, 0), (1, 1), (1, -1)):
+        ny, nx = cy + dy, cx + dx
+        ok = (ny < mask.shape[0]) & (nx >= 0) & (nx < mask.shape[1])
+        ok[ok] &= comp[ny[ok], nx[ok]]
+        a, b = idx[cy[ok], cx[ok]], idx[ny[ok], nx[ok]]
+        step = np.hypot(dy, dx)
+        cost = step / (0.5 + dt[cy[ok], cx[ok]] + dt[ny[ok], nx[ok]])
+        rows += [a, b]; cols += [b, a]; w += [cost, cost]
+    G = coo_matrix((np.concatenate(w), (np.concatenate(rows), np.concatenate(cols))), shape=(len(cy),) * 2).tocsr()
+    s0 = int(idx[ys[k], xs[k]])
+    # far end: furthest by plain path length from the start
+    hops, _ = dijkstra(G.copy().astype(bool).astype(float), indices=s0, return_predecessors=True)
+    end = int(np.nanargmax(np.where(np.isfinite(hops), hops, -1)))
+    _, pred = dijkstra(G, indices=s0, return_predecessors=True)
+    path, j = [], end
+    while j >= 0 and j != s0:
+        path.append((cx[j], cy[j]))
+        j = pred[j]
+    path.append((cx[s0], cy[s0]))
+    a = np.array(path[::-1], np.float32)
     if len(a) > 9:
-        k = np.ones(7) / 7
+        k7 = np.ones(7) / 7
         for d in (0, 1):
-            a[3:-3, d] = np.convolve(a[:, d], k, mode="valid")
+            a[3:-3, d] = np.convolve(a[:, d], k7, mode="valid")
     return a
 
 
@@ -474,9 +491,31 @@ def _shift_path(dstr, crop):
     return "".join(out)
 
 
+# ---------------------------------------------------------------- top globe
+def fix_globe(I, cfg):
+    """The art's bottom shaft ends in a neat red ring on a short stem; the
+    top one ends in a misshapen red blob. Replace the blob with the bottom
+    ring, mirrored about the line between the two shaft caps."""
+    g = cfg.get("globe")
+    if not g:
+        return I
+    I = I.copy()
+    (x0, x1), (b0, b1), flip = g["x"], g["rows"], g["flip"]
+    patch = I[b0:b1, x0:x1][::-1]
+    t0 = flip - (b1 - 1)
+    w = np.ones((b1 - b0, x1 - x0), np.float32)
+    for k in range(4):  # feather the sides and the far end into the backdrop
+        f = (k + 1) / 5
+        w[:, k] = np.minimum(w[:, k], f)
+        w[:, -1 - k] = np.minimum(w[:, -1 - k], f)
+        w[k, :] = np.minimum(w[k, :], f)
+    I[t0:t0 + (b1 - b0), x0:x1] = I[t0:t0 + (b1 - b0), x0:x1] * (1 - w[..., None]) + patch * w[..., None]
+    return I
+
+
 # ---------------------------------------------------------------- build
 def build(kind, cfg):
-    I = mirror_outlets(load(cfg["src"]), cfg)
+    I = fix_globe(mirror_outlets(load(cfg["src"]), cfg), cfg)
     cfg = dict(cfg)
     cfg["cards_out"] = [mirror_box(b, cfg) for b in cfg["cards_in"]]
     if cfg["axis"] == "x":
@@ -588,6 +627,44 @@ def build(kind, cfg):
     haze = (A < 0.1) & (redness < 70) & away
     haze = cv2.GaussianBlur(haze.astype(np.float32), (0, 0), 1.5)
     A = A * (1 - np.clip(haze * 1.6, 0, 1))
+
+    # between the pipes: the art's soft reflections and cast shadows of the
+    # pipes cross one another and read as smudges. Keep only the pipes, their
+    # connectors and a tight soft edge.
+    along_ = xx if cfg["axis"] == "x" else yy
+    across_ = yy if cfg["axis"] == "x" else xx
+    ps, pe = cfg["pipes_in"]["start"], cfg["pipes_in"]["end"]
+    lo, hi = min(ps, pe) - 30, max(ps, pe) + 6
+    ma = cfg["mirror"]["axis"]
+    span = cfg["mirror"]["pipes"]
+    zone = (((along_ > lo) & (along_ < hi)) | ((along_ > 2 * ma - hi) & (along_ < 2 * ma - lo))) \
+        & (across_ > span[0]) & (across_ < span[1])
+    tube = (R > 170) & (G < 140) & (Bc < 140) & (R - G > 70)
+    # pipe or metal, judged by colour rather than alpha: where the backdrop
+    # estimate failed (the mirrored outlets) pale backdrop came out opaque
+    lum_i = I.mean(2)
+    sat_i = I.max(2) - I.min(2)
+    metal = (lum_i < 185) | (sat_i > 80)
+    hard = (tube | metal) & (A > 0.25)
+    # the same inside the decorative ring's band, where the flanges and
+    # shafts are protected from the ring's erase and haze survived round them
+    er0, er1 = cfg["arcs"]["erase"]
+    dr = np.hypot(xx - hx, yy - hy)
+    zone |= (dr > er0 - 4) & (dr < er1 + 4)
+    hard = cv2.morphologyEx(hard.astype(np.uint8), cv2.MORPH_OPEN, np.ones((2, 2), np.uint8))
+    hard = cv2.dilate(hard, np.ones((3, 3), np.uint8)).astype(np.float32)
+    keep = np.clip(cv2.GaussianBlur(hard, (0, 0), 1.0) * 1.3, 0, 1)
+    A = np.where(zone, A * keep, A)
+
+    # last: small, faint fragments detached from the machine and the pipes
+    frag = A > 0.05
+    lab, n = ndi.label(frag, structure=np.ones((3, 3)))
+    if n > 1:
+        idx = np.arange(1, n + 1)
+        size = ndi.sum(frag, lab, idx)
+        peak = ndi.maximum(A, lab, idx)
+        drop = idx[(size < 400) & (peak < 0.3)]
+        A = np.where(np.isin(lab, drop), 0, A)
     body = np.dstack([Fc, A * 255])
 
     x0, y0, x1, y1 = cfg["crop"]
@@ -717,10 +794,10 @@ def build(kind, cfg):
         band_union = np.maximum(band_union, ((d >= g["band"][0] - 3) & (d <= g["band"][1] + 3)).astype(np.float32))
     band_union = cv2.GaussianBlur(band_union, (0, 0), 1.0)
     rig_base = np.dstack([base, band_union * 255])
-    save_webp(os.path.join(out_dir, "rig-base.webp"), rig_base[ry0:ry1, rx0:rx1], 90)
-    save_webp(os.path.join(out_dir, "rig-front.webp"), front[ry0:ry1, rx0:rx1], 90)
+    save_webp(os.path.join(out_dir, "rig-base.webp"), rig_base[ry0:ry1, rx0:rx1], 101)
+    save_webp(os.path.join(out_dir, "rig-front.webp"), front[ry0:ry1, rx0:rx1], 101)
     for gid, (box, rgba) in layers.items():
-        save_webp(os.path.join(out_dir, f"gear-{gid}.webp"), rgba, 90)
+        save_webp(os.path.join(out_dir, f"gear-{gid}.webp"), rgba, 101)
 
     # ---- 4. warm bloom of the central gear (screen-blended on the page)
     rc = red_cfg["c"]
@@ -734,12 +811,15 @@ def build(kind, cfg):
     save_webp(os.path.join(out_dir, "warm.webp"), warm[wb[1]:wb[3], wb[0]:wb[2]], 85)
 
     # ---- 5. pipes: trace every pipe's centre-line from the artwork
-    pipe_red = (redness > 0.25) & ~solid | ((redness > 0.25) & ~((xx - hx) ** 2 + (yy - hy) ** 2 < (hr - 40) ** 2))
-    pipe_red = ndi.binary_opening(pipe_red, np.ones((2, 2)))
+    # only the tubes' saturated red core: the pink glow and reflections round
+    # them would pull the trace across onto a neighbouring pipe
+    pipe_red = (R > 170) & (G < 120) & (Bc < 120) & (R - G > 90)
+    pipe_red = cv2.morphologyEx(pipe_red.astype(np.uint8), cv2.MORPH_CLOSE, np.ones((5, 3) if cfg["axis"] == "x" else (3, 5), np.uint8)) > 0
     def trace_set(spec, toward_machine):
         out = []
         for a in spec["at"]:
-            pts = trace_pipe(pipe_red, cfg["axis"], spec["start"], spec["end"], a)
+            st = (spec["start"], a) if cfg["axis"] == "x" else (a, spec["start"])
+            pts = trace_tube(pipe_red, st)
             if not toward_machine:
                 pts = pts[::-1]
             pts = simplify(pts)

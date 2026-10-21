@@ -33,8 +33,12 @@ It writes `public/machine/{desktop,mobile}/*.webp` and
    what lies behind the teeth, and glows/brackets in front of the gears go on
    a static front layer. The rig is only visible while the gears turn, so the
    resting machine is the approved art itself.
-5. **Pipes.** Every pipe's centre-line is traced from the red in the artwork,
-   so the light in the animation follows the real pipe.
+5. **Pipes.** Every pipe's centre-line is traced from the saturated red of its
+   tube (route-finding along each tube from its connector, so it holds at any
+   angle and never jumps to a neighbour), so the light in the animation
+   follows the real pipe. Between the pipes only pipe and metal are kept: the
+   art's crossing reflections and the pale backdrop round the mirrored
+   outlets are dropped, as are small faint fragments anywhere.
 6. **Six outlets.** The art has six inlet pipes but five outlets, though
    both flanges have six ports. The sixth outlet (for the sixth outcome card)
    comes from the art itself: the inlet bundle is mirrored about the

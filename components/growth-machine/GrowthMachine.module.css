@@ -418,12 +418,12 @@
 
 @keyframes warm-up {
   from { opacity: 0; }
-  to { opacity: 0.6; }
+  to { opacity: 0.35; }
 }
 
 @keyframes warm-settle {
-  from { opacity: 0.6; }
-  to { opacity: 0.2; }
+  from { opacity: 0.35; }
+  to { opacity: 0; }
 }
 
 /* Reduced motion: the settled state, no movement. */
@@ -448,7 +448,7 @@
 }
 
 .settled .warm {
-  opacity: 0.2;
+  opacity: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
