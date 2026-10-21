@@ -47,27 +47,64 @@
 
 /* ---------------------------------------------------------------- cards */
 
+/* Two cards with an "or" between: side by side from 1024px, stacked below. */
 .grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px;
-  margin-top: 52px;
+  grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr);
+  align-items: start;
+  max-width: 1100px;
+  margin: 56px auto 0;
 }
 
-.card {
-  position: relative;
+.or {
+  align-self: center;
+  justify-self: center;
   display: grid;
-  grid-template-columns: minmax(0, 0.82fr) minmax(0, 1fr);
-  gap: 30px;
-  padding: 14px;
-  border: 1px solid var(--rule);
-  background: rgba(255, 253, 249, 0.45);
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink);
+  background: #fffdf9;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 18px;
+  color: var(--red);
+  box-shadow: 2px 3px 0 var(--ink);
+  z-index: 1;
+}
+
+/* A card: outlined, a hard offset shadow, tilted a touch (the two lean
+   apart). Under the pointer or a finger it straightens, lifts and turns red. */
+.card {
+  --tilt: -1.2deg;
+  --lift: 0px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 10px 18px;
+  border: 1.5px solid var(--ink);
+  border-radius: 14px;
+  background: #fffdf9;
+  color: var(--ink);
+  box-shadow: 5px 6px 0 var(--ink);
+  transform: translateY(var(--lift)) rotate(var(--tilt));
+  transition:
+    transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.3s ease,
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.card + .or + .card {
+  --tilt: 1.2deg;
 }
 
 .media {
   position: relative;
-  min-height: 340px;
+  aspect-ratio: 16 / 10;
   overflow: hidden;
+  border-radius: 8px;
   background: #e7dfd3;
 }
 
@@ -77,79 +114,76 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: filter 0.25s ease, opacity 0.25s ease, transform 0.6s ease;
 }
 
-/* Until the photos arrive: a soft, warm tonal block in the brand palette. */
-.placeholder {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(120% 80% at 75% 15%, rgba(255, 250, 242, 0.55), transparent 60%),
-    linear-gradient(160deg, #d9cfc1 0%, #c4b6a4 55%, #a8988a 100%);
-}
-
-.body {
-  display: flex;
-  flex-direction: column;
-  padding: 14px 18px 12px 0;
-  min-width: 0;
+/* The title and description on a panel over the photo's lower edge. */
+.panel {
+  position: relative;
+  z-index: 1;
+  margin: -64px 18px 0;
+  padding: 16px 18px 15px;
+  border: 1.5px solid var(--ink);
+  border-radius: 10px;
+  background: #fffdf9;
+  box-shadow: 3px 4px 0 var(--ink);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .name {
   margin: 0;
   font-family: var(--serif);
   font-weight: 400;
-  font-size: clamp(19px, 1.65vw, 23px);
-  line-height: 1.22;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink);
+  font-size: clamp(22px, 2vw, 27px);
+  line-height: 1.12;
+  letter-spacing: -0.015em;
 }
 
 .cardLede {
-  margin: 12px 0 0;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--rule);
-  font-size: 15px;
-  line-height: 1.5;
+  margin: 6px 0 0;
+  font-size: 14.5px;
+  line-height: 1.45;
   color: var(--soft);
+  transition: color 0.2s ease;
 }
 
 .levers {
   list-style: none;
-  margin: 18px 0 0;
+  margin: 18px 18px 0;
   padding: 0;
   display: grid;
-  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px 18px;
 }
 
 .levers li {
   position: relative;
-  padding-left: 26px;
-  font-size: 15px;
-  line-height: 1.4;
+  padding-left: 15px;
+  font-size: 14px;
+  line-height: 1.35;
   color: #3a3530;
+  transition: color 0.2s ease;
 }
 
 .levers li::before {
   content: '';
   position: absolute;
-  left: 2px;
-  top: 0.55em;
+  left: 0;
+  top: 0.5em;
   width: 5px;
   height: 5px;
   border-radius: 50%;
   background: var(--red);
+  transition: background-color 0.2s ease;
 }
 
 /* The way forward: a solid button, and the whole card is clickable. */
 .cta {
-  align-self: stretch;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  margin-top: auto;
+  margin: 20px 18px 0;
   padding: 14px 18px;
   border-radius: 8px;
   background: var(--red);
@@ -159,18 +193,14 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #fff;
-  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-}
-
-/* Both buttons: same full width, pinned to the same baseline. */
-.levers {
-  margin-bottom: 28px;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .cta::after {
   content: '';
   position: absolute;
   inset: 0;
+  z-index: 2;
 }
 
 .cta span {
@@ -180,43 +210,78 @@
   transition: transform 0.2s ease;
 }
 
-.card:hover .cta,
-.cta:focus-visible {
-  background: #ad1b16;
-}
-
-.card:hover .cta span,
-.cta:focus-visible span {
-  transform: translateX(3px);
-}
-
 .cta:focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: 3px;
 }
 
-.card:hover {
-  border-color: rgba(200, 34, 28, 0.45);
-  box-shadow: 0 14px 34px -18px rgba(60, 40, 25, 0.35);
+/* Under the pointer or a finger. */
+.card:hover,
+.card:focus-within,
+.active {
+  --tilt: 0deg;
+  --lift: -6px;
+  background: var(--red);
+  color: #fff;
+  box-shadow: 8px 10px 0 var(--ink);
+}
+
+.card:hover .panel,
+.card:focus-within .panel,
+.active .panel {
+  background: var(--red);
+  color: #fff;
+}
+
+.card:hover .cardLede,
+.card:focus-within .cardLede,
+.active .cardLede,
+.card:hover .levers li,
+.card:focus-within .levers li,
+.active .levers li {
+  color: #ffe4de;
+}
+
+.card:hover .levers li::before,
+.card:focus-within .levers li::before,
+.active .levers li::before {
+  background: #fff;
+}
+
+.card:hover .cta,
+.card:focus-within .cta,
+.active .cta {
+  background: var(--ink);
+  color: #fff;
+}
+
+.card:hover .cta span,
+.active .cta span {
+  transform: translateX(3px);
+}
+
+.card:hover .media img,
+.active .media img {
+  transform: scale(1.03);
 }
 
 /* The selection marker: an empty ring in the photo's corner, like a radio
    button. Hover fills it; the chosen card's is filled red with a tick. */
 .select {
   position: absolute;
-  top: 28px;
-  left: 28px;
-  z-index: 2;
+  top: 24px;
+  left: 24px;
+  z-index: 3;
   display: grid;
   place-items: center;
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 1.5px solid #b8afa4;
+  border: 1.5px solid var(--ink);
   background: #fffdf9;
   box-shadow: 0 2px 8px rgba(40, 28, 18, 0.25);
   pointer-events: none;
-  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .select::before {
@@ -241,22 +306,19 @@
   opacity: 0;
 }
 
-.card:hover .select,
-.card:focus-within .select {
-  border-color: var(--red);
-}
-
 .card:hover .select::before,
-.card:focus-within .select::before {
+.card:focus-within .select::before,
+.active .select::before {
   transform: scale(1);
 }
 
 .current .select {
-  border-color: var(--red);
   background: var(--red);
 }
 
-.current .select::before {
+.current .select::before,
+.current:hover .select::before,
+.current.active .select::before {
   transform: scale(0);
 }
 
@@ -264,8 +326,9 @@
   opacity: 1;
 }
 
-.current:hover .select::before {
-  transform: scale(0);
+.current:hover .select,
+.current.active .select {
+  background: var(--ink);
 }
 
 /* One soft pulse when the undecided choice first comes into view. */
@@ -273,53 +336,32 @@
   animation: select-cue 1.4s ease-out;
 }
 
-.cue .card + .card .select {
+.cue .card + .or + .card .select {
   animation-delay: 0.25s;
 }
 
 @keyframes select-cue {
-  0% { box-shadow: 0 2px 8px rgba(40, 28, 18, 0.25), 0 0 0 0 rgba(255, 250, 244, 0); border-color: #b8afa4; }
-  30% { box-shadow: 0 2px 8px rgba(40, 28, 18, 0.25), 0 0 0 0 rgba(255, 250, 244, 0.85); border-color: var(--red); }
-  100% { box-shadow: 0 2px 8px rgba(40, 28, 18, 0.25), 0 0 0 16px rgba(255, 250, 244, 0); border-color: #b8afa4; }
+  0% { box-shadow: 0 2px 8px rgba(40, 28, 18, 0.25), 0 0 0 0 rgba(255, 250, 244, 0); }
+  30% { box-shadow: 0 2px 8px rgba(40, 28, 18, 0.25), 0 0 0 0 rgba(255, 250, 244, 0.9); }
+  100% { box-shadow: 0 2px 8px rgba(40, 28, 18, 0.25), 0 0 0 16px rgba(255, 250, 244, 0); }
 }
 
-@media (max-width: 600px) {
-  .select {
-    top: 24px;
-    left: 24px;
-  }
+/* On a journey: the chosen card keeps a red shadow and an outline button;
+   the other is plainly unselected (greyed photo, muted text, neutral button)
+   yet one touch away. Hover and touch still light either. */
+.current {
+  box-shadow: 5px 6px 0 var(--red);
 }
 
-/* On a journey: the chosen card is marked, the other recedes a little. */
-.card {
-  transition: opacity 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
-}
-
-.current .cta,
-.current:hover .cta,
-.current .cta:focus-visible {
+.current .cta {
   background: transparent;
   color: var(--red);
-  box-shadow: inset 0 0 0 1px var(--red);
+  box-shadow: inset 0 0 0 1.5px var(--red);
 }
 
-.current,
-.current:hover {
-  border-color: rgba(200, 34, 28, 0.55);
-  box-shadow: 0 0 0 1px rgba(200, 34, 28, 0.55);
-}
-
-.current {
-  border-color: rgba(200, 34, 28, 0.55);
-  box-shadow: 0 0 0 1px rgba(200, 34, 28, 0.55);
-}
-
-/* The card not chosen: plainly unselected (empty marker, greyed photo,
-   muted text, neutral button) yet still one click away. Hover restores it. */
 .other .media img {
   filter: grayscale(0.85);
   opacity: 0.75;
-  transition: filter 0.25s ease, opacity 0.25s ease;
 }
 
 .other .name,
@@ -334,18 +376,26 @@
 .other .cta {
   background: transparent;
   color: var(--ink);
-  box-shadow: inset 0 0 0 1px #b8afa4;
+  box-shadow: inset 0 0 0 1.5px #b8afa4;
 }
 
 .other:hover .media img,
+.other.active .media img,
 .other:focus-within .media img {
   filter: none;
   opacity: 1;
 }
 
+.other:hover .name,
+.other.active .name {
+  color: #fff;
+}
+
+.current:hover .cta,
+.current.active .cta,
 .other:hover .cta,
-.other:focus-within .cta {
-  background: var(--red);
+.other.active .cta {
+  background: var(--ink);
   color: #fff;
   box-shadow: none;
 }
@@ -376,14 +426,18 @@
 @media (max-width: 1023px) {
   .grid {
     grid-template-columns: 1fr;
-    max-width: 720px;
-    margin-inline: auto;
+    max-width: 620px;
+    margin-top: 40px;
+  }
+
+  .or {
+    margin: -6px 0;
   }
 }
 
 @media (max-width: 600px) {
   .section {
-    padding: 72px 0 64px;
+    padding: 64px 0 56px;
   }
 
   .title {
@@ -395,27 +449,56 @@
   }
 
   .grid {
-    margin-top: 36px;
-    gap: 18px;
+    margin-top: 30px;
+    padding: 0 6px;
   }
 
   .card {
-    grid-template-columns: 1fr;
-    gap: 22px;
-    padding: 12px;
+    --tilt: -1deg;
+    padding: 8px 8px 14px;
+    border-radius: 12px;
+    box-shadow: 4px 5px 0 var(--ink);
+  }
+
+  .card + .or + .card {
+    --tilt: 1deg;
   }
 
   .media {
-    min-height: 0;
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 16 / 11;
   }
 
-  .body {
-    padding: 0 8px 8px;
+  .panel {
+    margin: -52px 12px 0;
+    padding: 12px 14px 11px;
   }
 
   .name {
-    font-size: 20px;
+    font-size: 21px;
+  }
+
+  .cardLede {
+    font-size: 13.5px;
+  }
+
+  .levers {
+    margin: 14px 12px 0;
+    gap: 6px 12px;
+  }
+
+  .levers li {
+    padding-left: 12px;
+    font-size: 13px;
+  }
+
+  .cta {
+    margin: 16px 12px 0;
+    padding: 13px 16px;
+  }
+
+  .select {
+    top: 18px;
+    left: 18px;
   }
 
   .foot::before,
@@ -425,5 +508,11 @@
 
   .foot span {
     max-width: 280px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
   }
 }

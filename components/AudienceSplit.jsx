@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { goToJourney } from './JourneyStart';
 import styles from './AudienceSplit.module.css';
@@ -16,8 +16,13 @@ import styles from './AudienceSplit.module.css';
  * put and the page glides on into that journey (see JourneyStart). On a
  * journey, its card is marked current and the other stays one click away.
  *
- * Photos live in /public/systems: a 3:4 portrait for the side-by-side card
- * and a 4:3 landscape for phones, where the photo sits above the text.
+ * Each card is a photo with the title and description on a panel that
+ * overlaps its lower edge, then the levers and the button. Side by side from
+ * 1024px, stacked (compact, so both show while scrolling) below, an "or"
+ * between them. Cards lift and turn red under the pointer or a finger,
+ * including while scrolling past (passive touch listeners).
+ *
+ * Photos live in /public/systems as 4:3 landscapes.
  */
 const SYSTEMS = [
   {
@@ -34,7 +39,7 @@ const SYSTEMS = [
     href: '/ecommerce',
     cta: 'Explore ecommerce growth',
     image: 'ecommerce',
-    focus: '42% 50%',
+    focus: '42% 60%',
     alt: 'A botanical face oil bottle and its box on a stone plinth in warm afternoon light.',
   },
   {
@@ -52,7 +57,7 @@ const SYSTEMS = [
     href: '/b2b',
     cta: 'Explore B2B growth',
     image: 'b2b',
-    focus: '66% 50%',
+    focus: '60% 50%',
     alt: 'A leadership team in a high-rise boardroom at sunset, mapping a lead generation and conversion funnel on a whiteboard.',
   },
 ];
@@ -65,6 +70,36 @@ export default function AudienceSplit() {
   // first come into view, their selection markers pulse once.
   const gridRef = useRef(null);
   const [cue, setCue] = useState(false);
+  const [touched, setTouched] = useState(null);
+
+  // Touch: light the card under the finger as it moves, scrolling or not.
+  useEffect(() => {
+    const grid = gridRef.current;
+    let clear;
+    const pick = (e) => {
+      const t = e.touches[0];
+      if (!t) return;
+      const card = document.elementFromPoint(t.clientX, t.clientY)?.closest('[data-card]');
+      clearTimeout(clear);
+      setTouched(card && grid.contains(card) ? card.dataset.card : null);
+    };
+    const end = () => {
+      clearTimeout(clear);
+      clear = setTimeout(() => setTouched(null), 450);
+    };
+    const opts = { passive: true };
+    grid.addEventListener('touchstart', pick, opts);
+    grid.addEventListener('touchmove', pick, opts);
+    grid.addEventListener('touchend', end, opts);
+    grid.addEventListener('touchcancel', end, opts);
+    return () => {
+      clearTimeout(clear);
+      grid.removeEventListener('touchstart', pick, opts);
+      grid.removeEventListener('touchmove', pick, opts);
+      grid.removeEventListener('touchend', end, opts);
+      grid.removeEventListener('touchcancel', end, opts);
+    };
+  }, []);
   useEffect(() => {
     if (chosen || cue || !gridRef.current) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -93,41 +128,41 @@ export default function AudienceSplit() {
         </header>
 
         <div ref={gridRef} className={`${styles.grid} ${cue ? styles.cue : ''}`}>
-          {SYSTEMS.map((s) => (
-            <article
-              key={s.href}
-              className={`${styles.card} ${chosen ? (pathname === s.href ? styles.current : styles.other) : ''}`}
-            >
-              <span className={styles.select} aria-hidden="true">
-                <svg viewBox="0 0 16 16" focusable="false">
-                  <path d="M4 8.4 6.8 11 12 5.4" />
-                </svg>
-              </span>
-              <div className={styles.media}>
-                {s.image ? (
-                  <picture>
-                    <source media="(max-width: 600px)" srcSet={`/systems/${s.image}-landscape.webp`} />
-                    <img
-                      src={`/systems/${s.image}-portrait.webp`}
-                      alt={s.alt}
-                      style={{ objectPosition: s.focus }}
-                      width="900"
-                      height="1200"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </picture>
-                ) : (
-                  <span className={styles.placeholder} aria-hidden="true" />
-                )}
-              </div>
-              <div className={styles.body}>
-                <h3 className={styles.name}>
-                  {s.title[0]}
-                  <br />
-                  {s.title[1]}
-                </h3>
-                <p className={styles.cardLede}>{s.lede}</p>
+          {SYSTEMS.map((s, i) => (
+            <Fragment key={s.href}>
+              {i === 1 && (
+                <span className={styles.or} aria-hidden="true">
+                  or
+                </span>
+              )}
+              <article
+                data-card={s.href}
+                className={`${styles.card} ${chosen ? (pathname === s.href ? styles.current : styles.other) : ''} ${
+                  touched === s.href ? styles.active : ''
+                }`}
+              >
+                <span className={styles.select} aria-hidden="true">
+                  <svg viewBox="0 0 16 16" focusable="false">
+                    <path d="M4 8.4 6.8 11 12 5.4" />
+                  </svg>
+                </span>
+                <div className={styles.media}>
+                  <img
+                    src={`/systems/${s.image}-landscape.webp`}
+                    alt={s.alt}
+                    style={{ objectPosition: s.focus }}
+                    width="1200"
+                    height="900"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <div className={styles.panel}>
+                  <h3 className={styles.name}>
+                    {s.title[0]} {s.title[1]}
+                  </h3>
+                  <p className={styles.cardLede}>{s.lede}</p>
+                </div>
                 <ul className={styles.levers}>
                   {s.levers.map((l) => (
                     <li key={l}>{l}</li>
@@ -142,8 +177,8 @@ export default function AudienceSplit() {
                 >
                   {s.cta} <span aria-hidden="true">{pathname === s.href ? '↓' : '→'}</span>
                 </Link>
-              </div>
-            </article>
+              </article>
+            </Fragment>
           ))}
         </div>
 
