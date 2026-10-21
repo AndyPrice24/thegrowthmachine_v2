@@ -16,9 +16,11 @@
  *   flow           light that travels along the real pipe paths
  *
  * It plays once, when the machine comes into view: input cards light, the
- * inlet pipes energise, the central gear turns once and the function gears
- * answer it, the outlet pipes energise, the outcome cards light, then it
- * settles with a little warmth left on. Reduced motion shows the settled
+ * inlet pipes energise into the inlet, whose red innard lights; light runs
+ * along the shaft to the flash at the central gear; the gear turns once and
+ * the function gears answer it; light runs from the gear's other flash along
+ * the outlet shaft, the outlet's innard lights, the outlet pipes energise and
+ * the outcome cards light; then it settles with a little warmth left on. Reduced motion shows the settled
  * state without movement. Without JavaScript it is the static machine.
  */
 import { useEffect, useRef } from 'react';
@@ -29,16 +31,19 @@ import styles from './GrowthMachine.module.css';
 const INPUTS = ['Stalled growth', 'Unclear GTM', 'Weak acquisition', 'Low conversion', 'Margin leakage', 'Founder dependency'];
 const OUTPUTS = ['More revenue', 'Better margins', 'Better systems', 'AI-enabled operations', 'Stronger team', 'Scalable growth'];
 
-/* Timeline, in seconds from the start. Total about 4.3s. */
+/* Timeline, in seconds from the start. Total about 5s. The gear turn and
+   the settle are passed to the CSS as --gears and --settle. */
 const T = {
   cardIn: (i) => 0.0 + i * 0.09,
   pipeIn: (i) => 0.28 + i * 0.09,
-  shaftIn: 1.12,
-  gears: 1.4,
-  shaftOut: 2.4,
-  pipeOut: (i) => 2.58 + i * 0.07,
-  cardOut: (i) => 3.0 + i * 0.08,
-  settle: 3.75,
+  innardIn: 1.3,
+  shaftIn: 1.55,
+  gears: 1.9,
+  shaftOut: 2.95,
+  innardOut: 3.3,
+  pipeOut: (i) => 3.5 + i * 0.07,
+  cardOut: (i) => 3.95 + i * 0.08,
+  settle: 4.7,
 };
 
 const LOGO_ASPECT = 528 / 1409;
@@ -105,6 +110,20 @@ function Stage({ kind }) {
         </div>
 
         <img className={`${styles.layer} ${styles.warm}`} style={box(m.warm)} src={src('warm')} alt="" aria-hidden="true" />
+        <img
+          className={`${styles.layer} ${styles.innard}`}
+          style={{ ...box(m.innardIn), '--d': `${T.innardIn}s` }}
+          src={src('innard-in')}
+          alt=""
+          aria-hidden="true"
+        />
+        <img
+          className={`${styles.layer} ${styles.innard}`}
+          style={{ ...box(m.innardOut), '--d': `${T.innardOut}s` }}
+          src={src('innard-out')}
+          alt=""
+          aria-hidden="true"
+        />
 
         <svg className={styles.arcs} viewBox={`0 0 ${W} ${H}`} aria-hidden="true" focusable="false">
           {m.arcs.lines.map((d, i) => (
@@ -209,7 +228,7 @@ export default function GrowthMachine() {
   }, []);
 
   return (
-    <figure ref={ref} className={styles.machine}>
+    <figure ref={ref} className={styles.machine} style={{ '--gears': `${T.gears}s`, '--settle': `${T.settle}s` }}>
       <Stage kind="desktop" />
       <Stage kind="mobile" />
       <figcaption className={styles.srOnly}>

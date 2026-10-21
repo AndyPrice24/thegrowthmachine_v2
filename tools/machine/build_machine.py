@@ -84,8 +84,13 @@ CFG = {
             # only the flanges break the line
             "block": [(330, 285, 482, 470), (914, 285, 1066, 470)],
         },
-        "shaft_in": [(372, 375), (470, 373), (560, 372)],
-        "shaft_out": [(836, 372), (928, 373), (1026, 375)],
+        # the shafts: from where the rod leaves the inlet to the flash at the
+        # central gear, and from the gear's other flash to the outlet
+        "shaft_in": [(468, 375), (510, 374), (552, 372)],
+        "shaft_out": [(844, 372), (886, 374), (928, 375)],
+        # the red ring inside each inlet / outlet flange, which lights as the
+        # energy arrives
+        "innards": {"in": (402, 304, 430, 454), "out": (966, 304, 994, 454)},
     },
     "mobile": {
         "src": "public/growth-machine-mobile-approved.webp",
@@ -120,8 +125,9 @@ CFG = {
             "protect": [(270, 0, 530, 372), (270, 995, 530, 1421), (0, 585, 125, 785), (675, 585, 800, 785)],
             "block": [(270, 0, 530, 372), (270, 995, 530, 1421), (0, 585, 125, 785), (675, 585, 800, 785)],
         },
-        "shaft_in": [(400, 300), (400, 420), (397, 525)],
-        "shaft_out": [(397, 845), (400, 960), (400, 1062)],
+        "shaft_in": [(398, 375), (398, 440), (398, 505)],
+        "shaft_out": [(398, 863), (398, 935), (398, 1003)],
+        "innards": {"in": (352, 343, 445, 367), "out": (338, 1014, 460, 1041)},
     },
 }
 
@@ -810,6 +816,19 @@ def build(kind, cfg):
     wb = (int(rc[0] - pad), int(rc[1] - pad), int(rc[0] + pad), int(rc[1] + pad))
     save_webp(os.path.join(out_dir, "warm.webp"), warm[wb[1]:wb[3], wb[0]:wb[2]], 85)
 
+    # ---- 4b. the flanges' red innards, as glow layers (screen-blended)
+    innards = {}
+    for side, (bx0, by0, bx1, by1) in cfg["innards"].items():
+        reg = np.zeros((H, W), np.float32)
+        reg[by0:by1, bx0:bx1] = 1
+        red_in = np.clip(redness * 1.3, 0, 1) * reg
+        glow = np.clip(red_in * 0.9 + cv2.GaussianBlur(red_in, (0, 0), 5) * 1.2 + cv2.GaussianBlur(red_in, (0, 0), 12) * 0.5, 0, 1)
+        pad = 26
+        gb = (bx0 - pad, by0 - pad, bx1 + pad, by1 + pad)
+        layer = np.dstack([np.full((H, W), 255.0), np.full((H, W), 84.0), np.full((H, W), 52.0), glow * 255])
+        save_webp(os.path.join(out_dir, f"innard-{side}.webp"), layer[gb[1]:gb[3], gb[0]:gb[2]], 90)
+        innards[side] = [gb[0] - x0, gb[1] - y0, gb[2] - gb[0], gb[3] - gb[1]]
+
     # ---- 5. pipes: trace every pipe's centre-line from the artwork
     # only the tubes' saturated red core: the pink glow and reflections round
     # them would pull the trace across onto a neighbouring pipe
@@ -865,6 +884,8 @@ def build(kind, cfg):
         "gears": gears,
         "pipesIn": pipes_in,
         "pipesOut": pipes_out,
+        "innardIn": innards["in"],
+        "innardOut": innards["out"],
         "shaftIn": shaft(cfg["shaft_in"]),
         "shaftOut": shaft(cfg["shaft_out"]),
     }

@@ -11,7 +11,8 @@
   --hot: #ffe6cf;
   --ease-gear: cubic-bezier(0.55, 0, 0.22, 1);
   --ease-flow: cubic-bezier(0.42, 0, 0.25, 1);
-  --settle: 3.75s;
+  --gears: 1.9s;
+  --settle: 4.7s;
   margin: 0;
   position: relative;
 }
@@ -200,6 +201,34 @@
   will-change: transform;
 }
 
+/* The flanges' red innards: lit as the energy arrives, then a soft glow. */
+.innard {
+  opacity: 0;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.running .innard {
+  animation:
+    innard-on 0.45s ease-out var(--d) both,
+    innard-settle 1.2s ease-in-out var(--settle) forwards;
+}
+
+.settled .innard {
+  opacity: 0.35;
+}
+
+@keyframes innard-on {
+  0% { opacity: 0; }
+  55% { opacity: 1; }
+  100% { opacity: 0.85; }
+}
+
+@keyframes innard-settle {
+  from { opacity: 0.85; }
+  to { opacity: 0.35; }
+}
+
 .warm {
   opacity: 0;
   mix-blend-mode: screen;
@@ -352,12 +381,12 @@
 }
 
 .running .rig {
-  animation: rig-show 1.45s linear 1.4s both;
+  animation: rig-show 1.45s linear var(--gears) both;
 }
 
 .running .gear,
 .running .logoGear {
-  animation: turn 1.45s var(--ease-gear) 1.4s both;
+  animation: turn 1.45s var(--ease-gear) var(--gears) both;
 }
 
 .running .logoGear {
@@ -366,7 +395,7 @@
 
 .running .warm {
   animation:
-    warm-up 0.9s ease-out 1.4s both,
+    warm-up 0.9s ease-out var(--gears) both,
     warm-settle 1.3s ease-in-out var(--settle) forwards;
 }
 
