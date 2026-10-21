@@ -22,18 +22,17 @@ export const JOURNEYS = {
       mobile: '/journeys/b2b-landscape.webp',
       focus: '50% 22%',
     },
-    // "How we work": six disciplines around one hub, three a side (left
-    // column first, top to bottom), each with what it covers. `node` sets
-    // the line breaks inside the circle where the automatic ones read badly.
+    // "How we work": the six disciplines, each a card linking to its own
+    // page (/b2b/<slug>), and the photo behind the board.
     work: {
-      hub: ['Profitable', 'growth'],
+      photo: '/systems/b2b-landscape.webp',
       disciplines: [
-        { name: 'Brand & Demand', items: ['Positioning & proposition', 'Differentiation', 'Messaging & sales materials'] },
-        { name: 'Sales & Conversion', items: ['Lead generation & funnels', 'Sales process & conversion', 'Tools & enablement'] },
-        { name: 'GTM & Market Expansion', items: ['ICP & market focus', 'Routes to market', 'Launch & partnerships'] },
-        { name: 'Commercial Model', items: ['Pricing & packaging', 'Revenue model', 'Growth economics'] },
-        { name: 'Data, Systems & AI', node: ['Data, Systems', '& AI'], items: ['Connected data', 'Forecasting & scenarios', 'Automation & bespoke tools'] },
-        { name: 'Team & Operating Model', items: ['Structure & accountability', 'Leadership rhythm', 'Training & capability'] },
+        { slug: 'brand-and-demand', icon: 'target', name: 'Brand & Demand', items: ['Positioning & proposition', 'Differentiation', 'Messaging & sales materials'] },
+        { slug: 'sales-and-conversion', icon: 'funnel', name: 'Sales & Conversion', items: ['Lead generation & funnels', 'Sales process & conversion', 'Tools & enablement'] },
+        { slug: 'gtm-and-market-expansion', icon: 'compass', name: 'GTM & Market Expansion', items: ['ICP & market focus', 'Routes to market', 'Launch & partnerships'] },
+        { slug: 'commercial-model', icon: 'bars', name: 'Commercial Model', items: ['Pricing & packaging', 'Revenue model', 'Growth economics'] },
+        { slug: 'data-systems-and-ai', icon: 'chip', name: 'Data, Systems & AI', items: ['Connected data', 'Forecasting & scenarios', 'Automation & bespoke tools'] },
+        { slug: 'team-and-operating-model', icon: 'people', name: 'Team & Operating Model', items: ['Structure & accountability', 'Leadership rhythm', 'Training & capability'] },
       ],
     },
     imageAlt: 'A growth leader mapping a B2B growth engine, from ICP and demand through pipeline to revenue and expansion, on a whiteboard in a sunlit meeting room.',

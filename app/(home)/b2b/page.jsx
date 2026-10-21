@@ -14,7 +14,7 @@ export default function B2BJourney() {
   return (
     <>
       <JourneyIntro {...JOURNEYS.b2b} />
-      <HowWeWork work={JOURNEYS.b2b.work} />
+      <HowWeWork work={JOURNEYS.b2b.work} base="/b2b" />
       <JourneyStandIns howWeWork={false} />
       <ClosingCta />
     </>

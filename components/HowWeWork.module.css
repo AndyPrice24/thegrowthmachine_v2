@@ -1,17 +1,64 @@
-/* "How we work": editorial head, then six disciplines wired into a central
-   gear. Desktop from 1024px: the hub diagram. Below: the gear with a line
-   down each side, the disciplines alternating between them. */
+/* "How we work": a dark band (darkened photo under a dot screen) with a
+   tilted cream board on it, a hard red shadow behind the board. On the
+   board, a bento grid of six discipline cards round a dark "Profitable
+   growth" tile. Desktop from 1024px: 4 columns x 3 rows; tablets and phones:
+   2 columns. */
 
 .section {
   --serif: Georgia, 'Times New Roman', serif;
   --soft: #5f5850;
-  --rule: #ddd5ca;
-  --wire: #8d8478;
-  padding: 104px 0 96px;
-  border-top: 1px solid var(--rule);
+  --cream: #fbf7f0;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 120px 0 130px;
+  background: #1a1613;
 }
 
-/* ---------------------------------------------------------------- head */
+/* The photo, darkened, and a fine screen of dots over it. */
+.section::before,
+.section::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.section::before {
+  background:
+    linear-gradient(180deg, rgba(22, 18, 15, 0.78), rgba(22, 18, 15, 0.86)),
+    var(--photo) center / cover no-repeat;
+  filter: grayscale(0.35) contrast(1.05);
+}
+
+.section::after {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.2) 1px, transparent 1.4px);
+  background-size: 7px 7px;
+}
+
+/* ---------------------------------------------------------------- board */
+
+.board {
+  position: relative;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 52px 50px 50px;
+  background: var(--cream);
+  border-radius: 6px;
+  box-shadow:
+    14px 14px 0 var(--red),
+    0 40px 80px -30px rgba(0, 0, 0, 0.6);
+  transform: rotate(-1.4deg);
+  transition:
+    transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.6s ease;
+}
+
+.waiting {
+  opacity: 0;
+  transform: translateY(40px) rotate(-4deg);
+}
 
 .eyebrow {
   margin: 0;
@@ -23,504 +70,294 @@
 }
 
 .title {
-  margin: 18px 0 0;
+  margin: 14px 0 0;
+  max-width: 820px;
   font-family: var(--serif);
   font-weight: 400;
-  font-size: clamp(42px, 5vw, 72px);
-  line-height: 1.02;
-  letter-spacing: -0.04em;
+  font-size: clamp(36px, 4.2vw, 58px);
+  line-height: 1.04;
+  letter-spacing: -0.035em;
   color: var(--ink);
   text-wrap: balance;
 }
 
 .title em {
-  display: block;
   font-style: italic;
+  color: var(--red);
 }
 
 .lede {
-  margin: 26px 0 0;
-  padding-left: 22px;
-  border-left: 2px solid var(--red);
-  font-size: clamp(18px, 1.6vw, 22px);
-  line-height: 1.45;
-  color: #3a3530;
+  margin: 18px 0 0;
+  font-size: clamp(17px, 1.5vw, 20px);
+  line-height: 1.5;
+  color: var(--soft);
 }
 
-.subhead {
-  margin: 76px 0 0;
-  font-family: var(--serif);
-  font-weight: 400;
-  font-size: clamp(28px, 3vw, 44px);
-  line-height: 1.12;
-  letter-spacing: -0.03em;
-  color: var(--ink);
-}
+/* ---------------------------------------------------------------- bento */
 
-.subhead em {
-  font-style: italic;
-  color: var(--red);
-}
-
-.figure {
-  margin-top: 44px;
-}
-
-/* ---------------------------------------------------------------- gear */
-
-/* Pre-rendered layers on one square canvas: shadow, back plate, front
-   plate (ring dark), the ring lit, and its bloom. */
-.gear {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1;
-}
-
-.gear img {
-  position: absolute;
-  inset: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-  max-width: none;
-  pointer-events: none;
-  user-select: none;
-}
-
-/* The ring is revealed by a sweep from the top, round both sides at once:
-   --sweep is how far each side has got (180deg is the whole ring). */
-@property --sweep {
-  syntax: '<angle>';
-  inherits: false;
-  initial-value: 180deg;
-}
-
-.ring,
-.glow {
-  --sweep: 180deg;
-  -webkit-mask-image: conic-gradient(#000 0deg var(--sweep), transparent var(--sweep) calc(360deg - var(--sweep)), #000 calc(360deg - var(--sweep)));
-  mask-image: conic-gradient(#000 0deg var(--sweep), transparent var(--sweep) calc(360deg - var(--sweep)), #000 calc(360deg - var(--sweep)));
-}
-
-.gear .glow {
-  opacity: 0;
-}
-
-/* Waiting: the back plate part of a tooth out of step, the ring dark. */
-.gearArmed .plateBack {
-  transform: rotate(14deg);
-}
-
-.gearArmed .ring,
-.gearArmed .glow {
-  --sweep: 0deg;
-}
-
-/* Running: the plates click together, then the ring lights. */
-.gearIn .plateBack {
-  animation: plate-click 0.95s cubic-bezier(0.5, 0, 0.3, 1) 0.2s both;
-}
-
-.gearIn .plateFront {
-  animation: plate-nudge 0.32s ease-out 0.86s;
-}
-
-.gearIn .ring {
-  animation: ring-sweep 0.6s cubic-bezier(0.4, 0, 0.3, 1) 1.2s both;
-}
-
-.gearIn .glow {
-  animation:
-    ring-sweep 0.6s cubic-bezier(0.4, 0, 0.3, 1) 1.2s both,
-    glow-pulse 1.8s ease-out 1.2s both;
-}
-
-@keyframes plate-click {
-  0% { transform: rotate(14deg); }
-  72% { transform: rotate(-1.2deg); }
-  86% { transform: rotate(0.5deg); }
-  100% { transform: rotate(0deg); }
-}
-
-@keyframes plate-nudge {
-  0%, 100% { transform: none; }
-  40% { transform: rotate(-1deg) scale(1.012); }
-}
-
-@keyframes ring-sweep {
-  from { --sweep: 0deg; }
-  to { --sweep: 180deg; }
-}
-
-@keyframes glow-pulse {
-  0% { opacity: 0; }
-  30% { opacity: 1; }
-  100% { opacity: 0; }
-}
-
-.hubText {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
+.bento {
   display: grid;
-  place-content: center;
-  margin: 0;
-  font-family: var(--font-label), 'Jost', ui-sans-serif, system-ui, sans-serif;
-  font-weight: 500;
-  font-size: clamp(14px, 1.5cqw, 19px);
-  line-height: 1.12;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  text-align: center;
-  color: var(--red);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-areas:
+    'a a b c'
+    'd h h e'
+    'f f g g';
+  gap: 16px;
+  margin-top: 40px;
 }
 
-.hubText::after {
-  content: '';
-  justify-self: center;
-  width: 2.2em;
-  height: 1.5px;
-  margin-top: 0.45em;
-  background: var(--red);
+.a { grid-area: a; }
+.b { grid-area: b; }
+.c { grid-area: c; }
+.d { grid-area: d; }
+.e { grid-area: e; }
+.f { grid-area: f; }
+
+.a .items,
+.f .items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 26px;
 }
 
-/* ---------------------------------------------------------------- diagram */
-
-.diagram {
+.card {
+  --lift: 0px;
   position: relative;
-  aspect-ratio: 1200 / 600;
-  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  min-height: 190px;
+  padding: 20px 22px 18px;
+  border: 1.5px solid var(--ink);
+  border-radius: 12px;
+  background: #fffdf9;
+  color: var(--ink);
+  box-shadow: 4px 5px 0 var(--ink);
+  transform: perspective(700px) translateY(var(--lift)) rotateX(var(--ty, 0deg)) rotateY(var(--tx, 0deg));
+  transition:
+    transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.25s ease,
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
-.wires {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-
-.wires path {
-  fill: none;
-  stroke: var(--wire);
-  stroke-width: 1.3;
-  stroke-linecap: round;
-}
-
-.wires .tick {
-  stroke: var(--red);
-  stroke-width: 1;
-}
-
-/* The red over the wires: solid when settled (and without the animation),
-   the same weight as the gear's ring; run out from the ports, glowing, when
-   the animation plays. */
-.wires .wireGlow {
-  stroke: var(--red);
-  stroke-width: 1.8;
-}
-
-.hub {
-  position: absolute;
-}
-
-.node {
-  --node-shadow:
-    inset 0 0 0 1px rgba(110, 90, 70, 0.2),
-    inset 0 2px 0 rgba(255, 255, 255, 0.9),
-    0 2px 4px rgba(60, 40, 25, 0.06),
-    0 14px 26px -12px rgba(60, 40, 25, 0.28);
-  position: absolute;
+.icon {
   display: grid;
   place-items: center;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: radial-gradient(circle at 36% 30%, #fffefb 0%, #f6f1e9 58%, #ebe3d7 100%);
-  box-shadow: var(--node-shadow);
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: rgba(200, 34, 28, 0.09);
+  color: var(--red);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.node h4 {
-  margin: 0;
-  max-width: 78%;
+.icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.num {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  font-family: var(--serif);
+  font-size: 44px;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: transparent;
+  -webkit-text-stroke: 1px #d5c8b7;
+  transition: -webkit-text-stroke-color 0.2s ease;
+}
+
+.name {
+  margin: 18px 0 0;
   font-family: var(--serif);
   font-weight: 400;
-  font-size: clamp(15px, 1.62cqw, 20px);
-  line-height: 1.18;
+  font-size: 23px;
+  line-height: 1.12;
   letter-spacing: -0.015em;
-  text-align: center;
-  text-wrap: balance;
-  color: var(--ink);
 }
 
 .items {
-  position: absolute;
   list-style: none;
-  margin: 0;
+  margin: 10px 0 0;
   padding: 0;
-  transform: translateY(-50%);
-  font-size: clamp(12px, 1.26cqw, 15.5px);
-  line-height: 1.85;
+  font-size: 14px;
+  line-height: 1.6;
   color: var(--soft);
-  white-space: nowrap;
+  transition: color 0.2s ease;
 }
 
-.itemsLeft {
-  text-align: right;
+.more {
+  margin-top: auto;
+  padding-top: 14px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--red);
+  transition: color 0.2s ease;
 }
 
-/* ---------------------------------------------------------------- stack */
-
-.stack {
-  display: none;
+.more b {
+  display: inline-block;
+  transition: transform 0.2s ease;
 }
 
-/* ---------------------------------------------------------------- wire up */
-
-.armed .wires .wireGlow {
-  stroke-dasharray: 1 1;
-  stroke-dashoffset: 1;
-  filter: drop-shadow(0 0 3px rgba(255, 75, 43, 0.8));
+/* Under the pointer or a finger: the card lifts and turns red. */
+.card:hover,
+.card:focus-visible,
+.active {
+  --lift: -6px;
+  background: var(--red);
+  color: #fff;
+  box-shadow: 7px 9px 0 var(--ink);
 }
 
-.in .wires .wireGlow {
-  stroke-dashoffset: 0;
-  transition: stroke-dashoffset var(--dur) linear var(--from);
-  animation: glow-settle 1.4s ease-in-out calc(var(--from) + var(--dur)) forwards;
+.card:hover .icon,
+.card:focus-visible .icon,
+.active .icon {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
 }
 
-.armed .wires .tick {
-  stroke: #c9c0b4;
+.card:hover .num,
+.card:focus-visible .num,
+.active .num {
+  -webkit-text-stroke-color: rgba(255, 255, 255, 0.55);
 }
 
-.in .wires .tick {
-  stroke: var(--red);
-  transition: stroke 0.5s ease var(--at);
+.card:hover .items,
+.card:focus-visible .items,
+.active .items,
+.card:hover .more,
+.card:focus-visible .more,
+.active .more {
+  color: #ffe4de;
 }
 
-.in .node {
-  animation: node-pulse 1.3s ease-out var(--at) both;
+.card:hover .more b,
+.active .more b {
+  transform: translateX(4px);
 }
 
-@keyframes node-pulse {
-  0% { box-shadow: var(--node-shadow), 0 0 0 0 rgba(200, 34, 28, 0.55); }
-  25% { box-shadow: var(--node-shadow), 0 0 0 3px rgba(200, 34, 28, 0.9); }
-  100% { box-shadow: var(--node-shadow), 0 0 0 20px rgba(200, 34, 28, 0); }
+.card:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 4px;
 }
 
-@keyframes glow-settle {
-  to { filter: drop-shadow(0 0 0 rgba(255, 75, 43, 0)); }
+/* The hub: what the six add up to. */
+.hub {
+  grid-area: h;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 26px 30px;
+  border-radius: 12px;
+  background: var(--ink);
+  color: #fff;
 }
 
-/* ---------------------------------------------------------------- below 1024 */
+.hubEyebrow {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #cfc5b9;
+}
+
+.hubEyebrow em {
+  font-style: normal;
+  color: #ff6c64;
+}
+
+.hubTitle {
+  margin: 12px 0 0;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(36px, 3.6vw, 50px);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.hubText {
+  margin: 12px 0 0;
+  max-width: 400px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #d9d0c5;
+}
+
+/* The way in: a tile of its own, for anyone unsure where to start. */
+.start {
+  grid-area: g;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 24px 28px 22px;
+  border: 1.5px dashed var(--red);
+  border-radius: 12px;
+  color: var(--ink);
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.startTitle {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 26px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.start .more {
+  padding-top: 0;
+}
+
+.start:hover,
+.start:focus-visible {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #fff;
+}
+
+.start:hover .more,
+.start:focus-visible .more {
+  color: #ff6c64;
+}
+
+.start:hover .more b {
+  transform: translateX(4px);
+}
+
+/* ---------------------------------------------------------------- tablet */
 
 @media (max-width: 1023px) {
   .section {
-    padding: 72px 0 68px;
+    padding: 84px 0 96px;
   }
 
-  .title {
-    font-size: clamp(40px, 7vw, 56px);
+  .board {
+    padding: 40px 34px 38px;
+    transform: rotate(-1deg);
   }
 
-  .subhead {
-    margin-top: 56px;
-  }
-
-  .figure {
-    margin-top: 36px;
-  }
-
-  .diagram {
-    display: none;
-  }
-
-  .stack {
-    position: relative;
-    display: block;
-    --dot: 15px;
-  }
-
-  .spine {
-    position: absolute;
-    top: 0;
-    left: 0;
-    overflow: visible;
-    pointer-events: none;
-  }
-
-  .spine path {
-    fill: none;
-    stroke-linecap: round;
-  }
-
-  .spineBase {
-    stroke: var(--wire);
-    stroke-width: 1;
-  }
-
-  /* The red over the lines: solid when settled (and without the
-     animation); drawn down from the port when the animation runs. */
-  .spineGlow {
-    stroke: var(--red);
-    stroke-width: 1.8;
-  }
-
-  /* The canvas leaves room round the gear for its shadow and glow; pull it
-     up so the gear itself sits close under the subhead. */
-  .stackHub {
-    position: relative;
-    z-index: 2;
-    width: 330px;
-    margin: -24px auto 0;
-  }
-
-  .stackHub .hubText {
-    font-size: 18px;
-  }
-
-  .zig {
-    position: relative;
-    z-index: 1;
-    list-style: none;
-    margin: 46px 0 0;
-    padding: 0;
-  }
-
-  .zig li {
-    --dot-top: 8px;
-    --tick: 18px;
-    position: relative;
-    width: min(84%, 520px);
-    padding: 0 0 34px calc(var(--dot) + var(--tick) + 14px);
-  }
-
-  .zig li.right {
-    margin-left: auto;
-    padding: 0 calc(var(--dot) + var(--tick) + 14px) 34px 0;
-    text-align: right;
-  }
-
-  /* The short rule from the bullet to its title. */
-  .zig li::before {
-    content: '';
-    position: absolute;
-    left: calc(var(--dot) + 6px);
-    top: calc(var(--dot-top) + var(--dot) / 2 - 0.5px);
-    width: var(--tick);
-    border-top: 1px solid var(--red);
-  }
-
-  .zig li.right::before {
-    left: auto;
-    right: calc(var(--dot) + 6px);
-  }
-
-  .zig li:last-child {
-    padding-bottom: 0;
-  }
-
-  /* The bullet: a red ring on the line, masked from it by a paper halo. */
-  .zig li::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: var(--dot-top);
-    width: var(--dot);
-    height: var(--dot);
-    box-sizing: border-box;
-    border-radius: 50%;
-    border: 1.5px solid var(--red);
-    background: var(--paper);
-    box-shadow: 0 0 0 4px var(--paper);
-  }
-
-  .zig li.right::after {
-    left: auto;
-    right: 0;
-  }
-
-  .zig h4 {
-    margin: 0;
-    font-family: var(--serif);
-    font-weight: 400;
-    font-size: 25px;
-    line-height: 1.2;
-    letter-spacing: -0.02em;
-    color: var(--ink);
-  }
-
-  .zig p {
-    margin: 8px 0 0;
-    font-size: 16px;
-    line-height: 1.6;
-    color: var(--soft);
-  }
-
-  .zig p span {
-    display: block;
-  }
-
-  /* ---- the animation: after the gear, the red runs down the lines */
-
-  .spineArmed .zig li::before {
-    border-color: #c9c0b4;
-  }
-
-  .spineArmed .spineGlow {
-    stroke-dasharray: calc(var(--len) * 1px) calc(var(--len) * 1px);
-    stroke-dashoffset: calc(var(--len) * 1px);
-    filter: drop-shadow(0 0 3px rgba(255, 75, 43, 0.8));
-  }
-
-  .spineIn .spineGlow {
-    stroke-dashoffset: 0;
-    transition: stroke-dashoffset var(--dur) linear var(--from);
-    animation: glow-settle 1.4s ease-in-out calc(var(--from) + var(--dur)) forwards;
-  }
-
-  .spineIn .zig li::after {
-    animation: dot-pulse 1.3s ease-out var(--at) both;
-  }
-
-  .spineIn .zig li::before {
-    border-color: var(--red);
-    transition: border-color 0.5s ease var(--at);
-  }
-}
-
-@keyframes dot-pulse {
-  0% {
-    background: var(--paper);
-    box-shadow: 0 0 0 4px var(--paper), 0 0 0 4px rgba(200, 34, 28, 0.55);
-  }
-  25% {
-    background: var(--red);
-  }
-  100% {
-    background: var(--paper);
-    box-shadow: 0 0 0 4px var(--paper), 0 0 0 18px rgba(200, 34, 28, 0);
-  }
-}
-
-/* Tablets: room for both sides at once, the right side dropped half a step
-   so the two still alternate. */
-@media (min-width: 601px) and (max-width: 1023px) {
-  .zig {
-    display: grid;
+  .bento {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: 48px;
-    padding-bottom: 130px;
+    grid-template-areas:
+      'h h'
+      'a a'
+      'b c'
+      'd e'
+      'f f'
+      'g g';
+    gap: 14px;
+    margin-top: 30px;
   }
 
-  .zig li {
-    grid-column: 1;
-    width: auto;
-  }
-
-  .zig li.right {
-    grid-column: 2;
-    top: 130px;
-    margin-left: 0;
+  .card {
+    min-height: 0;
   }
 }
 
@@ -528,55 +365,87 @@
 
 @media (max-width: 600px) {
   .section {
-    padding: 60px 0 56px;
+    padding: 64px 0 76px;
+  }
+
+  .board {
+    padding: 30px 18px 26px;
+    box-shadow:
+      8px 8px 0 var(--red),
+      0 30px 60px -30px rgba(0, 0, 0, 0.6);
   }
 
   .title {
-    font-size: clamp(34px, 9.6vw, 44px);
+    font-size: clamp(30px, 8.6vw, 38px);
   }
 
-  .lede {
-    padding-left: 18px;
-    font-size: 18px;
+  .bento {
+    gap: 12px;
   }
 
-  .subhead {
-    margin-top: 48px;
-    font-size: clamp(26px, 7.4vw, 32px);
+  .card {
+    padding: 16px 14px 14px;
+    border-radius: 10px;
+    box-shadow: 3px 4px 0 var(--ink);
   }
 
-  .subhead em {
+  .icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+
+  .icon svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .num {
+    top: 14px;
+    right: 14px;
+    font-size: 34px;
+  }
+
+  .name {
+    margin-top: 14px;
+    font-size: 19px;
+  }
+
+  .items {
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+
+  .a .items,
+  .f .items {
     display: block;
   }
 
-  .stackHub {
-    width: 300px;
+  .start {
+    padding: 20px 18px;
   }
 
-  .stackHub .hubText {
-    font-size: 16px;
-  }
-
-  .zig {
-    margin-top: 40px;
-  }
-
-  .zig li {
-    --dot-top: 6px;
-    --tick: 14px;
-    width: 88%;
-    padding-bottom: 30px;
-  }
-
-  .zig li.right {
-    padding-bottom: 30px;
-  }
-
-  .zig h4 {
+  .startTitle {
     font-size: 22px;
   }
 
-  .zig p {
-    font-size: 15.5px;
+  .more {
+    font-size: 11px;
+  }
+
+  .hub {
+    padding: 22px 20px;
+  }
+
+  .hubTitle {
+    font-size: 38px;
+  }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .board,
+  .card {
+    transition: none;
   }
 }

@@ -1,356 +1,195 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import styles from './HowWeWork.module.css';
 
 /*
- * "How we work", the section after a journey's opening: one headline, then
- * the growth disciplines we work across, drawn as six nodes wired into a
- * central gear (the outcome they all drive).
+ * "How we work", the section after a journey's opening: a tilted cream board
+ * on a dark, dotted photo, holding the headline and a bento grid of the six
+ * growth disciplines around "Profitable growth".
  *
- * Desktop (1024px+): the hub diagram, three nodes a side, each with what it
- * covers beside it. Everything sits in the diagram's own 1200x600 units, as
- * percentages, so the wiring stays locked at any width. Below 1024px the
- * same content as the gear over two lines, one down each side (see Spine).
+ * Each discipline card links to its own page. Cards lift and turn red under
+ * the pointer, and under a finger on touch screens, including while it is
+ * scrolling past (the card under the finger is tracked from touch events,
+ * which are passive, so scrolling is never held up).
  *
- * Copy lives in journeys.js as `work`: { hub, disciplines[6] }, left column
- * first; a discipline's optional `node` gives its two lines in the circle.
- *
- * Both versions run the same sequence once, when they first come into view:
- * the gear's back plate clicks into register, its enamel ring lights (a
- * sweep from the top round both sides), and the red runs out along the
- * lines to each discipline, which pulses as it arrives. Without the
- * animation (reduced motion) the page shows the finished, lit state.
+ * Copy lives in journeys.js as `work`: { photo, disciplines[6] }, each
+ * { slug, icon, name, items }. Links go to `${base}/${slug}`.
  */
 
-// The sequence, in seconds from its start: the click runs 0.2-1.15 and the
-// ring lights 1.2-1.8 (both in the CSS), then the red flows out.
-const FLOW_AT = 1.8;
-
-const W = 1200;
-const H = 600;
-const R = 86; // node radius
-const NODES = [
-  [350, 110], [346, 300], [350, 490], // left, top to bottom
-  [850, 110], [854, 300], [850, 490], // right
-];
-const TICK = 40; // the short rule between a node and its list
-const GAP = 14;
-
-// The gear images' square canvas, in diagram units. The gear's tip radius
-// is 40% of it, and its ports' exits sit 1.152 tip radii out to each side,
-// three of them 0.03 tip radii apart (tools/gear/build_gear.py).
-const GEAR_BOX = 320;
-const TIP = GEAR_BOX * 0.4;
-
-// From a port exit to each node: out of the port, then round into the node
-// on the line towards the exit. With how long the red takes to run it, at
-// a steady speed.
-const SPEED = 115; // diagram units a second
-const WIRES = NODES.map(([x, y], i) => {
-  const side = i < 3 ? -1 : 1;
-  const ex = 600 + side * 1.152 * TIP;
-  const ey = 300 + Math.sign(y - 300) * 0.03 * TIP;
-  const [ux, uy] = [ex - x, ey - y].map((v, _, [a, b]) => v / Math.hypot(a, b));
-  const [nx, ny] = [x + ux * R, y + uy * R];
-  if (y === 300) return [`M${ex} ${ey}H${nx}`, Math.abs(ex - nx) / SPEED];
-  const d = `M${ex} ${ey}C${ex + side * 22} ${ey} ${nx + ux * 44} ${ny + uy * 44} ${nx} ${ny}`;
-  return [d, Math.hypot(ex - nx, ey - ny) * 1.15 / SPEED];
-});
-
-// The gear: pre-rendered layers (tools/gear/build_gear.py), the words live
-// text over the dial. layout is where its ports are: 'sides' (desktop) or
-// 'bottom' (phones and tablets). state is '', 'armed' (waiting: back plate
-// out of step, ring dark) or 'in' (running the sequence).
-const LAYERS = ['shadow-*', 'port-*', 'back', 'front-*', 'ring-*', 'glow'];
-const LAYER_CLASS = { back: 'plateBack', 'front-*': 'plateFront', 'ring-*': 'ring', glow: 'glow' };
-
-function Gear({ hub, layout, state = '' }) {
-  const cls = state === 'in' ? `${styles.gearArmed} ${styles.gearIn}` : state === 'armed' ? styles.gearArmed : '';
+export function DisciplineIcon({ name }) {
+  const paths = {
+    target: (
+      <>
+        <circle cx="12" cy="12" r="8.5" />
+        <circle cx="12" cy="12" r="4.6" />
+        <circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none" />
+      </>
+    ),
+    funnel: <path d="M3.5 5h17l-6.5 7.5V19l-4-2v-4.5L3.5 5Z" />,
+    compass: (
+      <>
+        <circle cx="12" cy="12" r="8.5" />
+        <path d="m15.6 8.4-2.2 5-5 2.2 2.2-5 5-2.2Z" />
+      </>
+    ),
+    bars: (
+      <>
+        <path d="M5 19v-6M10 19V7M15 19v-9M20 19V4" />
+        <path d="M3 19h18" />
+      </>
+    ),
+    chip: (
+      <>
+        <rect x="7" y="7" width="10" height="10" rx="1.6" />
+        <path d="M10 3.5V7M14 3.5V7M10 17v3.5M14 17v3.5M3.5 10H7M3.5 14H7M17 10h3.5M17 14h3.5" />
+      </>
+    ),
+    people: (
+      <>
+        <circle cx="8.5" cy="8.5" r="2.8" />
+        <circle cx="16" cy="9.5" r="2.3" />
+        <path d="M3.5 18.5c.6-3.2 2.6-4.8 5-4.8s4.4 1.6 5 4.8M13.8 14.2c.7-.4 1.4-.6 2.2-.6 2 0 3.6 1.4 4.2 4.4" />
+      </>
+    ),
+  };
   return (
-    <div className={`${styles.gear} ${cls}`}>
-      {LAYERS.map((l) => (
-        <img
-          key={l}
-          className={LAYER_CLASS[l] ? styles[LAYER_CLASS[l]] : undefined}
-          src={`/how-we-work/${l.replace('*', layout)}.webp`}
-          alt=""
-          width="720"
-          height="720"
-          decoding="async"
-          draggable="false"
-        />
-      ))}
-      <p className={styles.hubText}>
-        {hub[0]}
-        <br />
-        {hub[1]}
-      </p>
-    </div>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      {paths[name]}
+    </svg>
   );
 }
 
-/*
- * Below 1024px: the gear, and from the bottom of it two lines, one down each
- * side. The disciplines alternate between them (left side as on desktop:
- * the first three), titles on the left line left-aligned, on the right line
- * right-aligned. The lines are drawn from measured positions so they meet
- * each bullet exactly.
- *
- * In the sequence the red runs down both lines at once, so the bullets
- * light in reading order, each lighting the short rule to its title.
- */
-const ORDER = [0, 3, 1, 4, 2, 5];
-const DOT = 15;
-const DROP = 56; // how far the lines fall from the port while curving out
-const GLOW_TIME = 3.6; // s, for the longer of the two lines
+// Where each card sits in the desktop bento (4 columns, 3 rows), in order;
+// the hub fills the middle of row two.
+const AREAS = ['a', 'b', 'c', 'd', 'e', 'f'];
 
-function bezierLength(p0, p1, p2, p3) {
-  let len = 0;
-  let prev = p0;
-  for (let i = 1; i <= 40; i++) {
-    const t = i / 40;
-    const u = 1 - t;
-    const pt = [0, 1].map((k) => u * u * u * p0[k] + 3 * u * u * t * p1[k] + 3 * u * t * t * p2[k] + t * t * t * p3[k]);
-    len += Math.hypot(pt[0] - prev[0], pt[1] - prev[1]);
-    prev = pt;
-  }
-  return len;
-}
+export default function HowWeWork({ work, base }) {
+  const boardRef = useRef(null);
+  const [touched, setTouched] = useState(null);
+  const [shown, setShown] = useState(true);
 
-function Spine({ hub, disciplines }) {
-  const rootRef = useRef(null);
-  const gearRef = useRef(null);
-  const listRef = useRef(null);
-  const [geo, setGeo] = useState(null);
-  const [phase, setPhase] = useState('');
-
+  // The board swings into place once, when it first comes into view.
   useEffect(() => {
-    const root = rootRef.current;
-    const measure = () => {
-      if (!root.offsetParent) return; // hidden on desktop
-      const r = root.getBoundingClientRect();
-      const g = gearRef.current.getBoundingClientRect();
-      // The bottom port's two exits (tip radius: 40% of the gear canvas).
-      const cx = g.left + g.width / 2 - r.left;
-      const tip = g.width * 0.4;
-      const gy = g.top - r.top + g.height / 2 + 1.154 * tip;
-      const items = [...listRef.current.children];
-      const sides = ['left', 'right'].map((side) => {
-        const x = side === 'left' ? DOT / 2 : r.width - DOT / 2;
-        const ex = cx + (side === 'left' ? -1 : 1) * 0.02 * tip;
-        const p0 = [ex, gy];
-        const p1 = [ex, gy + DROP * 0.75];
-        const p2 = [x, gy + DROP * 0.25];
-        const p3 = [x, gy + DROP];
-        const curve = bezierLength(p0, p1, p2, p3);
-        const dots = items
-          .map((li, k) => ({ li, k }))
-          .filter(({ k }) => (ORDER[k] >= 3) === (side === 'right'))
-          .map(({ li, k }) => {
-            const top = parseFloat(getComputedStyle(li, '::after').top) || 0;
-            const y = li.getBoundingClientRect().top - r.top + top + DOT / 2;
-            return { k, at: curve + (y - p3[1]) };
-          });
-        const end = dots[dots.length - 1].at;
-        return {
-          d: `M${p0}C${p1} ${p2} ${p3}V${p3[1] + end - curve}`,
-          len: end,
-          dots,
-        };
-      });
-      const speed = Math.max(...sides.map((sd) => sd.len)) / GLOW_TIME;
-      const at = [];
-      sides.forEach((sd) => sd.dots.forEach((d) => (at[d.k] = FLOW_AT + d.at / speed)));
-      setGeo({ w: r.width, h: r.height, sides, speed, at });
+    const el = boardRef.current;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (el.getBoundingClientRect().top < window.innerHeight * 0.85) return;
+    setShown(false);
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShown(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.15 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  // Touch: light the card under the finger as it moves, scrolling or not.
+  useEffect(() => {
+    const board = boardRef.current;
+    let clear;
+    const pick = (e) => {
+      const t = e.touches[0];
+      if (!t) return;
+      const card = document.elementFromPoint(t.clientX, t.clientY)?.closest('[data-card]');
+      clearTimeout(clear);
+      setTouched(card && board.contains(card) ? card.dataset.card : null);
     };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(root);
-    return () => ro.disconnect();
+    const end = () => {
+      clearTimeout(clear);
+      clear = setTimeout(() => setTouched(null), 450);
+    };
+    board.addEventListener('touchstart', pick, { passive: true });
+    board.addEventListener('touchmove', pick, { passive: true });
+    board.addEventListener('touchend', end, { passive: true });
+    board.addEventListener('touchcancel', end, { passive: true });
+    return () => {
+      clearTimeout(clear);
+      board.removeEventListener('touchstart', pick);
+      board.removeEventListener('touchmove', pick);
+      board.removeEventListener('touchend', end);
+      board.removeEventListener('touchcancel', end);
+    };
   }, []);
 
-  const ready = Boolean(geo);
-  useEffect(() => {
-    const el = gearRef.current;
-    if (!ready || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    if (el.getBoundingClientRect().top < window.innerHeight * 0.6) return;
-    setPhase(styles.spineArmed);
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setPhase(`${styles.spineArmed} ${styles.spineIn}`);
-          io.disconnect();
-        }
-      },
-      { threshold: 1, rootMargin: '0px 0px -12% 0px' }
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [ready]);
+  // Pointer: a slight tilt towards the cursor on the card it is over.
+  const tilt = (e) => {
+    if (e.pointerType !== 'mouse') return;
+    const r = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - 0.5;
+    const y = (e.clientY - r.top) / r.height - 0.5;
+    e.currentTarget.style.setProperty('--tx', `${(x * 6).toFixed(2)}deg`);
+    e.currentTarget.style.setProperty('--ty', `${(-y * 6).toFixed(2)}deg`);
+  };
+  const untilt = (e) => {
+    e.currentTarget.style.removeProperty('--tx');
+    e.currentTarget.style.removeProperty('--ty');
+  };
 
   return (
-    <div ref={rootRef} className={`${styles.stack} ${phase}`}>
-      {geo && (
-        <svg className={styles.spine} width={geo.w} height={geo.h} viewBox={`0 0 ${geo.w} ${geo.h}`} aria-hidden="true" focusable="false">
-          {geo.sides.map((sd) => (
-            <path key={`b${sd.d}`} className={styles.spineBase} d={sd.d} />
-          ))}
-          {geo.sides.map((sd) => (
-            <path
-              key={`g${sd.d}`}
-              className={styles.spineGlow}
-              d={sd.d}
-              style={{ '--len': sd.len, '--dur': `${sd.len / geo.speed}s`, '--from': `${FLOW_AT}s` }}
-            />
-          ))}
-        </svg>
-      )}
-      <div ref={gearRef} className={styles.stackHub}>
-        <Gear hub={hub} layout="bottom" state={phase ? (phase.includes(styles.spineIn) ? 'in' : 'armed') : ''} />
-      </div>
-      <ol ref={listRef} className={styles.zig}>
-        {ORDER.map((idx, k) => {
-          const d = disciplines[idx];
-          return (
-            <li
-              key={d.name}
-              className={idx >= 3 ? styles.right : undefined}
-              style={geo ? { '--at': `${geo.at[k]}s` } : undefined}
-            >
-              <h4>{d.name}</h4>
-              <p>
-                {d.items.map((t) => (
-                  <span key={t}>{t}</span>
-                ))}
-              </p>
-            </li>
-          );
-        })}
-      </ol>
-    </div>
-  );
-}
-
-const pct = (v, of) => `${(v / of) * 100}%`;
-
-export default function HowWeWork({ work }) {
-  const figRef = useRef(null);
-  const [state, setState] = useState('');
-  useEffect(() => {
-    const el = figRef.current?.firstElementChild; // the desktop diagram
-    if (!el || !el.offsetParent || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    if (el.getBoundingClientRect().top < window.innerHeight * 0.5) return;
-    setState('armed');
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setState('in');
-          io.disconnect();
-        }
-      },
-      { threshold: 0.6 }
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
-  const { hub, disciplines } = work;
-
-  return (
-    <section className={styles.section} aria-labelledby="work-title">
+    <section
+      className={styles.section}
+      aria-labelledby="work-title"
+      style={{ '--photo': `url(${work.photo})` }}
+    >
       <div className="shell">
-        <p className={styles.eyebrow}>How we work</p>
-        <h2 id="work-title" className={styles.title}>
-          We don’t hand you a strategy. <em>We get in and do the work.</em>
-        </h2>
-        <p className={styles.lede}>Senior thinking is only useful if somebody makes it happen.</p>
+        <div ref={boardRef} className={`${styles.board} ${shown ? '' : styles.waiting}`}>
+          <p className={styles.eyebrow}>How we work</p>
+          <h2 id="work-title" className={styles.title}>
+            We don’t hand you a strategy. <em>We get in and do the work.</em>
+          </h2>
+          <p className={styles.lede}>Senior thinking is only useful if somebody makes it happen.</p>
 
-        <h3 className={styles.subhead}>
-          Complementary disciplines. <em>Compounding impact.</em>
-        </h3>
+          <div className={styles.bento}>
+            {work.disciplines.map((d, i) => (
+              <Link
+                key={d.slug}
+                href={`${base}/${d.slug}`}
+                data-card={d.slug}
+                className={`${styles.card} ${styles[AREAS[i]]} ${touched === d.slug ? styles.active : ''}`}
+                style={{ '--i': i }}
+                onPointerMove={tilt}
+                onPointerLeave={untilt}
+              >
+                <span className={styles.icon}>
+                  <DisciplineIcon name={d.icon} />
+                </span>
+                <span className={styles.num} aria-hidden="true">
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <h3 className={styles.name}>{d.name}</h3>
+                <ul className={styles.items}>
+                  {d.items.map((t) => (
+                    <li key={t}>{t}</li>
+                  ))}
+                </ul>
+                <span className={styles.more} aria-hidden="true">
+                  How it works <b>→</b>
+                </span>
+              </Link>
+            ))}
 
-        <div
-          ref={figRef}
-          className={`${styles.figure} ${state ? styles.armed : ''} ${state === 'in' ? styles.in : ''}`}
-        >
-          {/* Desktop: the hub diagram. */}
-          <div className={styles.diagram}>
-            <svg className={styles.wires} viewBox={`0 0 ${W} ${H}`} aria-hidden="true" focusable="false">
-              {WIRES.map(([d]) => (
-                <path key={d} d={d} />
-              ))}
-              {WIRES.map(([d, dur]) => (
-                <path
-                  key={`g${d}`}
-                  className={styles.wireGlow}
-                  d={d}
-                  pathLength="1"
-                  style={{ '--dur': `${dur}s`, '--from': `${FLOW_AT}s` }}
-                />
-              ))}
-              {NODES.map(([x, y], i) => {
-                const left = i < 3;
-                const x1 = left ? x - R : x + R;
-                return (
-                  <path
-                    key={i}
-                    className={styles.tick}
-                    d={`M${x1} ${y}h${left ? -TICK : TICK}`}
-                    style={{ '--at': `${FLOW_AT + WIRES[i][1]}s` }}
-                  />
-                );
-              })}
-            </svg>
-
-            <div
-              className={styles.hub}
-              style={{
-                left: pct(600 - GEAR_BOX / 2, W),
-                top: pct(300 - GEAR_BOX / 2, H),
-                width: pct(GEAR_BOX, W),
-              }}
-            >
-              <Gear hub={hub} layout="sides" state={state} />
+            <div className={styles.hub}>
+              <p className={styles.hubEyebrow}>
+                Complementary disciplines. <em>Compounding impact.</em>
+              </p>
+              <p className={styles.hubTitle}>Profitable growth</p>
+              <p className={styles.hubText}>Six disciplines run as one commercial function, so a gain in one isn’t lost in the next.</p>
             </div>
 
-            {disciplines.map((d, i) => {
-              const [x, y] = NODES[i];
-              const left = i < 3;
-              const edge = left ? x - R - TICK - GAP : x + R + TICK + GAP;
-              return (
-                <div key={d.name} style={{ '--at': `${FLOW_AT + WIRES[i][1]}s` }}>
-                  <div
-                    className={styles.node}
-                    style={{ left: pct(x - R, W), top: pct(y - R, H), width: pct(R * 2, W) }}
-                  >
-                    <h4>
-                      {d.node ? (
-                        <>
-                          {d.node[0]}
-                          <br />
-                          {d.node[1]}
-                        </>
-                      ) : (
-                        d.name
-                      )}
-                    </h4>
-                  </div>
-                  <ul
-                    className={`${styles.items} ${left ? styles.itemsLeft : ''}`}
-                    style={left ? { right: pct(W - edge, W), top: pct(y, H) } : { left: pct(edge, W), top: pct(y, H) }}
-                  >
-                    {d.items.map((t) => (
-                      <li key={t}>{t}</li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            })}
+            <Link href="/contact" className={styles.start}>
+              <p className={styles.startTitle}>Not sure which of the six is holding you back?</p>
+              <span className={styles.more} aria-hidden="true">
+                Talk to us <b>→</b>
+              </span>
+            </Link>
           </div>
 
-          {/* Tablets and phones: the gear over two lines, one down each side. */}
-          <Spine hub={hub} disciplines={disciplines} />
         </div>
       </div>
     </section>
