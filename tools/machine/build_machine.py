@@ -657,13 +657,13 @@ def build(kind, cfg):
     A = np.where(zone, A * keep, A)
 
     # last: small, faint fragments detached from the machine and the pipes
-    frag = A > 0.05
+    frag = A > 0.02
     lab, n = ndi.label(frag, structure=np.ones((3, 3)))
     if n > 1:
         idx = np.arange(1, n + 1)
         size = ndi.sum(frag, lab, idx)
         peak = ndi.maximum(A, lab, idx)
-        drop = idx[(size < 400) & (peak < 0.3)]
+        drop = idx[(size < 3000) & (peak < 0.3)]
         A = np.where(np.isin(lab, drop), 0, A)
     body = np.dstack([Fc, A * 255])
 
