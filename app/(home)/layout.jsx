@@ -19,10 +19,10 @@ export default function HomeLayout({ children }) {
     <section className="v2-hero">
       <div className="shell v2-hero-head">
         <div className="v2-hero-title">
-          <h1>Don’t hire the title.<br/><em>Solve the growth problem.</em></h1>
+          <h1><span className="v2-hero-line">Don’t hire <span className="v2-strike">the title</span>.</span> <em>Solve the growth problem.</em></h1>
         </div>
         <div className="v2-hero-copy">
-          <p className="v2-hero-lede">When growth slows, businesses often reach for a title: CMO, CRO, Head of Growth, GTM lead. But growth rarely fits neatly inside one role. We diagnose the whole system, then step in and do the work that matters most.</p>
+          <p className="v2-hero-lede">When growth slows, businesses often reach for a title: CMO, CRO, Head of Growth, GTM lead. But growth rarely fits neatly inside one role.</p>
           <div className="v2-hero-actions">
             <Link className="button" href="/contact">Talk to The Growth Machine →</Link>
             <span className="v2-note">Fractional. Senior-led. Hands-on.</span>

@@ -12,12 +12,12 @@
 .home-v2{background:var(--paper);overflow:hidden}
 .home-v2 .section{padding:118px 0}
 .v2-hero{padding:72px 0 0;position:relative}
-.v2-hero-head{display:grid;grid-template-columns:1fr;gap:30px}
+.v2-hero-head{display:grid;grid-template-columns:1fr;gap:30px;justify-items:center;text-align:center}
 .v2-hero-title h1{font-family:Georgia,"Times New Roman",serif;font-size:clamp(52px,5.3vw,84px);line-height:.95;letter-spacing:-.045em;font-weight:400;margin:0}
-.v2-hero-copy{display:grid;grid-template-columns:minmax(0,660px) auto;justify-content:space-between;align-items:end;gap:24px 64px}
-.v2-hero-copy .v2-hero-actions{margin-top:0;flex-direction:column;align-items:flex-start;gap:14px}
+.v2-hero-copy{display:grid;justify-items:center;gap:30px}
+.v2-hero-copy .v2-hero-actions{margin-top:0;flex-direction:column;align-items:center;gap:14px}
 .v2-hero-machine{width:min(1320px,100% - 32px);margin:44px auto 0}
-.v2-hero-lede{max-width:660px;font-size:19px;line-height:1.6;color:var(--muted);margin:0;text-wrap:pretty}
+.v2-hero-lede{max-width:660px;font-size:19px;line-height:1.6;color:var(--muted);margin:0;text-wrap:balance}
 .v2-hero-actions{display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin-top:34px}
 .v2-note{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--stone)}
 
@@ -95,7 +95,6 @@
 @media(max-width:980px){
   .home-v2 .section{padding:90px 0}
   .v2-hero-head{gap:22px}
-  .v2-hero-copy{grid-template-columns:1fr}
   .v2-hero-machine{margin-top:36px}
   .v2-section-intro{grid-template-columns:1fr;gap:18px}
   .v2-method-track{grid-template-columns:1fr 1fr;gap:44px 26px}
@@ -115,7 +114,6 @@
   .v2-hero-title h1{font-size:50px;line-height:.95}
   .v2-hero-machine{width:calc(100% - 28px)}
   .v2-hero-lede{font-size:17px;line-height:1.55}
-  .v2-hero-actions{align-items:flex-start;flex-direction:column}
   .v2-section-intro h2,.v2-do h2,.v2-founders h2,.v2-proof h2,.v2-insights h2,.v2-final h2{font-size:42px}
   .v2-section-intro{margin-bottom:38px}
   .v2-method-track{grid-template-columns:1fr;gap:0;border-left:1px solid #cfc6bb;margin-left:29px}
@@ -147,3 +145,15 @@
 .discipline-areas h2{margin:0;font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:clamp(24px,2.6vw,32px)}
 .discipline-note{margin:30px 0 0;color:var(--muted)}
 .discipline-foot{display:flex;flex-wrap:wrap;align-items:center;gap:18px 28px;margin-top:40px}
+
+/* Hero headline: "Don't hire the title." with "the title" struck through by
+   a hand-drawn red stroke, drawn once on arrival; the answer beneath. */
+.v2-hero-title h1{text-wrap:balance}
+.v2-hero-line{display:block}
+.v2-hero-title h1 em{display:block;margin-top:.08em;text-wrap:balance}
+.v2-strike{position:relative;white-space:nowrap}
+.v2-strike::after{content:'';position:absolute;left:-4%;right:-4%;top:50%;height:.2em;margin-top:-.06em;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 24' preserveAspectRatio='none'%3E%3Cpath d='M4 16C70 9 160 7 250 8.5c55 1 105 3.5 146 7' fill='none' stroke='%23c8221c' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat left center/100% 100%;
+  transform:rotate(-2deg);clip-path:inset(0 0 0 0);animation:v2-strike .55s cubic-bezier(.6,0,.3,1) .7s both}
+@keyframes v2-strike{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+@media(prefers-reduced-motion:reduce){.v2-strike::after{animation:none}}

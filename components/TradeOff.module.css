@@ -1,5 +1,5 @@
 /* "Breadth or ownership?" — editorial serif throughout, red only for The
-   Growth Machine. Desktop columns from 1024px; below that, cards on a
+   Growth Machine. The intro (eyebrow, title, lede) is centred. Desktop columns from 1024px; below that, cards on a
    numbered timeline. */
 
 .section {
@@ -13,6 +13,7 @@
 
 .eyebrow {
   margin: 0;
+  text-align: center;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   font-size: 13px;
   font-weight: 500;
@@ -23,6 +24,7 @@
 
 .title {
   margin: 18px 0 0;
+  text-align: center;
   font-family: var(--serif);
   font-weight: 400;
   font-size: clamp(48px, 7vw, 104px);
@@ -32,13 +34,14 @@
 }
 
 .lede {
-  margin: 26px 0 0;
+  margin: 26px auto 0;
   max-width: 980px;
+  text-align: center;
   font-size: clamp(21px, 2.15vw, 30px);
   line-height: 1.38;
   letter-spacing: -0.01em;
   color: #2a2622;
-  text-wrap: pretty;
+  text-wrap: balance;
 }
 
 /* ---------------------------------------------------------------- options */
