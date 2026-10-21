@@ -65,7 +65,7 @@
   height: 44px;
   border-radius: 50%;
   border: 1.5px solid var(--ink);
-  background: #fffdf9;
+  background: #ffffff;
   font-family: var(--serif);
   font-style: italic;
   font-size: 18px;
@@ -85,7 +85,7 @@
   padding: 10px 10px 18px;
   border: 1.5px solid var(--ink);
   border-radius: 14px;
-  background: #fffdf9;
+  background: #ffffff;
   color: var(--ink);
   box-shadow: 5px 6px 0 var(--ink);
   transform: translateY(var(--lift)) rotate(var(--tilt));
@@ -125,7 +125,7 @@
   padding: 16px 18px 15px;
   border: 1.5px solid var(--ink);
   border-radius: 10px;
-  background: #fffdf9;
+  background: #ffffff;
   box-shadow: 3px 4px 0 var(--ink);
   transition: background-color 0.2s ease, color 0.2s ease;
 }
@@ -278,7 +278,7 @@
   height: 28px;
   border-radius: 50%;
   border: 1.5px solid var(--ink);
-  background: #fffdf9;
+  background: #ffffff;
   box-shadow: 0 2px 8px rgba(40, 28, 18, 0.25);
   pointer-events: none;
   transition: border-color 0.2s ease, background-color 0.2s ease;

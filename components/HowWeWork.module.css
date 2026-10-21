@@ -7,7 +7,7 @@
 .section {
   --serif: Georgia, 'Times New Roman', serif;
   --soft: #5f5850;
-  --cream: #fbf7f0;
+  --cream: #faf8f4;
   position: relative;
   isolation: isolate;
   overflow: hidden;
@@ -129,7 +129,7 @@
   padding: 20px 22px 18px;
   border: 1.5px solid var(--ink);
   border-radius: 12px;
-  background: #fffdf9;
+  background: #ffffff;
   color: var(--ink);
   box-shadow: 4px 5px 0 var(--ink);
   transform: perspective(700px) translateY(var(--lift)) rotateX(var(--ty, 0deg)) rotateY(var(--tx, 0deg));
