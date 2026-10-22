@@ -229,12 +229,6 @@
   to { opacity: 0.35; }
 }
 
-.warm {
-  opacity: 0;
-  mix-blend-mode: screen;
-  pointer-events: none;
-}
-
 /* ---------------------------------------------------------------- arc labels */
 
 .arcs {
@@ -393,12 +387,6 @@
   --turn: 360deg;
 }
 
-.running .warm {
-  animation:
-    warm-up 0.9s ease-out var(--gears) both,
-    warm-settle 1.3s ease-in-out var(--settle) forwards;
-}
-
 @keyframes light-on {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -445,16 +433,6 @@
   to { transform: rotate(var(--turn)); }
 }
 
-@keyframes warm-up {
-  from { opacity: 0; }
-  to { opacity: 0.35; }
-}
-
-@keyframes warm-settle {
-  from { opacity: 0.35; }
-  to { opacity: 0; }
-}
-
 /* Reduced motion: the settled state, no movement. */
 .settled .cardIn::before,
 .settled .cardIn::after {
@@ -474,10 +452,6 @@
 .settled .core {
   opacity: 0.16;
   stroke-dashoffset: 0;
-}
-
-.settled .warm {
-  opacity: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {

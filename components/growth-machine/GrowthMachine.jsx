@@ -20,7 +20,7 @@
  * along the shaft to the flash at the central gear; the gear turns once and
  * the function gears answer it; light runs from the gear's other flash along
  * the outlet shaft, the outlet's innard lights, the outlet pipes energise and
- * the outcome cards light; then it settles with a little warmth left on. Reduced motion shows the settled
+ * the outcome cards light; then it settles with the inlet rings softly lit. Reduced motion shows the settled
  * state without movement. Without JavaScript it is the static machine.
  */
 import { useEffect, useRef } from 'react';
@@ -109,7 +109,6 @@ function Stage({ kind }) {
           <img className={styles.layer} style={box(m.rig)} src={src('rig-front')} alt="" />
         </div>
 
-        <img className={`${styles.layer} ${styles.warm}`} style={box(m.warm)} src={src('warm')} alt="" aria-hidden="true" />
         <img
           className={`${styles.layer} ${styles.innard}`}
           style={{ ...box(m.innardIn), '--d': `${T.innardIn}s` }}

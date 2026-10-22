@@ -23,7 +23,8 @@ What it makes, per artwork:
                 a static front layer for the glows and brackets that sit in
                 front of the gears. At rest the page shows body.webp, so the
                 resting machine is pixel-faithful to the approved art.
-  warm.webp     A warm bloom of the central gear for the "engaged" state.
+  innard-*.webp The red rings inside the inlet and outlet flanges, which
+                light as the energy passes through.
 
 and the manifest: canvas size, crop, card boxes, gear centres and tooth
 counts, the nameplate, and the centre-lines of every pipe and shaft (traced
@@ -628,9 +629,9 @@ def build(kind, cfg):
     # Drop them where they are clear of the machine's solid parts; the red
     # glow round the pipes (strongly red) is kept.
     Fc = np.clip(F, 0, 255)
-    redness = Fc[..., 0] - Fc[..., 1:].max(2)
+    red_f = Fc[..., 0] - Fc[..., 1:].max(2)
     away = cv2.distanceTransform((A < 0.9).astype(np.uint8), cv2.DIST_L2, 5) > 6
-    haze = (A < 0.1) & (redness < 70) & away
+    haze = (A < 0.1) & (red_f < 70) & away
     haze = cv2.GaussianBlur(haze.astype(np.float32), (0, 0), 1.5)
     A = A * (1 - np.clip(haze * 1.6, 0, 1))
 
@@ -716,6 +717,13 @@ def build(kind, cfg):
             alpha_t[rs < rs[toothy.min()]] = 1
             alpha_t *= np.clip((tip - rs) / 1.5, 0, 1)[:, None]
             tooth = alpha_t > 0.5
+            # silver only: red in the averaged tooth is the red gear's glow
+            # caught at the tooth edges, and would turn as a red fringe, so
+            # it becomes the same brightness in silver
+            red_t = T[..., 0] - np.maximum(T[..., 1], T[..., 2])
+            wr = np.clip((red_t - 50) / 30, 0, 1)[..., None]
+            lum_T = T.mean(-1, keepdims=True)
+            T = T * (1 - wr) + (lum_T * np.array([1.1, 1.0, 0.9])) * wr
         prepared.append((g, P, rs, th, T, alpha_t, tooth))
 
     # base: fill each band's teeth with what is behind them (red first, it is on top)
@@ -723,25 +731,14 @@ def build(kind, cfg):
         Pb, _, _ = polar(base, g["c"], rs[0], rs[-1] + 0.5, len(th))
         keep = ~cv2.dilate(tooth.astype(np.uint8), np.ones((3, 9), np.uint8)).astype(bool)
         if g["red"]:
-            # Behind the red teeth is the dark interior of the machine. The
-            # gaps also show bits of the function gears, which the grey rings
-            # redraw themselves, so use the plain interior tone per radius.
-            # sample only gaps away from the function gears: those show the
-            # warm, dark interior, not silver teeth
-            thg = np.linspace(0, 2 * np.pi, Pb.shape[1], endpoint=False)
-            px = g["c"][0] + rs[:, None] * np.cos(thg)[None]
-            py = g["c"][1] + rs[:, None] * np.sin(thg)[None]
-            clear = keep.copy()
-            for o in all_gears:
-                if not o["red"]:
-                    clear &= np.hypot(px - o["c"][0], py - o["c"][1]) > o["band"][1] + 4
-            masked = np.where(clear[..., None], Pb, np.nan)
-            tone = np.stack([np.nanmedian(masked[i], axis=0) if clear[i].any() else Pb[i].mean(0) for i in range(Pb.shape[0])])
-            tone = np.nan_to_num(tone, nan=50.0)
-            # the whole band, gaps included: any of the art kept here (the
-            # shaft flashes, with teeth round them) would stay still while
-            # the gear turns over it
-            filled = np.broadcast_to(tone[:, None, :], Pb.shape).copy()
+            # behind the gear is the machine's interior, lit red by the gear:
+            # carry the real interior seen in the gaps round the ring, never
+            # the teeth themselves (solid gear red, with a margin), which
+            # would stay still while the gear turns over them
+            Prb, _, _ = polar(redness, g["c"], rs[0], rs[-1] + 0.5, len(th))
+            gear_red = cv2.dilate(((Prb > 0.55) | tooth).astype(np.uint8), np.ones((5, 11), np.uint8)).astype(bool)
+            seen = ~gear_red
+            filled = fill_along_theta(Pb, seen)
         else:
             filled = fill_along_theta(Pb, keep)
         r_out = g["band"][1] + 2
@@ -779,9 +776,20 @@ def build(kind, cfg):
             rgb = sub * w[..., None] + tcol * (1 - w[..., None])
             a = np.clip(cv2.GaussianBlur(shape, (0, 0), 0.6), 0, 1)
         else:
-            rgb, inside = unpolar(T, g["c"], rs, th, (H, W), box)
-            a, _ = unpolar(alpha_t, g["c"], rs, th, (H, W), box)
-            a = np.where(inside, a, 0)
+            # A function gear is also the art's own gear: the shared tooth
+            # outline, the art's metal wherever it shows, and the median
+            # tooth only where the red gear hides it (where they mesh).
+            bx0, by0, bx1, by1 = box
+            sub = clean[by0:by1, bx0:bx1].astype(np.float32)
+            shape, inside = unpolar(alpha_t, g["c"], rs, th, (H, W), box)
+            shape = np.where(inside, shape, 0).astype(np.float32)
+            tcol, _ = unpolar(T, g["c"], rs, th, (H, W), box)
+            sy, sx = np.mgrid[by0:by1, bx0:bx1]
+            rc = red_cfg["c"]
+            hidden = (np.hypot(sx - rc[0], sy - rc[1]) < red_cfg["band"][1] + 3) | (redness[by0:by1, bx0:bx1] > 0.1)
+            w = np.clip(cv2.GaussianBlur((~hidden).astype(np.float32), (0, 0), 1.0), 0, 1)
+            rgb = sub * w[..., None] + tcol * (1 - w[..., None])
+            a = np.clip(cv2.GaussianBlur((shape > 0.5).astype(np.float32), (0, 0), 0.6), 0, 1)
         layers[g["id"]] = (box, np.dstack([rgb, a * 255]))
         gears.append({"id": g["id"], "N": g["N"], "c": [round(g["c"][0] - x0, 2), round(g["c"][1] - y0, 2)],
                       "box": [box[0] - x0, box[1] - y0, box[2] - box[0], box[3] - box[1]],
@@ -841,17 +849,6 @@ def build(kind, cfg):
     save_webp(os.path.join(out_dir, "rig-front.webp"), front[ry0:ry1, rx0:rx1], 101)
     for gid, (box, rgba) in layers.items():
         save_webp(os.path.join(out_dir, f"gear-{gid}.webp"), rgba, 101)
-
-    # ---- 4. warm bloom of the central gear (screen-blended on the page)
-    rc = red_cfg["c"]
-    d = np.hypot(xx - rc[0], yy - rc[1])
-    ring = ((d > red_cfg["band"][0] - 6) & (d < red_cfg["band"][1] + 4)).astype(np.float32) * np.clip(redness * 1.5, 0, 1)
-    bloom = cv2.GaussianBlur(ring, (0, 0), 6) * 0.8 + cv2.GaussianBlur(ring, (0, 0), 16) * 0.3
-    bloom = np.clip(bloom, 0, 1)
-    warm = np.dstack([np.full((H, W), 255.0), np.full((H, W), 78.0), np.full((H, W), 44.0), bloom * 255])
-    pad = red_cfg["band"][1] + 60
-    wb = (int(rc[0] - pad), int(rc[1] - pad), int(rc[0] + pad), int(rc[1] + pad))
-    save_webp(os.path.join(out_dir, "warm.webp"), warm[wb[1]:wb[3], wb[0]:wb[2]], 85)
 
     # ---- 4b. the flanges' red innards, as glow layers (screen-blended)
     innards = {}
@@ -917,7 +914,6 @@ def build(kind, cfg):
         "plate": {"cx": round(pcx - x0, 2), "cy": round(pcy - y0, 2), "r": pr},
         "logo": logo,
         "rig": rig_box,
-        "warm": [wb[0] - x0, wb[1] - y0, wb[2] - wb[0], wb[3] - wb[1]],
         "gears": gears,
         "pipesIn": pipes_in,
         "pipesOut": pipes_out,
