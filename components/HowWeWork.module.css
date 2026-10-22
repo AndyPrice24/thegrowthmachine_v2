@@ -1,7 +1,7 @@
 /* "How we work": a dark band (darkened photo under a dot screen) with a
    tilted cream board on it, a hard red shadow behind the board. On the
    board, a bento grid of six discipline cards round a dark "Profitable
-   growth" tile. Desktop from 1024px: 4 columns x 3 rows; tablets and phones:
+   growth" tile. Desktop from 1024px: 4 columns x 4 rows; tablets and phones:
    2 columns. */
 
 .section {
@@ -99,7 +99,8 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   grid-template-areas:
-    'a a b c'
+    'a a a a'
+    'b h h c'
     'd h h e'
     'f f g g';
   gap: 16px;
@@ -113,10 +114,15 @@
 .e { grid-area: e; }
 .f { grid-area: f; }
 
-/* The wide cards set their three areas side by side, in equal columns. */
+/* The wide cards set their three areas side by side, in equal columns;
+   the full-width card 01 keeps them to a comfortable width. */
 .a .items,
 .f .items {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.a .items {
+  max-width: 760px;
 }
 
 .card {
