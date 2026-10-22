@@ -138,17 +138,6 @@
   background: var(--red);
 }
 
-/* ---------------------------------------------------------------- close */
-
-.close {
-  margin: 44px 0 0;
-  padding-top: 34px;
-  border-top: 1px solid var(--rule);
-  font-size: clamp(17px, 1.5vw, 21px);
-  line-height: 1.5;
-  color: #3a3530;
-}
-
 /* ---------------------------------------------------------------- mobile */
 
 @media (max-width: 1023px) {
@@ -268,11 +257,6 @@
     color: var(--soft);
   }
 
-  .close {
-    margin-top: 30px;
-    padding-top: 24px;
-    font-size: 17px;
-  }
 }
 
 /* Tablets: the same cards, with room to breathe. */

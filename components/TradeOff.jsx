@@ -79,9 +79,6 @@ export default function TradeOff() {
           ))}
         </div>
 
-        <p className={styles.close}>
-          We work with your team, your specialists, or independently — whatever the problem requires.
-        </p>
       </div>
     </section>
   );
