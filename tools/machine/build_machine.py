@@ -693,11 +693,17 @@ def build(kind, cfg):
         Pred, _, _ = polar(redness, g["c"], g["band"][0], g["band"][1], nth)
         T, mad, per = fold_template(P, g["N"])
         if g["red"]:
-            Tred, _, _ = fold_template(Pred[..., None], g["N"])
-            alpha_t = np.clip(Tred[..., 0] * 1.6, 0, 1)
-            # the inner solid band of the ring is always opaque
-            alpha_t[rs < g["band"][0] + 10] = 1
+            # the tooth shape every tooth shares, from the art's bright red
+            # (the median over all teeth ignores the shaft glows and the dark
+            # red interior seen between the teeth)
+            cr, cg_, cb = clean[..., 0], clean[..., 1], clean[..., 2]
+            real = np.clip((cr - np.maximum(cg_, cb) - 60) / 50, 0, 1) * np.clip((cr - 110) / 40, 0, 1)
+            Pa, _, _ = polar(real.astype(np.float32), g["c"], g["band"][0], g["band"][1], nth)
+            Ta, _, _ = fold_template(Pa[..., None], g["N"])
+            alpha_t = (Ta[..., 0] > 0.5).astype(np.float32)
+            alpha_t[rs < g["band"][0] + 8] = 1
             tooth = alpha_t > 0.5
+            g["real"] = real
         else:
             # In the median tooth the metal is bright and the gaps (whatever
             # lies behind them, averaged) are dark, so brightness separates them.
@@ -747,9 +753,32 @@ def build(kind, cfg):
     for g, P, rs, th, T, alpha_t, tooth in prepared:
         r_out = int(np.ceil(g["band"][1])) + 2
         box = (int(round(g["c"][0])) - r_out, int(round(g["c"][1])) - r_out, int(round(g["c"][0])) + r_out, int(round(g["c"][1])) + r_out)
-        rgb, inside = unpolar(T, g["c"], rs, th, (H, W), box)
-        a, _ = unpolar(alpha_t, g["c"], rs, th, (H, W), box)
-        a = np.where(inside, a, 0)
+        if g["red"]:
+            # The red gear turns exactly once, so it needs no periodic tooth:
+            # it is the art's own gear, cut out by its red (the gaps clear),
+            # which stays as crisp as the art at every angle.
+            bx0, by0, bx1, by1 = box
+            sub = clean[by0:by1, bx0:bx1].astype(np.float32)
+            real = g["real"][by0:by1, bx0:bx1]
+            shape, inside = unpolar(alpha_t, g["c"], rs, th, (H, W), box)
+            shape = (np.where(inside, shape, 0) > 0.5).astype(np.float32)
+            # where a glow lies over the teeth (it stays put on the front
+            # layer), the turning gear takes its plain tooth colour instead
+            hot_p = (P.mean(-1) - T.mean(-1)) > 28
+            hot_p = ndi.binary_dilation(ndi.binary_opening(hot_p, np.ones((3, 3))), np.ones((5, 7))).astype(np.float32)
+            hot, _ = unpolar(hot_p, g["c"], rs, th, (H, W), box)
+            tcol, _ = unpolar(T, g["c"], rs, th, (H, W), box)
+            hot = np.clip(cv2.GaussianBlur(np.where(inside, hot, 0).astype(np.float32), (0, 0), 1.5), 0, 1)
+            # the outline is the shared tooth shape everywhere; the colour is
+            # the art's where its gear shows, the plain tooth where something
+            # sat in front of it (the shafts) or a glow lay over it
+            w = np.clip(cv2.GaussianBlur((real > 0.6).astype(np.float32), (0, 0), 1.0), 0, 1) * (1 - hot)
+            rgb = sub * w[..., None] + tcol * (1 - w[..., None])
+            a = np.clip(cv2.GaussianBlur(shape, (0, 0), 0.6), 0, 1)
+        else:
+            rgb, inside = unpolar(T, g["c"], rs, th, (H, W), box)
+            a, _ = unpolar(alpha_t, g["c"], rs, th, (H, W), box)
+            a = np.where(inside, a, 0)
         layers[g["id"]] = (box, np.dstack([rgb, a * 255]))
         gears.append({"id": g["id"], "N": g["N"], "c": [round(g["c"][0] - x0, 2), round(g["c"][1] - y0, 2)],
                       "box": [box[0] - x0, box[1] - y0, box[2] - box[0], box[3] - box[1]],
