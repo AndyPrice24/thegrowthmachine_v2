@@ -147,13 +147,11 @@
 .discipline-foot{display:flex;flex-wrap:wrap;align-items:center;gap:18px 28px;margin-top:40px}
 
 /* Hero headline: "Don't hire the title." with "the title" struck through by
-   a hand-drawn red stroke, drawn once on arrival; the answer beneath. */
+   a hand-drawn red stroke; the answer beneath. */
 .v2-hero-title h1{text-wrap:balance}
 .v2-hero-line{display:block}
 .v2-hero-title h1 em{display:block;margin-top:.08em;text-wrap:balance}
 .v2-strike{position:relative;white-space:nowrap}
 .v2-strike::after{content:'';position:absolute;left:-4%;right:-4%;top:50%;height:.2em;margin-top:-.06em;
-  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 24' preserveAspectRatio='none'%3E%3Cpath d='M4 16C70 9 160 7 250 8.5c55 1 105 3.5 146 7' fill='none' stroke='%23c8221c' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat left center/100% 100%;
-  transform:rotate(-2deg);clip-path:inset(0 0 0 0);animation:v2-strike .55s cubic-bezier(.6,0,.3,1) .7s both}
-@keyframes v2-strike{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
-@media(prefers-reduced-motion:reduce){.v2-strike::after{animation:none}}
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 24' preserveAspectRatio='none'%3E%3Cpath d='M4 16C70 9 160 7 250 8.5c55 1 105 3.5 146 7' fill='none' stroke='%23c8221c' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat left center/100% 100%;
+  transform:rotate(-2deg)}
