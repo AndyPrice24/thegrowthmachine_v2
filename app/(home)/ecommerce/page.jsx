@@ -1,4 +1,5 @@
 import JourneyIntro from '@/components/JourneyIntro';
+import HowWeWork from '@/components/HowWeWork';
 import { JourneyStandIns, ClosingCta } from '@/components/JourneyStandIns';
 import { JOURNEYS } from '@/components/journeys';
 
@@ -13,7 +14,8 @@ export default function EcommerceJourney() {
   return (
     <>
       <JourneyIntro {...JOURNEYS.ecommerce} />
-      <JourneyStandIns />
+      <HowWeWork work={JOURNEYS.ecommerce.work} base="/ecommerce" />
+      <JourneyStandIns howWeWork={false} />
       <ClosingCta />
     </>
   );

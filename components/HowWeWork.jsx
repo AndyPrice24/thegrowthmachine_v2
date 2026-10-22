@@ -40,6 +40,21 @@ export function DisciplineIcon({ name }) {
         <path d="M3 19h18" />
       </>
     ),
+    cart: (
+      <>
+        <path d="M3 4h2.2l2.2 10.2a1.5 1.5 0 0 0 1.5 1.2h8.4a1.5 1.5 0 0 0 1.5-1.1L20.5 8H6.1" />
+        <circle cx="9.5" cy="19.5" r="1.3" />
+        <circle cx="17" cy="19.5" r="1.3" />
+      </>
+    ),
+    loop: (
+      <>
+        <path d="M19 9a7.5 7.5 0 0 0-13.4-2.2" />
+        <path d="M5 4v3.5h3.5" />
+        <path d="M5 15a7.5 7.5 0 0 0 13.4 2.2" />
+        <path d="M19 20v-3.5h-3.5" />
+      </>
+    ),
     chip: (
       <>
         <rect x="7" y="7" width="10" height="10" rx="1.6" />

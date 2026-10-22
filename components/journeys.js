@@ -3,7 +3,8 @@
  *
  * b2b: Andrew's B2B section (October 2026 mockups), word for word, minus its
  *   four-lever row: the How we work section below covers the disciplines.
- * ecommerce: Andrew's ecommerce section (October 2026 mockups), word for word.
+ * ecommerce: Andrew's ecommerce section (October 2026 mockups), word for word,
+ *   minus its four-lever row, for the same reason.
  *
  * image: { desktop, mobile, focus }. Desktop shows a near-square crop beside
  * the copy (a 3:4 portrait works best); phones and tablets show a 4:3
@@ -43,12 +44,19 @@ export const JOURNEYS = {
     title: 'The next stage of growth may not start with more traffic.',
     lede: 'The next growth opportunity may come from sharper acquisition, stronger conversion, greater customer value, or healthier unit economics.',
     statement: 'We diagnose, prioritise and execute — not just advise.',
-    levers: [
-      { icon: 'bars', name: 'Acquire', text: 'Customers, channels & media economics' },
-      { icon: 'cart', name: 'Convert', text: 'Offer, pricing & onsite experience' },
-      { icon: 'people', name: 'Grow customer value', text: 'AOV, retention & LTV' },
-      { icon: 'stack', name: 'Protect margin', text: 'Product mix, channel economics & profitability' },
-    ],
+    // "How we work": the six disciplines, each a card linking to its own
+    // page (/ecommerce/<slug>), and the photo behind the board.
+    work: {
+      photo: '/systems/ecommerce-landscape.webp',
+      disciplines: [
+        { slug: 'brand-and-demand', icon: 'target', name: 'Brand & Demand', items: ['Positioning & proposition', 'Creative & content', 'Brand building'] },
+        { slug: 'acquisition-and-discoverability', icon: 'compass', name: 'Acquisition & Discoverability', items: ['Paid media & channel mix', 'SEO, GEO & AEO', 'Media economics'] },
+        { slug: 'conversion-and-onsite', icon: 'cart', name: 'Conversion & Onsite', items: ['Site & landing pages', 'Offer & pricing', 'Testing & optimisation'] },
+        { slug: 'retention-and-ltv', icon: 'loop', name: 'Retention & LTV', items: ['CRM & email', 'Loyalty & subscriptions', 'Customer lifetime value'] },
+        { slug: 'margin-and-channels', icon: 'bars', name: 'Margin & Channels', items: ['Unit economics', 'Marketplaces & retail', 'Product mix'] },
+        { slug: 'data-systems-and-ai', icon: 'chip', name: 'Data, Systems & AI', items: ['Connected data', 'Forecasting & reporting', 'Automation & tools'] },
+      ],
+    },
     image: {
       desktop: '/journeys/ecommerce-portrait.webp',
       mobile: '/journeys/ecommerce-landscape.webp',

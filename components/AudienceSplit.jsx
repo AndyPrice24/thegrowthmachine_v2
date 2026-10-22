@@ -29,12 +29,13 @@ const SYSTEMS = [
     title: ['Ecommerce &', 'consumer growth'],
     lede: 'For businesses where growth happens through customers, products and channels.',
     levers: [
-      'Acquisition & media economics',
-      'Conversion & onsite experience',
-      'Offer, pricing & merchandising',
-      'CRM, retention & LTV',
+      // The six disciplines of the ecommerce How we work section, in its order.
       'Brand & demand',
-      'Margin & channel performance',
+      'Acquisition & discoverability',
+      'Conversion & onsite',
+      'Retention & LTV',
+      'Margin & channels',
+      'Data, systems & AI',
     ],
     href: '/ecommerce',
     cta: 'Explore ecommerce growth',
