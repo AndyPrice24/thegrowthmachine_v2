@@ -694,17 +694,11 @@ def build(kind, cfg):
         Pred, _, _ = polar(redness, g["c"], g["band"][0], g["band"][1], nth)
         T, mad, per = fold_template(P, g["N"])
         if g["red"]:
-            # the tooth shape every tooth shares, from the art's bright red
-            # (the median over all teeth ignores the shaft glows and the dark
-            # red interior seen between the teeth)
-            cr, cg_, cb = clean[..., 0], clean[..., 1], clean[..., 2]
-            real = np.clip((cr - np.maximum(cg_, cb) - 60) / 50, 0, 1) * np.clip((cr - 110) / 40, 0, 1)
-            Pa, _, _ = polar(real.astype(np.float32), g["c"], g["band"][0], g["band"][1], nth)
-            Ta, _, _ = fold_template(Pa[..., None], g["N"])
-            alpha_t = (Ta[..., 0] > 0.5).astype(np.float32)
-            alpha_t[rs < g["band"][0] + 8] = 1
+            Tred, _, _ = fold_template(Pred[..., None], g["N"])
+            alpha_t = np.clip(Tred[..., 0] * 1.6, 0, 1)
+            # the inner solid band of the ring is always opaque
+            alpha_t[rs < g["band"][0] + 10] = 1
             tooth = alpha_t > 0.5
-            g["real"] = real
         else:
             # In the median tooth the metal is bright and the gaps (whatever
             # lies behind them, averaged) are dark, so brightness separates them.
@@ -717,13 +711,6 @@ def build(kind, cfg):
             alpha_t[rs < rs[toothy.min()]] = 1
             alpha_t *= np.clip((tip - rs) / 1.5, 0, 1)[:, None]
             tooth = alpha_t > 0.5
-            # silver only: red in the averaged tooth is the red gear's glow
-            # caught at the tooth edges, and would turn as a red fringe, so
-            # it becomes the same brightness in silver
-            red_t = T[..., 0] - np.maximum(T[..., 1], T[..., 2])
-            wr = np.clip((red_t - 50) / 30, 0, 1)[..., None]
-            lum_T = T.mean(-1, keepdims=True)
-            T = T * (1 - wr) + (lum_T * np.array([1.1, 1.0, 0.9])) * wr
         prepared.append((g, P, rs, th, T, alpha_t, tooth))
 
     # base: fill each band's teeth with what is behind them (red first, it is on top)
@@ -731,14 +718,22 @@ def build(kind, cfg):
         Pb, _, _ = polar(base, g["c"], rs[0], rs[-1] + 0.5, len(th))
         keep = ~cv2.dilate(tooth.astype(np.uint8), np.ones((3, 9), np.uint8)).astype(bool)
         if g["red"]:
-            # behind the gear is the machine's interior, lit red by the gear:
-            # carry the real interior seen in the gaps round the ring, never
-            # the teeth themselves (solid gear red, with a margin), which
-            # would stay still while the gear turns over them
-            Prb, _, _ = polar(redness, g["c"], rs[0], rs[-1] + 0.5, len(th))
-            gear_red = cv2.dilate(((Prb > 0.55) | tooth).astype(np.uint8), np.ones((5, 11), np.uint8)).astype(bool)
-            seen = ~gear_red
-            filled = fill_along_theta(Pb, seen)
+            # Behind the red teeth is the dark interior of the machine. The
+            # gaps also show bits of the function gears, which the grey rings
+            # redraw themselves, so use the plain interior tone per radius.
+            # sample only gaps away from the function gears: those show the
+            # warm, dark interior, not silver teeth
+            thg = np.linspace(0, 2 * np.pi, Pb.shape[1], endpoint=False)
+            px = g["c"][0] + rs[:, None] * np.cos(thg)[None]
+            py = g["c"][1] + rs[:, None] * np.sin(thg)[None]
+            clear = keep.copy()
+            for o in all_gears:
+                if not o["red"]:
+                    clear &= np.hypot(px - o["c"][0], py - o["c"][1]) > o["band"][1] + 4
+            masked = np.where(clear[..., None], Pb, np.nan)
+            tone = np.stack([np.nanmedian(masked[i], axis=0) if clear[i].any() else Pb[i].mean(0) for i in range(Pb.shape[0])])
+            tone = np.nan_to_num(tone, nan=50.0)
+            filled = np.where(keep[..., None], Pb, tone[:, None, :])
         else:
             filled = fill_along_theta(Pb, keep)
         r_out = g["band"][1] + 2
@@ -753,43 +748,9 @@ def build(kind, cfg):
     for g, P, rs, th, T, alpha_t, tooth in prepared:
         r_out = int(np.ceil(g["band"][1])) + 2
         box = (int(round(g["c"][0])) - r_out, int(round(g["c"][1])) - r_out, int(round(g["c"][0])) + r_out, int(round(g["c"][1])) + r_out)
-        if g["red"]:
-            # The red gear turns exactly once, so it needs no periodic tooth:
-            # it is the art's own gear, cut out by its red (the gaps clear),
-            # which stays as crisp as the art at every angle.
-            bx0, by0, bx1, by1 = box
-            sub = clean[by0:by1, bx0:bx1].astype(np.float32)
-            real = g["real"][by0:by1, bx0:bx1]
-            shape, inside = unpolar(alpha_t, g["c"], rs, th, (H, W), box)
-            shape = (np.where(inside, shape, 0) > 0.5).astype(np.float32)
-            # where a glow lies over the teeth (it stays put on the front
-            # layer), the turning gear takes its plain tooth colour instead
-            hot_p = (P.mean(-1) - T.mean(-1)) > 28
-            hot_p = ndi.binary_dilation(ndi.binary_opening(hot_p, np.ones((3, 3))), np.ones((5, 7))).astype(np.float32)
-            hot, _ = unpolar(hot_p, g["c"], rs, th, (H, W), box)
-            tcol, _ = unpolar(T, g["c"], rs, th, (H, W), box)
-            hot = np.clip(cv2.GaussianBlur(np.where(inside, hot, 0).astype(np.float32), (0, 0), 1.5), 0, 1)
-            # the outline is the shared tooth shape everywhere; the colour is
-            # the art's where its gear shows, the plain tooth where something
-            # sat in front of it (the shafts) or a glow lay over it
-            w = np.clip(cv2.GaussianBlur((real > 0.6).astype(np.float32), (0, 0), 1.0), 0, 1) * (1 - hot)
-            rgb = sub * w[..., None] + tcol * (1 - w[..., None])
-            a = np.clip(cv2.GaussianBlur(shape, (0, 0), 0.6), 0, 1)
-        else:
-            # A function gear is also the art's own gear: the shared tooth
-            # outline, the art's metal wherever it shows, and the median
-            # tooth only where the red gear hides it (where they mesh).
-            bx0, by0, bx1, by1 = box
-            sub = clean[by0:by1, bx0:bx1].astype(np.float32)
-            shape, inside = unpolar(alpha_t, g["c"], rs, th, (H, W), box)
-            shape = np.where(inside, shape, 0).astype(np.float32)
-            tcol, _ = unpolar(T, g["c"], rs, th, (H, W), box)
-            sy, sx = np.mgrid[by0:by1, bx0:bx1]
-            rc = red_cfg["c"]
-            hidden = (np.hypot(sx - rc[0], sy - rc[1]) < red_cfg["band"][1] + 3) | (redness[by0:by1, bx0:bx1] > 0.1)
-            w = np.clip(cv2.GaussianBlur((~hidden).astype(np.float32), (0, 0), 1.0), 0, 1)
-            rgb = sub * w[..., None] + tcol * (1 - w[..., None])
-            a = np.clip(cv2.GaussianBlur((shape > 0.5).astype(np.float32), (0, 0), 0.6), 0, 1)
+        rgb, inside = unpolar(T, g["c"], rs, th, (H, W), box)
+        a, _ = unpolar(alpha_t, g["c"], rs, th, (H, W), box)
+        a = np.where(inside, a, 0)
         layers[g["id"]] = (box, np.dstack([rgb, a * 255]))
         gears.append({"id": g["id"], "N": g["N"], "c": [round(g["c"][0] - x0, 2), round(g["c"][1] - y0, 2)],
                       "box": [box[0] - x0, box[1] - y0, box[2] - box[0], box[3] - box[1]],
@@ -801,8 +762,8 @@ def build(kind, cfg):
     for g, P, rs, th, T, alpha_t, tooth in prepared:
         if g["red"]:
             # nothing static over the red gear: a frozen patch of it (the
-            # shaft flashes, with the teeth under them) would stay behind
-            # while the rest turns; the turning gear has the plain tooth there
+            # shaft flashes, with the teeth under them) stays behind while the
+            # rest turns
             continue
         dev = np.abs(P - T).max(-1)
         Pred, _, _ = polar(redness, g["c"], rs[0], rs[-1] + 0.5, len(th))
@@ -830,6 +791,11 @@ def build(kind, cfg):
             cart = np.where(near, 0, cart)
         front_a[by0:by1, bx0:bx1] = np.maximum(front_a[by0:by1, bx0:bx1], np.where(inside, cart, 0))
     # the outer radius of the red teeth band touches the shaft glows above/below:
+    # the logo plate sits in front of the function gears: their rings reach
+    # just behind its edge, and as they turn those parts would swing out over
+    # the plate, so a still copy of the plate stays on top
+    d_plate = np.hypot(xx - red_cfg["c"][0], yy - red_cfg["c"][1])
+    front_a = np.maximum(front_a, np.clip(red_cfg["band"][0] - 1 - d_plate, 0, 1))
     front = np.dstack([clean, np.clip(front_a, 0, 1) * 255])
 
     # rig crop: everything the gears can touch
@@ -840,9 +806,13 @@ def build(kind, cfg):
     rig_box = [rx0 - x0, ry0 - y0, rx1 - rx0, ry1 - ry0]
     # the base only needs to cover the bands (body shows everywhere else)
     band_union = np.zeros((H, W), np.float32)
+    d_red = np.hypot(xx - red_cfg["c"][0], yy - red_cfg["c"][1])
     for g in all_gears:
         d = np.hypot(xx - g["c"][0], yy - g["c"][1])
-        band_union = np.maximum(band_union, ((d >= g["band"][0] - 3) & (d <= g["band"][1] + 3)).astype(np.float32))
+        ring = (d >= g["band"][0] - 3) & (d <= g["band"][1] + 3)
+        if not g["red"]:
+            ring &= d_red >= red_cfg["band"][0]  # not over the logo plate
+        band_union = np.maximum(band_union, ring.astype(np.float32))
     band_union = cv2.GaussianBlur(band_union, (0, 0), 1.0)
     rig_base = np.dstack([base, band_union * 255])
     save_webp(os.path.join(out_dir, "rig-base.webp"), rig_base[ry0:ry1, rx0:rx1], 101)
