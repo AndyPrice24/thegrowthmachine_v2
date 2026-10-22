@@ -1,8 +1,8 @@
 /* "How we work": a dark band (darkened photo under a dot screen) with a
    tilted cream board on it, a hard red shadow behind the board. On the
-   board, a bento grid of six discipline cards round a dark "Profitable
-   growth" tile. Desktop from 1024px: 4 columns x 4 rows; tablets and phones:
-   2 columns. */
+   board, six discipline cards, all alike, round a dark "Profitable growth"
+   tile. Desktop from 1024px: three columns, the disciplines down each side
+   and Profitable growth in the middle; tablets and phones: 2 columns. */
 
 .section {
   --serif: Georgia, 'Times New Roman', serif;
@@ -97,12 +97,11 @@
 
 .bento {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 1fr);
   grid-template-areas:
-    'a a a a'
-    'b h h c'
-    'd h h e'
-    'f f g g';
+    'a h b'
+    'c h d'
+    'e g f';
   gap: 16px;
   margin-top: 40px;
 }
@@ -113,17 +112,6 @@
 .d { grid-area: d; }
 .e { grid-area: e; }
 .f { grid-area: f; }
-
-/* The wide cards set their three areas side by side, in equal columns;
-   the full-width card 01 keeps them to a comfortable width. */
-.a .items,
-.f .items {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.a .items {
-  max-width: 760px;
-}
 
 .card {
   --lift: 0px;
@@ -392,10 +380,9 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-template-areas:
       'h h'
-      'a a'
-      'b c'
-      'd e'
-      'f f'
+      'a b'
+      'c d'
+      'e f'
       'g g';
     gap: 14px;
     margin-top: 30px;
@@ -425,6 +412,8 @@
   }
 
   .bento {
+    grid-template-columns: 1fr;
+    grid-template-areas: 'h' 'a' 'b' 'c' 'd' 'e' 'f' 'g';
     gap: 12px;
   }
 
@@ -460,11 +449,6 @@
     min-height: 32px;
     padding: 6px 10px;
     font-size: 13px;
-  }
-
-  .a .items,
-  .f .items {
-    grid-template-columns: 1fr;
   }
 
   .start {
