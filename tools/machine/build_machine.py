@@ -738,7 +738,10 @@ def build(kind, cfg):
             masked = np.where(clear[..., None], Pb, np.nan)
             tone = np.stack([np.nanmedian(masked[i], axis=0) if clear[i].any() else Pb[i].mean(0) for i in range(Pb.shape[0])])
             tone = np.nan_to_num(tone, nan=50.0)
-            filled = np.where(keep[..., None], Pb, tone[:, None, :])
+            # the whole band, gaps included: any of the art kept here (the
+            # shaft flashes, with teeth round them) would stay still while
+            # the gear turns over it
+            filled = np.broadcast_to(tone[:, None, :], Pb.shape).copy()
         else:
             filled = fill_along_theta(Pb, keep)
         r_out = g["band"][1] + 2
@@ -788,6 +791,11 @@ def build(kind, cfg):
     # differ strongly from the periodic gear, inside the tooth bands only
     front_a = np.zeros((H, W), np.float32)
     for g, P, rs, th, T, alpha_t, tooth in prepared:
+        if g["red"]:
+            # nothing static over the red gear: a frozen patch of it (the
+            # shaft flashes, with the teeth under them) would stay behind
+            # while the rest turns; the turning gear has the plain tooth there
+            continue
         dev = np.abs(P - T).max(-1)
         Pred, _, _ = polar(redness, g["c"], rs[0], rs[-1] + 0.5, len(th))
         Plum = P.mean(-1)
