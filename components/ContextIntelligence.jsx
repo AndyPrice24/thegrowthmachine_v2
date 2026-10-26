@@ -8,9 +8,9 @@ import styles from './ContextIntelligence.module.css';
  * "Data, systems & AI", after How we work on each journey: the headline, then
  * a working miniature of the tools we build, one screen per growth
  * discipline. Each screen asks one question and answers it twice: the chart
- * one system gives you ("On its own", and the conclusion it invites), then
- * the same question with the other sources joined in ("In context", and the
- * real story), then three key figures and the action.
+ * one system gives you ("Plain data", and the conclusion it invites), then
+ * the same question with the other sources joined in ("Enhanced data", and
+ * the real story), then three key figures and the action.
  *
  * Desktop (from 1180px): the disciplines down the left of a dark screen, the
  * two answers side by side. Tablets and phones: the disciplines become a row
@@ -301,9 +301,9 @@ function Chart({ chart, hot }) {
 function Panel({ kind, panel, shown, play }) {
   const hot = kind === 'context';
   return (
-    <section className={`${styles.panel} ${hot ? styles.ctx : styles.alone} ${shown ? styles.shown : ''}`} aria-label={hot ? 'In context' : 'On its own'}>
+    <section className={`${styles.panel} ${hot ? styles.ctx : styles.alone} ${shown ? styles.shown : ''}`} aria-label={hot ? 'Enhanced data' : 'Plain data'}>
       <div className={styles.ph}>
-        <span className={styles.tag}>{hot ? 'In context' : 'On its own'}</span>
+        <span className={styles.tag}>{hot ? 'Enhanced data' : 'Plain data'}</span>
         <span className={styles.chips}>
           {panel.sources.map(([icon, name]) => (
             <span key={name} className={styles.chip}>
