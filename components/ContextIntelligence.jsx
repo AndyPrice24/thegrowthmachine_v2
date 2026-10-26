@@ -426,7 +426,7 @@ export default function ContextIntelligence({ intel }) {
                 <div className={styles.plus} aria-hidden="true">
                   <i />
                   <span>+</span>
-                  <small>Add context</small>
+                  <small>Enhance</small>
                   <i />
                 </div>
                 <Panel kind="context" panel={s.context} shown={view === 'context'} play={`${play}-c`} />
