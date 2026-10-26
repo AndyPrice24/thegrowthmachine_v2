@@ -1,0 +1,372 @@
+/* "The people behind the machine": a warm paper section. Copy on the left,
+   the two portraits as dark-captioned cards on the right (ink outline, hard
+   shadow; the second sits a little lower), and four facts in a ruled row
+   beneath. Phones: headline, portraits side by side, copy, facts two by two. */
+
+.section {
+  --serif: Georgia, 'Times New Roman', serif;
+  --soft: #5f5850;
+  padding: 100px 0 96px;
+  background: var(--paper2);
+}
+
+.wrap {
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+}
+
+.top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr);
+  grid-template-areas:
+    'head pair'
+    'body pair';
+  column-gap: 56px;
+  align-items: start;
+}
+
+.head { grid-area: head; align-self: end; }
+.pair { grid-area: pair; }
+.body { grid-area: body; }
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+
+.eyebrow::after {
+  content: '';
+  width: 48px;
+  height: 1.5px;
+  background: var(--red);
+}
+
+.title {
+  margin: 18px 0 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(40px, 5vw, 64px);
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  color: var(--ink);
+}
+
+.title span {
+  display: block;
+  color: var(--red);
+}
+
+.sub {
+  margin: 22px 0 0;
+  font-family: var(--serif);
+  font-size: clamp(22px, 2.2vw, 28px);
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+
+.copy {
+  max-width: 520px;
+  margin: 18px 0 0;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--soft);
+}
+
+.copy b {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 28px;
+  padding: 15px 22px;
+  border: 1.5px solid var(--ink);
+  border-radius: 10px;
+  background: var(--red);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #fff;
+  box-shadow: 4px 4px 0 var(--ink);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cta span {
+  transition: transform 0.2s ease;
+}
+
+.cta:hover {
+  transform: translate(-1px, -2px);
+  box-shadow: 5px 6px 0 var(--ink);
+}
+
+.cta:hover span {
+  transform: translateX(3px);
+}
+
+.cta:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 4px;
+}
+
+/* Portraits */
+
+.pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  padding-bottom: 28px;
+}
+
+.card {
+  overflow: hidden;
+  border: 1.5px solid var(--ink);
+  border-radius: 14px;
+  background: #141311;
+  box-shadow: 8px 9px 0 var(--ink);
+}
+
+.card + .card {
+  box-shadow: 8px 9px 0 var(--red);
+  transform: translateY(28px);
+}
+
+.card img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 4.6;
+  object-fit: cover;
+  object-position: 50% 18%;
+}
+
+.cap {
+  padding: 18px 18px 20px;
+  color: #ece6dd;
+}
+
+.name {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #ff6c64;
+}
+
+.name::after {
+  content: '';
+  flex: none;
+  width: 28px;
+  height: 1.5px;
+  background: #ff6c64;
+}
+
+.role {
+  margin: 10px 0 0;
+  font-family: var(--serif);
+  font-size: 24px;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+}
+
+.skills {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #cfc6ba;
+}
+
+/* Facts */
+
+.proof {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 60px 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1.5px solid var(--ink);
+  border-bottom: 1px solid #d9cfc2;
+}
+
+.proof li {
+  padding: 24px 22px 22px 0;
+}
+
+.proof li + li {
+  padding-left: 22px;
+  border-left: 1px solid #d9cfc2;
+}
+
+.proof b {
+  display: block;
+  font-family: var(--serif);
+  font-size: clamp(30px, 3vw, 40px);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  white-space: nowrap;
+  color: var(--red);
+}
+
+.proof span {
+  display: block;
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--soft);
+}
+
+/* ---------------------------------------------------------------- tablet */
+
+@media (max-width: 1023px) {
+  .section {
+    padding: 80px 0 84px;
+  }
+
+  .top {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'head' 'pair' 'body';
+  }
+
+  .pair {
+    max-width: 640px;
+    margin-top: 36px;
+  }
+
+  .body {
+    margin-top: 28px;
+  }
+
+  .proof {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 48px;
+  }
+
+  .proof li:nth-child(odd) {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .proof li:nth-child(even) {
+    padding-left: 18px;
+    border-left: 1px solid #d9cfc2;
+  }
+
+  .proof li:nth-child(n + 3) {
+    border-top: 1px solid #d9cfc2;
+  }
+}
+
+/* ---------------------------------------------------------------- phone */
+
+@media (max-width: 600px) {
+  .section {
+    padding: 60px 0;
+  }
+
+  .wrap {
+    width: calc(100% - 32px);
+  }
+
+  .eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.16em;
+  }
+
+  .eyebrow::after {
+    display: none;
+  }
+
+  .pair {
+    gap: 12px;
+    margin-top: 28px;
+    padding-bottom: 16px;
+  }
+
+  .card {
+    border-radius: 12px;
+    box-shadow: 4px 5px 0 var(--ink);
+  }
+
+  .card + .card {
+    box-shadow: 4px 5px 0 var(--red);
+    transform: translateY(16px);
+  }
+
+  .cap {
+    padding: 12px 11px 13px;
+  }
+
+  .name {
+    font-size: 9.5px;
+    letter-spacing: 0.16em;
+  }
+
+  .name::after {
+    display: none;
+  }
+
+  .role {
+    font-size: 16px;
+  }
+
+  .skills {
+    font-size: 11.5px;
+  }
+
+  .copy {
+    font-size: 16px;
+  }
+
+  .proof {
+    margin-top: 40px;
+  }
+
+  .proof li {
+    padding: 18px 10px 16px 0;
+  }
+
+  .proof li:nth-child(even) {
+    padding-left: 14px;
+  }
+
+  .proof b {
+    font-size: 26px;
+  }
+
+  .proof span {
+    font-size: 13px;
+  }
+}
+
+/* The narrowest phones: the longest fact wraps rather than overflowing. */
+@media (max-width: 400px) {
+  .proof b {
+    font-size: 23px;
+    white-space: normal;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cta,
+  .cta span {
+    transition: none;
+  }
+}

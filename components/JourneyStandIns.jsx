@@ -38,21 +38,6 @@ export function JourneyStandIns({ howWeWork = true }){
     </section>
     </>}
 
-    <section className="v2-founders section section-ink">
-      <div className="shell v2-founders-grid">
-        <div>
-          <span className="eyebrow inverse">The people doing the work</span>
-          <h2>Two senior operators.<br/>One growth mandate.</h2>
-          <p>Between us, we bring founder-level commercial judgement across B2B, consumer, ecommerce, brand, GTM, sales, revenue models, systems and execution.</p>
-          <Link href="/about" className="light-link">Meet Andrew & Tarren →</Link>
-        </div>
-        <div className="v2-founder-cards">
-          <article><span>Andrew</span><p>Business design · Revenue · B2B GTM · Sales · Systems · Founder execution</p></article>
-          <article><span>Tarren</span><p>Consumer · Brand · FMCG · Ecommerce · Data · DTC growth</p></article>
-        </div>
-      </div>
-    </section>
-
     <section className="v2-proof section">
       <div className="shell v2-proof-grid">
         <div>
