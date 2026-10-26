@@ -1,5 +1,6 @@
 import JourneyIntro from '@/components/JourneyIntro';
 import HowWeWork from '@/components/HowWeWork';
+import ContextIntelligence from '@/components/ContextIntelligence';
 import { JourneyStandIns, ClosingCta } from '@/components/JourneyStandIns';
 import { JOURNEYS } from '@/components/journeys';
 
@@ -15,6 +16,7 @@ export default function B2BJourney() {
     <>
       <JourneyIntro {...JOURNEYS.b2b} />
       <HowWeWork work={JOURNEYS.b2b.work} base="/b2b" />
+      <ContextIntelligence intel={JOURNEYS.b2b.intel} />
       <JourneyStandIns howWeWork={false} />
       <ClosingCta />
     </>

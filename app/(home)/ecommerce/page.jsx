@@ -1,5 +1,6 @@
 import JourneyIntro from '@/components/JourneyIntro';
 import HowWeWork from '@/components/HowWeWork';
+import ContextIntelligence from '@/components/ContextIntelligence';
 import { JourneyStandIns, ClosingCta } from '@/components/JourneyStandIns';
 import { JOURNEYS } from '@/components/journeys';
 
@@ -15,6 +16,7 @@ export default function EcommerceJourney() {
     <>
       <JourneyIntro {...JOURNEYS.ecommerce} />
       <HowWeWork work={JOURNEYS.ecommerce.work} base="/ecommerce" />
+      <ContextIntelligence intel={JOURNEYS.ecommerce.intel} />
       <JourneyStandIns howWeWork={false} />
       <ClosingCta />
     </>

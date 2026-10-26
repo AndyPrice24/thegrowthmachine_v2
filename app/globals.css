@@ -54,13 +54,6 @@
 .v2-do-item strong{font-family:Georgia,serif;font-size:26px;font-weight:400}
 .v2-do-item p{margin:6px 0 0;color:var(--muted);line-height:1.6}
 
-.v2-engage-grid{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid #cfc6bb;border-bottom:1px solid #cfc6bb}
-.v2-engage-grid article{padding:40px 34px 44px 0;min-height:330px;display:flex;flex-direction:column}
-.v2-engage-grid article+article{border-left:1px solid #cfc6bb;padding-left:34px}
-.v2-engage-grid article>span{font-size:11px;color:var(--red)}
-.v2-engage-grid h3{font-family:Georgia,serif;font-size:34px;font-weight:400;margin:55px 0 14px}
-.v2-engage-grid p{color:var(--muted);line-height:1.7}
-.v2-engage-grid a{margin-top:auto;color:var(--red);font-weight:700}
 
 .v2-founders-grid{display:grid;grid-template-columns:1fr 1fr;gap:100px;align-items:end}
 .v2-founders h2{font-size:clamp(48px,5.3vw,72px);line-height:1}
@@ -101,10 +94,6 @@
   .v2-method-line{display:none}
   .v2-do-grid,.v2-founders-grid,.v2-proof-grid{grid-template-columns:1fr;gap:50px}
   .v2-do-statement{position:static}
-  .v2-engage-grid{grid-template-columns:1fr}
-  .v2-engage-grid article{padding:32px 0;min-height:auto}
-  .v2-engage-grid article+article{border-left:0;border-top:1px solid #cfc6bb;padding-left:0}
-  .v2-engage-grid h3{margin-top:25px}
   .v2-final-panel{align-items:flex-start;flex-direction:column}
 }
 
@@ -122,7 +111,6 @@
   .v2-method-step h3{margin:5px 0 7px;font-size:28px}
   .v2-method-step p{max-width:none;margin:0}
   .v2-do-item{grid-template-columns:32px 1fr}
-  .v2-engage-grid h3{font-size:30px}
   .v2-founders-grid{gap:42px}
   .v2-logo-row{grid-template-columns:1fr}
   .v2-insights-head{align-items:flex-start;flex-direction:column}
