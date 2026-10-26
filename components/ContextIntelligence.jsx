@@ -400,55 +400,7 @@ export default function ContextIntelligence({ intel }) {
             </div>
           </nav>
 
-          <div id="ci-view" className={styles.view} role="tabpanel" aria-labelledby={`ci-tab-${active}`}>
-            <div className={styles.main}>
-              <div className={styles.vh}>
-                <div key={active} className={styles.enter}>
-                  <p className={styles.kick}>0{active + 1} · {s.name}</p>
-                  <h3 className={styles.question}>{s.question}</h3>
-                </div>
-                <span className={styles.periods} aria-hidden="true">
-                  <span>30D</span><span>90D</span><span className={styles.on}>12M</span>
-                </span>
-              </div>
-
-              <div className={styles.switch} role="group" aria-label="Show the answer">
-                <button type="button" aria-pressed={view === 'alone'} className={view === 'alone' ? styles.on : ''} onClick={() => setView('alone')}>
-                  Plain data
-                </button>
-                <button type="button" aria-pressed={view === 'context'} className={view === 'context' ? `${styles.on} ${styles.hotOn}` : ''} onClick={() => setView('context')}>
-                  Enhanced data
-                </button>
-              </div>
-
-              <div className={styles.pair}>
-                <Panel kind="alone" panel={s.alone} shown={view === 'alone'} play={`${play}-a`} />
-                <div className={styles.plus} aria-hidden="true">
-                  <i />
-                  <span>+</span>
-                  <small>Enhance</small>
-                  <i />
-                </div>
-                <Panel kind="context" panel={s.context} shown={view === 'context'} play={`${play}-c`} />
-              </div>
-            </div>
-
-            <div key={active} className={`${styles.strip} ${styles.enter}`}>
-              {s.figures.map(([v, l]) => (
-                <div key={l} className={styles.fig}>
-                  <b>{v}</b>
-                  <span>{l}</span>
-                </div>
-              ))}
-              <div className={styles.act}>
-                <Icon name="send" className={styles.actIcon} />
-                <div>
-                  <small>Do next</small>
-                  <p>{s.action}</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <ScreenView id="ci-view" labelledBy={`ci-tab-${active}`} s={s} n={active + 1} view={view} setView={setView} play={play} />
         </div>
 
         <footer className={styles.foot}>
@@ -459,5 +411,77 @@ export default function ContextIntelligence({ intel }) {
         </footer>
       </div>
     </section>
+  );
+}
+
+// One discipline's screen: its question, the plain and enhanced answers (side
+// by side on desktop, behind a switch on smaller screens), then the figures
+// and the action. Used by the section above and on each discipline's page.
+function ScreenView({ id, labelledBy, s, n, view, setView, play }) {
+  return (
+    <div id={id} className={styles.view} role={labelledBy ? 'tabpanel' : undefined} aria-labelledby={labelledBy}>
+      <div className={styles.main}>
+        <div className={styles.vh}>
+          <div key={s.name} className={styles.enter}>
+            <p className={styles.kick}>0{n} · {s.name}</p>
+            <h3 className={styles.question}>{s.question}</h3>
+          </div>
+          <span className={styles.periods} aria-hidden="true">
+            <span>30D</span><span>90D</span><span className={styles.on}>12M</span>
+          </span>
+        </div>
+
+        <div className={styles.switch} role="group" aria-label="Show the answer">
+          <button type="button" aria-pressed={view === 'alone'} className={view === 'alone' ? styles.on : ''} onClick={() => setView('alone')}>
+            Plain data
+          </button>
+          <button type="button" aria-pressed={view === 'context'} className={view === 'context' ? `${styles.on} ${styles.hotOn}` : ''} onClick={() => setView('context')}>
+            Enhanced data
+          </button>
+        </div>
+
+        <div className={styles.pair}>
+          <Panel kind="alone" panel={s.alone} shown={view === 'alone'} play={`${play}-a`} />
+          <div className={styles.plus} aria-hidden="true">
+            <i />
+            <span>+</span>
+            <small>Enhance</small>
+            <i />
+          </div>
+          <Panel kind="context" panel={s.context} shown={view === 'context'} play={`${play}-c`} />
+        </div>
+      </div>
+
+      <div key={s.name} className={`${styles.strip} ${styles.enter}`}>
+        {s.figures.map(([v, l]) => (
+          <div key={l} className={styles.fig}>
+            <b>{v}</b>
+            <span>{l}</span>
+          </div>
+        ))}
+        <div className={styles.act}>
+          <Icon name="send" className={styles.actIcon} />
+          <div>
+            <small>Do next</small>
+            <p>{s.action}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/*
+ * A single discipline's screen on its own, framed like the section's (used on
+ * the discipline pages). It opens on plain data, like the section.
+ */
+export function ContextScreen({ screen, n }) {
+  const [view, setView] = useState('alone');
+  return (
+    <div className={styles.solo}>
+      <div className={`${styles.screen} ${styles.soloScreen}`}>
+        <ScreenView s={screen} n={n} view={view} setView={setView} play={view} />
+      </div>
+    </div>
   );
 }

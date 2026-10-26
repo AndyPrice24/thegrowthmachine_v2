@@ -5,7 +5,8 @@
    disciplines become a row of light tabs, the screen shows one answer at a
    time (with a switch), and the figures become light tiles. */
 
-.section {
+.section,
+.solo {
   --serif: Georgia, 'Times New Roman', serif;
   --soft: #5f5850;
   --s0: #131210;
@@ -16,8 +17,17 @@
   --sm: #9b948a;
   --sf: #6e685f;
   --hot: #ff4b3e;
+}
+
+.section {
   padding: 104px 0 100px;
   background: var(--paper);
+}
+
+/* A single screen on a discipline's page: no disciplines down the side. */
+.screen.soloScreen {
+  grid-template-columns: minmax(0, 1fr);
+  margin-top: 0;
 }
 
 .wrap {
