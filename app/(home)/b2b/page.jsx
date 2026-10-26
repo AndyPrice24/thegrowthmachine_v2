@@ -3,6 +3,7 @@ import HowWeWork from '@/components/HowWeWork';
 import ContextIntelligence from '@/components/ContextIntelligence';
 import { INTEL } from '@/components/intel';
 import Founders from '@/components/Founders';
+import Companies from '@/components/Companies';
 import { JourneyStandIns, ClosingCta } from '@/components/JourneyStandIns';
 import { JOURNEYS } from '@/components/journeys';
 
@@ -20,6 +21,7 @@ export default function B2BJourney() {
       <HowWeWork work={JOURNEYS.b2b.work} base="/b2b" />
       <ContextIntelligence intel={INTEL.b2b} />
       <Founders />
+      <Companies />
       <JourneyStandIns howWeWork={false} />
       <ClosingCta />
     </>

@@ -24,7 +24,7 @@
 
 
 
-.v2-section-intro h2,.v2-do h2,.v2-proof h2,.v2-insights h2,.v2-final h2{font-family:Georgia,"Times New Roman",serif;font-weight:400;letter-spacing:-.035em;margin:0}
+.v2-section-intro h2,.v2-do h2,.v2-insights h2,.v2-final h2{font-family:Georgia,"Times New Roman",serif;font-weight:400;letter-spacing:-.035em;margin:0}
 
 .v2-section-intro{display:grid;grid-template-columns:1.2fr .8fr;gap:20px 80px;align-items:end;margin-bottom:66px}
 .v2-section-intro .eyebrow{grid-column:1/-1}
@@ -56,11 +56,6 @@
 
 
 
-.v2-proof-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:80px;align-items:center}
-.v2-proof h2{font-size:clamp(42px,4.5vw,62px);line-height:1.02}
-.v2-proof p{color:var(--muted)}
-.v2-logo-row{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line);border-left:1px solid var(--line)}
-.v2-logo-row span{min-height:110px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:grid;place-items:center;color:#9a9186;text-transform:uppercase;letter-spacing:.12em;font-size:10px}
 
 .v2-insights-head{display:flex;justify-content:space-between;align-items:end;gap:30px;margin-bottom:44px}
 .v2-insights h2{font-size:clamp(44px,5vw,66px);line-height:1}
@@ -85,7 +80,7 @@
   .v2-section-intro{grid-template-columns:1fr;gap:18px}
   .v2-method-track{grid-template-columns:1fr 1fr;gap:44px 26px}
   .v2-method-line{display:none}
-  .v2-do-grid,.v2-proof-grid{grid-template-columns:1fr;gap:50px}
+  .v2-do-grid{grid-template-columns:1fr;gap:50px}
   .v2-do-statement{position:static}
   .v2-final-panel{align-items:flex-start;flex-direction:column}
 }
@@ -96,7 +91,7 @@
   .v2-hero-title h1{font-size:50px;line-height:.95}
   .v2-hero-machine{width:calc(100% - 28px)}
   .v2-hero-lede{font-size:17px;line-height:1.55}
-  .v2-section-intro h2,.v2-do h2,.v2-proof h2,.v2-insights h2,.v2-final h2{font-size:42px}
+  .v2-section-intro h2,.v2-do h2,.v2-insights h2,.v2-final h2{font-size:42px}
   .v2-section-intro{margin-bottom:38px}
   .v2-method-track{grid-template-columns:1fr;gap:0;border-left:1px solid #cfc6bb;margin-left:29px}
   .v2-method-step{padding:0 0 36px 42px}
@@ -104,7 +99,6 @@
   .v2-method-step h3{margin:5px 0 7px;font-size:28px}
   .v2-method-step p{max-width:none;margin:0}
   .v2-do-item{grid-template-columns:32px 1fr}
-  .v2-logo-row{grid-template-columns:1fr}
   .v2-insights-head{align-items:flex-start;flex-direction:column}
   .v2-article-row{grid-template-columns:36px 1fr 20px;gap:10px}
   .v2-article-row h3{font-size:27px}

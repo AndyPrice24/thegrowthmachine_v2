@@ -38,19 +38,6 @@ export function JourneyStandIns({ howWeWork = true }){
     </section>
     </>}
 
-    <section className="v2-proof section">
-      <div className="shell v2-proof-grid">
-        <div>
-          <span className="eyebrow">Selected experience</span>
-          <h2>Built from years inside businesses, not from a playbook.</h2>
-          <p>Reference brands will be added here as permissions are confirmed.</p>
-        </div>
-        <div className="v2-logo-row">
-          {['Reference brand','Reference brand','Reference brand','Reference brand'].map((x,i)=><span key={i}>{x} {String(i+1).padStart(2,'0')}</span>)}
-        </div>
-      </div>
-    </section>
-
     <section className="v2-insights section">
       <div className="shell">
         <div className="v2-insights-head">
