@@ -290,9 +290,9 @@ export const INTEL = {
         },
         context: {
           sources: [['store', 'Store'], ['mail', 'CRM'], ['tag', 'Discounts']],
-          caption: 'Customers still buying, by how they first bought',
+          caption: 'Customers still buying, by month and how they first bought',
           chart: {
-            type: 'lines', x: ['Month 0', '', '', '3', '', '', '6', '', '', '9', '', '', '12'], range: [0, 100],
+            type: 'lines', x: ['0', '', '', '3', '', '', '6', '', '', '9', '', '', '12 mo'], range: [0, 100],
             series: [
               { points: [100, 30, 21, 17, 15, 13, 12, 11, 11, 10, 10, 10, 9], tone: 'muted', label: '30% off: 9%' },
               { points: [100, 48, 40, 36, 33, 31, 29, 28, 27, 26, 25, 25, 24], tone: 'light', label: 'Full price: 24%' },

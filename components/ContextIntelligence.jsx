@@ -14,9 +14,9 @@ import styles from './ContextIntelligence.module.css';
  *
  * Desktop (from 1180px): the disciplines down the left of a dark screen, the
  * two answers side by side. Tablets and phones: the disciplines become a row
- * of tabs above the screen, which shows one answer at a time with a switch
- * between them; it starts on "On its own" and turns to "In context" by
- * itself, until the reader works the switch.
+ * of tabs above the screen, which shows one answer at a time behind a
+ * "Plain data" / "Enhanced data" switch. Every discipline opens on plain
+ * data; the reader always has to ask for the enhanced view.
  *
  * Copy and figures live in intel.js. Charts are drawn here, to the width
  * they are given, and grow in each time a screen or answer is shown.
@@ -330,41 +330,8 @@ const STACKED = '(max-width: 1179px)';
 export default function ContextIntelligence({ intel }) {
   const [active, setActive] = useState(intel.active);
   const [view, setView] = useState('alone');
-  const touched = useRef(false);
-  const seen = useRef(false);
-  const flip = useRef(null);
-  const screenRef = useRef(null);
   const tabsRef = useRef(null);
   const s = intel.screens[active];
-
-  // Stacked layouts show one answer at a time: "On its own" first, turning to
-  // "In context" by itself once the screen is in view, until the reader takes
-  // the switch over.
-  const startFlip = (delay) => {
-    clearTimeout(flip.current);
-    if (touched.current || !window.matchMedia(STACKED).matches) return;
-    setView('alone');
-    flip.current = setTimeout(() => setView('context'), delay);
-  };
-
-  useEffect(() => {
-    const el = screenRef.current;
-    if (!window.matchMedia(STACKED).matches) return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return;
-        seen.current = true;
-        startFlip(1600);
-        io.disconnect();
-      },
-      { threshold: 0.45 }
-    );
-    io.observe(el);
-    return () => {
-      io.disconnect();
-      clearTimeout(flip.current);
-    };
-  }, []);
 
   // Start the row of tabs scrolled to the one that is on.
   useEffect(() => {
@@ -372,8 +339,10 @@ export default function ContextIntelligence({ intel }) {
     if (row.scrollWidth > row.clientWidth) row.scrollLeft = row.children[intel.active].offsetLeft - row.offsetLeft - 16;
   }, [intel.active]);
 
+  // A new discipline always opens on plain data.
   const pick = (i, e) => {
     setActive(i);
+    setView('alone');
     const row = tabsRef.current;
     if (row.scrollWidth > row.clientWidth) {
       const tab = e.currentTarget;
@@ -387,14 +356,6 @@ export default function ContextIntelligence({ intel }) {
       const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       window.scrollBy({ top: gap, behavior: still ? 'auto' : 'smooth' });
     }
-    seen.current = true;
-    startFlip(1400);
-  };
-
-  const choose = (v) => {
-    touched.current = true;
-    clearTimeout(flip.current);
-    setView(v);
   };
 
   const play = `${active}-${view}`;
@@ -410,7 +371,7 @@ export default function ContextIntelligence({ intel }) {
           <p className={styles.lede}>{intel.lede}</p>
         </header>
 
-        <div ref={screenRef} className={styles.screen}>
+        <div className={styles.screen}>
           <nav className={styles.nav} aria-label="Growth disciplines">
             <div className={styles.navHead}>
               <p>Disciplines</p>
@@ -452,11 +413,11 @@ export default function ContextIntelligence({ intel }) {
               </div>
 
               <div className={styles.switch} role="group" aria-label="Show the answer">
-                <button type="button" aria-pressed={view === 'alone'} className={view === 'alone' ? styles.on : ''} onClick={() => choose('alone')}>
-                  On its own
+                <button type="button" aria-pressed={view === 'alone'} className={view === 'alone' ? styles.on : ''} onClick={() => setView('alone')}>
+                  Plain data
                 </button>
-                <button type="button" aria-pressed={view === 'context'} className={view === 'context' ? `${styles.on} ${styles.hotOn}` : ''} onClick={() => choose('context')}>
-                  In context
+                <button type="button" aria-pressed={view === 'context'} className={view === 'context' ? `${styles.on} ${styles.hotOn}` : ''} onClick={() => setView('context')}>
+                  Enhanced data
                 </button>
               </div>
 
