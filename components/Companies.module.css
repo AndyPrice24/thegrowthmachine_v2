@@ -1,5 +1,6 @@
-/* "Companies we've worked with": a dark, dotted band. A strip of pills runs
-   the full width on a thin rail; the one in the middle opens into a cream card (ink outline, hard red shadow). The slots are set
+/* "Companies we've worked with": a dark, dotted band. A strip of cream logo
+   plates runs the full width on a thin rail; the one in the middle opens into
+   a cream card (ink outline, hard red shadow). The slots are set
    by --first (middle to the first pill either side) and --step (pill to
    pill); each item knows its side (--s) and distance (--a). */
 
@@ -9,9 +10,9 @@
   --st: #ece6dd;
   --sm: #9b948a;
   --hot: #ff4b3e;
-  --first: 400px;
-  --step: 240px;
-  --card: 470px;
+  --first: 430px;
+  --step: 190px;
+  --card: 560px;
   position: relative;
   isolation: isolate;
   overflow: hidden;
@@ -71,8 +72,8 @@
 
 .stage {
   position: relative;
-  height: 420px;
-  margin-top: 48px;
+  height: 540px;
+  margin-top: 40px;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent);
   mask-image: linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent);
   touch-action: pan-y;
@@ -118,18 +119,12 @@
   position: absolute;
   left: 0;
   top: 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 9px 16px 9px 9px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 999px;
-  background: #1d1b18;
-  font: inherit;
-  font-size: 15px;
-  font-weight: 500;
-  white-space: nowrap;
-  color: #cfc6ba;
+  display: grid;
+  place-items: center;
+  padding: 9px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  background: #faf8f4;
   transform: translate(-50%, -50%);
   transition:
     opacity 0.4s ease,
@@ -142,34 +137,42 @@
   pointer-events: none;
 }
 
+/* Logos are wordmarks of different shapes: each fits a fixed box. */
 .logo {
-  display: grid;
+  display: flex;
   flex: none;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 50%;
-  background: #2a2723;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--st);
+  align-items: center;
+  justify-content: center;
+  width: 116px;
+  height: 32px;
 }
 
 .logo img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
 }
 
 .logoBig {
-  width: 64px;
+  justify-content: flex-start;
+  width: 210px;
   height: 64px;
-  border: 0;
-  background: #171715;
+}
+
+/* A company without a logo yet shows its name in its place. */
+.wordmark {
+  font-family: var(--serif);
   font-size: 20px;
-  color: #fff;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+.logoBig .wordmark {
+  font-size: 34px;
 }
 
 /* The open card */
@@ -179,7 +182,7 @@
   left: 0;
   top: 0;
   width: var(--card);
-  padding: 26px 30px 26px;
+  padding: 26px 30px 24px;
   border: 1.5px solid var(--ink);
   border-radius: 18px;
   background: #faf8f4;
@@ -206,24 +209,17 @@
 
 .id {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 16px;
-}
-
-.name {
-  margin: 0;
-  font-family: var(--serif);
-  font-weight: 400;
-  font-size: 32px;
-  line-height: 1.05;
-  letter-spacing: -0.02em;
+  justify-content: space-between;
+  gap: 12px 20px;
 }
 
 .tags {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin: 8px 0 0;
+  margin: 0;
 }
 
 .tags span {
@@ -236,59 +232,74 @@
   text-transform: uppercase;
 }
 
-.hl {
-  display: grid;
-  gap: 12px;
-  margin-top: 20px;
-  padding-top: 18px;
+.tags .own {
+  border-color: var(--red);
+  background: var(--red);
+  color: #fff;
+}
+
+.did {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 18px 0 0;
+  padding: 16px 0 0;
+  list-style: none;
   border-top: 1px solid #d9cfc2;
 }
 
-.hl.split {
-  grid-template-columns: auto 1fr;
-  gap: 22px;
-  align-items: center;
+.did li {
+  padding: 5px 10px;
+  border: 1px solid rgba(23, 23, 21, 0.85);
+  border-radius: 7px;
+  background: #fff;
+  box-shadow: 2px 2px 0 var(--ink);
+  font-size: 12.5px;
+  font-weight: 600;
 }
 
-.figure b {
-  display: block;
+.quote {
+  margin: 18px 0 0;
+}
+
+.quote p {
+  margin: 0;
   font-family: var(--serif);
-  font-size: 54px;
-  font-weight: 400;
-  line-height: 1;
-  letter-spacing: -0.03em;
-  white-space: nowrap;
-  color: var(--red);
+  font-size: 17.5px;
+  line-height: 1.45;
 }
 
-.figure small {
-  display: block;
-  margin-top: 6px;
+.quote footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: baseline;
+  margin-top: 12px;
   font-size: 13px;
   color: var(--soft);
 }
 
+.quote footer b {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.quote footer b::before {
+  content: '— ';
+  color: var(--red);
+}
+
 .statement {
-  margin: 0;
+  margin: 18px 0 0;
   font-family: var(--serif);
   font-size: 19px;
-  line-height: 1.3;
-}
-
-.split .statement {
-  padding-left: 20px;
-  border-left: 1px solid #d9cfc2;
-}
-
-.hl:not(.split) .statement + .statement {
-  padding-top: 12px;
-  border-top: 1px solid #d9cfc2;
+  line-height: 1.35;
 }
 
 .visit {
   display: inline-flex;
   gap: 6px;
-  margin-top: 18px;
+  margin-top: 16px;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.14em;
@@ -348,9 +359,9 @@
 
 @media (max-width: 760px) {
   .section {
-    --card: min(320px, calc(100vw - 72px));
-    --first: calc(var(--card) / 2 + 36px);
-    --step: 70px;
+    --card: min(340px, calc(100vw - 48px));
+    --first: calc(var(--card) / 2 + 64px);
+    --step: 100px;
     padding: 64px 0 64px;
   }
 
@@ -363,48 +374,43 @@
   }
 
   .stage {
-    height: 460px;
-    margin-top: 32px;
-    -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
-    mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+    height: 640px;
+    margin-top: 28px;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
   }
 
   .pill {
-    padding: 8px;
+    padding: 7px 10px;
   }
 
-  .pillName {
-    display: none;
-  }
-
-  .card {
-    padding: 22px 20px 20px;
-    box-shadow: 7px 8px 0 var(--red);
+  .logo {
+    width: 84px;
+    height: 26px;
   }
 
   .logoBig {
-    width: 52px;
-    height: 52px;
-    font-size: 17px;
+    width: 170px;
+    height: 54px;
   }
 
-  .name {
-    font-size: 25px;
+  .logoBig .wordmark {
+    font-size: 28px;
   }
 
-  .hl.split {
-    grid-template-columns: 1fr;
-    gap: 14px;
+  .card {
+    padding: 20px 18px 18px;
+    box-shadow: 7px 8px 0 var(--red);
   }
 
-  .split .statement {
-    padding: 14px 0 0;
-    border-left: 0;
-    border-top: 1px solid #d9cfc2;
+  .did {
+    margin-top: 14px;
+    padding-top: 14px;
   }
 
-  .figure b {
-    font-size: 46px;
+  .quote p {
+    font-size: 15.5px;
+    line-height: 1.42;
   }
 
   .statement {

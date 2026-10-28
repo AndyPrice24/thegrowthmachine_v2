@@ -5,10 +5,10 @@ import { COMPANIES } from './companies';
 import styles from './Companies.module.css';
 
 /*
- * "Companies we've worked with": a strip of small logo-and-name pills across
- * the width of a dark section. Whichever company reaches the middle opens
- * into a card with one or two highlights; after a few seconds the strip moves
- * on and the next one opens.
+ * "Companies we've worked with": a strip of small logo plates across the
+ * width of a dark section. Whichever company reaches the middle opens into a
+ * card with what we did and, where there is one, the client's own words;
+ * after a few seconds the strip moves on and the next one opens.
  *
  * Every company sits at a slot worked out from its distance to the middle
  * (CSS places the slots, so they scale with the screen). Moving on changes
@@ -24,7 +24,12 @@ import styles from './Companies.module.css';
  * Companies live in companies.js.
  */
 
-const HOLD = 5.5; // seconds each company stays open
+// Seconds each company stays open: long enough to read what's on its card,
+// at a little under four words a second.
+const hold = (c) => {
+  const words = `${c.quote?.text || ''} ${c.statement || ''}`.split(/\s+/).filter(Boolean).length;
+  return Math.max(6, 4 + words * 0.22);
+};
 
 export default function Companies({ companies = COMPANIES }) {
   const n = companies.length;
@@ -74,32 +79,37 @@ export default function Companies({ companies = COMPANIES }) {
             >
               <span className={styles.pill}>
                 <Logo c={c} />
-                <span className={styles.pillName}>{c.name}</span>
               </span>
 
               <div className={styles.card}>
                 <div className={styles.id}>
                   <Logo c={c} big />
-                  <div>
-                    <p className={styles.name}>{c.name}</p>
-                    <p className={styles.tags}>
-                      <span>{c.sector}</span>
-                      <span>{c.country}</span>
-                    </p>
-                  </div>
+                  <p className={styles.tags}>
+                    {c.own && <span className={styles.own}>Our own brand</span>}
+                    <span>{c.sector}</span>
+                    <span>{c.country}</span>
+                  </p>
                 </div>
-                <div className={`${styles.hl} ${c.highlights.length > 1 && c.highlights[0].figure ? styles.split : ''}`}>
-                  {c.highlights.map((h, j) =>
-                    h.figure ? (
-                      <div key={j} className={styles.figure}>
-                        <b>{h.figure}</b>
-                        <small>{h.label}</small>
-                      </div>
-                    ) : (
-                      <p key={j} className={styles.statement}>{h.text}</p>
-                    )
-                  )}
-                </div>
+                <ul className={styles.did}>
+                  {c.did.map((d) => (
+                    <li key={d}>{d}</li>
+                  ))}
+                </ul>
+                {c.quote && (
+                  <blockquote className={styles.quote}>
+                    <p>“{c.quote.text}”</p>
+                    <footer>
+                      <b>{c.quote.name || c.name}</b>
+                      {c.quote.name && (
+                        <span>
+                          {c.quote.role ? `${c.quote.role}, ` : ''}
+                          {c.name}
+                        </span>
+                      )}
+                    </footer>
+                  </blockquote>
+                )}
+                {c.statement && <p className={styles.statement}>{c.statement}</p>}
                 {c.href && (
                   <a className={styles.visit} href={c.href} target="_blank" rel="noopener noreferrer" tabIndex={-1}>
                     Visit site <span aria-hidden="true">↗</span>
@@ -113,15 +123,17 @@ export default function Companies({ companies = COMPANIES }) {
 
       <div className={styles.ctrl} aria-hidden="true">
         <span className={styles.prog}>
-          <i key={active} className={inView ? '' : styles.held} style={{ animationDuration: `${HOLD}s` }} onAnimationEnd={next} />
+          <i key={active} className={inView ? '' : styles.held} style={{ animationDuration: `${hold(companies[active])}s` }} onAnimationEnd={next} />
         </span>
       </div>
 
       <ul className={styles.srOnly}>
         {companies.map((c) => (
           <li key={c.name}>
-            {c.href ? <a href={c.href}>{c.name}</a> : c.name} ({c.sector}, {c.country}):{' '}
-            {c.highlights.map((h) => (h.figure ? `${h.figure} ${h.label}.` : h.text)).join(' ')}
+            {c.href ? <a href={c.href}>{c.name}</a> : c.name} ({c.own ? 'our own brand, ' : ''}
+            {c.sector}, {c.country}): {c.did.join(', ')}.
+            {c.quote && ` “${c.quote.text}” ${[c.quote.name, c.quote.role].filter(Boolean).join(', ') || c.name}.`}
+            {c.statement && ` ${c.statement}`}
           </li>
         ))}
       </ul>
@@ -132,7 +144,7 @@ export default function Companies({ companies = COMPANIES }) {
 function Logo({ c, big }) {
   return (
     <span className={`${styles.logo} ${big ? styles.logoBig : ''}`} aria-hidden="true">
-      {c.logo ? <img src={c.logo} alt="" /> : c.initials}
+      {c.logo ? <img src={c.logo} alt="" /> : <span className={styles.wordmark}>{c.name}</span>}
     </span>
   );
 }
