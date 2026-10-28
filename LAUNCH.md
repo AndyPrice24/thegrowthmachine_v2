@@ -5,11 +5,12 @@ and Cloudflare Pages already publishes this branch as production at
 thegrowthmachine.pages.dev. What's left happens in your Cloudflare, GoDaddy
 and Resend accounts.
 
-**Progress (28 October 2026):** DNS moved to Cloudflare and active (Google
-Workspace email records carried over, SPF simplified to
-`v=spf1 include:_spf.google.com ~all`); Resend domain added with its records
-in Cloudflare; Resend API key saved as a Pages secret. Remaining: the two
-contact-email settings, the custom domains, the www redirect, and testing.
+**Live since 28 October 2026.** DNS is on Cloudflare (Google Workspace email
+records carried over, SPF simplified to `v=spf1 include:_spf.google.com ~all`);
+thegrowthmachine.co and www are connected to the Pages project, www redirects
+to the root, Always Use HTTPS is on, and the contact form sends through Resend
+to hello@. The steps below are kept for reference; only "After launch" is
+still open.
 
 Do the steps in order. Part 1 puts the site on the domain; part 2 makes the
 contact form email you (until then it shows visitors hello@thegrowthmachine.co
