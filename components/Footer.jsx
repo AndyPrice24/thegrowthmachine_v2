@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { CONTACT_EMAIL } from '@/app/site';
 
 export default function Footer(){
   // The homepage ends at the choice between the two growth systems, so it
@@ -16,6 +17,6 @@ export default function Footer(){
       <div><h4>Company</h4><Link href="/about">About</Link><Link href="/insights">Insights</Link><Link href="/contact">Contact</Link></div>
       <div><h4>Start here</h4><p>It starts with a free call about where your business is going.</p><Link href="/contact" className="text-link">Book a growth call →</Link></div>
     </div>
-    <div className="shell footer-bottom"><span>© {new Date().getFullYear()} The Growth Machine</span><span>thegrowthmachine.co</span></div>
+    <div className="shell footer-bottom"><span>© {new Date().getFullYear()} The Growth Machine (Pty) Ltd</span><nav aria-label="Legal"><Link href="/privacy">Privacy policy</Link><a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></nav></div>
   </footer>
 }

@@ -17,10 +17,10 @@ const jost = localFont({
 export const metadata = {
   metadataBase: new URL('https://thegrowthmachine.co'),
   title: { default: 'The Growth Machine | Fractional Growth Leadership', template: '%s | The Growth Machine' },
-  description: 'Fractional growth leadership for ambitious ecommerce, B2B, SaaS and B2B2C businesses. Diagnose what is holding growth back, design the right roadmap, execute with your team, and embed systems that last.',
+  description: 'Senior, hands-on growth leadership for ecommerce, B2B and SaaS businesses, without the full-time hire. We find what’s holding growth back, plan the fix, and do the work with your team.',
   openGraph: {
     title: 'The Growth Machine',
-    description: 'The growth leadership you need before you know which title to hire.',
+    description: 'Senior growth leadership. Without the full-time hire.',
     url: 'https://thegrowthmachine.co',
     siteName: 'The Growth Machine',
     type: 'website'

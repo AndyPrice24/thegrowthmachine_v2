@@ -16,6 +16,8 @@ Writes:
   app/icon.svg                       browser tab icon (the red cog)
   app/favicon.ico                    the same, 16, 32 and 48px, for old browsers
   app/apple-icon.png                 phone home-screen icon (red cog on ink)
+  app/opengraph-image.png            the preview card shown when a page is
+                                     shared (LinkedIn, WhatsApp, Slack…)
 
 Needs Pillow and Playwright (with the preinstalled Chromium) to draw the PNGs.
 """
@@ -73,6 +75,20 @@ def cog_svg(fill, tile=None):
     )
 
 
+# The share card: cream paper, the logo, the promise, and the address.
+SHARE = '''<html><head><style>
+body{margin:0;width:1200px;height:630px;background:#faf8f4;font-family:Georgia,'Liberation Serif',serif;color:#171715;position:relative;overflow:hidden}
+.logo{position:absolute;left:80px;top:72px;width:300px}.logo svg{width:100%;height:auto;display:block}
+h1{position:absolute;left:80px;top:220px;width:860px;margin:0;font-weight:400;font-size:76px;line-height:1.02;letter-spacing:-2.5px}
+h1 em{color:#c8221c}
+p{position:absolute;left:80px;bottom:64px;margin:0;font:600 22px Inter,'DejaVu Sans',sans-serif;letter-spacing:4px;text-transform:uppercase}
+.cog{position:absolute;right:-120px;bottom:-140px;width:520px}.cog svg{width:100%;height:auto;display:block}
+.rule{position:absolute;left:80px;right:400px;bottom:120px;height:2px;background:#171715}
+</style></head><body><div class="logo">{LOGO}</div>
+<h1>Senior growth leadership. <em>Without the full-time hire.</em></h1>
+<div class="rule"></div><p>thegrowthmachine.co</p><div class="cog">{COG}</div></body></html>'''
+
+
 def write(path, text):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text)
@@ -115,6 +131,11 @@ def main():
                 icon = Image.open(io.BytesIO(png))
                 icon.save(ROOT / 'app/favicon.ico', sizes=[(16, 16), (32, 32), (48, 48)])
                 print('wrote app/favicon.ico')
+        share = SHARE.replace('{LOGO}', light).replace('{COG}', cog_svg(RED))
+        page.set_viewport_size({'width': 1200, 'height': 630})
+        page.set_content(share)
+        page.screenshot(path=str(ROOT / 'app/opengraph-image.png'))
+        print('wrote app/opengraph-image.png')
         browser.close()
 
 

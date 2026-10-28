@@ -1,0 +1,119 @@
+/* Privacy policy: a single readable column on warm paper, serif headings,
+   red eyebrow and links, in the site's house style. */
+
+.page {
+  --serif: Georgia, 'Times New Roman', serif;
+  --soft: #5f5850;
+  padding: 80px 0 100px;
+}
+
+.shell {
+  width: min(760px, calc(100% - 40px));
+  margin: 0 auto;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+
+.title {
+  margin: 16px 0 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(40px, 5vw, 64px);
+  line-height: 1;
+  letter-spacing: -0.035em;
+}
+
+.updated {
+  margin: 16px 0 0;
+  font-size: 14px;
+  color: var(--soft);
+}
+
+.body {
+  margin-top: 40px;
+  padding-top: 34px;
+  border-top: 1.5px solid var(--ink);
+  font-size: 17px;
+  line-height: 1.7;
+  color: #2f2b27;
+}
+
+.body .lead {
+  margin-top: 0;
+  font-family: var(--serif);
+  font-size: 22px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.body h2 {
+  margin: 40px 0 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.body p,
+.body ul {
+  margin: 12px 0 0;
+}
+
+.body ul {
+  padding-left: 22px;
+}
+
+.body li + li {
+  margin-top: 8px;
+}
+
+.body li::marker {
+  color: var(--red);
+}
+
+.body b {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.body a {
+  color: var(--red);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.body a:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+  .page {
+    padding: 52px 0 72px;
+  }
+
+  .shell {
+    width: calc(100% - 32px);
+  }
+
+  .body {
+    font-size: 16px;
+  }
+
+  .body .lead {
+    font-size: 19px;
+  }
+
+  .body h2 {
+    font-size: 24px;
+  }
+}
