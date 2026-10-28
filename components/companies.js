@@ -52,7 +52,7 @@ export const COMPANIES = [
     sector: 'Financial services',
     country: 'South Africa',
     href: 'https://nationaldebtadvisors.co.za',
-    did: ['Revenue growth'],
+    did: ['Lead generation', 'Sales conversion', 'Performance reporting'],
     quote: {
       text: 'I love these guys. A complete one-stop shop for getting your revenue where it needs to be. No buzzwords and vanity metrics. They figure out what is going to move the needle, and then they make it happen.',
       name: 'Sebastien Alexanderson',
