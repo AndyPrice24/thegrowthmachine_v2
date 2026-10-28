@@ -21,17 +21,27 @@ import styles from './DisciplinePage.module.css';
  *   5. How it works: diagnose, prioritise, do the work, embed, as they
  *      apply to this discipline
  *   6. What changes
- *   7. Works best with: two related disciplines and why, and all six to
- *      jump between
+ *   7. Works best with: two related disciplines and why, and all six (one
+ *      business, six lenses) to jump between
  *   8. Talk to us: about the real constraint, wherever it turns out to be
  *
  * Copy lives in disciplines.js; names, icons and area titles in journeys.js;
  * the dashboard screen in intel.js.
  */
 
+// lenses: what each discipline does for the business, in order, for the
+// "One business, six lenses" row.
 const LABELS = {
-  b2b: { short: 'B2B', back: 'B2B, SaaS & sales-led growth' },
-  ecommerce: { short: 'Ecommerce', back: 'Ecommerce & consumer growth' },
+  b2b: {
+    short: 'B2B',
+    back: 'B2B, SaaS & sales-led growth',
+    lenses: ['Sharpens who chooses you', 'Converts the right opportunities', 'Finds the next growth pocket', 'Protects profit', 'Makes it visible', 'Makes it repeatable'],
+  },
+  ecommerce: {
+    short: 'Ecommerce',
+    back: 'Ecommerce & consumer growth',
+    lenses: ['Creates the demand', 'Finds the right customers', 'Turns visits into orders', 'Brings customers back', 'Protects profit', 'Makes it visible'],
+  },
 };
 
 const STEPS = ['Diagnose', 'Prioritise', 'Do the work', 'Embed'];
@@ -47,7 +57,7 @@ export function disciplineRoute(journey) {
   const disciplines = JOURNEYS[journey].work.disciplines;
   const pages = DISCIPLINE_PAGES[journey];
   const screens = INTEL[journey].screens;
-  const { short, back } = LABELS[journey];
+  const { short, back, lenses } = LABELS[journey];
   const base = `/${journey}`;
 
   function generateStaticParams() {
@@ -264,7 +274,7 @@ export function disciplineRoute(journey) {
             </div>
 
             <nav className={styles.all} aria-label={`All ${short} disciplines`}>
-              <p>All six disciplines</p>
+              <p>One business, six lenses</p>
               <ul>
                 {disciplines.map((x, k) => (
                   <li key={x.slug}>
@@ -274,6 +284,7 @@ export function disciplineRoute(journey) {
                       </span>
                       <span className={styles.allNum}>{pad(k + 1)}</span>
                       <span className={styles.allName}>{x.name}</span>
+                      <span className={styles.allLens}>{lenses[k]}</span>
                     </Link>
                   </li>
                 ))}
@@ -289,7 +300,7 @@ export function disciplineRoute(journey) {
               <div>
                 <p className={styles.eyebrowLight}>Start with a conversation</p>
                 <h2 id="cta-title" className={styles.ctaTitle}>
-                  Not sure what’s really holding growth back? <em>Let’s identify the constraint, and what to do next.</em>
+                  Find the constraint. Build the plan. <em>Do the work.</em>
                 </h2>
                 <p className={styles.ctaText}>Whether it’s {d.name} or somewhere else in the system, finding the real constraint is the first thing we do.</p>
               </div>

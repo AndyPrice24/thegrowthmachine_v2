@@ -240,12 +240,12 @@ function Bubble({ c, W }) {
       <line className={styles.axisLine} x1={pl} x2={pl} y1={pt} y2={H - pb} />
       <text className={styles.axis} x={W - pr} y={H - 6} textAnchor="end">{c.x} →</text>
       <text className={styles.axis} x="0" y={pt} transform={`rotate(-90 0 ${pt})`} textAnchor="end" dy="10">{c.y} →</text>
-      {c.points.map(([name, x, y, size, red], i) => {
+      {c.points.map(([name, x, y, size, red, rank], i) => {
         const r = 10 + size * 26;
         return (
           <g key={name} style={pct(i)}>
             <circle className={`${styles.pop} ${red ? styles.bubbleHot : styles.bubble}`} cx={X(x)} cy={Y(y)} r={r} />
-            <text className={`${styles.fade} ${red ? styles.valueHot : styles.labelLight}`} x={X(x)} y={Y(y) + r + 13} textAnchor="middle">{name}</text>
+            <text className={`${styles.fade} ${red ? styles.valueHot : styles.labelLight}`} x={X(x)} y={Y(y) + r + 13} textAnchor="middle">{rank ? `${rank}. ${name}` : name}</text>
           </g>
         );
       })}
@@ -305,6 +305,7 @@ function Panel({ kind, panel, shown, play }) {
       <div className={styles.ph}>
         <span className={styles.tag}>{hot ? 'Enhanced data' : 'Plain data'}</span>
         <span className={styles.chips}>
+          <span className={styles.srcLabel}>{panel.sources.length > 1 ? 'Connected sources' : 'Source'}</span>
           {panel.sources.map(([icon, name]) => (
             <span key={name} className={styles.chip}>
               <Icon name={icon} className={styles.chipIcon} />

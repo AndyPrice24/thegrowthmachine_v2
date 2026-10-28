@@ -23,7 +23,8 @@
  *   lines   x: labels, series: [{ points, tone, label, range? }], range,
  *           markers?: [{ at, label }], gap?: [i, j] (shade between series)
  *   funnel  stages: [[label, shown, width 0-1]], rates: [shown], leak: index
- *   bubble  x, y (axis titles), points: [[name, x, y, size, hot?]] (all 0-1)
+ *   bubble  x, y (axis titles), points: [[name, x, y, size, hot?, rank?]]
+ *           (x, y and size 0-1; rank shows before the name)
  *   share   rows: [[label, [[segment, percent]]]], hot: segment
  */
 
@@ -51,7 +52,7 @@ export const INTEL = {
             items: [['Efficiency', '420', '£0.9M'], ['Cost saving', '260', '£1.9M'], ['Compliance', '180', '£0.7M'], ['Innovation', '140', '£0.3M']],
             rightOrder: ['Cost saving', 'Efficiency', 'Compliance', 'Innovation'], hot: 'Cost saving',
           },
-          read: '*Cost saving wins twice* the revenue.',
+          read: 'Your best lead-generating message *isn’t your best revenue-generating one*.',
         },
         figures: [['34%', 'cost-saving win rate, vs 12%'], ['+£1.0M', 'revenue from the same leads'], ['−22%', 'cost per won deal']],
         action: 'Lead with cost saving, and prove it over the next two campaigns.',
@@ -73,12 +74,12 @@ export const INTEL = {
         },
         context: {
           sources: [['crm', 'CRM'], ['mail', 'Email'], ['cal', 'Calendar']],
-          caption: 'Close rate from proposal, by people engaged on the deal',
-          chart: { type: 'hbars', rows: [['1 contact', 9, '9%', true], ['2 contacts', 27, '27%'], ['3+ contacts', 41, '41%']] },
-          read: '*Single-contact deals* close at 9%.',
+          caption: 'Close rate from proposal, by buyers engaged on the deal, last 12 months',
+          chart: { type: 'hbars', rows: [['1 contact', 9, '9%', true], ['2 contacts', 27, '27%'], ['Buyer mapped', 41, '41%']] },
+          read: '*High-value deals reach proposal* without the right buyers engaged.',
         },
-        figures: [['64%', 'of deals have one contact'], ['41%', 'close rate with three or more'], ['£1.4M', 'stuck at proposal']],
-        action: 'Require a second stakeholder before proposal.',
+        figures: [['64%', 'of proposals have one contact'], ['41%', 'close rate with the economic buyer mapped'], ['£1.4M', 'stuck at proposal']],
+        action: 'For complex deals, map the economic buyer before proposal, and review aged deals weekly.',
       },
       {
         icon: 'compass',
@@ -93,15 +94,15 @@ export const INTEL = {
         },
         context: {
           sources: [['crm', 'CRM'], ['db', 'Finance'], ['globe', 'Market data']],
-          caption: 'Win rate against customer value, last 2 years; size is market size',
+          caption: 'Right to win against customer value, last 2 years; size is reachable market, numbers are our ranking',
           chart: {
-            type: 'bubble', x: 'Win rate', y: 'Customer value',
-            points: [['Retail', 0.14, 0.2, 0.55], ['Manufacturing', 0.4, 0.3, 0.95], ['Logistics', 0.64, 0.52, 0.45], ['Healthcare', 0.86, 0.82, 0.7, true]],
+            type: 'bubble', x: 'Right to win', y: 'Customer value',
+            points: [['Retail', 0.14, 0.2, 0.55, false, 4], ['Manufacturing', 0.4, 0.3, 0.95, false, 3], ['Logistics', 0.64, 0.52, 0.45, false, 2], ['Healthcare', 0.86, 0.82, 0.7, true, 1]],
           },
-          read: '*Healthcare is your best market*, and you’re barely in it.',
+          read: 'Your biggest pipeline isn’t your best market. *Healthcare ranks first.*',
         },
         figures: [['3x', 'customer value in healthcare'], ['−40%', 'shorter sales cycle'], ['6%', 'of pipeline today']],
-        action: 'Pilot a healthcare route to market; scale it on win rate.',
+        action: 'Run a 90-day healthcare entry sprint: one profile, named accounts. Scale on signed demand.',
       },
       {
         icon: 'bars',
@@ -124,10 +125,10 @@ export const INTEL = {
             type: 'diverge',
             rows: [['Global Retail', 190, '£190K'], ['HealthTech Co', -60, '−£60K'], ['Apex Mfg', 140, '£140K'], ['Northwind', 120, '£120K'], ['Brightline', -45, '−£45K'], ['Public Sector', -80, '−£80K'], ['Vertex Labs', 95, '£95K'], ['Orbit Media', 70, '£70K']],
           },
-          read: '*3 of your top 8* lose money.',
+          read: 'Three major accounts are *buying growth at the expense of your margin*.',
         },
         figures: [['£420K', 'a year lost to discounts over 15%'], ['−£185K', 'contribution on three big accounts'], ['+6pts', 'modelled EBITDA, if fixed']],
-        action: 'Cap discounts at 15%. Reprice three accounts.',
+        action: 'Reprice or rescope the three accounts at renewal, and give sales value-based discount rules.',
       },
       {
         icon: 'chip',
@@ -157,10 +158,10 @@ export const INTEL = {
               { points: [0.3, 0.6, 1, 1.4, 1.8, 2.2, 2.6, 3, 3.1, 3.25, 3.4, 3.5, 3.6], tone: 'hot', label: '£3.6M' },
             ],
           },
-          read: 'Forecast *£500K short*, held in six stale deals.',
+          read: 'The forecast looks healthy because CRM stages are *hiding £500K of deal risk*.',
         },
-        figures: [['£3.6M', 'evidence-based forecast'], ['6', 'stale deals hold the gap'], ['±4%', 'past forecast accuracy']],
-        action: 'Re-qualify six deals this week.',
+        figures: [['£3.6M', 'likely landing, vs £4.1M in the CRM'], ['6 deals', 'at risk: 3 no next meeting, 2 slipped, 1 no buyer'], ['±4%', 'past forecast accuracy']],
+        action: 'Re-qualify the six at-risk deals this week, and run a weekly evidence-based forecast.',
       },
       {
         icon: 'people',
@@ -190,10 +191,10 @@ export const INTEL = {
               { points: [6, 6.3, 6.6, 7, 7.2, 7.5, 7.8, 8, 8.1, 8.3, 8.5, 8.6], tone: 'hot', label: '8.6 productive' },
             ],
           },
-          read: 'You have *the capacity of 8.6 reps*, not 12.',
+          read: 'You’re hiring to a headcount plan, *not a revenue-capacity plan*.',
         },
-        figures: [['8.6', 'productive reps'], ['5 mo', 'to ramp a new rep'], ['£1.1M', 'estimated Q3 shortfall']],
-        action: 'Hire two reps now, not in May.',
+        figures: [['8.6', 'productive reps, of 12 hired'], ['5 mo', 'to ramp a new rep'], ['£1.1M', 'estimated Q3 shortfall']],
+        action: 'Cover Q3 with territory moves, deal focus and coaching. Hire now for Q4 and Q1.',
       },
     ],
   },

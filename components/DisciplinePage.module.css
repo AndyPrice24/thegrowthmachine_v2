@@ -717,6 +717,18 @@
   height: 22px;
 }
 
+.allLens {
+  margin-top: auto;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--soft);
+}
+
+.all a.here .allLens {
+  color: #cfc6ba;
+}
+
 .allNum {
   font-family: var(--serif);
   font-size: 13px;
@@ -734,7 +746,19 @@
   color: #ff6c64;
 }
 
-.all a.here .allNum {
+.all a.here .allLens {
+  margin-top: auto;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--soft);
+}
+
+.all a.here .allLens {
+  color: #cfc6ba;
+}
+
+.allNum {
   color: #cfc6ba;
 }
 

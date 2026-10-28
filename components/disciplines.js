@@ -25,7 +25,7 @@ export const DISCIPLINE_PAGES = {
   b2b: {
     'brand-and-demand': {
       promise: 'Be the obvious choice before the first sales call.',
-      lede: 'Most B2B brands describe what they do. Buyers choose the one that explains why it matters to them, so we sharpen who you’re for and why you win, and give sales the words and materials to prove it.',
+      lede: 'B2B brands don’t lose because buyers haven’t heard of them. They lose when the value isn’t clear enough to defend internally, so we sharpen the positioning, build the proof and arm sales with a story buyers can repeat.',
       signsTitle: 'Signs buyers can’t see *why you, not them*.',
       signs: [
         'Prospects can’t tell you apart from two competitors.',
@@ -45,7 +45,7 @@ export const DISCIPLINE_PAGES = {
         'Rewrite the pitch, site and proposals, and train the team on them.',
         'Track win rate by message, and refresh it every quarter.',
       ],
-      outcomes: ['A story every salesperson tells the same way.', 'Fewer, better-fit leads.', 'Price conversations that start from value.'],
+      outcomes: ['Messaging judged by revenue won, not leads.', 'A story every salesperson tells the same way.', 'Price conversations that start from value.'],
       related: [
         ['sales-and-conversion', 'Positioning only pays off when sales tell the story the same way.'],
         ['gtm-and-market-expansion', 'Who you’re for decides where you should go next.'],
@@ -53,7 +53,7 @@ export const DISCIPLINE_PAGES = {
     },
     'sales-and-conversion': {
       promise: 'Turn more of the pipeline you already have into revenue.',
-      lede: 'Pipeline problems are rarely about volume. We find where deals stall, fix the process and tools around it, and work alongside your team until the new way sticks.',
+      lede: 'A bigger pipeline means nothing if the deals inside it aren’t moving. We connect pipeline data with buyer engagement and sales execution to find where revenue is slipping, and change how the team sells.',
       signsTitle: 'Signs your pipeline is *bigger than your results*.',
       signs: [
         'Plenty of pipeline, not enough closing.',
@@ -73,7 +73,7 @@ export const DISCIPLINE_PAGES = {
         'Rebuild the process, CRM and playbook with the team.',
         'Run weekly deal reviews until the new way is habit.',
       ],
-      outcomes: ['Higher win rates from the same pipeline.', 'Forecasts you can plan around.', 'A sales process new hires learn in weeks.'],
+      outcomes: ['Complex deals with the right buyers engaged.', 'Higher win rates from the same pipeline.', 'Forecasts you can plan around.'],
       related: [
         ['brand-and-demand', 'Better-fit leads and a sharper story lift win rates at every stage.'],
         ['team-and-operating-model', 'A new sales process only lasts with clear owners and a rhythm.'],
@@ -81,7 +81,7 @@ export const DISCIPLINE_PAGES = {
     },
     'gtm-and-market-expansion': {
       promise: 'Grow into the right markets, in the right order.',
-      lede: 'Expansion fails when it’s driven by opportunity rather than evidence. We find where you’re most likely to win, choose how to reach it, and lead the launch.',
+      lede: 'Expansion isn’t about going wider. It’s about finding the segment where your offer has the strongest economics and the highest right to win, then building a repeatable route into it.',
       signsTitle: 'Signs you’re *growing in the wrong places*.',
       signs: [
         'You sell to everyone, so you stand out to no one.',
@@ -101,7 +101,7 @@ export const DISCIPLINE_PAGES = {
         'Build the route in and run the launch with your team.',
         'Set early signals, and scale or stop on the evidence.',
       ],
-      outcomes: ['A clear list of where to play, and where not to.', 'Launches with a plan, owners and early signals.', 'Partnerships measured in pipeline.'],
+      outcomes: ['A ranked list of where to play, and where not to.', 'Launches with owners, targets and early signals.', 'Partnerships measured in pipeline.'],
       related: [
         ['brand-and-demand', 'Every new market needs positioning that speaks to it.'],
         ['commercial-model', 'A new market is only worth it if the model makes money there.'],
@@ -109,7 +109,7 @@ export const DISCIPLINE_PAGES = {
     },
     'commercial-model': {
       promise: 'Make sure growth makes money.',
-      lede: 'Revenue can grow while profit quietly shrinks. We look at what you sell, how you price it and what it costs to win and serve, and rebuild the model so every sale counts.',
+      lede: 'You can be winning deals and still weakening the business. We connect pricing, discounting, customer economics and delivery costs, so every commercial decision strengthens the revenue line, not just enlarges it.',
       signsTitle: 'Signs you’re *winning deals that don’t pay*.',
       signs: [
         'Discounting has become the default way to close.',
@@ -129,7 +129,7 @@ export const DISCIPLINE_PAGES = {
         'Reprice, repackage and set discount rules with sales.',
         'Track margin by customer every month, in your own tools.',
       ],
-      outcomes: ['Prices that hold in negotiation.', 'Margin visible by customer and product.', 'A growth plan the numbers support.'],
+      outcomes: ['Every account earning its place, and repriced at renewal if not.', 'Prices that hold in negotiation.', 'A growth plan the numbers support.'],
       related: [
         ['sales-and-conversion', 'Pricing only holds if sales can sell the value.'],
         ['data-systems-and-ai', 'You can’t manage margin you can’t see.'],
@@ -137,7 +137,7 @@ export const DISCIPLINE_PAGES = {
     },
     'data-systems-and-ai': {
       promise: 'See the whole business, and act on it faster.',
-      lede: 'Your CRM, finance and marketing data each tell part of the story. We connect them, make sense of them, and turn them into decisions and actions you can measure, with forecasts and AI tools your team uses every day.',
+      lede: 'You already have the numbers. We connect the commercial signals, show where the plan is drifting, and build the decisions and systems to correct it, while there’s still time to act.',
       signsTitle: 'Signs disconnected information is *slowing you down*.',
       signs: [
         'Reporting takes days, and the numbers still get argued about.',
@@ -157,7 +157,7 @@ export const DISCIPLINE_PAGES = {
         'Connect the data, build the forecasts and automate the busywork.',
         'Hand over tools you own, and train the team to use them.',
       ],
-      outcomes: ['One version of the numbers.', 'Forecasts you can trust.', 'Hours back every week, in tools you keep.'],
+      outcomes: ['A forecast that shows its risks early.', 'One version of the numbers.', 'Hours back every week, in tools you keep.'],
       related: [
         ['commercial-model', 'Connected data is how you see margin by customer.'],
         ['team-and-operating-model', 'Tools only help if the team’s rhythm runs on them.'],
@@ -165,7 +165,7 @@ export const DISCIPLINE_PAGES = {
     },
     'team-and-operating-model': {
       promise: 'Build the team and rhythm that keep growth going.',
-      lede: 'Strategy only lands when people own it. We shape the structure, the meetings and the skills, and help you hire the right people, so growth keeps running after we step back.',
+      lede: 'A growth plan only works if the organisation can execute it. We align structure, ownership, leadership rhythm and capability to the revenue plan, then leave the team able to keep it moving.',
       signsTitle: 'Signs nobody *owns growth*.',
       signs: [
         'Nobody owns growth from end to end.',
@@ -185,7 +185,7 @@ export const DISCIPLINE_PAGES = {
         'Set up the rhythm, coach the team and support hiring.',
         'Step back once it runs without us.',
       ],
-      outcomes: ['A clear owner for every growth target.', 'Meetings that make decisions.', 'The right next hire, with a role ready for them.'],
+      outcomes: ['Capacity planned against revenue, not headcount.', 'A clear owner for every growth target.', 'Meetings that make decisions.'],
       related: [
         ['sales-and-conversion', 'Sales performance comes down to people, process and rhythm.'],
         ['data-systems-and-ai', 'A good rhythm runs on numbers everyone trusts.'],

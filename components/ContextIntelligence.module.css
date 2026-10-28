@@ -273,7 +273,15 @@
 .chips {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 5px;
+}
+
+/* Says what the tags are, so they don't read as filters. */
+.srcLabel {
+  margin-right: 4px;
+  font-size: 10px;
+  color: var(--sf);
 }
 
 .chip {
@@ -339,6 +347,8 @@
 }
 
 .ctx .read {
+  font-size: 23px;
+  line-height: 1.2;
   color: var(--st);
 }
 
@@ -406,7 +416,7 @@
 .fig b {
   display: block;
   font-family: var(--serif);
-  font-size: 30px;
+  font-size: 26px;
   font-weight: 400;
   line-height: 1;
   letter-spacing: -0.02em;
@@ -899,6 +909,10 @@
 
   .read {
     font-size: 18px;
+  }
+
+  .ctx .read {
+    font-size: 20px;
   }
 
   .strip {
