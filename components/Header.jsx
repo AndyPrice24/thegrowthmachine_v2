@@ -21,8 +21,7 @@ export default function Header() {
     ['How it works','/how-it-works'],
     ['Ecommerce','/ecommerce'],
     ['B2B / SaaS','/b2b'],
-    ['About','/about'],
-    ['Insights','/insights']
+    ['About','/about']
   ];
   return (
     <header className="site-header">

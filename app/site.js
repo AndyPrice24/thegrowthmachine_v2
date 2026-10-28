@@ -1,10 +1,10 @@
 /**
- * Flip to true on launch day, and only once the launch checklist is done.
- * Until then every page tells search engines not to index it and robots.txt
- * disallows everything, so a preview deployment cannot end up in Google with
- * placeholders on it. (Pattern carried over from the original Astro build.)
+ * Launched in October 2026: every page may be indexed, and robots.txt points
+ * search engines at the sitemap. Set back to false to hide the whole site from
+ * search engines again (every page then says noindex, and robots.txt
+ * disallows everything).
  */
-export const LAUNCHED = false;
+export const LAUNCHED = true;
 
 /** The company behind the site, as registered with CIPC (South Africa). */
 export const COMPANY = {

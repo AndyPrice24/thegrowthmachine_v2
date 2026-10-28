@@ -45,7 +45,7 @@ The site builds as plain static files for Cloudflare Pages (free plan, commercia
 2. Build settings: framework preset **None**, build command `npm run build`, build output directory `out`. Node comes from `.nvmrc`.
 3. Add the three contact form variables above (as secrets).
 4. Pages builds a preview for every branch and deploys the production branch to `<project>.pages.dev`.
-5. Custom domains → add `thegrowthmachine.co` and `www.thegrowthmachine.co`, and follow the DNS records Cloudflare gives. Keep existing email/MX records intact.
+5. Custom domains: see `LAUNCH.md` for the full go-live steps (moving DNS to Cloudflare, connecting `thegrowthmachine.co`, and setting up the contact form email).
 
 What runs where on Cloudflare: pages are static HTML in `out/`; the contact form is the Pages Function `functions/api/contact.js`; the old audience URLs redirect via `public/_redirects` (keep it in step with `redirects()` in `next.config.mjs`). To build the same output locally: `npm run build:cloudflare`.
 
