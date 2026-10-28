@@ -28,7 +28,7 @@ export default function Header() {
     <header className="site-header">
       <div className="shell nav-shell">
         <Link className="brand" href="/" aria-label="The Growth Machine home">
-          <img src="/tgm-logo.png" alt="The Growth Machine" />
+          <img src="/brand/tgm-logo.svg" alt="The Growth Machine" />
         </Link>
         <nav className="desktop-nav" aria-label="Main navigation">
           {links.map(([label, href]) => <Link key={href} href={href} {...linkProps(href)}>{label}</Link>)}

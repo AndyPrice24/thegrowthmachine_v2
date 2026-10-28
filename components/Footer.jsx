@@ -9,7 +9,7 @@ export default function Footer(){
   return <footer className="footer">
     <div className="shell footer-grid">
       <div>
-        <img src="/tgm-logo.png" alt="The Growth Machine" className="footer-logo"/>
+        <img src="/brand/tgm-logo-white.svg" alt="The Growth Machine" className="footer-logo"/>
         <p>Fractional growth leadership for businesses that need clarity before another senior hire.</p>
       </div>
       <div><h4>Explore</h4><Link href="/how-it-works">How it works</Link><Link href="/ecommerce">Ecommerce</Link><Link href="/b2b">B2B / SaaS</Link></div>

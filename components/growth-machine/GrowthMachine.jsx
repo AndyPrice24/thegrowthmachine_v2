@@ -25,7 +25,7 @@
  */
 import { useEffect, useRef } from 'react';
 import manifest from './manifest.json';
-import { LOGO_VIEWBOX, GEAR_CENTRE, WORDMARK, GEAR } from './logo-paths';
+import { LOGO_VIEWBOX, WORDMARK, COG, COG_CENTRE, COG_SCALE, COG_SHADOW } from './logo-paths';
 import styles from './GrowthMachine.module.css';
 
 const INPUTS = ['Stalled growth', 'Unclear GTM', 'Weak acquisition', 'Low conversion', 'Margin leakage', 'Founder dependency'];
@@ -169,8 +169,11 @@ function Stage({ kind }) {
           {WORDMARK.map((d, i) => (
             <path key={i} d={d} className={styles.wordmark} />
           ))}
-          <g transform={`translate(${GEAR_CENTRE.x} ${GEAR_CENTRE.y})`}>
-            <path d={GEAR} className={styles.logoGear} />
+          <g transform={`translate(${COG_CENTRE.x} ${COG_CENTRE.y}) scale(${COG_SCALE})`}>
+            <g transform={`translate(${COG_SHADOW.x / COG_SCALE} ${COG_SHADOW.y / COG_SCALE})`}>
+              <path d={COG} className={`${styles.logoGear} ${styles.logoGearShadow}`} />
+            </g>
+            <path d={COG} className={styles.logoGear} />
           </g>
         </svg>
 

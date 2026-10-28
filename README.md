@@ -63,5 +63,8 @@ Do not change GoDaddy nameservers unless you intentionally want to move DNS host
 ## Editorial workflow
 The starter insights are code-backed in `app/insights/posts.js`. For a real publishing workflow, add a CMS such as Sanity, Contentful, Storyblok or WordPress headless after the first version is approved. The current structure is deliberately CMS-ready.
 
+## Logo and icons
+The logo (the wordmark with the lop-sided cog in the O) lives as vector paths in `components/growth-machine/logo-paths.js`. `python3 tools/brand/build_logo.py` builds everything else from it: the header and footer logos and PNG copies for collateral in `public/brand/`, and the browser and home-screen icons in `app/` (`icon.svg`, `favicon.ico`, `apple-icon.png`). Rerun it after changing the logo, and commit the output.
+
 ## Brand variables
 Edit the CSS variables at the top of `app/globals.css` to change the global visual system.

@@ -183,9 +183,13 @@
 }
 
 .logoGear {
-  fill: #c6221c;
+  fill: #c8221c;
   transform-box: fill-box;
   transform-origin: center;
+}
+
+.logoGearShadow {
+  fill: #111;
 }
 
 /* ---------------------------------------------------------------- rig */
