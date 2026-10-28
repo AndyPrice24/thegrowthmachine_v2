@@ -2,28 +2,74 @@ import Link from 'next/link';
 import styles from './about.module.css';
 
 /*
- * About: confidence in the two people a client works with, not a second
- * explanation of the growth proposition (the homepage and discipline pages
- * do that). Five parts: the introduction, the experience behind the
- * machine, the founders (equal cards, each with a bio and a career timeline
- * tagged with the growth roles held in it), the combined advantage, and one
- * call to talk.
+ * About: the company first, the founders as proof. Six parts: what The
+ * Growth Machine is, why we built it (the middle ground most growing
+ * businesses get stuck in), the complementary skills that cover the whole
+ * spectrum of growth, how we work, meet the team (equal cards with a few
+ * highlights each, not a CV), and one call to talk.
  *
- * Careers name only the big brands; everything else is described.
+ * Only the big brands are named; everything else is described.
  */
 
 export const metadata = {
   title: 'About',
   description:
-    'Andrew and Tarren Price: founders, entrepreneurs and hands-on commercial growth operators behind The Growth Machine.',
+    'The Growth Machine gives growing businesses senior, hands-on growth leadership across the whole commercial system, without the full-time hire. Founded by Andrew and Tarren Price.',
   alternates: { canonical: '/about' },
 };
 
-const PROOF = [
-  ['£1.5M+', 'raised across three funding rounds'],
-  ['1 exit', 'a fintech venture built and sold'],
-  ['Global patent', 'secured across 11 regions'],
-  ['2 global brands', 'commercial and insight roles at Red Bull and Beiersdorf'],
+const MIDDLE = [
+  {
+    tag: 'You need growth',
+    title: 'The next stage needs a different engine.',
+    text: 'What got the business here won’t get it to the next level, and the pressure to grow is real.',
+  },
+  {
+    tag: 'Not another full-time hire',
+    title: 'A senior hire is a big, slow bet.',
+    text: 'It takes months to find the right person, costs a fixed salary, and brings one person’s experience to a many-sided problem.',
+  },
+  {
+    tag: 'Growth spans everything',
+    title: 'The problem sits between roles.',
+    text: 'Brand, sales, pricing, data and team all move growth. The constraint is rarely inside just one of them.',
+  },
+];
+
+const SPECTRUM = [
+  'Brand & positioning',
+  'Customer insight',
+  'Acquisition',
+  'Conversion',
+  'Sales',
+  'Pricing & model',
+  'Data & AI',
+  'Team & operations',
+];
+
+const PILLARS = [
+  {
+    tag: 'Growth operators',
+    title: '15+ years each in growth roles.',
+    text: 'Sales, marketing, revenue and commercial leadership, from enterprise deals to ecommerce and marketplaces.',
+  },
+  {
+    tag: 'Brand builders',
+    title: 'From global brands to our own.',
+    text: 'Commercial and insight roles at Red Bull and Beiersdorf, and brands we’ve built from scratch.',
+  },
+  {
+    tag: 'Founders',
+    title: 'We’ve built businesses ourselves.',
+    text: '6+ startups founded and run, £1.5M+ raised, a venture built and sold, and a brand trading internationally today.',
+  },
+];
+
+const STEPS = [
+  ['Diagnose', 'We look across the whole commercial system to find what’s really holding growth back.'],
+  ['Prioritise', 'We agree the few changes with the biggest commercial impact, and what good looks like.'],
+  ['Do the work', 'We build and run it alongside your team, directing agencies and partners where needed.'],
+  ['Embed', 'We leave the tools, rhythm and skills behind, so it keeps working without us.'],
 ];
 
 const FOUNDERS = [
@@ -31,114 +77,176 @@ const FOUNDERS = [
     name: 'Andrew Price',
     photo: '/founders/andrew.webp',
     linkedin: 'https://www.linkedin.com/in/andrew-perry-price',
-    bio: 'Andrew has spent 15+ years building businesses and the commercial engines that make them grow. In every role, from enterprise sales and running an agency P&L to co-founding a 15-person venture studio and leading ventures as CEO, Andrew has owned the growth: sales, marketing, brand, forecasting, fundraising and the business model, while leading the team. Andrew’s strength is seeing the whole commercial picture, and turning it into a model a business can execute.',
-    career: [
-      { when: '2014–15', role: 'Head of business development', where: 'global creative-research network', what: 'Ran enterprise B2B sales end to end, with pipeline forecasting and quota accountability.', tags: ['Sales', 'Forecasting', 'B2B'] },
-      { when: '2015–16', role: 'Managing director', where: 'full-service creative & marketing agency', what: 'Ran the P&L and a 12-person team across brand, digital, content and PR; built the agency’s first outbound sales engine.', tags: ['Growth', 'Sales', 'Marketing', 'Brand', 'Team'] },
-      { when: '2016–20', role: 'Co-founder & CRO', where: '15-person venture and innovation studio', what: 'Built the revenue model and personally sold programmes to ABSA, Woolworths and Vodacom.', tags: ['Sales', 'Business models', 'Go-to-market', 'Team'] },
-      { when: '2019–21', role: 'General manager', where: 'fintech venture', what: 'Built the business case, proposition and revenue model; led the launch and took it through to acquisition by an industry partner.', tags: ['Business design', 'Go-to-market', 'Partnerships', 'Exit'] },
-      { when: '2020–23', role: 'CEO', where: 'patented consumer-tech venture', what: 'Raised £1.5M+ across three rounds, led a multidisciplinary team, and ran go-to-market in the UK and South Africa.', tags: ['Fundraising', 'Go-to-market', 'Brand', 'Team'] },
-      { when: '2023', role: 'Fractional CRO', where: 'fintech business', what: 'Reworked the commercial model, pricing and go-to-market, and led investor and partner talks.', tags: ['Revenue', 'Pricing', 'Partnerships'] },
-      { when: '2024–', role: 'Commercial director & co-founder', where: 'international DTC pet brand', what: 'Built the growth model across DTC, Amazon and paid acquisition, plus the AI tools for forecasting and unit economics.', tags: ['Growth', 'Brand', 'Forecasting', 'AI'] },
+    intro:
+      'A founder and commercial leader who has owned the growth in every business Andrew has built or led: the model, the sales, the brand and the funding.',
+    highlights: [
+      'Co-founded a 15-person venture studio and led its revenue',
+      'Built and sold a fintech venture',
+      'Raised £1.5M+ and secured a global patent as a CEO',
+      'Ran a creative agency and built its sales engine',
+      'Co-founded and runs an international DTC pet brand',
     ],
-    earlier: 'Earlier: field marketing, sales and general management roles.',
+    brands: 'ABSA · Woolworths · Vodacom',
   },
   {
     name: 'Tarren Price',
     photo: '/founders/tarren.webp',
     linkedin: 'https://www.linkedin.com/in/tarren-price-3389835a/',
-    bio: 'Tarren brings 15+ years of connecting consumer and market intelligence with commercial growth. From trade marketing at Beiersdorf and national insights at Red Bull to founding and running consumer brands, Tarren’s work spans brand strategy, marketing, consumer insight, ecommerce, pricing and commercial optimisation. Today that means hands-on growth leadership across acquisition, conversion, marketplaces and operations, and the people and partners behind them: turning what customers and markets reveal into better commercial decisions.',
-    career: [
-      { role: 'Trade marketing strategist', where: 'Beiersdorf', what: 'Used competitor, customer, market and financial data to shape positioning, distribution, product and retailer relationships.', tags: ['Insight', 'Positioning', 'Trade marketing', 'Distribution'] },
-      { role: 'National insights manager', where: 'Red Bull', what: 'Turned market and sales data into go-to-market, trade and marketing decisions.', tags: ['Insight', 'Go-to-market', 'Marketing'] },
-      { role: 'Founder', where: 'health-supplement brand', what: 'Built and ran a consumer brand from launch.', tags: ['Brand', 'Ecommerce', 'Growth'] },
-      { role: 'Co-founder', where: 'international DTC pet brand', what: 'Trading direct and on Amazon in the US and Australia.', tags: ['Growth', 'Ecommerce', 'Marketplaces', 'Brand'] },
-      { role: 'Fractional growth lead', where: 'UK beauty brand', what: 'Reshaping the creative, website, costings, commercial model, Amazon, search and team.', tags: ['Ecommerce', 'Commercial model', 'Marketplaces', 'Team'] },
+    intro:
+      'A consumer and commercial growth leader who turns customer and market insight into decisions on brand, channel, product and price.',
+    highlights: [
+      'Trade marketing strategy for a global skincare brand',
+      'National insights for a global drinks brand',
+      'Founded and ran a consumer health brand',
+      'Leads ecommerce growth for a UK beauty brand',
+      'Co-founded and runs an international DTC pet brand',
     ],
+    brands: 'Red Bull · Beiersdorf',
   },
 ];
 
 export default function About() {
   return (
     <article className={styles.page}>
-      {/* 1. Introduction */}
-      <section className={styles.intro}>
-        <div className={styles.shell}>
-          <p className={styles.eyebrow}>About The Growth Machine</p>
-          <div className={styles.introGrid}>
+      {/* 1. What The Growth Machine is */}
+      <section className={styles.hero}>
+        <div className={`${styles.shell} ${styles.heroGrid}`}>
+          <div>
+            <p className={styles.eyebrow}>About The Growth Machine</p>
             <h1 className={styles.title}>
-              We’ve built businesses. <em>Now we help grow yours.</em>
+              Senior growth leadership. <em>Without the full-time hire.</em>
             </h1>
-            <div className={styles.introCopy}>
-              <p className={styles.lead}>We’re Andrew and Tarren: founders, entrepreneurs and hands-on commercial growth operators.</p>
-              <p>
-                Between us, we’ve launched multiple ventures, raised investment, led teams, worked with international brands and built
-                businesses trading across global markets.
-              </p>
-              <p>
-                We’ve experienced growth from both sides: setting the commercial strategy, and being the people accountable for making it
-                work. We founded The Growth Machine to bring that experience directly into other businesses.
-              </p>
-              <p className={styles.featured}>
-                <span aria-hidden="true" />
-                As featured in <b>Fast Company</b> South Africa
-              </p>
-            </div>
+            <p className={styles.lede}>
+              The Growth Machine is a fractional growth partnership, founded by Andrew and Tarren Price. We give founders and leadership
+              teams senior, hands-on growth leadership across the whole commercial system, for as long as they need it.
+            </p>
+            <p className={styles.badge}>
+              <span aria-hidden="true" />
+              Founder-led · Senior-only · Hands-on
+            </p>
+          </div>
+          <div className={styles.pics} aria-hidden="true">
+            {FOUNDERS.map((f, i) => (
+              <figure key={f.name} className={`${styles.pic} ${i ? styles.picB : styles.picA}`}>
+                <img src={f.photo} alt="" width="800" height="999" decoding="async" />
+                <figcaption>{f.name}</figcaption>
+              </figure>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* 2. The experience behind the machine */}
-      <section className={styles.proof} aria-labelledby="proof-title">
+      {/* 2. Why we built it */}
+      <section className={styles.why} aria-labelledby="why-title">
         <div className={styles.shell}>
-          <h2 id="proof-title" className={styles.proofTitle}>The experience behind the machine</h2>
-          <ul className={styles.proofList}>
-            {PROOF.map(([value, label]) => (
-              <li key={value}>
-                <b>{value}</b>
-                <span>{label}</span>
+          <p className={styles.eyebrowLight}>Why we built it</p>
+          <h2 id="why-title" className={styles.h2}>
+            Most growing businesses get stuck <em>in the middle.</em>
+          </h2>
+          <ol className={styles.middle}>
+            {MIDDLE.map((m, i) => (
+              <li key={m.tag}>
+                <small>
+                  0{i + 1} · {m.tag}
+                </small>
+                <h3>{m.title}</h3>
+                <p>{m.text}</p>
               </li>
             ))}
-          </ul>
+          </ol>
+          <div className={styles.comeIn}>
+            <h3>
+              That’s where <em>we come in.</em>
+            </h3>
+            <p>
+              Senior growth leadership across every discipline, fractional and hands-on: we find the real constraint, own the outcome and do
+              the work, alongside your team.
+            </p>
+          </div>
         </div>
       </section>
 
-      {/* 3. Meet the founders */}
-      <section className={styles.founders} aria-labelledby="founders-title">
+      {/* 3. Complementary skills */}
+      <section className={styles.spectrum} aria-labelledby="spectrum-title">
         <div className={styles.shell}>
-          <p className={styles.eyebrow}>Meet the founders</p>
-          <h2 id="founders-title" className={styles.h2}>
-            Operators first. <em>Advisers second.</em>
+          <div className={styles.split}>
+            <div>
+              <p className={styles.eyebrow}>Why two founders</p>
+              <h2 id="spectrum-title" className={styles.h2}>
+                Complementary skills. <em>The whole spectrum of growth.</em>
+              </h2>
+            </div>
+            <p className={styles.splitCopy}>
+              Growth doesn’t live in one department, so neither does our experience. Between us, we’ve led it from both ends: the commercial
+              model, sales and revenue, and the customer, brand and channels. Where our experience overlaps, we challenge each other.
+              Together, it covers every lever a business can pull to grow.
+            </p>
+          </div>
+          <ul className={styles.levers}>
+            {SPECTRUM.map((s) => (
+              <li key={s}>{s}</li>
+            ))}
+          </ul>
+          <p className={styles.bracket}>
+            <span>Between us, all of it</span>
+          </p>
+          <p className={styles.any}>In any industry: B2B, SaaS, ecommerce and consumer.</p>
+          <div className={styles.pillars}>
+            {PILLARS.map((p) => (
+              <div key={p.tag} className={styles.pillar}>
+                <small>{p.tag}</small>
+                <h3>{p.title}</h3>
+                <p>{p.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 4. How we work */}
+      <section className={styles.process} aria-labelledby="process-title">
+        <div className={styles.shell}>
+          <p className={styles.eyebrow}>How we work</p>
+          <h2 id="process-title" className={styles.h2}>
+            We don’t hand you a strategy. <em>We get in and do the work.</em>
+          </h2>
+          <ol className={styles.track}>
+            {STEPS.map(([title, text], i) => (
+              <li key={title}>
+                <span className={styles.node} aria-hidden="true">
+                  {i + 1}
+                </span>
+                <h3>{title}</h3>
+                <p>{text}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* 5. Meet the team */}
+      <section className={styles.team} aria-labelledby="team-title">
+        <div className={styles.shell}>
+          <p className={styles.eyebrow}>Meet the team</p>
+          <h2 id="team-title" className={styles.h2}>
+            The people <em>you’ll work with.</em>
           </h2>
           <div className={styles.cards}>
             {FOUNDERS.map((f) => (
               <article key={f.name} className={styles.card}>
-                <div className={styles.portrait}>
-                  <img src={f.photo} alt={`Portrait of ${f.name}`} width="800" height="999" loading="lazy" decoding="async" />
-                </div>
+                <img src={f.photo} alt={`Portrait of ${f.name}`} width="800" height="999" loading="lazy" decoding="async" />
                 <div className={styles.cardBody}>
                   <h3 className={styles.name}>{f.name}</h3>
                   <p className={styles.role}>Co-founder &amp; Growth Operator</p>
-                  <p className={styles.bio}>{f.bio}</p>
-
-                  <h4 className={styles.careerTitle}>Career</h4>
-                  <ol className={styles.career}>
-                    {f.career.map((c) => (
-                      <li key={c.role + c.where}>
-                        {c.when && <span className={styles.when}>{c.when}</span>}
-                        <p className={styles.post}>
-                          <b>{c.role}</b>, {c.where}
-                        </p>
-                        <p className={styles.what}>{c.what}</p>
-                        <ul className={styles.tags} aria-label="Roles held">
-                          {c.tags.map((t) => (
-                            <li key={t}>{t}</li>
-                          ))}
-                        </ul>
-                      </li>
+                  <p className={styles.intro}>{f.intro}</p>
+                  <ul className={styles.highlights}>
+                    {f.highlights.map((h) => (
+                      <li key={h}>{h}</li>
                     ))}
-                  </ol>
-                  {f.earlier && <p className={styles.earlier}>{f.earlier}</p>}
+                  </ul>
+                  <p className={styles.brands}>
+                    Worked with <b>{f.brands}</b>
+                  </p>
                   <a className={styles.linkedin} href={f.linkedin} target="_blank" rel="noopener noreferrer">
                     {f.name.split(' ')[0]} on LinkedIn <span aria-hidden="true">↗</span>
                   </a>
@@ -146,42 +254,13 @@ export default function About() {
               </article>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* 4. The combined advantage */}
-      <section className={styles.together} aria-labelledby="together-title">
-        <div className={styles.shell}>
-          <div className={styles.togetherGrid}>
-            <div>
-              <p className={styles.eyebrowLight}>The combined advantage</p>
-              <h2 id="together-title" className={styles.togetherTitle}>
-                Different experience. <em>Shared accountability.</em>
-              </h2>
-            </div>
-            <div className={styles.togetherCopy}>
-              <p>
-                We’ve built and operated businesses together, including <b>Hoddogs</b>, an international consumer brand trading in the US and
-                Australia.
-              </p>
-              <p>
-                Our different backgrounds give us a broader perspective. Our shared experience as founders means we approach decisions with
-                the same commercial accountability.
-              </p>
-              <p>
-                We don’t divide your business into functional silos. We challenge assumptions, connect the dots and focus on the opportunities
-                most likely to make a commercial difference.
-              </p>
-              <p className={styles.leads}>The challenge determines who leads. Both perspectives strengthen the solution.</p>
-            </div>
-          </div>
           <p className={styles.direct}>
             When you work with The Growth Machine, <em>you work directly with us.</em>
           </p>
         </div>
       </section>
 
-      {/* 5. Talk to us */}
+      {/* 6. Talk to us */}
       <section className={styles.cta} aria-labelledby="cta-title">
         <div className={styles.shell}>
           <div className={styles.ctaPanel}>
