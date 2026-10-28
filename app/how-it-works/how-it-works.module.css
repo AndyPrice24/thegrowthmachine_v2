@@ -1,0 +1,822 @@
+/* How it works, in the site's house style: warm paper, serif headlines with
+   red emphasis, ink-outlined cards with hard shadows, and one dark dotted
+   band for the route. The route runs across five columns on desktop, free
+   stages in cream and paid stages in red, and becomes a vertical line with
+   the cards hanging off it below 900px. */
+
+.page {
+  --serif: Georgia, 'Times New Roman', serif;
+  --soft: #5f5850;
+  --hot: #ff4b3e;
+  --cream: #ece6dd;
+  --muted: #b9b0a5;
+  --rule: #e3dacd;
+  --sans: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.shell {
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+}
+
+.eyebrow,
+.eyebrowLight,
+.tag {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+
+.eyebrowLight {
+  color: #ff6c64;
+}
+
+.h2 {
+  margin: 14px 0 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(32px, 3.6vw, 48px);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.h2 em,
+.title em,
+.ctaTitle em {
+  font-style: italic;
+  color: var(--red);
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------ 1. hero */
+
+.hero {
+  padding: 76px 0 80px;
+}
+
+.title {
+  max-width: 900px;
+  margin: 16px 0 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(44px, 5.4vw, 76px);
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+}
+
+.lede {
+  max-width: 640px;
+  margin: 22px 0 0;
+  font-size: 19px;
+  line-height: 1.6;
+  color: var(--soft);
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 30px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.facts li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 14px;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 3px 3px 0 var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.facts li::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--red);
+}
+
+/* ----------------------------------------------------------- 2. route */
+
+.route {
+  position: relative;
+  isolation: isolate;
+  padding: 96px 0 104px;
+  background: #131210;
+  color: var(--cream);
+}
+
+.route::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1.4px);
+  background-size: 7px 7px;
+}
+
+.route .h2 em {
+  color: var(--hot);
+}
+
+.routeLede {
+  max-width: 620px;
+  margin: 16px 0 0;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.zones {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 22px;
+  margin-top: 54px;
+}
+
+.zoneFree,
+.zonePaid {
+  margin: 0;
+  padding: 9px 0;
+  border-top: 2px solid;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.zoneFree {
+  border-color: var(--cream);
+}
+
+.zonePaid {
+  border-color: var(--hot);
+  color: var(--hot);
+}
+
+.zones b {
+  margin-left: 8px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: #8f877c;
+}
+
+.stages {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 22px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stages::before {
+  content: '';
+  position: absolute;
+  top: 27px;
+  left: 28px;
+  right: 28px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--cream) 0 58%, var(--hot) 62% 100%);
+}
+
+.stages > li {
+  position: relative;
+}
+
+.node {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border: 1.5px solid var(--cream);
+  border-radius: 50%;
+  background: #131210;
+  font-family: var(--serif);
+  font-size: 22px;
+}
+
+.paid .node {
+  border-color: var(--hot);
+  background: var(--red);
+  color: #fff;
+}
+
+.step {
+  margin: 18px 0 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #ff6c64;
+}
+
+/* The free / paid label sits on each stage only where the zones above are
+   hidden, on the stacked layout. */
+.price {
+  display: none;
+  margin-left: 8px;
+  padding: 2px 7px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 9.5px;
+}
+
+.stageTitle {
+  margin: 6px 0 0;
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.stageCard {
+  margin-top: 16px;
+  padding: 18px;
+  border: 1.5px solid var(--ink);
+  border-radius: 12px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 5px 6px 0 #000;
+}
+
+.paid .stageCard {
+  box-shadow: 5px 6px 0 var(--red);
+}
+
+.stageCard p {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--soft);
+}
+
+.options {
+  display: grid;
+  gap: 7px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.options li {
+  padding: 7px 10px;
+  border: 1px solid rgba(23, 23, 21, 0.8);
+  border-radius: 7px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.options span {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--soft);
+}
+
+.stageCard .get {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule);
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.get b {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+
+.spur {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border: 1.5px dashed #8f877c;
+  border-radius: 12px;
+}
+
+.spurTag {
+  display: inline-block;
+  padding: 3px 8px;
+  border: 1px solid var(--hot);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--hot);
+}
+
+.spur h4 {
+  margin: 8px 0 0;
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 400;
+}
+
+.spur p {
+  margin: 6px 0 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.loop {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+  margin: 30px 0 0 auto;
+  font-family: var(--serif);
+  font-size: 19px;
+  font-style: italic;
+}
+
+.loop svg {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  color: var(--hot);
+}
+
+/* ------------------------------------------------------------ 3. ways */
+
+.ways {
+  padding: 100px 0 90px;
+}
+
+.waysGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px;
+  margin-top: 44px;
+}
+
+.way {
+  padding: 32px 32px 30px;
+  border: 1.5px solid var(--ink);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 8px 9px 0 var(--ink);
+}
+
+.way + .way {
+  box-shadow: 8px 9px 0 var(--red);
+}
+
+.way .tag,
+.routeCard .tag {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+}
+
+.way h3 {
+  margin: 10px 0 0;
+  font-family: var(--serif);
+  font-size: 36px;
+  font-weight: 400;
+  line-height: 1.05;
+}
+
+.wayPrice {
+  display: inline-block;
+  margin: 14px 0 0;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #fff;
+}
+
+.wayText {
+  margin: 16px 0 0;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--soft);
+}
+
+.best {
+  margin: 18px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--rule);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.best b {
+  color: var(--red);
+}
+
+.mix {
+  margin: 34px 0 0;
+  font-family: var(--serif);
+  font-size: 22px;
+  font-style: italic;
+  text-align: center;
+}
+
+.mix span {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-style: normal;
+  color: var(--soft);
+}
+
+/* --------------------------------------------------------- 4. with us */
+
+.withUs {
+  padding: 90px 0;
+  background: var(--paper2);
+}
+
+.withUsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 22px;
+  margin-top: 44px;
+}
+
+.point {
+  padding-top: 22px;
+  border-top: 3px solid var(--ink);
+}
+
+.point svg {
+  width: 28px;
+  height: 28px;
+  color: var(--red);
+}
+
+.point h3 {
+  margin: 12px 0 0;
+  font-family: var(--serif);
+  font-size: 23px;
+  font-weight: 400;
+  line-height: 1.15;
+}
+
+.point p {
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--soft);
+}
+
+/* ----------------------------------------------------------- 5. start */
+
+.start {
+  padding: 100px 0 90px;
+}
+
+.routes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px;
+  margin-top: 44px;
+}
+
+.routeCard {
+  padding: 28px;
+  border: 1.5px solid var(--ink);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 6px 7px 0 var(--ink);
+}
+
+.routeCard h3 {
+  margin: 8px 0 0;
+  font-family: var(--serif);
+  font-size: 30px;
+  font-weight: 400;
+}
+
+.routeCard ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.routeCard li a {
+  display: block;
+  height: 100%;
+  padding: 9px 11px;
+  border: 1px solid rgba(23, 23, 21, 0.85);
+  border-radius: 8px;
+  background: #f7f3ec;
+  box-shadow: 2px 2px 0 var(--ink);
+  font-size: 13.5px;
+  font-weight: 500;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.routeCard li a span {
+  color: var(--red);
+}
+
+.routeCard li a:hover {
+  background: #fff;
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 var(--red);
+}
+
+.routeCard a:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.more {
+  display: inline-block;
+  margin-top: 18px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+
+.more:hover {
+  text-decoration: underline;
+}
+
+/* ------------------------------------------------------------ 6. ends */
+
+.ends {
+  padding: 0 0 100px;
+}
+
+.endsGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 60px;
+  padding-top: 70px;
+  border-top: 1px solid #d9cfc2;
+}
+
+.leftWith {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1.5px solid var(--ink);
+}
+
+.leftWith li {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid #d9cfc2;
+  font-family: var(--serif);
+  font-size: 21px;
+}
+
+.leftWith span {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--red);
+}
+
+/* -------------------------------------------------------------- 7. cta */
+
+.cta {
+  padding: 0 0 100px;
+}
+
+.ctaPanel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+  padding: 44px 48px;
+  border: 1.5px solid var(--ink);
+  border-radius: 18px;
+  background: #131210;
+  color: var(--cream);
+  box-shadow: 12px 14px 0 var(--red);
+}
+
+.ctaTitle {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(30px, 3.2vw, 44px);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+}
+
+.ctaTitle em {
+  color: var(--hot);
+}
+
+.ctaText {
+  max-width: 560px;
+  margin: 12px 0 0;
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.ctaButton {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 22px;
+  border: 1.5px solid #fff;
+  border-radius: 10px;
+  background: var(--red);
+  font-weight: 600;
+  color: #fff;
+  box-shadow: 4px 4px 0 #fff;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ctaButton:hover {
+  transform: translate(-1px, -2px);
+  box-shadow: 5px 6px 0 #fff;
+}
+
+.ctaButton:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 4px;
+}
+
+/* ---------------------------------------------------------- tablet */
+
+@media (max-width: 1023px) {
+  .withUsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 34px;
+  }
+}
+
+/* Below 900px the route stacks: one vertical line, nodes on the left, and
+   a free / paid label on each stage in place of the zones. */
+@media (max-width: 899px) {
+  .zones {
+    display: none;
+  }
+
+  .stages {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    max-width: 560px;
+    margin-top: 44px;
+  }
+
+  .stages::before {
+    top: 28px;
+    bottom: 40px;
+    left: 27px;
+    right: auto;
+    width: 2px;
+    height: auto;
+    background: linear-gradient(180deg, var(--cream) 0 60%, var(--hot) 64% 100%);
+  }
+
+  .stages > li {
+    padding: 0 0 30px 74px;
+  }
+
+  .node {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  .step {
+    margin-top: 4px;
+  }
+
+  .price {
+    display: inline-block;
+  }
+
+  .loop {
+    margin: 0 0 0 74px;
+    font-size: 17px;
+  }
+
+  .waysGrid,
+  .routes,
+  .endsGrid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+
+  .endsGrid {
+    padding-top: 50px;
+  }
+
+  .ctaPanel {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* ----------------------------------------------------------- phone */
+
+@media (max-width: 600px) {
+  .shell {
+    width: calc(100% - 32px);
+  }
+
+  .hero {
+    padding: 44px 0 56px;
+  }
+
+  .lede {
+    font-size: 16.5px;
+  }
+
+  .facts li {
+    padding: 8px 11px;
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+  }
+
+  .route,
+  .ways,
+  .withUs,
+  .start {
+    padding: 64px 0;
+  }
+
+  .withUsGrid {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 22px;
+  }
+
+  .way {
+    padding: 24px 20px;
+    box-shadow: 5px 6px 0 var(--ink);
+  }
+
+  .way + .way {
+    box-shadow: 5px 6px 0 var(--red);
+  }
+
+  .way h3 {
+    font-size: 30px;
+  }
+
+  .routeCard {
+    padding: 22px 18px;
+  }
+
+  .routeCard ul {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .leftWith li {
+    font-size: 18px;
+  }
+
+  .ends,
+  .cta {
+    padding-bottom: 64px;
+  }
+
+  .ctaPanel {
+    padding: 28px 22px;
+    box-shadow: 7px 8px 0 var(--red);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ctaButton,
+  .routeCard li a {
+    transition: none;
+  }
+}

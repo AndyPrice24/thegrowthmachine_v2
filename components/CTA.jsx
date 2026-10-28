@@ -1,2 +1,0 @@
-import Link from 'next/link';
-export default function CTA(){return <section className="section"><div className="shell cta-panel"><div><span className="eyebrow">Before the next senior hire</span><h2>Diagnose what the business actually needs.</h2><p>If you are debating CMO vs CRO vs GTM lead vs Head of Growth vs EIR, that uncertainty is part of the problem we solve.</p></div><Link href="/contact" className="button">Book a Growth Call →</Link></div></section>}
