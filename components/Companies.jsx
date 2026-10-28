@@ -6,9 +6,9 @@ import styles from './Companies.module.css';
 
 /*
  * "Companies we've worked with": a strip of small logo-and-name pills across
- * the width of a dark section. Whichever company reaches the red marker in
- * the middle opens into a card with one or two highlights; after a few
- * seconds the strip moves on and the next one opens.
+ * the width of a dark section. Whichever company reaches the middle opens
+ * into a card with one or two highlights; after a few seconds the strip moves
+ * on and the next one opens.
  *
  * Every company sits at a slot worked out from its distance to the middle
  * (CSS places the slots, so they scale with the screen). Moving on changes
@@ -61,7 +61,6 @@ export default function Companies({ companies = COMPANIES }) {
 
       <div ref={stageRef} className={`${styles.stage} ${still ? styles.still : ''}`} aria-hidden="true">
         <span className={styles.rail} aria-hidden="true" />
-        <span className={styles.mark} aria-hidden="true" />
 
         {companies.map((c, i) => {
           const k = offset(i, active);

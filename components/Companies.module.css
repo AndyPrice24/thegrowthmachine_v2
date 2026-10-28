@@ -1,6 +1,5 @@
 /* "Companies we've worked with": a dark, dotted band. A strip of pills runs
-   the full width on a thin rail; the one at the red marker in the middle
-   opens into a cream card (ink outline, hard red shadow). The slots are set
+   the full width on a thin rail; the one in the middle opens into a cream card (ink outline, hard red shadow). The slots are set
    by --first (middle to the first pill either side) and --step (pill to
    pill); each item knows its side (--s) and distance (--a). */
 
@@ -87,29 +86,6 @@
   height: 1px;
   background: rgba(255, 255, 255, 0.18);
 }
-
-.mark {
-  position: absolute;
-  left: 50%;
-  top: 6px;
-  bottom: 6px;
-  border-left: 1.5px dashed rgba(255, 75, 62, 0.45);
-}
-
-.mark::before,
-.mark::after {
-  content: '';
-  position: absolute;
-  left: -6.5px;
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  background: var(--hot);
-  box-shadow: 0 0 12px var(--hot);
-}
-
-.mark::before { top: -6px; }
-.mark::after { bottom: -6px; }
 
 /* Each company is a point on the rail; its pill and card are centred on it. */
 .item {
