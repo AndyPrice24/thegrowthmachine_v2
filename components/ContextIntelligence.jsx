@@ -254,23 +254,23 @@ function Bubble({ c, W }) {
 }
 
 function Share({ c, W }) {
-  // Row labels on the left; segment names above the first bar, percentages
-  // inside.
-  const BH = 40, RH = 56, lw = 64, top = 22, H = top + RH * c.rows.length, bw = W - lw;
+  // Segment names along the top; each row's label sits just above its bar,
+  // so the bars get the full width; percentages inside.
+  const BH = 40, LH = 18, RH = 70, top = 22, H = top + RH * c.rows.length - 12;
   const tones = [styles.barLight, null, styles.barMuted];
-  const at = (segs, k) => lw + (bw * segs.slice(0, k).reduce((t, x) => t + x[1], 0)) / 100;
+  const at = (segs, k) => (W * segs.slice(0, k).reduce((t, x) => t + x[1], 0)) / 100;
   return (
     <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
       {c.rows[0][1].map(([name], k) => (
         <text key={name} className={name === c.hot ? styles.valueHot : styles.labelLight} x={at(c.rows[0][1], k) + 2} y="12">{name}</text>
       ))}
       {c.rows.map(([label, segs], r) => {
-        const y = top + r * RH;
+        const y = top + r * RH + LH;
         return (
           <g key={label}>
-            <text className={styles.axis} x="0" y={y + BH / 2 + 4}>{label}</text>
+            <text className={styles.axis} x="0" y={y - 6}>{label}</text>
             {segs.map(([name, p], i) => {
-              const x = at(segs, i), w = (bw * p) / 100, hotSeg = name === c.hot;
+              const x = at(segs, i), w = (W * p) / 100, hotSeg = name === c.hot;
               return (
                 <g key={name} style={pct(r * 3 + i)}>
                   <rect className={`${styles.growX} ${hotSeg ? styles.barHot : tones[i] || styles.barMuted}`} x={x} y={y} width={Math.max(0, w - 2)} height={BH} rx="3" />
@@ -426,9 +426,6 @@ function ScreenView({ id, labelledBy, s, n, view, setView, play }) {
             <p className={styles.kick}>0{n} · {s.name}</p>
             <h3 className={styles.question}>{s.question}</h3>
           </div>
-          <span className={styles.periods} aria-hidden="true">
-            <span>30D</span><span>90D</span><span className={styles.on}>12M</span>
-          </span>
         </div>
 
         <div className={styles.switch} role="group" aria-label="Show the answer">

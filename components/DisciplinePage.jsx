@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { DisciplineIcon } from '@/components/HowWeWork';
@@ -14,12 +15,15 @@ import styles from './DisciplinePage.module.css';
  *
  *   1. Opening: the promise, and the card you clicked, opened up
  *   2. Sound familiar? The signs this discipline is the constraint
- *   3. What we do: the three areas, and what you come away with
+ *   3. What we do: the commercial goal, the three areas, and what you're
+ *      left with
  *   4. The question we'd answer first: the discipline's dashboard screen
- *   5. How it works: diagnose, prioritise, do the work, embed
+ *   5. How it works: diagnose, prioritise, do the work, embed, as they
+ *      apply to this discipline
  *   6. What changes
- *   7. Works best with: two related disciplines, and all six to jump between
- *   8. Talk to us
+ *   7. Works best with: two related disciplines and why, and all six to
+ *      jump between
+ *   8. Talk to us: about the real constraint, wherever it turns out to be
  *
  * Copy lives in disciplines.js; names, icons and area titles in journeys.js;
  * the dashboard screen in intel.js.
@@ -30,12 +34,12 @@ const LABELS = {
   ecommerce: { short: 'Ecommerce', back: 'Ecommerce & consumer growth' },
 };
 
-const STEPS = [
-  ['Diagnose', 'We dig into the data and talk to the people closest to it, to find what’s really holding things back.'],
-  ['Prioritise', 'We agree the few changes that will move the numbers most, and what good looks like.'],
-  ['Do the work', 'We build it and run it alongside your team. Not a deck: the actual work.'],
-  ['Embed', 'We hand over the tools, rhythm and skills, so it keeps working without us.'],
-];
+const STEPS = ['Diagnose', 'Prioritise', 'Do the work', 'Embed'];
+
+// "Signs your brand *isn’t doing enough*." → the starred words in red.
+function Marked({ text }) {
+  return text.split('*').map((part, i) => (i % 2 ? <em key={i}>{part}</em> : <Fragment key={i}>{part}</Fragment>));
+}
 
 const pad = (n) => String(n).padStart(2, '0');
 
@@ -69,7 +73,7 @@ export function disciplineRoute(journey) {
     const p = pages[slug];
     const prev = disciplines[(i + disciplines.length - 1) % disciplines.length];
     const next = disciplines[(i + 1) % disciplines.length];
-    const related = p.related.map((r) => disciplines.find((x) => x.slug === r));
+    const related = p.related.map(([r, why]) => ({ ...disciplines.find((x) => x.slug === r), why }));
 
     const schema = {
       '@context': 'https://schema.org',
@@ -143,7 +147,7 @@ export function disciplineRoute(journey) {
             <div className={styles.signsHead}>
               <p className={styles.eyebrowLight}>Sound familiar?</p>
               <h2 id="signs-title" className={styles.h2Light}>
-                The signs <em>{d.name}</em> is holding growth back.
+                <Marked text={p.signsTitle} />
               </h2>
             </div>
             <ul className={styles.notes}>
@@ -164,13 +168,17 @@ export function disciplineRoute(journey) {
             <h2 id="areas-title" className={styles.h2}>
               Three areas. <em>One commercial goal.</em>
             </h2>
+            <p className={styles.goal}>
+              <b>The goal</b>
+              {p.goal}
+            </p>
             <ol className={styles.areaList}>
               {d.items.map((t, k) => (
                 <li key={t} className={styles.area}>
                   <span className={styles.areaNum} aria-hidden="true">{pad(k + 1)}</span>
-                  <h3>{t}</h3>
+                  <h3>{p.areas[k].title || t}</h3>
                   <p>{p.areas[k].desc}</p>
-                  <small>You come away with</small>
+                  <small>What you’re left with</small>
                   <ul className={styles.gets}>
                     {p.areas[k].gets.map((g) => (
                       <li key={g}>{g}</li>
@@ -207,11 +215,11 @@ export function disciplineRoute(journey) {
               We don’t hand you a strategy. <em>We get in and do the work.</em>
             </h2>
             <ol className={styles.steps}>
-              {STEPS.map(([t, x], k) => (
+              {STEPS.map((t, k) => (
                 <li key={t}>
                   <span className={styles.stepNode} aria-hidden="true">{k + 1}</span>
                   <h3>{t}</h3>
-                  <p>{x}</p>
+                  <p>{p.steps[k]}</p>
                 </li>
               ))}
             </ol>
@@ -247,7 +255,7 @@ export function disciplineRoute(journey) {
                     <DisciplineIcon name={r.icon} />
                   </span>
                   <h3>{r.name}</h3>
-                  <p>{pages[r.slug].promise}</p>
+                  <p>{r.why}</p>
                   <span className={styles.more}>
                     Explore <b aria-hidden="true">→</b>
                   </span>
@@ -281,9 +289,9 @@ export function disciplineRoute(journey) {
               <div>
                 <p className={styles.eyebrowLight}>Start with a conversation</p>
                 <h2 id="cta-title" className={styles.ctaTitle}>
-                  Is {d.name} what’s holding you back? <em>Let’s find out.</em>
+                  Not sure what’s really holding growth back? <em>Let’s identify the constraint, and what to do next.</em>
                 </h2>
-                <p className={styles.ctaText}>Not sure it’s the right place to start? Talk to us anyway. Finding the real constraint is the first thing we do.</p>
+                <p className={styles.ctaText}>Whether it’s {d.name} or somewhere else in the system, finding the real constraint is the first thing we do.</p>
               </div>
               <Link className={styles.ctaButton} href="/contact">
                 Book a growth call <span aria-hidden="true">→</span>

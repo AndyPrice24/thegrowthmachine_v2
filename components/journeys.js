@@ -52,7 +52,7 @@ export const JOURNEYS = {
         { slug: 'brand-and-demand', icon: 'target', name: 'Brand & Demand', items: ['Positioning & proposition', 'Creative & content', 'Brand building'] },
         { slug: 'acquisition-and-discoverability', icon: 'compass', name: 'Acquisition & Discoverability', items: ['Paid media & channel mix', 'SEO, GEO & AEO', 'Media economics'] },
         { slug: 'conversion-and-onsite', icon: 'cart', name: 'Conversion & Onsite', items: ['Site & landing pages', 'Offer & pricing', 'Testing & optimisation'] },
-        { slug: 'retention-and-ltv', icon: 'loop', name: 'Retention & LTV', items: ['CRM & email', 'Loyalty & subscriptions', 'Customer lifetime value'] },
+        { slug: 'retention-and-ltv', icon: 'loop', name: 'Retention & LTV', items: ['CRM & email', 'Lifecycle & repeat purchase', 'Customer lifetime value'] },
         { slug: 'margin-and-channels', icon: 'bars', name: 'Margin & Channels', items: ['Unit economics', 'Marketplaces & retail', 'Product mix'] },
         { slug: 'data-systems-and-ai', icon: 'chip', name: 'Data, Systems & AI', items: ['Connected data', 'Forecasting & reporting', 'Automation & tools'] },
       ],

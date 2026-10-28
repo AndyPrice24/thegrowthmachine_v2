@@ -218,25 +218,6 @@
   color: var(--st);
 }
 
-.periods {
-  display: flex;
-  flex: none;
-  gap: 4px;
-  font-size: 11px;
-  color: var(--sm);
-}
-
-.periods span {
-  padding: 4px 8px;
-  border-radius: 6px;
-}
-
-.periods .on {
-  background: var(--s2);
-  color: var(--st);
-  box-shadow: inset 0 0 0 1px var(--sl);
-}
-
 .switch {
   display: none;
 }
@@ -910,10 +891,6 @@
   .main {
     padding: 20px 16px 18px;
     box-shadow: 7px 8px 0 var(--red);
-  }
-
-  .periods {
-    display: none;
   }
 
   .question {
