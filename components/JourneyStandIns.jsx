@@ -56,15 +56,3 @@ export function JourneyStandIns({ howWeWork = true }){
 
   </>
 }
-
-/* The closing call to action, shared by / and both journeys. */
-export function ClosingCta(){
-  return <>
-    <section className="v2-final section">
-      <div className="shell v2-final-panel">
-        <div><span className="eyebrow inverse">The Growth Machine</span><h2>Bring us the growth problem.<br/>We’ll help work out what it actually needs.</h2></div>
-        <Link className="button v2-final-button" href="/contact">Start a conversation →</Link>
-      </div>
-    </section>
-  </>
-}

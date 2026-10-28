@@ -4,7 +4,7 @@ import ContextIntelligence from '@/components/ContextIntelligence';
 import { INTEL } from '@/components/intel';
 import Founders from '@/components/Founders';
 import Companies from '@/components/Companies';
-import { JourneyStandIns, ClosingCta } from '@/components/JourneyStandIns';
+import { JourneyStandIns } from '@/components/JourneyStandIns';
 import { JOURNEYS } from '@/components/journeys';
 
 export const metadata = {
@@ -23,7 +23,6 @@ export default function EcommerceJourney() {
       <Founders />
       <Companies />
       <JourneyStandIns howWeWork={false} />
-      <ClosingCta />
     </>
   );
 }

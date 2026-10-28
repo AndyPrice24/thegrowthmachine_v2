@@ -5,7 +5,7 @@
   --serif: Georgia, 'Times New Roman', serif;
   --soft: #6b645c;
   --rule: #ddd5ca;
-  padding: 100px 0 92px;
+  padding: 60px 0 92px;
 }
 
 .head {
@@ -74,10 +74,9 @@
   z-index: 1;
 }
 
-/* A card: outlined, a hard offset shadow, tilted a touch (the two lean
-   apart). Under the pointer or a finger it straightens, lifts and turns red. */
+/* A card: outlined, with a hard offset shadow. Kept upright: any tilt
+   blurs the text. Under the pointer or a finger it straightens, lifts and turns red. */
 .card {
-  --tilt: -1.2deg;
   --lift: 0px;
   position: relative;
   display: flex;
@@ -88,7 +87,7 @@
   background: #ffffff;
   color: var(--ink);
   box-shadow: 5px 6px 0 var(--ink);
-  transform: translateY(var(--lift)) rotate(var(--tilt));
+  transform: translateY(var(--lift));
   transition:
     transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
     box-shadow 0.3s ease,
@@ -96,9 +95,6 @@
     color 0.2s ease;
 }
 
-.card + .or + .card {
-  --tilt: 1.2deg;
-}
 
 .media {
   position: relative;
@@ -219,7 +215,6 @@
 .card:hover,
 .card:focus-within,
 .active {
-  --tilt: 0deg;
   --lift: -6px;
   background: var(--red);
   color: #fff;
@@ -437,7 +432,7 @@
 
 @media (max-width: 600px) {
   .section {
-    padding: 64px 0 56px;
+    padding: 40px 0 56px;
   }
 
   .title {
@@ -454,14 +449,9 @@
   }
 
   .card {
-    --tilt: -1deg;
     padding: 8px 8px 14px;
     border-radius: 12px;
     box-shadow: 4px 5px 0 var(--ink);
-  }
-
-  .card + .or + .card {
-    --tilt: 1deg;
   }
 
   .media {

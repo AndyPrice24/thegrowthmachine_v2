@@ -3,13 +3,13 @@ import styles from './Founders.module.css';
 
 /*
  * "The people behind the machine", after Data, systems & AI on each journey:
- * the case for the two founders, their portraits, and four facts from their
- * careers. Achievements are described, not the companies behind them (several
- * no longer trade), so every claim stands on its own.
+ * the case for the two founders, their portraits, and six collective
+ * achievements. Achievements are described, not the companies behind them
+ * (several no longer trade), so every claim stands on its own.
  *
- * Desktop: copy on the left, the two portraits on the right, the facts in a
- * ruled row beneath. Phones: headline, then the portraits side by side, then
- * the copy and the facts two by two.
+ * Desktop: copy on the left, the two portraits on the right, the achievements
+ * in a ruled three-by-two grid beneath. Phones: headline, then the portraits
+ * side by side, then the copy and the achievements two by two.
  */
 
 const FOUNDERS = [
@@ -17,11 +17,13 @@ const FOUNDERS = [
   { name: 'Tarren Price', photo: '/founders/tarren.webp', skills: 'Commercial intelligence · Growth strategy · Market positioning' },
 ];
 
-const PROOF = [
-  ['£1.5M+', 'raised in startup funding'],
-  ['1 exit', 'a tech venture we built and sold'],
-  ['11 regions', 'covered by a global tech patent we secured'],
-  ['2 global brands', 'Red Bull and Beiersdorf: commercial and insight roles'],
+const ACHIEVEMENTS = [
+  ['£1.5M+ raised', 'in venture funding'],
+  ['2x exits', 'ventures ideated, built and sold'],
+  ['Global patent', 'a tech patent secured in 11 regions'],
+  ['International DTC brand', 'a pet brand we founded and still run'],
+  ['6+ startups', 'founded and managed'],
+  ['2 global brands', 'commercial growth and insights for Red Bull and Beiersdorf'],
 ];
 
 export default function Founders() {
@@ -62,8 +64,9 @@ export default function Founders() {
           </div>
         </div>
 
+        <h3 className={styles.achHead}>Collective achievements</h3>
         <ul className={styles.proof}>
-          {PROOF.map(([value, label]) => (
+          {ACHIEVEMENTS.map(([value, label]) => (
             <li key={value}>
               <b>{value}</b>
               <span>{label}</span>

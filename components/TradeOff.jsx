@@ -12,7 +12,7 @@ const OPTIONS = [
   {
     n: '01',
     name: 'Agency',
-    sub: 'External breadth',
+    sub: 'Specialty breadth',
     points: [
       'Works within a defined scope',
       'Often layered, with junior delivery',

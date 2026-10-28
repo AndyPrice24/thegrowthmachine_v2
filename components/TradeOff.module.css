@@ -7,7 +7,7 @@
   --grey: #8f887f;
   --soft: #6b645c;
   --rule: #ddd6cc;
-  padding: 110px 0 96px;
+  padding: 110px 0 50px;
   font-family: var(--serif);
 }
 
@@ -142,7 +142,7 @@
 
 @media (max-width: 1023px) {
   .section {
-    padding: 72px 0 64px;
+    padding: 72px 0 40px;
   }
 
   .eyebrow {

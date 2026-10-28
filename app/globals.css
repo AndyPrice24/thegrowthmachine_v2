@@ -24,7 +24,7 @@
 
 
 
-.v2-section-intro h2,.v2-do h2,.v2-insights h2,.v2-final h2{font-family:Georgia,"Times New Roman",serif;font-weight:400;letter-spacing:-.035em;margin:0}
+.v2-section-intro h2,.v2-do h2,.v2-insights h2{font-family:Georgia,"Times New Roman",serif;font-weight:400;letter-spacing:-.035em;margin:0}
 
 .v2-section-intro{display:grid;grid-template-columns:1.2fr .8fr;gap:20px 80px;align-items:end;margin-bottom:66px}
 .v2-section-intro .eyebrow{grid-column:1/-1}
@@ -67,11 +67,6 @@
 .v2-article-row h3{font-family:Georgia,serif;font-weight:400;font-size:clamp(25px,3vw,38px);margin:0}
 .v2-article-row b{font-size:20px}
 
-.v2-final{padding-top:40px!important}
-.v2-final-panel{background:var(--red);color:#fff;padding:64px 68px;display:flex;justify-content:space-between;align-items:end;gap:50px}
-.v2-final h2{font-size:clamp(44px,4.7vw,66px);line-height:1.02;max-width:850px}
-.v2-final-button{background:#fff;color:var(--red);border-color:#fff;white-space:nowrap}
-.v2-final-button:hover{background:#f4eee7;color:#a61b16}
 
 @media(max-width:980px){
   .home-v2 .section{padding:90px 0}
@@ -82,7 +77,6 @@
   .v2-method-line{display:none}
   .v2-do-grid{grid-template-columns:1fr;gap:50px}
   .v2-do-statement{position:static}
-  .v2-final-panel{align-items:flex-start;flex-direction:column}
 }
 
 @media(max-width:600px){
@@ -91,7 +85,7 @@
   .v2-hero-title h1{font-size:50px;line-height:.95}
   .v2-hero-machine{width:calc(100% - 28px)}
   .v2-hero-lede{font-size:17px;line-height:1.55}
-  .v2-section-intro h2,.v2-do h2,.v2-insights h2,.v2-final h2{font-size:42px}
+  .v2-section-intro h2,.v2-do h2,.v2-insights h2{font-size:42px}
   .v2-section-intro{margin-bottom:38px}
   .v2-method-track{grid-template-columns:1fr;gap:0;border-left:1px solid #cfc6bb;margin-left:29px}
   .v2-method-step{padding:0 0 36px 42px}
@@ -102,8 +96,6 @@
   .v2-insights-head{align-items:flex-start;flex-direction:column}
   .v2-article-row{grid-template-columns:36px 1fr 20px;gap:10px}
   .v2-article-row h3{font-size:27px}
-  .v2-final-panel{padding:42px 28px}
-  .v2-final-button{width:100%}
 }
 
 
