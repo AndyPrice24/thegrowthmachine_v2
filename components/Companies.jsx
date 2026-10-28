@@ -83,7 +83,10 @@ export default function Companies({ companies = COMPANIES }) {
 
               <div className={styles.card}>
                 <div className={styles.id}>
-                  <Logo c={c} big />
+                  <span className={styles.brand}>
+                    <Logo c={c} big />
+                    {c.square && <span className={styles.brandName}>{c.name}</span>}
+                  </span>
                   <p className={styles.tags}>
                     {c.own && <span className={styles.own}>Our own brand</span>}
                     <span>{c.sector}</span>
@@ -143,7 +146,7 @@ export default function Companies({ companies = COMPANIES }) {
 
 function Logo({ c, big }) {
   return (
-    <span className={`${styles.logo} ${big ? styles.logoBig : ''}`} aria-hidden="true">
+    <span className={`${styles.logo} ${big ? styles.logoBig : ''} ${c.square ? styles.square : ''}`} aria-hidden="true">
       {c.logo ? <img src={c.logo} alt="" /> : <span className={styles.wordmark}>{c.name}</span>}
     </span>
   );

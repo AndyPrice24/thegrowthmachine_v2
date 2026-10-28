@@ -161,6 +161,31 @@
   height: 64px;
 }
 
+.logo.square {
+  width: 40px;
+  height: 40px;
+  margin: -4px 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.logoBig.square {
+  width: 72px;
+  height: 72px;
+  margin: 0;
+}
+
+.brandName {
+  font-family: var(--serif);
+  font-size: 30px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
 /* A company without a logo yet shows its name in its place. */
 .wordmark {
   font-family: var(--serif);
@@ -396,6 +421,20 @@
 
   .logoBig .wordmark {
     font-size: 28px;
+  }
+
+  .logoBig.square {
+    width: 60px;
+    height: 60px;
+  }
+
+  .logo.square {
+    width: 34px;
+    height: 34px;
+  }
+
+  .brandName {
+    font-size: 26px;
   }
 
   .card {

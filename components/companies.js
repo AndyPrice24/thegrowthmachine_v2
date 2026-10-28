@@ -7,6 +7,8 @@
  *                   logo until there is one)
  *   logo            optional: a wordmark under /public/companies (trimmed,
  *                   transparent, 160px tall)
+ *   square          true for a square logo: shown larger, with the name
+ *                   beside it on the open card
  *   sector, country tags on the open card
  *   href            optional: the company's live site ("Visit site")
  *   did             what we did, as two or three short tags
@@ -35,6 +37,8 @@ export const COMPANIES = [
   },
   {
     name: 'Hoddogs',
+    logo: '/companies/hoddogs.webp',
+    square: true,
     sector: 'Pet · DTC',
     country: 'US & Australia',
     did: ['Brand', 'Marketing', 'Website & conversion', 'Retail & Amazon'],
