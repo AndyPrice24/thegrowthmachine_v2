@@ -82,7 +82,7 @@ export const COMPANIES = [
     did: ['Revenue leaks', 'Optimisation', 'Scaling'],
     quote: {
       text: 'The trouble with being a one-man band and founder: you are spread so thin, and never really have the capacity to look deep enough into any area of the business. Working with this team helped me find the leaky buckets, and optimise to help scale my business. It felt like I had a team of founders, rather than just an agency.',
-      name: 'Pieter',
+      name: 'Pieter van Reenen',
       role: 'Owner',
     },
   },
