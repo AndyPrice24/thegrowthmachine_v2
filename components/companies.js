@@ -17,8 +17,8 @@
  *   statement       optional, for our own brand in place of a quote
  *   own             true for a brand we run ourselves: labelled as ours
  *
- * Quotes are placeholders agreed with each client; confirm the final
- * wording with them before launch.
+ * Each quote's wording and attribution has been approved by the client
+ * (October 2026). Any change to a quote needs their OK again.
  */
 
 export const COMPANIES = [
