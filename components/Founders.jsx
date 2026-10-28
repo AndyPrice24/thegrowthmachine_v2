@@ -19,7 +19,7 @@ const FOUNDERS = [
 
 const ACHIEVEMENTS = [
   ['£1.5M+ raised', 'in venture funding'],
-  ['2x exits', 'ventures ideated, built and sold'],
+  ['1 exit', 'a fintech venture built and sold'],
   ['Global patent', 'a tech patent secured in 11 regions'],
   ['International DTC brand', 'a pet brand we founded and still run'],
   ['6+ startups', 'founded and managed'],
