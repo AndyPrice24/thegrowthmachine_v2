@@ -364,7 +364,7 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="tip" hidden></div>
 <script>
-const STUDIO_BUILD = '2026-11-01 16:44 UTC';
+const STUDIO_BUILD = '2026-11-01 16:48 UTC';
 /* ---- model.js ---- */
 /* ============================================================
    The Growth Machine — data model, scenario engine, scoring, insights
@@ -2306,11 +2306,14 @@ const SOURCE_TYPES = ['Online research', 'Founder', 'Staff', 'Client / customer'
 const OPP_AREAS = ['Positioning', 'Marketing', 'Product', 'Pricing', 'Sales', 'Systems & operations'];
 const CAP_VAL = { Strong: 1, Partial: 0.5, None: 0 };
 const IMP_W = { High: 3, Medium: 2, Low: 1 };
+/** Weighted capability score. Returns null until at least half the capabilities are rated, so thin evidence never shows as 100%. */
 function capabilityScore(e, getLevel) {
-  let w = 0, tot = 0;
+  let w = 0, tot = 0; const rated = capabilityRated(e, getLevel);
+  if (!e.capabilities.length || rated < Math.ceil(e.capabilities.length / 2)) return null;
   e.capabilities.forEach((c) => { const lv = getLevel(c); if (!(lv in CAP_VAL)) return; const wt = IMP_W[c.importance] || 2; w += wt; tot += wt * CAP_VAL[lv]; });
   return w ? tot / w * 100 : null;
 }
+function capabilityRated(e, getLevel) { return e.capabilities.filter((c) => getLevel(c) in CAP_VAL).length; }
 function positioningMap(e) {
   const pts = e.competitors.filter((c) => num(c.pricePoint) > 0).map((c) => ({ label: c.name, x: num(c.pricePoint), y: capabilityScore(e, (cap) => (cap.scores || {})[c.id]), threat: c.threat }));
   if (num(e.client.pricePoint) > 0) pts.push({ label: e.client.name, x: num(e.client.pricePoint), y: capabilityScore(e, (cap) => cap.client), me: true });
@@ -2339,7 +2342,7 @@ function capabilityMatrix(e, { editable = true } = {}) {
   };
   return `<table class="tbl matrix capm"><thead><tr><th>Capability</th><th>Importance</th>${cols.map((c) => `<th class="c ${c.me ? 'me' : ''}">${esc(trunc(c.name, 18))}</th>`).join('')}</tr></thead><tbody>
     ${e.capabilities.map((cap) => `<tr><td>${esc(cap.name)}</td><td class="small">${esc(cap.importance || '—')}</td>${cols.map((c) => cell(cap, c)).join('')}</tr>`).join('')}
-    <tr><td><b>Weighted score</b></td><td></td>${cols.map((c) => { const s = capabilityScore(e, (cap) => (c.me ? cap.client : (cap.scores || {})[c.id])); return `<td class="c"><b>${s == null ? '—' : Math.round(s) + '%'}</b></td>`; }).join('')}</tr></tbody></table>`;
+    <tr><td><b>Weighted score</b><div class="faint small">shown once half the rows are rated</div></td><td></td>${cols.map((c) => { const g = (cap) => (c.me ? cap.client : (cap.scores || {})[c.id]); const s = capabilityScore(e, g); const n = capabilityRated(e, g); return `<td class="c"><b>${s == null ? '—' : Math.round(s) + '%'}</b><div class="faint small">${n}/${e.capabilities.length} rated</div></td>`; }).join('')}</tr></tbody></table>`;
 }
 function viewCompetitors(e) {
   const comps = e.competitors;
@@ -2364,7 +2367,7 @@ function viewCompetitors(e) {
     <p class="faint small">${c.sources ? 'Sources: ' + esc(trunc(c.sources, 140)) : '⚑ No sources recorded'} · ${c.lastReviewed ? 'Reviewed ' + esc(fmtD(c.lastReviewed, { day: 'numeric', month: 'short', year: 'numeric' })) : 'Not reviewed'}</p>
     <div class="btn-row"><button class="btn sm" data-action="editCompetitor" data-id="${esc(c.id)}">Edit profile</button><button class="btn sm ghost" data-action="addIntel" data-id="${esc(c.id)}">+ Intel</button><span class="faint small">${e.intel.filter((x) => x.competitorId === c.id).length} intel entries</span></div></article>`).join('')}</div>`
     : card('', '<p class="empty">No competitors yet. Add them here or in Data & Claude, or ask Claude to research them and paste the result in (the prompt includes the competitor format).</p>')}
-  ${card('Capability comparison', `<div class="scroll-x">${capabilityMatrix(e)}</div>`, { sub: 'Choose Strong / Partial / None per cell. The weighted score uses each capability\'s importance (High 3, Medium 2, Low 1).' })}
+  ${card('Capability comparison', `<div class="scroll-x">${capabilityMatrix(e)}</div>`, { sub: 'Choose Strong / Partial / None per cell, and leave it blank when there is no evidence. The weighted score uses each capability\'s importance (High 3, Medium 2, Low 1). The Location Bank column is for the founders to confirm.' })}
   ${intelBlock(e)}
   ${sharpenBlock(e)}
   ${card('Positioning: price vs capability', `<div class="form-grid"><label class="fld"><span>${esc(e.client.name)} indicative price per location / month</span><input type="number" data-bind="client.pricePoint" value="${esc(e.client.pricePoint || '')}"></label></div>${positioningMap(e)}`, { sub: 'Price is an indicative monthly price per location. Hover a point for detail.' })}`;
