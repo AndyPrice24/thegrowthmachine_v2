@@ -107,6 +107,7 @@ function savingsBlock(sv) {
 
 /* ---------- Discovery: coverage, founder intake, interview capture ---------- */
 function viewDiscovery(e) {
+  if (ui.session) return viewIntakeSession(e);
   if (ui.capture) return viewCapture(e);
   const cov = coverage(e); const mx = Math.max(1, ...cov.rows.flatMap((r) => r.counts));
   const cell = (n) => { if (!n) return '<td class="cov-0">—</td>'; const k = Math.min(6, Math.floor(n / mx * 6.999)); return `<td style="background:${SEQ[k]};color:${k >= 4 ? '#fff' : 'var(--ink)'}">${n}</td>`; };
@@ -114,18 +115,23 @@ function viewDiscovery(e) {
     ${cov.rows.map((r) => `<tr><th>${esc(r.c.label)}</th>${r.counts.map(cell).join('')}<td><strong>${r.total}</strong>${r.total === 0 ? ' <span class="chip sev-high">▲ gap</span>' : r.total < 3 ? ' <span class="chip sev-medium">● thin</span>' : ''}</td><td class="faint small">${esc(r.c.feeds)}</td></tr>`).join('')}</table>`;
   const people = e.people.slice().sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   const done = new Set(e.interviews.map((i) => i.personId));
-  const sections = INTAKE_SECTIONS;
+  const sections = INTAKE_SECTIONS; const io = intakeOutstanding(e);
   const intake = e.intake.length ? e.intake.map((r) => `<details class="intake"><summary><strong>${esc(r.respondent)}</strong> <span class="muted small">${esc(r.role)} · ${esc(r.timestamp || r.date)} · ${Object.keys(r.answers).length} answers</span></summary>
+      <div class="btn-row"><button class="btn sm" data-action="resumeIntake" data-id="${esc(r.id)}">Continue live session</button></div>
       ${sections.map((s) => { const qs = s.questions.filter((q) => r.answers[q.id]); return qs.length ? `<h5>${esc(s.title)}</h5><dl>${qs.map((q) => `<dt>${esc(q.q)} <span class="chip">${esc((CRITERIA.find((c) => c.id === q.crit) || {}).label || '')}</span></dt><dd>${esc(r.answers[q.id])}</dd>`).join('')}</dl>` : ''; }).join('')}</details>`).join('')
     : '<p class="empty">No founder responses yet.</p>';
   return `<div class="page-h"><div><span class="eyebrow">Discovery</span><h1>What we know, and where the gaps are</h1><p class="muted">Every answer is stored against a discovery criterion. Coverage shows which criteria are well evidenced and which still need questions.</p></div>
     <div class="btn-row"><button class="btn" data-action="startCapture">+ Capture an interview</button></div></div>
   ${card('Discovery coverage (answers per criterion)', `<div class="scroll-x">${covTable}</div>`, { sub: 'Darker means more evidence. "Gap" and "thin" show where to aim the next interviews.' })}
   <div class="grid-2">
-    ${card(`Founder questionnaire (${e.intake.length} responses)`, `<div class="btn-row"><label class="btn sm">Import responses CSV<input type="file" accept=".csv,text/csv" id="intakeFile" hidden></label></div>
-      <p class="faint small">In the responses Google Sheet: File → Download → CSV, then import it here. Re-importing updates existing responses. Or ask Claude to read the Sheet from your Drive and produce the JSON.</p>${intake}`)}
-    ${card('Interview checklist', people.length ? `<table class="tbl"><thead><tr><th>Person</th><th>Level</th><th>Question set</th><th></th></tr></thead><tbody>${people.map((p) => { const d = e.departments.find((x) => x.id === p.departmentId); const dt = deptType(d); return `<tr><td>${esc(p.name)}<div class="faint small">${esc(p.title || '')}</div></td><td>${esc(guessLevel(e, p))}</td><td class="small">${esc((DEPT_TYPES.find((x) => x[0] === dt) || ['', 'core only'])[1])}</td><td>${done.has(p.id) ? '<span class="chip st-added">✓ Interviewed</span>' : `<button class="btn sm" data-action="startCapture" data-id="${esc(p.id)}">Interview</button>`}</td></tr>`; }).join('')}</tbody></table>` : '<p class="empty">Add the org chart (People) first. The checklist and question sets then build themselves from it.</p>', { sub: 'Built from the org chart. Level and department decide each person\'s questions.' })}
-  </div>`;
+    ${card(`Founder questionnaire: ${io.answered} of ${io.total} answered`, `<div class="btn-row"><button class="btn" data-action="startIntake">▶ Live founder session</button><label class="btn sm">Import form responses (CSV)<input type="file" accept=".csv,text/csv" id="intakeFile" hidden></label></div>
+      ${io.open.length ? `<div class="outstanding"><h5>⚑ Still needed (${io.open.length}${io.openPriority.length ? `, ${io.openPriority.length} priority` : ''})</h5><ul>${io.open.slice(0, 40).map((q) => `<li>${q.p ? '<b>★</b> ' : ''}${esc(q.q)} <span class="faint small">· ${esc(q.section)}</span></li>`).join('')}</ul><button class="btn sm ghost" data-action="copyOutstanding">Copy outstanding questions</button></div>` : '<p class="small"><span class="chip st-added">✓ All founder questions answered</span></p>'}
+      <p class="faint small">Answers from live sessions and from the Google Form merge per person. A form submission fills gaps without overwriting what you captured live.</p>${intake}`)}
+    ${card('Interview checklist', people.length ? `<table class="tbl"><thead><tr><th>Person</th><th>Level</th><th>Question set</th><th></th></tr></thead><tbody>${people.map((p) => { const d = e.departments.find((x) => x.id === p.departmentId); const dt = deptType(d); return `<tr><td>${esc(p.name)}<div class="faint small">${esc(p.title || '')}</div></td><td>${esc(guessLevel(e, p))}</td><td class="small">${esc((DEPT_TYPES.find((x) => x[0] === dt) || ['', 'core only'])[1])}</td><td>${done.has(p.id) ? '<span class="chip st-added">✓ Interviewed</span>' : `${e.staffSurvey.some((x) => x.personId === p.id) ? '<span class="chip">✓ Questionnaire</span> ' : ''}<button class="btn sm" data-action="startCapture" data-id="${esc(p.id)}">Interview</button>`}</td></tr>`; }).join('')}</tbody></table>` : '<p class="empty">Add the org chart (People) first. The checklist and question sets then build themselves from it.</p>', { sub: 'Built from the org chart. Level and department decide each person\'s questions.' })}
+  </div>
+  ${card(`Staff questionnaire (${e.staffSurvey.length} responses)`, `<div class="btn-row"><label class="btn sm">Import staff responses (CSV)<input type="file" accept=".csv,text/csv" id="staffFile" hidden></label></div>
+    <p class="faint small">The 10-minute pre-interview form. Responses match to people by name, and each person's answers appear at the top of their interview capture form.</p>
+    ${e.staffSurvey.length ? `<table class="tbl"><thead><tr><th>Name</th><th>Role</th><th>Matched to org chart</th><th>Biggest frustration</th></tr></thead><tbody>${e.staffSurvey.map((r) => `<tr><td>${esc(r.respondent)}</td><td>${esc(r.role)}</td><td>${r.personId ? '<span class="chip st-added">✓</span>' : '<span class="chip sev-medium">● not matched</span>'}</td><td class="small">${esc(trunc(r.answers.st_frustration || '', 120))}</td></tr>`).join('')}</tbody></table>` : '<p class="empty">No staff responses yet.</p>'}`)}`;
 }
 
 const DRAFT_KEY = () => STORE_KEY + '.draft';
@@ -162,6 +168,7 @@ function viewCapture(e) {
       <label class="fld"><span>Quote worth keeping</span><textarea data-draft="quotes" rows="2">${esc(d.quotes || '')}</textarea></label>
     </aside>
     <div class="card qcol">
+      ${(() => { const ss = e.staffSurvey.find((x) => x.personId === d.personId && d.personId); return ss ? `<div class="pre"><h4>Their questionnaire answers</h4><dl>${STAFF_SECTIONS.flatMap((sec) => sec.questions).filter((q) => ss.answers[q.id] && !/_name$/.test(q.id)).map((q) => `<dt>${esc(q.q)}</dt><dd>${esc(ss.answers[q.id])}</dd>`).join('')}</dl></div>` : ''; })()}
       ${qBlock('Core questions (everyone)', set.core)}
       ${qBlock(d.level === 'founder' ? 'Founder questions' : d.level === 'manager' ? 'Manager questions' : 'Team member questions', set.level)}
       ${qBlock(dtype ? `${(DEPT_TYPES.find((x) => x[0] === dtype) || ['', ''])[1]} questions` : '', set.dept)}
@@ -196,10 +203,52 @@ function renderStatusReport(e) {
   const li = (a) => `<li>${esc(a.title)}${a.due && a.status !== 'Done' ? ` <span class="muted small">· due ${fmtD(a.due)}</span>` : ''}${a.doneDate && a.status === 'Done' ? ` <span class="muted small">· ${fmtD(a.doneDate)}</span>` : ''}${a.status === 'Waiting on client' ? ' <span class="chip st-changed">waiting on client</span>' : ''}</li>`;
   h += `<section class="rpt-sec"><div class="rpt-2"><div><h3>✓ Done</h3>${st.done.length ? `<ul>${st.done.map(li).join('')}</ul>` : '<p class="muted">—</p>'}</div><div><h3>● In progress</h3>${st.doing.length ? `<ul>${st.doing.map(li).join('')}</ul>` : '<p class="muted">—</p>'}<h3>→ Next</h3>${st.next.length ? `<ul>${st.next.slice(0, 8).map(li).join('')}</ul>` : '<p class="muted">—</p>'}</div></div></section>`;
   h += `<section class="rpt-sec"><h2>What we need from you</h2>${waiting.length ? `<table class="tbl"><thead><tr><th>Item</th><th>Owner</th><th>Due</th><th>Status</th></tr></thead><tbody>${waiting.map((r) => `<tr><td>${esc(r.item)}</td><td>${esc(r.owner || '')}</td><td class="nowrap">${fmtD(r.dueDate)}</td><td>${r._status === 'Overdue' ? '▲ Overdue' : 'Waiting'}</td></tr>`).join('')}</tbody></table>` : '<p>Nothing outstanding. Thank you.</p>'}
+    ${(() => { const io = intakeOutstanding(e); return e.intake.length && io.open.length ? `<p><b>Founder questions still open:</b> ${io.open.length} of ${io.total}${io.openPriority.length ? ` (${io.openPriority.length} priority)` : ''}. They can be finished in a short follow-up or through the online form.</p>` : ''; })()}
     ${awaiting.length ? `<h3>Decisions awaiting approval</h3><ul>${awaiting.map((r) => `<li>${esc(r.title)}</li>`).join('')}</ul>` : ''}</section>`;
   h += `<section class="rpt-sec"><h2>Time used</h2><div class="rpt-2"><div><h3>By phase</h3>${hbars(g.phases.map((p) => ({ label: p.name, value: num(st.byPhase[p.id] || 0), tip: `${num(p.plannedDays)} planned` })), { fmt: (v) => v.toFixed(1) + ' d', max: Math.max(1, ...g.phases.map((p) => Math.max(num(p.plannedDays), num(st.byPhase[p.id] || 0)))) })}</div>
     <div><h3>By contract month</h3>${hbars([1, 2, 3].map((m) => ({ label: `Month ${m}`, value: num(st.byMonth[m] || 0) })), { fmt: (v) => `${v.toFixed(1)} of ${num(g.daysPerMonth)} d`, max: Math.max(num(g.daysPerMonth), ...Object.values(st.byMonth)), color: 'var(--s3)' })}</div></div></section>`;
   if (sv.target) h += `<section class="rpt-sec"><h2>Savings tracker</h2>${savingsBlock(sv)}</section>`;
   h += `<footer class="rpt-foot">The Growth Machine · Status report generated ${date}. Figures are working estimates until validated against the agreed baseline.</footer>`;
   return h;
+}
+
+/* ---------- Live founder session: you ask, you type; every keystroke is saved ---------- */
+function viewIntakeSession(e) {
+  const r = e.intake.find((x) => x.id === ui.sessionId);
+  if (!r) {
+    const leaders = e.people.filter((p) => guessLevel(e, p) === 'founder');
+    return `<div class="page-h"><div><span class="eyebrow">Live founder session</span><h1>Who are you speaking with?</h1><p class="muted">You ask the questions and type the answers. Everything saves as you type, so you can stop at any point, switch person, and come back later.</p></div><button class="btn ghost" data-action="endIntake">Close</button></div>
+    ${e.intake.length ? card('Continue with', `<div class="btn-row">${e.intake.map((x) => `<button class="btn sm" data-action="resumeIntake" data-id="${esc(x.id)}">${esc(x.respondent)}${x.role ? ' · ' + esc(x.role) : ''} (${Object.keys(x.answers).length} answers)</button>`).join('')}</div>`) : ''}
+    ${card('New person', `<div class="form-grid">
+      <label class="fld"><span>From the org chart</span>${sel(leaders.concat(e.people.filter((p) => !leaders.includes(p))).map((p) => [p.id, p.name + (p.title ? ' · ' + p.title : '')]), '', 'id="sessPerson"')}</label>
+      <label class="fld"><span>…or name</span><input id="sessName" placeholder="e.g. Daryl"></label>
+      <label class="fld"><span>Role</span><input id="sessRole" placeholder="e.g. Co-founder / MD"></label></div>
+      <div class="btn-row"><button class="btn" data-action="newIntake">Start</button></div>`)}`;
+  }
+  const io = intakeOutstanding(e);
+  const mine = INTAKE_SECTIONS.filter((s) => s.id !== 'about').flatMap((s) => s.questions);
+  const mineDone = mine.filter((q) => String(r.answers[q.id] || '').trim()).length;
+  const others = (qid) => e.intake.filter((x) => x.id !== r.id && String(x.answers[qid] || '').trim()).map((x) => x.respondent);
+  const input = (q) => {
+    const v = r.answers[q.id] || ''; const a = `data-intake="${q.id}"`;
+    if (q.type === 'long') return `<textarea ${a} rows="2">${esc(v)}</textarea>`;
+    if (q.type === 'scale') return sel([['1', '1 · ' + (q.low || '')], ['2', '2'], ['3', '3'], ['4', '4'], ['5', '5 · ' + (q.high || '')]], v, `data-intakesel="${q.id}"`);
+    if (q.type === 'choice') return `<input ${a} list="dl_${q.id}" value="${esc(v)}" placeholder="Pick or type"><datalist id="dl_${q.id}">${(q.options || []).map((o) => `<option value="${esc(o)}">`).join('')}</datalist>`;
+    if (q.type === 'checkbox') {
+      const parts = splitList(v); const opts = q.options || []; const other = parts.filter((x) => !opts.includes(x)).join(', ');
+      return `<div class="chk">${opts.map((o) => `<label><input type="checkbox" data-intakemulti="${q.id}" value="${esc(o)}" ${parts.includes(o) ? 'checked' : ''}> ${esc(o)}</label>`).join('')}<input data-intakeother="${q.id}" value="${esc(other)}" placeholder="Other"></div>`;
+    }
+    return `<input ${a} value="${esc(v)}">`;
+  };
+  const sections = INTAKE_SECTIONS.filter((s) => s.id !== 'about').map((s) => {
+    const qs = s.questions.filter((q) => !ui.prioOnly || q.p);
+    if (!qs.length) return '';
+    return `<h4>${esc(s.title)}</h4>${qs.map((q) => { const o = others(q.id); const done = String(r.answers[q.id] || '').trim(); return `<div class="qa ${done ? 'qa-done' : ''}"><label><span>${q.p ? '<b class="star">★</b> ' : ''}${esc(q.q)}</span><span class="qa-meta">${o.length ? `<span class="chip">answered by ${esc(o.join(', '))}</span>` : ''}${done ? '<span class="chip st-added">✓</span>' : ''}</span></label>${input(q)}</div>`; }).join('')}`;
+  }).join('');
+  return `<div class="page-h"><div><span class="eyebrow">Live founder session · saving as you type</span><h1>${esc(r.respondent)}${r.role ? ` <span class="muted" style="font-size:20px">· ${esc(r.role)}</span>` : ''}</h1>
+      <p class="muted">${mineDone} of ${mine.length} answered by ${esc(r.respondent)} · ${io.open.length} still open across all founders (${io.openPriority.length} priority).</p></div>
+    <div class="btn-row"><label class="tog"><input type="checkbox" data-ui="prioOnly" ${ui.prioOnly ? 'checked' : ''}> ★ Priority questions only</label><button class="btn sm" data-action="switchIntake">Switch person</button><button class="btn" data-action="endIntake">Done for now</button></div></div>
+  <div class="card qcol session">${sections}
+    ${ui.prioOnly ? `<h4>Anything else they raised</h4><div class="qa"><textarea data-intake="i_other" rows="3" placeholder="Unexpected points, worries, names mentioned…">${esc(r.answers.i_other || '')}</textarea></div>` : ''}
+  </div>`;
 }

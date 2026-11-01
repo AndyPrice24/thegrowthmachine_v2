@@ -2,7 +2,7 @@
    App shell — storage, routing, actions, data editor, Claude bridge
    ============================================================ */
 const STORE_KEY = 'tgm.studio.v1';
-const ui = { tab: 'overview', scenario: 'current', processId: '', anon: false, ghosts: true, showCost: true, compare: true, zoom: 1, area: 'All', recType: 'All', coll: 'people', theme: '', reportType: 'status', capture: false, draft: null };
+const ui = { tab: 'overview', scenario: 'current', processId: '', anon: false, ghosts: true, showCost: true, compare: true, zoom: 1, area: 'All', recType: 'All', coll: 'people', theme: '', reportType: 'status', capture: false, draft: null, session: false, sessionId: '', prioOnly: true };
 let db = { activeId: '', engagements: {} };
 
 /* ---------- storage (localStorage, wrapped; the JSON file export is the real backup) ---------- */
@@ -22,12 +22,31 @@ function save() {
   E().meta.lastUpdated = new Date().toISOString();
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
+    saveTimer = null;
     try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); setStatus('Saved in this browser'); }
     catch (err) { setStatus('⚠ Could not save in this browser. Export JSON to keep your work.'); }
   }, 250);
 }
+function flushSave() { if (!saveTimer) return; clearTimeout(saveTimer); saveTimer = null; try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); } catch (err) { /* ignore */ } }
+window.addEventListener('pagehide', flushSave);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
 function saveUI() { try { localStorage.setItem(STORE_KEY + '.ui', JSON.stringify({ tab: ui.tab, anon: ui.anon, showCost: ui.showCost, ghosts: ui.ghosts, compare: ui.compare, coll: ui.coll, theme: ui.theme })); } catch (err) { /* ignore */ } }
 const E = () => db.engagements[db.activeId];
+/** Live founder session: write one answer straight into the respondent's record (no re-render, so typing is never interrupted). */
+function intakeWrite(t) {
+  const r = E().intake.find((x) => x.id === ui.sessionId); if (!r) return;
+  const qid = t.dataset.intake || t.dataset.intakesel || t.dataset.intakemulti || t.dataset.intakeother;
+  let v;
+  if (t.dataset.intakemulti || t.dataset.intakeother) {
+    const picked = [...document.querySelectorAll(`[data-intakemulti="${qid}"]:checked`)].map((x) => x.value);
+    const other = (document.querySelector(`[data-intakeother="${qid}"]`) || {}).value || '';
+    v = [...picked, ...splitList(other)].join(', ');
+  } else v = t.value;
+  if (String(v).trim()) r.answers[qid] = v; else delete r.answers[qid];
+  if (!/Live session/.test(r.source || '')) r.source = r.source ? r.source + ' + Live session' : 'Live session';
+  const qa = t.closest('.qa'); if (qa) qa.classList.toggle('qa-done', !!String(v).trim());
+  save();
+}
 function flagBadge(e) {
   if (!e.engagement.phases.length) return '';
   const st = engagementStatus(e); const n = st.openDelays.length, o = st.overdue.length;
@@ -238,6 +257,23 @@ const actions = {
     ui.capture = true; ui.tab = 'discovery'; render(); window.scrollTo(0, 0);
   },
   cancelCapture: () => { ui.capture = false; render(); },
+  startIntake: () => { ui.session = true; ui.sessionId = ''; ui.capture = false; ui.tab = 'discovery'; render(); window.scrollTo(0, 0); },
+  resumeIntake: (el) => { ui.session = true; ui.sessionId = el.dataset.id; ui.capture = false; ui.tab = 'discovery'; render(); window.scrollTo(0, 0); },
+  switchIntake: () => { ui.sessionId = ''; render(); window.scrollTo(0, 0); },
+  endIntake: () => { ui.session = false; ui.sessionId = ''; save(); render(); toast('Saved. Unanswered questions are listed under Discovery as still needed.'); },
+  newIntake: () => {
+    const e = E(); const pid = document.getElementById('sessPerson').value; const p = e.people.find((x) => x.id === pid);
+    const name = (document.getElementById('sessName').value || (p ? p.name : '')).trim(); const role = (document.getElementById('sessRole').value || (p ? p.title : '') || '').trim();
+    if (!name) return toast('Choose a person or type a name');
+    let r = e.intake.find((x) => String(x.respondent).toLowerCase() === name.toLowerCase());
+    if (!r) { r = { id: 'in_' + name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 40), respondent: name, role, personId: p ? p.id : '', date: todayISO(), source: 'Live session', answers: { i_name: name, i_role: role } }; e.intake.push(r); }
+    ui.sessionId = r.id; save(); render(); window.scrollTo(0, 0);
+  },
+  copyOutstanding: () => {
+    const io = intakeOutstanding(E()); let sec = ''; const lines = [];
+    io.open.forEach((q) => { if (q.section !== sec) { sec = q.section; lines.push('', sec); } lines.push('- ' + q.q); });
+    copyText(`A few questions we didn't get to. Short answers are perfect:\n${lines.join('\n')}`, 'Outstanding questions copied, ready to paste into an email');
+  },
   addOutlier: () => { ui.draft.outliers.push({ text: '', crit: '' }); saveDraft(ui.draft); render(); },
   saveCapture: () => {
     const e = E(); const d = ui.draft; const p = e.people.find((x) => x.id === d.personId);
@@ -302,6 +338,13 @@ document.addEventListener('change', (ev) => {
     };
     fr.readAsText(t.files[0]); return;
   }
+  if (t.id === 'staffFile' && t.files[0]) {
+    const fr = new FileReader();
+    fr.onload = () => { const res = importFormCSV(E(), fr.result, 'staff'); save(); render(); toast(`Staff responses: ${res.added} added, ${res.updated} updated${res.unmatched.length ? `, ${res.unmatched.length} columns not matched` : ''}`); };
+    fr.readAsText(t.files[0]); return;
+  }
+  if (t.dataset.intakesel || t.dataset.intakemulti) { intakeWrite(t); return; }
+  if (t.dataset.intake) { intakeWrite(t); return; }
   if (t.id === 'intakeFile' && t.files[0]) {
     const fr = new FileReader();
     fr.onload = () => { const res = importIntakeCSV(E(), fr.result); save(); render(); toast(`Founder responses: ${res.added} added, ${res.updated || 0} updated${res.unmatched.length ? `, ${res.unmatched.length} columns not matched` : ''}`); };
@@ -333,6 +376,7 @@ document.addEventListener('change', (ev) => {
 document.addEventListener('input', (ev) => {
   const t = ev.target;
   if (t.tagName === 'TEXTAREA' && t.dataset.bind) { setPath(E(), t.dataset.bind, t.value); save(); }
+  if (t.dataset.intake || t.dataset.intakeother) { intakeWrite(t); return; }
   if (t.dataset.draft && ui.draft) { setPath(ui.draft, t.dataset.draft, t.type === 'number' ? t.value : t.value); saveDraft(ui.draft); }
 });
 

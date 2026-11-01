@@ -25,6 +25,7 @@ function normaliseEngagementBlock(e) {
     e.engagement[k].forEach((x) => { if (!x.id) x.id = uid(k.slice(0, 2)); });
   });
   if (!Array.isArray(e.intake)) e.intake = [];
+  if (!Array.isArray(e.staffSurvey)) e.staffSurvey = [];
   e.recommendations.forEach((r) => { if (LEGACY_STATUS[r.status]) r.status = LEGACY_STATUS[r.status]; if (!r.status) r.status = 'Identified'; });
   e.interviews.forEach((iv) => { if (!iv.answers || typeof iv.answers !== 'object') iv.answers = {}; if (!Array.isArray(iv.outliers)) iv.outliers = []; });
   return e;
@@ -108,16 +109,17 @@ function savingsTracker(e) {
 }
 
 /* ---------- Discovery coverage: how well each criterion is evidenced ---------- */
-const QINDEX = (() => { const m = {}; INTAKE_SECTIONS.forEach((s) => s.questions.forEach((q) => { m[q.id] = q; })); INTERVIEW_QUESTIONS.forEach((q) => { m[q.id] = q; }); return m; })();
+const QINDEX = (() => { const m = {}; [...INTAKE_SECTIONS, ...STAFF_SECTIONS].forEach((s) => s.questions.forEach((q) => { m[q.id] = q; })); INTERVIEW_QUESTIONS.forEach((q) => { m[q.id] = q; }); return m; })();
 function coverage(e) {
-  const cols = ['Founder intake', 'Founder interviews', 'Manager interviews', 'Staff interviews', 'Unexpected points'];
+  const cols = ['Founder questionnaire', 'Staff questionnaire', 'Founder interviews', 'Manager interviews', 'Staff interviews', 'Unexpected points'];
   const m = {}; CRITERIA.forEach((c) => { m[c.id] = cols.map(() => 0); });
   const hit = (crit, col) => { if (m[crit]) m[crit][col]++; };
   e.intake.forEach((r) => Object.entries(r.answers || {}).forEach(([qid, v]) => { if (String(v || '').trim() && QINDEX[qid]) hit(QINDEX[qid].crit, 0); }));
+  e.staffSurvey.forEach((r) => Object.entries(r.answers || {}).forEach(([qid, v]) => { if (String(v || '').trim() && QINDEX[qid] && !/_name$|_role$/.test(qid)) hit(QINDEX[qid].crit, 1); }));
   e.interviews.forEach((iv) => {
-    const col = iv.level === 'founder' ? 1 : iv.level === 'manager' ? 2 : 3;
+    const col = iv.level === 'founder' ? 2 : iv.level === 'manager' ? 3 : 4;
     Object.entries(iv.answers || {}).forEach(([qid, v]) => { if (String(v || '').trim() && QINDEX[qid]) hit(QINDEX[qid].crit, col); });
-    (iv.outliers || []).forEach((o) => { if (o.text && o.crit) hit(o.crit, 4); });
+    (iv.outliers || []).forEach((o) => { if (o.text && o.crit) hit(o.crit, 5); });
   });
   return { cols, rows: CRITERIA.map((c) => ({ c, counts: m[c.id], total: sum(m[c.id]) })) };
 }
@@ -164,22 +166,36 @@ function parseCSV(text) {
   if (cur || row.length) { row.push(cur); rows.push(row); }
   return rows.filter((r) => r.some((x) => x.trim()));
 }
-/** Map Google Form response columns (question titles) back to question ids. */
-function importIntakeCSV(e, text) {
-  const rows = parseCSV(text); if (rows.length < 2) return { added: 0, unmatched: [] };
+/** Map Google Form response columns (question titles) back to question ids, then merge into the target list.
+    Answers are merged per person: a later form submission fills gaps without wiping answers captured live. */
+function importFormCSV(e, text, kind) {
+  const isStaff = kind === 'staff';
+  const sections = isStaff ? STAFF_SECTIONS : INTAKE_SECTIONS; const list = isStaff ? e.staffSurvey : e.intake;
+  const nameQ = isStaff ? 'st_name' : 'i_name', roleQ = isStaff ? 'st_role' : 'i_role';
+  const rows = parseCSV(text); if (rows.length < 2) return { added: 0, updated: 0, unmatched: [] };
   const head = rows[0];
-  const byTitle = {}; INTAKE_SECTIONS.forEach((s) => s.questions.forEach((q) => { byTitle[q.q.trim().toLowerCase()] = q.id; }));
+  const byTitle = {}; sections.forEach((s) => s.questions.forEach((q) => { byTitle[q.q.trim().toLowerCase()] = q.id; }));
   const map = head.map((h) => byTitle[h.trim().toLowerCase()] || null);
   const unmatched = head.filter((h, i) => !map[i] && !/timestamp/i.test(h));
   let added = 0, updated = 0;
   rows.slice(1).forEach((r) => {
-    const answers = {}; map.forEach((qid, i) => { if (qid && r[i]) answers[qid] = r[i]; });
+    const answers = {}; map.forEach((qid, i) => { if (qid && String(r[i] || '').trim()) answers[qid] = r[i]; });
     const ts = r[head.findIndex((h) => /timestamp/i.test(h))] || '';
-    const respondent = answers.i_name || 'Unknown';
-    const id = 'in_' + respondent.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 40);
-    const existing = e.intake.find((x) => x.id === id || String(x.respondent).toLowerCase() === respondent.toLowerCase());
-    const rec = { id, respondent, role: answers.i_role || '', timestamp: ts, date: todayISO(), source: 'Google Form', answers };
-    if (existing) { Object.assign(existing, rec); updated++; } else { e.intake.push(rec); added++; }
+    const respondent = (answers[nameQ] || 'Unknown').trim();
+    const person = e.people.find((p) => (p.name || '').trim().toLowerCase() === respondent.toLowerCase());
+    const id = (isStaff ? 'ss_' : 'in_') + respondent.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 40);
+    const existing = list.find((x) => x.id === id || String(x.respondent).toLowerCase() === respondent.toLowerCase());
+    if (existing) { existing.answers = Object.assign({}, existing.answers, answers); existing.timestamp = ts; existing.source = (existing.source || '') + (existing.source && !/Google Form/.test(existing.source) ? ' + Google Form' : existing.source ? '' : 'Google Form'); if (person) existing.personId = person.id; updated++; }
+    else { list.push({ id, respondent, role: answers[roleQ] || '', personId: person ? person.id : '', timestamp: ts, date: todayISO(), source: 'Google Form', answers }); added++; }
   });
   return { added, updated, unmatched };
+}
+const importIntakeCSV = (e, text) => importFormCSV(e, text, 'intake');
+
+/** Founder questionnaire completeness: which questions nobody has answered yet. */
+function intakeOutstanding(e) {
+  const answered = new Set(); e.intake.forEach((r) => Object.entries(r.answers || {}).forEach(([q, v]) => { if (String(v || '').trim()) answered.add(q); }));
+  const all = INTAKE_SECTIONS.filter((s) => s.id !== 'about').flatMap((s) => s.questions.map((q) => Object.assign({ section: s.title }, q)));
+  const open = all.filter((q) => !answered.has(q.id));
+  return { total: all.length, open, openPriority: open.filter((q) => q.p), answered: all.length - open.length };
 }

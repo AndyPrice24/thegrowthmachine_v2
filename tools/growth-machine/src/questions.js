@@ -31,42 +31,42 @@ const INTAKE_SECTIONS = [
     { id: 'i_role', crit: 'people', type: 'short', q: 'Your role', required: true }
   ] },
   { id: 'goals', title: '1. Goals & success', intro: 'What this engagement must achieve for you.', questions: [
-    { id: 'i_success', crit: 'strategy', type: 'long', q: 'By 1 February 2027, what would make this engagement a clear success for you?' },
-    { id: 'i_priorities', crit: 'strategy', type: 'long', q: 'What are the three things you most want fixed or improved?' },
-    { id: 'i_offlimits', crit: 'strategy', type: 'long', q: 'Is anything off-limits, sensitive or already decided (people, products, suppliers, systems)?' },
+    { id: 'i_success', p: 1, crit: 'strategy', type: 'long', q: 'By 1 February 2027, what would make this engagement a clear success for you?' },
+    { id: 'i_priorities', p: 1, crit: 'strategy', type: 'long', q: 'What are the three things you most want fixed or improved?' },
+    { id: 'i_offlimits', p: 1, crit: 'strategy', type: 'long', q: 'Is anything off-limits, sensitive or already decided (people, products, suppliers, systems)?' },
     { id: 'i_plans', crit: 'strategy', type: 'long', q: 'What plans are already in motion that we should know about (hires, exits, new products, funding, system changes)?' }
   ] },
   { id: 'revenue', title: '2. Revenue & customers', intro: 'Where the money comes from, and where it is strongest and weakest.', questions: [
     { id: 'i_streams', crit: 'revenue', type: 'long', q: 'What are your main revenue streams, and roughly what share of revenue does each bring?' },
-    { id: 'i_strong', crit: 'revenue', type: 'long', q: 'Where is revenue strongest (products, client types, markets, channels)? Why?' },
-    { id: 'i_weak', crit: 'revenue', type: 'long', q: 'Where is revenue weakest or declining? Why do you think that is?' },
+    { id: 'i_strong', p: 1, crit: 'revenue', type: 'long', q: 'Where is revenue strongest (products, client types, markets, channels)? Why?' },
+    { id: 'i_weak', p: 1, crit: 'revenue', type: 'long', q: 'Where is revenue weakest or declining? Why do you think that is?' },
     { id: 'i_markets', crit: 'revenue', type: 'checkbox', q: 'Which markets do you sell into?', options: ['South Africa', 'India', 'Rest of Africa', 'Middle East', 'Europe / UK', 'United States'], other: true },
     { id: 'i_market_split', crit: 'revenue', type: 'short', q: 'Roughly what share of revenue comes from each market?' },
-    { id: 'i_concentration', crit: 'customers', type: 'long', q: 'How many active clients do you have, and roughly what share of revenue do your top five bring in?' },
+    { id: 'i_concentration', p: 1, crit: 'customers', type: 'long', q: 'How many active clients do you have, and roughly what share of revenue do your top five bring in?' },
     { id: 'i_pricing', crit: 'revenue', type: 'long', q: 'How do you price (per location, per month, set-up fees, reseller margins, discounts)?' },
     { id: 'i_churn', crit: 'customers', type: 'long', q: 'Which clients leave, and why? Roughly how many left in the last 12 months?' }
   ] },
   { id: 'cost', title: '3. Cost base', intro: 'This helps us agree the cost baseline the savings target is measured against.', questions: [
-    { id: 'i_costs_top', crit: 'cost', type: 'long', q: 'Apart from salaries, what are your five biggest monthly costs?' },
+    { id: 'i_costs_top', p: 1, crit: 'cost', type: 'long', q: 'Apart from salaries, what are your five biggest monthly costs?' },
     { id: 'i_costs_high', crit: 'cost', type: 'long', q: 'Which costs feel too high or poor value?' },
-    { id: 'i_renewals', crit: 'cost', type: 'long', q: 'Which contracts or subscriptions renew in the next six months, and what are their notice periods?', help: 'Notice periods decide how quickly savings can land.' },
+    { id: 'i_renewals', p: 1, crit: 'cost', type: 'long', q: 'Which contracts or subscriptions renew in the next six months, and what are their notice periods?', help: 'Notice periods decide how quickly savings can land.' },
     { id: 'i_cost_changes', crit: 'cost', type: 'long', q: 'Have costs changed significantly in the last 12 months? What drove it?' }
   ] },
   { id: 'people', title: '4. People & structure', questions: [
-    { id: 'i_headcount', crit: 'people', type: 'short', q: 'How many people work in the business: employees, contractors and outsourced?' },
-    { id: 'i_structure', crit: 'people', type: 'long', q: 'How is the team organised, and who leads each area?' },
+    { id: 'i_headcount', p: 1, crit: 'people', type: 'short', q: 'How many people work in the business: employees, contractors and outsourced?' },
+    { id: 'i_structure', p: 1, crit: 'people', type: 'long', q: 'How is the team organised, and who leads each area?' },
     { id: 'i_unclear', crit: 'people', type: 'long', q: 'Where are roles unclear, duplicated or overloaded?' },
     { id: 'i_keyperson', crit: 'risk', type: 'long', q: 'If one person left tomorrow, whose absence would hurt most? Why?' },
     { id: 'i_hiring', crit: 'people', type: 'long', q: 'What roles are open, or what hires or exits are planned?' }
   ] },
   { id: 'tech', title: '5. Technology & data', intro: 'Which systems you run, where they are hosted and where your data lives.', questions: [
-    { id: 'i_crm', crit: 'tech', type: 'choice', q: 'Which CRM do you use?', options: ['HubSpot', 'Salesforce', 'Pipedrive', 'Zoho', 'Spreadsheets / none'], other: true },
-    { id: 'i_accounting', crit: 'tech', type: 'choice', q: 'Which accounting system do you use?', options: ['Xero', 'Sage', 'QuickBooks', 'Pastel'], other: true },
+    { id: 'i_crm', p: 1, crit: 'tech', type: 'choice', q: 'Which CRM do you use?', options: ['HubSpot', 'Salesforce', 'Pipedrive', 'Zoho', 'Spreadsheets / none'], other: true },
+    { id: 'i_accounting', p: 1, crit: 'tech', type: 'choice', q: 'Which accounting system do you use?', options: ['Xero', 'Sage', 'QuickBooks', 'Pastel'], other: true },
     { id: 'i_workspace', crit: 'tech', type: 'choice', q: 'Which email and office suite does the company use?', options: ['Google Workspace', 'Microsoft 365', 'Both'], other: true },
     { id: 'i_comms', crit: 'tech', type: 'checkbox', q: 'How does the team communicate day to day?', options: ['Slack', 'Microsoft Teams', 'WhatsApp', 'Email'], other: true },
     { id: 'i_support', crit: 'tech', type: 'short', q: 'What do you use for client support or tickets?' },
     { id: 'i_pm', crit: 'tech', type: 'short', q: 'What project or task management tools do you use?' },
-    { id: 'i_platform_hosting', crit: 'tech', type: 'choice', q: 'Where is the Location Bank platform hosted?', options: ['Amazon Web Services (AWS)', 'Microsoft Azure', 'Google Cloud', 'Our own / local servers', 'A third-party hosting provider', 'Not sure'], other: true },
+    { id: 'i_platform_hosting', p: 1, crit: 'tech', type: 'choice', q: 'Where is the Location Bank platform hosted?', options: ['Amazon Web Services (AWS)', 'Microsoft Azure', 'Google Cloud', 'Our own / local servers', 'A third-party hosting provider', 'Not sure'], other: true },
     { id: 'i_local', crit: 'tech', type: 'choice', q: 'Do you run any servers, databases or file storage on your own premises?', options: ['Yes', 'No', 'Not sure'] },
     { id: 'i_local_detail', crit: 'tech', type: 'long', q: 'If yes, what runs locally, and why?' },
     { id: 'i_files', crit: 'data', type: 'choice', q: 'Where are company files mainly stored?', options: ['Google Drive', 'SharePoint / OneDrive', 'Dropbox', 'Local or network drive', 'A mix'], other: true },
@@ -82,15 +82,37 @@ const INTAKE_SECTIONS = [
     { id: 'i_cadence', crit: 'decisions', type: 'long', q: 'What regular meetings run the business (who attends, how often)?' }
   ] },
   { id: 'pain', title: '7. Frustrations & ideas', questions: [
-    { id: 'i_frustrations', crit: 'pain', type: 'long', q: 'What are your three biggest operational frustrations right now?' },
+    { id: 'i_frustrations', p: 1, crit: 'pain', type: 'long', q: 'What are your three biggest operational frustrations right now?' },
     { id: 'i_fix', crit: 'pain', type: 'long', q: 'If you could fix one thing tomorrow, what would it be?' },
     { id: 'i_tried', crit: 'pain', type: 'long', q: 'What has been tried before that did not work? Why not?' }
   ] },
   { id: 'practical', title: '8. Getting started', questions: [
-    { id: 'i_managers', crit: 'people', type: 'long', q: 'Which managers should Andrew interview first (name and role)?' },
-    { id: 'i_staff_comms', crit: 'decisions', type: 'choice', q: 'How should the team hear about this engagement?', options: ['The founders announce it before interviews start (recommended)', 'Andrew introduces it at a team meeting', 'Both', "Let's discuss"] },
+    { id: 'i_managers', p: 1, crit: 'people', type: 'long', q: 'Which managers should Andrew interview first (name and role)?' },
+    { id: 'i_staff_comms', p: 1, crit: 'decisions', type: 'choice', q: 'How should the team hear about this engagement?', options: ['The founders announce it before interviews start (recommended)', 'Andrew introduces it at a team meeting', 'Both', "Let's discuss"] },
     { id: 'i_access', crit: 'tech', type: 'short', q: 'Who can grant read-only access to systems (CRM, accounting, helpdesk)?' },
     { id: 'i_other', crit: 'pain', type: 'long', q: 'Is there anything else you think I should know?' }
+  ] }
+];
+
+/* ---------- Staff pre-interview questionnaire (Google Form, max ~10 minutes, named) ---------- */
+const STAFF_SECTIONS = [
+  { id: 'about', title: 'About you', intro: 'About 10 minutes. Short answers are perfect. This helps Andrew make your interview quicker and more useful.', questions: [
+    { id: 'st_name', crit: 'people', type: 'short', q: 'Your name', required: true },
+    { id: 'st_role', crit: 'people', type: 'short', q: 'Your role and team', required: true },
+    { id: 'st_tenure', crit: 'people', type: 'choice', q: 'How long have you been in this role?', options: ['Less than 6 months', '6–12 months', '1–3 years', 'More than 3 years'] }
+  ] },
+  { id: 'work', title: 'Your work', questions: [
+    { id: 'st_main', crit: 'process', type: 'long', q: 'What are the 3–5 main things you do in a typical week?' },
+    { id: 'st_split', crit: 'process', type: 'short', q: 'Roughly what % of your week goes on: core work / admin & reporting / meetings / fixing problems?', help: 'e.g. 50 / 20 / 15 / 15. A rough guess is fine.' },
+    { id: 'st_tools', crit: 'tech', type: 'short', q: 'Which systems or tools do you use every day?' },
+    { id: 'st_copy', crit: 'data', type: 'long', q: 'Where do you re-type, copy or check data by hand between systems or spreadsheets?' },
+    { id: 'st_depend', crit: 'process', type: 'short', q: 'Who do you depend on most to get your work done, and where do things get stuck?' },
+    { id: 'st_workload', crit: 'people', type: 'scale', q: 'How is your workload most weeks?', low: 'Too light', high: 'Too heavy' }
+  ] },
+  { id: 'improve', title: 'What would help', questions: [
+    { id: 'st_frustration', crit: 'pain', type: 'long', q: 'What is the biggest frustration or time-waster in your work?' },
+    { id: 'st_hour', crit: 'pain', type: 'long', q: 'What one change would save you an hour a week?' },
+    { id: 'st_private', crit: 'pain', type: 'long', q: 'Anything you would rather raise with Andrew in person? (Optional: just a topic is fine.)' }
   ] }
 ];
 

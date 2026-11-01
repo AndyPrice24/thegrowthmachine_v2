@@ -323,6 +323,19 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 .heat.cov th{white-space:normal;max-width:130px}
 .status-preview .rpt{max-width:1000px}
 @media (max-width:1000px){.act-grid,.capture{grid-template-columns:1fr}.capture aside{position:static;max-height:none}}
+/* live founder session + outstanding */
+.session .qa{border-left:3px solid var(--line);padding-left:10px}
+.session .qa.qa-done{border-left-color:var(--good)}
+.session .qa input:not([type=checkbox]),.session .qa select{width:100%}
+.qa-meta{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.star{color:var(--red)}
+.chk{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+.chk label{display:inline-flex;gap:5px;align-items:center;font-size:13px}
+.chk input[data-intakeother]{flex:1;min-width:160px}
+.outstanding{border:1px solid var(--warn);border-radius:10px;padding:8px 12px;margin:10px 0;max-height:280px;overflow:auto}
+.outstanding h5{margin:2px 0 6px;color:var(--warn-ink);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+.outstanding ul{margin:0;padding-left:18px;font-size:12.5px}
+.pre{background:var(--surface-2);border-radius:10px;padding:8px 12px;margin-bottom:12px}
 </style>
 </head>
 <body>
@@ -762,42 +775,42 @@ const INTAKE_SECTIONS = [
     { id: 'i_role', crit: 'people', type: 'short', q: 'Your role', required: true }
   ] },
   { id: 'goals', title: '1. Goals & success', intro: 'What this engagement must achieve for you.', questions: [
-    { id: 'i_success', crit: 'strategy', type: 'long', q: 'By 1 February 2027, what would make this engagement a clear success for you?' },
-    { id: 'i_priorities', crit: 'strategy', type: 'long', q: 'What are the three things you most want fixed or improved?' },
-    { id: 'i_offlimits', crit: 'strategy', type: 'long', q: 'Is anything off-limits, sensitive or already decided (people, products, suppliers, systems)?' },
+    { id: 'i_success', p: 1, crit: 'strategy', type: 'long', q: 'By 1 February 2027, what would make this engagement a clear success for you?' },
+    { id: 'i_priorities', p: 1, crit: 'strategy', type: 'long', q: 'What are the three things you most want fixed or improved?' },
+    { id: 'i_offlimits', p: 1, crit: 'strategy', type: 'long', q: 'Is anything off-limits, sensitive or already decided (people, products, suppliers, systems)?' },
     { id: 'i_plans', crit: 'strategy', type: 'long', q: 'What plans are already in motion that we should know about (hires, exits, new products, funding, system changes)?' }
   ] },
   { id: 'revenue', title: '2. Revenue & customers', intro: 'Where the money comes from, and where it is strongest and weakest.', questions: [
     { id: 'i_streams', crit: 'revenue', type: 'long', q: 'What are your main revenue streams, and roughly what share of revenue does each bring?' },
-    { id: 'i_strong', crit: 'revenue', type: 'long', q: 'Where is revenue strongest (products, client types, markets, channels)? Why?' },
-    { id: 'i_weak', crit: 'revenue', type: 'long', q: 'Where is revenue weakest or declining? Why do you think that is?' },
+    { id: 'i_strong', p: 1, crit: 'revenue', type: 'long', q: 'Where is revenue strongest (products, client types, markets, channels)? Why?' },
+    { id: 'i_weak', p: 1, crit: 'revenue', type: 'long', q: 'Where is revenue weakest or declining? Why do you think that is?' },
     { id: 'i_markets', crit: 'revenue', type: 'checkbox', q: 'Which markets do you sell into?', options: ['South Africa', 'India', 'Rest of Africa', 'Middle East', 'Europe / UK', 'United States'], other: true },
     { id: 'i_market_split', crit: 'revenue', type: 'short', q: 'Roughly what share of revenue comes from each market?' },
-    { id: 'i_concentration', crit: 'customers', type: 'long', q: 'How many active clients do you have, and roughly what share of revenue do your top five bring in?' },
+    { id: 'i_concentration', p: 1, crit: 'customers', type: 'long', q: 'How many active clients do you have, and roughly what share of revenue do your top five bring in?' },
     { id: 'i_pricing', crit: 'revenue', type: 'long', q: 'How do you price (per location, per month, set-up fees, reseller margins, discounts)?' },
     { id: 'i_churn', crit: 'customers', type: 'long', q: 'Which clients leave, and why? Roughly how many left in the last 12 months?' }
   ] },
   { id: 'cost', title: '3. Cost base', intro: 'This helps us agree the cost baseline the savings target is measured against.', questions: [
-    { id: 'i_costs_top', crit: 'cost', type: 'long', q: 'Apart from salaries, what are your five biggest monthly costs?' },
+    { id: 'i_costs_top', p: 1, crit: 'cost', type: 'long', q: 'Apart from salaries, what are your five biggest monthly costs?' },
     { id: 'i_costs_high', crit: 'cost', type: 'long', q: 'Which costs feel too high or poor value?' },
-    { id: 'i_renewals', crit: 'cost', type: 'long', q: 'Which contracts or subscriptions renew in the next six months, and what are their notice periods?', help: 'Notice periods decide how quickly savings can land.' },
+    { id: 'i_renewals', p: 1, crit: 'cost', type: 'long', q: 'Which contracts or subscriptions renew in the next six months, and what are their notice periods?', help: 'Notice periods decide how quickly savings can land.' },
     { id: 'i_cost_changes', crit: 'cost', type: 'long', q: 'Have costs changed significantly in the last 12 months? What drove it?' }
   ] },
   { id: 'people', title: '4. People & structure', questions: [
-    { id: 'i_headcount', crit: 'people', type: 'short', q: 'How many people work in the business: employees, contractors and outsourced?' },
-    { id: 'i_structure', crit: 'people', type: 'long', q: 'How is the team organised, and who leads each area?' },
+    { id: 'i_headcount', p: 1, crit: 'people', type: 'short', q: 'How many people work in the business: employees, contractors and outsourced?' },
+    { id: 'i_structure', p: 1, crit: 'people', type: 'long', q: 'How is the team organised, and who leads each area?' },
     { id: 'i_unclear', crit: 'people', type: 'long', q: 'Where are roles unclear, duplicated or overloaded?' },
     { id: 'i_keyperson', crit: 'risk', type: 'long', q: 'If one person left tomorrow, whose absence would hurt most? Why?' },
     { id: 'i_hiring', crit: 'people', type: 'long', q: 'What roles are open, or what hires or exits are planned?' }
   ] },
   { id: 'tech', title: '5. Technology & data', intro: 'Which systems you run, where they are hosted and where your data lives.', questions: [
-    { id: 'i_crm', crit: 'tech', type: 'choice', q: 'Which CRM do you use?', options: ['HubSpot', 'Salesforce', 'Pipedrive', 'Zoho', 'Spreadsheets / none'], other: true },
-    { id: 'i_accounting', crit: 'tech', type: 'choice', q: 'Which accounting system do you use?', options: ['Xero', 'Sage', 'QuickBooks', 'Pastel'], other: true },
+    { id: 'i_crm', p: 1, crit: 'tech', type: 'choice', q: 'Which CRM do you use?', options: ['HubSpot', 'Salesforce', 'Pipedrive', 'Zoho', 'Spreadsheets / none'], other: true },
+    { id: 'i_accounting', p: 1, crit: 'tech', type: 'choice', q: 'Which accounting system do you use?', options: ['Xero', 'Sage', 'QuickBooks', 'Pastel'], other: true },
     { id: 'i_workspace', crit: 'tech', type: 'choice', q: 'Which email and office suite does the company use?', options: ['Google Workspace', 'Microsoft 365', 'Both'], other: true },
     { id: 'i_comms', crit: 'tech', type: 'checkbox', q: 'How does the team communicate day to day?', options: ['Slack', 'Microsoft Teams', 'WhatsApp', 'Email'], other: true },
     { id: 'i_support', crit: 'tech', type: 'short', q: 'What do you use for client support or tickets?' },
     { id: 'i_pm', crit: 'tech', type: 'short', q: 'What project or task management tools do you use?' },
-    { id: 'i_platform_hosting', crit: 'tech', type: 'choice', q: 'Where is the Location Bank platform hosted?', options: ['Amazon Web Services (AWS)', 'Microsoft Azure', 'Google Cloud', 'Our own / local servers', 'A third-party hosting provider', 'Not sure'], other: true },
+    { id: 'i_platform_hosting', p: 1, crit: 'tech', type: 'choice', q: 'Where is the Location Bank platform hosted?', options: ['Amazon Web Services (AWS)', 'Microsoft Azure', 'Google Cloud', 'Our own / local servers', 'A third-party hosting provider', 'Not sure'], other: true },
     { id: 'i_local', crit: 'tech', type: 'choice', q: 'Do you run any servers, databases or file storage on your own premises?', options: ['Yes', 'No', 'Not sure'] },
     { id: 'i_local_detail', crit: 'tech', type: 'long', q: 'If yes, what runs locally, and why?' },
     { id: 'i_files', crit: 'data', type: 'choice', q: 'Where are company files mainly stored?', options: ['Google Drive', 'SharePoint / OneDrive', 'Dropbox', 'Local or network drive', 'A mix'], other: true },
@@ -813,15 +826,37 @@ const INTAKE_SECTIONS = [
     { id: 'i_cadence', crit: 'decisions', type: 'long', q: 'What regular meetings run the business (who attends, how often)?' }
   ] },
   { id: 'pain', title: '7. Frustrations & ideas', questions: [
-    { id: 'i_frustrations', crit: 'pain', type: 'long', q: 'What are your three biggest operational frustrations right now?' },
+    { id: 'i_frustrations', p: 1, crit: 'pain', type: 'long', q: 'What are your three biggest operational frustrations right now?' },
     { id: 'i_fix', crit: 'pain', type: 'long', q: 'If you could fix one thing tomorrow, what would it be?' },
     { id: 'i_tried', crit: 'pain', type: 'long', q: 'What has been tried before that did not work? Why not?' }
   ] },
   { id: 'practical', title: '8. Getting started', questions: [
-    { id: 'i_managers', crit: 'people', type: 'long', q: 'Which managers should Andrew interview first (name and role)?' },
-    { id: 'i_staff_comms', crit: 'decisions', type: 'choice', q: 'How should the team hear about this engagement?', options: ['The founders announce it before interviews start (recommended)', 'Andrew introduces it at a team meeting', 'Both', "Let's discuss"] },
+    { id: 'i_managers', p: 1, crit: 'people', type: 'long', q: 'Which managers should Andrew interview first (name and role)?' },
+    { id: 'i_staff_comms', p: 1, crit: 'decisions', type: 'choice', q: 'How should the team hear about this engagement?', options: ['The founders announce it before interviews start (recommended)', 'Andrew introduces it at a team meeting', 'Both', "Let's discuss"] },
     { id: 'i_access', crit: 'tech', type: 'short', q: 'Who can grant read-only access to systems (CRM, accounting, helpdesk)?' },
     { id: 'i_other', crit: 'pain', type: 'long', q: 'Is there anything else you think I should know?' }
+  ] }
+];
+
+/* ---------- Staff pre-interview questionnaire (Google Form, max ~10 minutes, named) ---------- */
+const STAFF_SECTIONS = [
+  { id: 'about', title: 'About you', intro: 'About 10 minutes. Short answers are perfect. This helps Andrew make your interview quicker and more useful.', questions: [
+    { id: 'st_name', crit: 'people', type: 'short', q: 'Your name', required: true },
+    { id: 'st_role', crit: 'people', type: 'short', q: 'Your role and team', required: true },
+    { id: 'st_tenure', crit: 'people', type: 'choice', q: 'How long have you been in this role?', options: ['Less than 6 months', '6–12 months', '1–3 years', 'More than 3 years'] }
+  ] },
+  { id: 'work', title: 'Your work', questions: [
+    { id: 'st_main', crit: 'process', type: 'long', q: 'What are the 3–5 main things you do in a typical week?' },
+    { id: 'st_split', crit: 'process', type: 'short', q: 'Roughly what % of your week goes on: core work / admin & reporting / meetings / fixing problems?', help: 'e.g. 50 / 20 / 15 / 15. A rough guess is fine.' },
+    { id: 'st_tools', crit: 'tech', type: 'short', q: 'Which systems or tools do you use every day?' },
+    { id: 'st_copy', crit: 'data', type: 'long', q: 'Where do you re-type, copy or check data by hand between systems or spreadsheets?' },
+    { id: 'st_depend', crit: 'process', type: 'short', q: 'Who do you depend on most to get your work done, and where do things get stuck?' },
+    { id: 'st_workload', crit: 'people', type: 'scale', q: 'How is your workload most weeks?', low: 'Too light', high: 'Too heavy' }
+  ] },
+  { id: 'improve', title: 'What would help', questions: [
+    { id: 'st_frustration', crit: 'pain', type: 'long', q: 'What is the biggest frustration or time-waster in your work?' },
+    { id: 'st_hour', crit: 'pain', type: 'long', q: 'What one change would save you an hour a week?' },
+    { id: 'st_private', crit: 'pain', type: 'long', q: 'Anything you would rather raise with Andrew in person? (Optional: just a topic is fine.)' }
   ] }
 ];
 
@@ -945,6 +980,7 @@ function normaliseEngagementBlock(e) {
     e.engagement[k].forEach((x) => { if (!x.id) x.id = uid(k.slice(0, 2)); });
   });
   if (!Array.isArray(e.intake)) e.intake = [];
+  if (!Array.isArray(e.staffSurvey)) e.staffSurvey = [];
   e.recommendations.forEach((r) => { if (LEGACY_STATUS[r.status]) r.status = LEGACY_STATUS[r.status]; if (!r.status) r.status = 'Identified'; });
   e.interviews.forEach((iv) => { if (!iv.answers || typeof iv.answers !== 'object') iv.answers = {}; if (!Array.isArray(iv.outliers)) iv.outliers = []; });
   return e;
@@ -1028,16 +1064,17 @@ function savingsTracker(e) {
 }
 
 /* ---------- Discovery coverage: how well each criterion is evidenced ---------- */
-const QINDEX = (() => { const m = {}; INTAKE_SECTIONS.forEach((s) => s.questions.forEach((q) => { m[q.id] = q; })); INTERVIEW_QUESTIONS.forEach((q) => { m[q.id] = q; }); return m; })();
+const QINDEX = (() => { const m = {}; [...INTAKE_SECTIONS, ...STAFF_SECTIONS].forEach((s) => s.questions.forEach((q) => { m[q.id] = q; })); INTERVIEW_QUESTIONS.forEach((q) => { m[q.id] = q; }); return m; })();
 function coverage(e) {
-  const cols = ['Founder intake', 'Founder interviews', 'Manager interviews', 'Staff interviews', 'Unexpected points'];
+  const cols = ['Founder questionnaire', 'Staff questionnaire', 'Founder interviews', 'Manager interviews', 'Staff interviews', 'Unexpected points'];
   const m = {}; CRITERIA.forEach((c) => { m[c.id] = cols.map(() => 0); });
   const hit = (crit, col) => { if (m[crit]) m[crit][col]++; };
   e.intake.forEach((r) => Object.entries(r.answers || {}).forEach(([qid, v]) => { if (String(v || '').trim() && QINDEX[qid]) hit(QINDEX[qid].crit, 0); }));
+  e.staffSurvey.forEach((r) => Object.entries(r.answers || {}).forEach(([qid, v]) => { if (String(v || '').trim() && QINDEX[qid] && !/_name$|_role$/.test(qid)) hit(QINDEX[qid].crit, 1); }));
   e.interviews.forEach((iv) => {
-    const col = iv.level === 'founder' ? 1 : iv.level === 'manager' ? 2 : 3;
+    const col = iv.level === 'founder' ? 2 : iv.level === 'manager' ? 3 : 4;
     Object.entries(iv.answers || {}).forEach(([qid, v]) => { if (String(v || '').trim() && QINDEX[qid]) hit(QINDEX[qid].crit, col); });
-    (iv.outliers || []).forEach((o) => { if (o.text && o.crit) hit(o.crit, 4); });
+    (iv.outliers || []).forEach((o) => { if (o.text && o.crit) hit(o.crit, 5); });
   });
   return { cols, rows: CRITERIA.map((c) => ({ c, counts: m[c.id], total: sum(m[c.id]) })) };
 }
@@ -1084,24 +1121,38 @@ function parseCSV(text) {
   if (cur || row.length) { row.push(cur); rows.push(row); }
   return rows.filter((r) => r.some((x) => x.trim()));
 }
-/** Map Google Form response columns (question titles) back to question ids. */
-function importIntakeCSV(e, text) {
-  const rows = parseCSV(text); if (rows.length < 2) return { added: 0, unmatched: [] };
+/** Map Google Form response columns (question titles) back to question ids, then merge into the target list.
+    Answers are merged per person: a later form submission fills gaps without wiping answers captured live. */
+function importFormCSV(e, text, kind) {
+  const isStaff = kind === 'staff';
+  const sections = isStaff ? STAFF_SECTIONS : INTAKE_SECTIONS; const list = isStaff ? e.staffSurvey : e.intake;
+  const nameQ = isStaff ? 'st_name' : 'i_name', roleQ = isStaff ? 'st_role' : 'i_role';
+  const rows = parseCSV(text); if (rows.length < 2) return { added: 0, updated: 0, unmatched: [] };
   const head = rows[0];
-  const byTitle = {}; INTAKE_SECTIONS.forEach((s) => s.questions.forEach((q) => { byTitle[q.q.trim().toLowerCase()] = q.id; }));
+  const byTitle = {}; sections.forEach((s) => s.questions.forEach((q) => { byTitle[q.q.trim().toLowerCase()] = q.id; }));
   const map = head.map((h) => byTitle[h.trim().toLowerCase()] || null);
   const unmatched = head.filter((h, i) => !map[i] && !/timestamp/i.test(h));
   let added = 0, updated = 0;
   rows.slice(1).forEach((r) => {
-    const answers = {}; map.forEach((qid, i) => { if (qid && r[i]) answers[qid] = r[i]; });
+    const answers = {}; map.forEach((qid, i) => { if (qid && String(r[i] || '').trim()) answers[qid] = r[i]; });
     const ts = r[head.findIndex((h) => /timestamp/i.test(h))] || '';
-    const respondent = answers.i_name || 'Unknown';
-    const id = 'in_' + respondent.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 40);
-    const existing = e.intake.find((x) => x.id === id || String(x.respondent).toLowerCase() === respondent.toLowerCase());
-    const rec = { id, respondent, role: answers.i_role || '', timestamp: ts, date: todayISO(), source: 'Google Form', answers };
-    if (existing) { Object.assign(existing, rec); updated++; } else { e.intake.push(rec); added++; }
+    const respondent = (answers[nameQ] || 'Unknown').trim();
+    const person = e.people.find((p) => (p.name || '').trim().toLowerCase() === respondent.toLowerCase());
+    const id = (isStaff ? 'ss_' : 'in_') + respondent.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 40);
+    const existing = list.find((x) => x.id === id || String(x.respondent).toLowerCase() === respondent.toLowerCase());
+    if (existing) { existing.answers = Object.assign({}, existing.answers, answers); existing.timestamp = ts; existing.source = (existing.source || '') + (existing.source && !/Google Form/.test(existing.source) ? ' + Google Form' : existing.source ? '' : 'Google Form'); if (person) existing.personId = person.id; updated++; }
+    else { list.push({ id, respondent, role: answers[roleQ] || '', personId: person ? person.id : '', timestamp: ts, date: todayISO(), source: 'Google Form', answers }); added++; }
   });
   return { added, updated, unmatched };
+}
+const importIntakeCSV = (e, text) => importFormCSV(e, text, 'intake');
+
+/** Founder questionnaire completeness: which questions nobody has answered yet. */
+function intakeOutstanding(e) {
+  const answered = new Set(); e.intake.forEach((r) => Object.entries(r.answers || {}).forEach(([q, v]) => { if (String(v || '').trim()) answered.add(q); }));
+  const all = INTAKE_SECTIONS.filter((s) => s.id !== 'about').flatMap((s) => s.questions.map((q) => Object.assign({ section: s.title }, q)));
+  const open = all.filter((q) => !answered.has(q.id));
+  return { total: all.length, open, openPriority: open.filter((q) => q.p), answered: all.length - open.length };
 }
 
 /* ---- charts.js ---- */
@@ -1953,6 +2004,7 @@ function savingsBlock(sv) {
 
 /* ---------- Discovery: coverage, founder intake, interview capture ---------- */
 function viewDiscovery(e) {
+  if (ui.session) return viewIntakeSession(e);
   if (ui.capture) return viewCapture(e);
   const cov = coverage(e); const mx = Math.max(1, ...cov.rows.flatMap((r) => r.counts));
   const cell = (n) => { if (!n) return '<td class="cov-0">—</td>'; const k = Math.min(6, Math.floor(n / mx * 6.999)); return `<td style="background:${SEQ[k]};color:${k >= 4 ? '#fff' : 'var(--ink)'}">${n}</td>`; };
@@ -1960,18 +2012,23 @@ function viewDiscovery(e) {
     ${cov.rows.map((r) => `<tr><th>${esc(r.c.label)}</th>${r.counts.map(cell).join('')}<td><strong>${r.total}</strong>${r.total === 0 ? ' <span class="chip sev-high">▲ gap</span>' : r.total < 3 ? ' <span class="chip sev-medium">● thin</span>' : ''}</td><td class="faint small">${esc(r.c.feeds)}</td></tr>`).join('')}</table>`;
   const people = e.people.slice().sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   const done = new Set(e.interviews.map((i) => i.personId));
-  const sections = INTAKE_SECTIONS;
+  const sections = INTAKE_SECTIONS; const io = intakeOutstanding(e);
   const intake = e.intake.length ? e.intake.map((r) => `<details class="intake"><summary><strong>${esc(r.respondent)}</strong> <span class="muted small">${esc(r.role)} · ${esc(r.timestamp || r.date)} · ${Object.keys(r.answers).length} answers</span></summary>
+      <div class="btn-row"><button class="btn sm" data-action="resumeIntake" data-id="${esc(r.id)}">Continue live session</button></div>
       ${sections.map((s) => { const qs = s.questions.filter((q) => r.answers[q.id]); return qs.length ? `<h5>${esc(s.title)}</h5><dl>${qs.map((q) => `<dt>${esc(q.q)} <span class="chip">${esc((CRITERIA.find((c) => c.id === q.crit) || {}).label || '')}</span></dt><dd>${esc(r.answers[q.id])}</dd>`).join('')}</dl>` : ''; }).join('')}</details>`).join('')
     : '<p class="empty">No founder responses yet.</p>';
   return `<div class="page-h"><div><span class="eyebrow">Discovery</span><h1>What we know, and where the gaps are</h1><p class="muted">Every answer is stored against a discovery criterion. Coverage shows which criteria are well evidenced and which still need questions.</p></div>
     <div class="btn-row"><button class="btn" data-action="startCapture">+ Capture an interview</button></div></div>
   ${card('Discovery coverage (answers per criterion)', `<div class="scroll-x">${covTable}</div>`, { sub: 'Darker means more evidence. "Gap" and "thin" show where to aim the next interviews.' })}
   <div class="grid-2">
-    ${card(`Founder questionnaire (${e.intake.length} responses)`, `<div class="btn-row"><label class="btn sm">Import responses CSV<input type="file" accept=".csv,text/csv" id="intakeFile" hidden></label></div>
-      <p class="faint small">In the responses Google Sheet: File → Download → CSV, then import it here. Re-importing updates existing responses. Or ask Claude to read the Sheet from your Drive and produce the JSON.</p>${intake}`)}
-    ${card('Interview checklist', people.length ? `<table class="tbl"><thead><tr><th>Person</th><th>Level</th><th>Question set</th><th></th></tr></thead><tbody>${people.map((p) => { const d = e.departments.find((x) => x.id === p.departmentId); const dt = deptType(d); return `<tr><td>${esc(p.name)}<div class="faint small">${esc(p.title || '')}</div></td><td>${esc(guessLevel(e, p))}</td><td class="small">${esc((DEPT_TYPES.find((x) => x[0] === dt) || ['', 'core only'])[1])}</td><td>${done.has(p.id) ? '<span class="chip st-added">✓ Interviewed</span>' : `<button class="btn sm" data-action="startCapture" data-id="${esc(p.id)}">Interview</button>`}</td></tr>`; }).join('')}</tbody></table>` : '<p class="empty">Add the org chart (People) first. The checklist and question sets then build themselves from it.</p>', { sub: 'Built from the org chart. Level and department decide each person\'s questions.' })}
-  </div>`;
+    ${card(`Founder questionnaire: ${io.answered} of ${io.total} answered`, `<div class="btn-row"><button class="btn" data-action="startIntake">▶ Live founder session</button><label class="btn sm">Import form responses (CSV)<input type="file" accept=".csv,text/csv" id="intakeFile" hidden></label></div>
+      ${io.open.length ? `<div class="outstanding"><h5>⚑ Still needed (${io.open.length}${io.openPriority.length ? `, ${io.openPriority.length} priority` : ''})</h5><ul>${io.open.slice(0, 40).map((q) => `<li>${q.p ? '<b>★</b> ' : ''}${esc(q.q)} <span class="faint small">· ${esc(q.section)}</span></li>`).join('')}</ul><button class="btn sm ghost" data-action="copyOutstanding">Copy outstanding questions</button></div>` : '<p class="small"><span class="chip st-added">✓ All founder questions answered</span></p>'}
+      <p class="faint small">Answers from live sessions and from the Google Form merge per person. A form submission fills gaps without overwriting what you captured live.</p>${intake}`)}
+    ${card('Interview checklist', people.length ? `<table class="tbl"><thead><tr><th>Person</th><th>Level</th><th>Question set</th><th></th></tr></thead><tbody>${people.map((p) => { const d = e.departments.find((x) => x.id === p.departmentId); const dt = deptType(d); return `<tr><td>${esc(p.name)}<div class="faint small">${esc(p.title || '')}</div></td><td>${esc(guessLevel(e, p))}</td><td class="small">${esc((DEPT_TYPES.find((x) => x[0] === dt) || ['', 'core only'])[1])}</td><td>${done.has(p.id) ? '<span class="chip st-added">✓ Interviewed</span>' : `${e.staffSurvey.some((x) => x.personId === p.id) ? '<span class="chip">✓ Questionnaire</span> ' : ''}<button class="btn sm" data-action="startCapture" data-id="${esc(p.id)}">Interview</button>`}</td></tr>`; }).join('')}</tbody></table>` : '<p class="empty">Add the org chart (People) first. The checklist and question sets then build themselves from it.</p>', { sub: 'Built from the org chart. Level and department decide each person\'s questions.' })}
+  </div>
+  ${card(`Staff questionnaire (${e.staffSurvey.length} responses)`, `<div class="btn-row"><label class="btn sm">Import staff responses (CSV)<input type="file" accept=".csv,text/csv" id="staffFile" hidden></label></div>
+    <p class="faint small">The 10-minute pre-interview form. Responses match to people by name, and each person's answers appear at the top of their interview capture form.</p>
+    ${e.staffSurvey.length ? `<table class="tbl"><thead><tr><th>Name</th><th>Role</th><th>Matched to org chart</th><th>Biggest frustration</th></tr></thead><tbody>${e.staffSurvey.map((r) => `<tr><td>${esc(r.respondent)}</td><td>${esc(r.role)}</td><td>${r.personId ? '<span class="chip st-added">✓</span>' : '<span class="chip sev-medium">● not matched</span>'}</td><td class="small">${esc(trunc(r.answers.st_frustration || '', 120))}</td></tr>`).join('')}</tbody></table>` : '<p class="empty">No staff responses yet.</p>'}`)}`;
 }
 
 const DRAFT_KEY = () => STORE_KEY + '.draft';
@@ -2008,6 +2065,7 @@ function viewCapture(e) {
       <label class="fld"><span>Quote worth keeping</span><textarea data-draft="quotes" rows="2">${esc(d.quotes || '')}</textarea></label>
     </aside>
     <div class="card qcol">
+      ${(() => { const ss = e.staffSurvey.find((x) => x.personId === d.personId && d.personId); return ss ? `<div class="pre"><h4>Their questionnaire answers</h4><dl>${STAFF_SECTIONS.flatMap((sec) => sec.questions).filter((q) => ss.answers[q.id] && !/_name$/.test(q.id)).map((q) => `<dt>${esc(q.q)}</dt><dd>${esc(ss.answers[q.id])}</dd>`).join('')}</dl></div>` : ''; })()}
       ${qBlock('Core questions (everyone)', set.core)}
       ${qBlock(d.level === 'founder' ? 'Founder questions' : d.level === 'manager' ? 'Manager questions' : 'Team member questions', set.level)}
       ${qBlock(dtype ? `${(DEPT_TYPES.find((x) => x[0] === dtype) || ['', ''])[1]} questions` : '', set.dept)}
@@ -2042,12 +2100,54 @@ function renderStatusReport(e) {
   const li = (a) => `<li>${esc(a.title)}${a.due && a.status !== 'Done' ? ` <span class="muted small">· due ${fmtD(a.due)}</span>` : ''}${a.doneDate && a.status === 'Done' ? ` <span class="muted small">· ${fmtD(a.doneDate)}</span>` : ''}${a.status === 'Waiting on client' ? ' <span class="chip st-changed">waiting on client</span>' : ''}</li>`;
   h += `<section class="rpt-sec"><div class="rpt-2"><div><h3>✓ Done</h3>${st.done.length ? `<ul>${st.done.map(li).join('')}</ul>` : '<p class="muted">—</p>'}</div><div><h3>● In progress</h3>${st.doing.length ? `<ul>${st.doing.map(li).join('')}</ul>` : '<p class="muted">—</p>'}<h3>→ Next</h3>${st.next.length ? `<ul>${st.next.slice(0, 8).map(li).join('')}</ul>` : '<p class="muted">—</p>'}</div></div></section>`;
   h += `<section class="rpt-sec"><h2>What we need from you</h2>${waiting.length ? `<table class="tbl"><thead><tr><th>Item</th><th>Owner</th><th>Due</th><th>Status</th></tr></thead><tbody>${waiting.map((r) => `<tr><td>${esc(r.item)}</td><td>${esc(r.owner || '')}</td><td class="nowrap">${fmtD(r.dueDate)}</td><td>${r._status === 'Overdue' ? '▲ Overdue' : 'Waiting'}</td></tr>`).join('')}</tbody></table>` : '<p>Nothing outstanding. Thank you.</p>'}
+    ${(() => { const io = intakeOutstanding(e); return e.intake.length && io.open.length ? `<p><b>Founder questions still open:</b> ${io.open.length} of ${io.total}${io.openPriority.length ? ` (${io.openPriority.length} priority)` : ''}. They can be finished in a short follow-up or through the online form.</p>` : ''; })()}
     ${awaiting.length ? `<h3>Decisions awaiting approval</h3><ul>${awaiting.map((r) => `<li>${esc(r.title)}</li>`).join('')}</ul>` : ''}</section>`;
   h += `<section class="rpt-sec"><h2>Time used</h2><div class="rpt-2"><div><h3>By phase</h3>${hbars(g.phases.map((p) => ({ label: p.name, value: num(st.byPhase[p.id] || 0), tip: `${num(p.plannedDays)} planned` })), { fmt: (v) => v.toFixed(1) + ' d', max: Math.max(1, ...g.phases.map((p) => Math.max(num(p.plannedDays), num(st.byPhase[p.id] || 0)))) })}</div>
     <div><h3>By contract month</h3>${hbars([1, 2, 3].map((m) => ({ label: `Month ${m}`, value: num(st.byMonth[m] || 0) })), { fmt: (v) => `${v.toFixed(1)} of ${num(g.daysPerMonth)} d`, max: Math.max(num(g.daysPerMonth), ...Object.values(st.byMonth)), color: 'var(--s3)' })}</div></div></section>`;
   if (sv.target) h += `<section class="rpt-sec"><h2>Savings tracker</h2>${savingsBlock(sv)}</section>`;
   h += `<footer class="rpt-foot">The Growth Machine · Status report generated ${date}. Figures are working estimates until validated against the agreed baseline.</footer>`;
   return h;
+}
+
+/* ---------- Live founder session: you ask, you type; every keystroke is saved ---------- */
+function viewIntakeSession(e) {
+  const r = e.intake.find((x) => x.id === ui.sessionId);
+  if (!r) {
+    const leaders = e.people.filter((p) => guessLevel(e, p) === 'founder');
+    return `<div class="page-h"><div><span class="eyebrow">Live founder session</span><h1>Who are you speaking with?</h1><p class="muted">You ask the questions and type the answers. Everything saves as you type, so you can stop at any point, switch person, and come back later.</p></div><button class="btn ghost" data-action="endIntake">Close</button></div>
+    ${e.intake.length ? card('Continue with', `<div class="btn-row">${e.intake.map((x) => `<button class="btn sm" data-action="resumeIntake" data-id="${esc(x.id)}">${esc(x.respondent)}${x.role ? ' · ' + esc(x.role) : ''} (${Object.keys(x.answers).length} answers)</button>`).join('')}</div>`) : ''}
+    ${card('New person', `<div class="form-grid">
+      <label class="fld"><span>From the org chart</span>${sel(leaders.concat(e.people.filter((p) => !leaders.includes(p))).map((p) => [p.id, p.name + (p.title ? ' · ' + p.title : '')]), '', 'id="sessPerson"')}</label>
+      <label class="fld"><span>…or name</span><input id="sessName" placeholder="e.g. Daryl"></label>
+      <label class="fld"><span>Role</span><input id="sessRole" placeholder="e.g. Co-founder / MD"></label></div>
+      <div class="btn-row"><button class="btn" data-action="newIntake">Start</button></div>`)}`;
+  }
+  const io = intakeOutstanding(e);
+  const mine = INTAKE_SECTIONS.filter((s) => s.id !== 'about').flatMap((s) => s.questions);
+  const mineDone = mine.filter((q) => String(r.answers[q.id] || '').trim()).length;
+  const others = (qid) => e.intake.filter((x) => x.id !== r.id && String(x.answers[qid] || '').trim()).map((x) => x.respondent);
+  const input = (q) => {
+    const v = r.answers[q.id] || ''; const a = `data-intake="${q.id}"`;
+    if (q.type === 'long') return `<textarea ${a} rows="2">${esc(v)}</textarea>`;
+    if (q.type === 'scale') return sel([['1', '1 · ' + (q.low || '')], ['2', '2'], ['3', '3'], ['4', '4'], ['5', '5 · ' + (q.high || '')]], v, `data-intakesel="${q.id}"`);
+    if (q.type === 'choice') return `<input ${a} list="dl_${q.id}" value="${esc(v)}" placeholder="Pick or type"><datalist id="dl_${q.id}">${(q.options || []).map((o) => `<option value="${esc(o)}">`).join('')}</datalist>`;
+    if (q.type === 'checkbox') {
+      const parts = splitList(v); const opts = q.options || []; const other = parts.filter((x) => !opts.includes(x)).join(', ');
+      return `<div class="chk">${opts.map((o) => `<label><input type="checkbox" data-intakemulti="${q.id}" value="${esc(o)}" ${parts.includes(o) ? 'checked' : ''}> ${esc(o)}</label>`).join('')}<input data-intakeother="${q.id}" value="${esc(other)}" placeholder="Other"></div>`;
+    }
+    return `<input ${a} value="${esc(v)}">`;
+  };
+  const sections = INTAKE_SECTIONS.filter((s) => s.id !== 'about').map((s) => {
+    const qs = s.questions.filter((q) => !ui.prioOnly || q.p);
+    if (!qs.length) return '';
+    return `<h4>${esc(s.title)}</h4>${qs.map((q) => { const o = others(q.id); const done = String(r.answers[q.id] || '').trim(); return `<div class="qa ${done ? 'qa-done' : ''}"><label><span>${q.p ? '<b class="star">★</b> ' : ''}${esc(q.q)}</span><span class="qa-meta">${o.length ? `<span class="chip">answered by ${esc(o.join(', '))}</span>` : ''}${done ? '<span class="chip st-added">✓</span>' : ''}</span></label>${input(q)}</div>`; }).join('')}`;
+  }).join('');
+  return `<div class="page-h"><div><span class="eyebrow">Live founder session · saving as you type</span><h1>${esc(r.respondent)}${r.role ? ` <span class="muted" style="font-size:20px">· ${esc(r.role)}</span>` : ''}</h1>
+      <p class="muted">${mineDone} of ${mine.length} answered by ${esc(r.respondent)} · ${io.open.length} still open across all founders (${io.openPriority.length} priority).</p></div>
+    <div class="btn-row"><label class="tog"><input type="checkbox" data-ui="prioOnly" ${ui.prioOnly ? 'checked' : ''}> ★ Priority questions only</label><button class="btn sm" data-action="switchIntake">Switch person</button><button class="btn" data-action="endIntake">Done for now</button></div></div>
+  <div class="card qcol session">${sections}
+    ${ui.prioOnly ? `<h4>Anything else they raised</h4><div class="qa"><textarea data-intake="i_other" rows="3" placeholder="Unexpected points, worries, names mentioned…">${esc(r.answers.i_other || '')}</textarea></div>` : ''}
+  </div>`;
 }
 
 /* ---- report.js ---- */
@@ -2147,7 +2247,7 @@ body{margin:0;background:#f6f1e9;font-family:Inter,ui-sans-serif,-apple-system,B
    App shell — storage, routing, actions, data editor, Claude bridge
    ============================================================ */
 const STORE_KEY = 'tgm.studio.v1';
-const ui = { tab: 'overview', scenario: 'current', processId: '', anon: false, ghosts: true, showCost: true, compare: true, zoom: 1, area: 'All', recType: 'All', coll: 'people', theme: '', reportType: 'status', capture: false, draft: null };
+const ui = { tab: 'overview', scenario: 'current', processId: '', anon: false, ghosts: true, showCost: true, compare: true, zoom: 1, area: 'All', recType: 'All', coll: 'people', theme: '', reportType: 'status', capture: false, draft: null, session: false, sessionId: '', prioOnly: true };
 let db = { activeId: '', engagements: {} };
 
 /* ---------- storage (localStorage, wrapped; the JSON file export is the real backup) ---------- */
@@ -2167,12 +2267,31 @@ function save() {
   E().meta.lastUpdated = new Date().toISOString();
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
+    saveTimer = null;
     try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); setStatus('Saved in this browser'); }
     catch (err) { setStatus('⚠ Could not save in this browser. Export JSON to keep your work.'); }
   }, 250);
 }
+function flushSave() { if (!saveTimer) return; clearTimeout(saveTimer); saveTimer = null; try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); } catch (err) { /* ignore */ } }
+window.addEventListener('pagehide', flushSave);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
 function saveUI() { try { localStorage.setItem(STORE_KEY + '.ui', JSON.stringify({ tab: ui.tab, anon: ui.anon, showCost: ui.showCost, ghosts: ui.ghosts, compare: ui.compare, coll: ui.coll, theme: ui.theme })); } catch (err) { /* ignore */ } }
 const E = () => db.engagements[db.activeId];
+/** Live founder session: write one answer straight into the respondent's record (no re-render, so typing is never interrupted). */
+function intakeWrite(t) {
+  const r = E().intake.find((x) => x.id === ui.sessionId); if (!r) return;
+  const qid = t.dataset.intake || t.dataset.intakesel || t.dataset.intakemulti || t.dataset.intakeother;
+  let v;
+  if (t.dataset.intakemulti || t.dataset.intakeother) {
+    const picked = [...document.querySelectorAll(`[data-intakemulti="${qid}"]:checked`)].map((x) => x.value);
+    const other = (document.querySelector(`[data-intakeother="${qid}"]`) || {}).value || '';
+    v = [...picked, ...splitList(other)].join(', ');
+  } else v = t.value;
+  if (String(v).trim()) r.answers[qid] = v; else delete r.answers[qid];
+  if (!/Live session/.test(r.source || '')) r.source = r.source ? r.source + ' + Live session' : 'Live session';
+  const qa = t.closest('.qa'); if (qa) qa.classList.toggle('qa-done', !!String(v).trim());
+  save();
+}
 function flagBadge(e) {
   if (!e.engagement.phases.length) return '';
   const st = engagementStatus(e); const n = st.openDelays.length, o = st.overdue.length;
@@ -2383,6 +2502,23 @@ const actions = {
     ui.capture = true; ui.tab = 'discovery'; render(); window.scrollTo(0, 0);
   },
   cancelCapture: () => { ui.capture = false; render(); },
+  startIntake: () => { ui.session = true; ui.sessionId = ''; ui.capture = false; ui.tab = 'discovery'; render(); window.scrollTo(0, 0); },
+  resumeIntake: (el) => { ui.session = true; ui.sessionId = el.dataset.id; ui.capture = false; ui.tab = 'discovery'; render(); window.scrollTo(0, 0); },
+  switchIntake: () => { ui.sessionId = ''; render(); window.scrollTo(0, 0); },
+  endIntake: () => { ui.session = false; ui.sessionId = ''; save(); render(); toast('Saved. Unanswered questions are listed under Discovery as still needed.'); },
+  newIntake: () => {
+    const e = E(); const pid = document.getElementById('sessPerson').value; const p = e.people.find((x) => x.id === pid);
+    const name = (document.getElementById('sessName').value || (p ? p.name : '')).trim(); const role = (document.getElementById('sessRole').value || (p ? p.title : '') || '').trim();
+    if (!name) return toast('Choose a person or type a name');
+    let r = e.intake.find((x) => String(x.respondent).toLowerCase() === name.toLowerCase());
+    if (!r) { r = { id: 'in_' + name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 40), respondent: name, role, personId: p ? p.id : '', date: todayISO(), source: 'Live session', answers: { i_name: name, i_role: role } }; e.intake.push(r); }
+    ui.sessionId = r.id; save(); render(); window.scrollTo(0, 0);
+  },
+  copyOutstanding: () => {
+    const io = intakeOutstanding(E()); let sec = ''; const lines = [];
+    io.open.forEach((q) => { if (q.section !== sec) { sec = q.section; lines.push('', sec); } lines.push('- ' + q.q); });
+    copyText(`A few questions we didn't get to. Short answers are perfect:\n${lines.join('\n')}`, 'Outstanding questions copied, ready to paste into an email');
+  },
   addOutlier: () => { ui.draft.outliers.push({ text: '', crit: '' }); saveDraft(ui.draft); render(); },
   saveCapture: () => {
     const e = E(); const d = ui.draft; const p = e.people.find((x) => x.id === d.personId);
@@ -2447,6 +2583,13 @@ document.addEventListener('change', (ev) => {
     };
     fr.readAsText(t.files[0]); return;
   }
+  if (t.id === 'staffFile' && t.files[0]) {
+    const fr = new FileReader();
+    fr.onload = () => { const res = importFormCSV(E(), fr.result, 'staff'); save(); render(); toast(`Staff responses: ${res.added} added, ${res.updated} updated${res.unmatched.length ? `, ${res.unmatched.length} columns not matched` : ''}`); };
+    fr.readAsText(t.files[0]); return;
+  }
+  if (t.dataset.intakesel || t.dataset.intakemulti) { intakeWrite(t); return; }
+  if (t.dataset.intake) { intakeWrite(t); return; }
   if (t.id === 'intakeFile' && t.files[0]) {
     const fr = new FileReader();
     fr.onload = () => { const res = importIntakeCSV(E(), fr.result); save(); render(); toast(`Founder responses: ${res.added} added, ${res.updated || 0} updated${res.unmatched.length ? `, ${res.unmatched.length} columns not matched` : ''}`); };
@@ -2478,6 +2621,7 @@ document.addEventListener('change', (ev) => {
 document.addEventListener('input', (ev) => {
   const t = ev.target;
   if (t.tagName === 'TEXTAREA' && t.dataset.bind) { setPath(E(), t.dataset.bind, t.value); save(); }
+  if (t.dataset.intake || t.dataset.intakeother) { intakeWrite(t); return; }
   if (t.dataset.draft && ui.draft) { setPath(ui.draft, t.dataset.draft, t.type === 'number' ? t.value : t.value); saveDraft(ui.draft); }
 });
 

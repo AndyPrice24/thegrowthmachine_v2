@@ -14,8 +14,8 @@ if (!cfgPath) { console.error('Usage: node build-pack.cjs <pack.config.json>'); 
 const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
 const outDir = path.dirname(cfgPath);
 const ctx = {}; vm.createContext(ctx);
-vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'src', 'questions.js'), 'utf8') + '\n;this.Q={CRITERIA,INTAKE_SECTIONS,DOCUMENT_REQUESTS,standardPlan};', ctx);
-const { INTAKE_SECTIONS, DOCUMENT_REQUESTS, standardPlan } = ctx.Q;
+vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'src', 'questions.js'), 'utf8') + '\n;this.Q={CRITERIA,INTAKE_SECTIONS,STAFF_SECTIONS,DOCUMENT_REQUESTS,standardPlan};', ctx);
+const { INTAKE_SECTIONS, STAFF_SECTIONS, DOCUMENT_REQUESTS, standardPlan } = ctx.Q;
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const fmtDate = (iso, opts = { day: 'numeric', month: 'short' }) => new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', opts);
@@ -161,12 +161,13 @@ function leaveBehind() {
       <div class="box"><h4>Who and how long</h4><p class="small muted">Founders and managers: one-to-one, 60–75 minutes. Team members: 30–45 minutes, one-to-one or in small groups. With around ${esc(cfg.headcountEstimate)} people, that is roughly two to three days of conversations across Weeks 2–3.</p></div>
       <div class="box"><h4>Consistent and confidential</h4><p class="small muted">Everyone gets the same core questions, plus questions for their role and department, so answers can be compared. Findings are reported as themes, not attributed to individuals.</p></div>
     </div>
+    <p class="small muted" style="margin-top:8px">Before their interview, each team member receives a short questionnaire (about 10 minutes), so the conversation can go straight to what matters.</p>
     ${foot(3, L)}</section>`;
 
   const p4 = `<section class="page">${brand('What I need from you')}
     <div class="eyebrow">What I need from you</div><h2>Getting started this week</h2>
     <div class="grid2">
-      <div class="box"><span class="n">1</span><h4>Founder questionnaire</h4><p class="small muted">A link arrives by email today. Answer what you can by <b>${fmtDate(addDays(cfg.start, cfg.questionnaireDueDays), { weekday: 'long', day: 'numeric', month: 'short' })}</b>. It takes 30–40 minutes, and you can come back and edit your answers. Each founder can submit separately. The full list of questions is at the back of this pack, so you can prepare.</p></div>
+      <div class="box"><span class="n">1</span><h4>Founder questions</h4><p class="small muted">We'll work through the key questions together, starting today, and I'll capture your answers as we talk. Nothing to fill in. Anything we don't cover comes to you afterwards as a short list or online form, to finish when convenient. The full list is at the back of this pack.</p></div>
       <div class="box"><span class="n">2</span><h4>Tell the team</h4><p class="small muted">Before interviews start, please introduce the engagement to the team. Hearing it from you first makes people more open. There is suggested wording on the last page.</p></div>
       <div class="box"><span class="n">3</span><h4>Information & documents</h4><p class="small muted">Please share the items below through the secure folder link I'll send (not by email: some of it is personal information, protected under POPIA).</p></div>
       <div class="box"><span class="n">4</span><h4>Time & decisions</h4><p class="small muted">Help scheduling interviews, and decisions within about five business days once a recommendation is ready, so momentum holds.</p></div>
@@ -179,11 +180,11 @@ function leaveBehind() {
     ${foot(4, L)}</section>`;
 
   const qs = INTAKE_SECTIONS.filter((s) => s.id !== 'about');
-  const qcol = (arr) => arr.map((s) => `<div class="q-sec"><h4>${esc(s.title)}</h4><ol>${s.questions.map((q) => `<li>${esc(q.q)}${q.options ? ` <em>(${esc(q.options.join(' / '))}${q.other ? ' / other' : ''})</em>` : ''}</li>`).join('')}</ol></div>`).join('');
+  const qcol = (arr) => arr.map((s) => `<div class="q-sec"><h4>${esc(s.title)}</h4><ol>${s.questions.map((q) => `<li>${q.p ? '<b style="color:#c8221c">★</b> ' : ''}${esc(q.q)}${q.options ? ` <em>(${esc(q.options.join(' / '))}${q.other ? ' / other' : ''})</em>` : ''}</li>`).join('')}</ol></div>`).join('');
   const byId = (ids) => qs.filter((s) => ids.includes(s.id));
   const p5 = `<section class="page">${brand('Founder questionnaire')}
     <div class="eyebrow">Appendix A</div><h2>Founder questionnaire: the questions</h2>
-    <p class="muted small">For preparation. Please answer through the online link, so your answers go straight into our analysis. Short answers are fine, and "don't know" is a useful answer too.</p>
+    <p class="muted small">We'll cover these together, so there's nothing to prepare. Questions marked <b>★</b> are the ones we'll start with. Short answers are fine, and "don't know" is a useful answer too.</p>
     <div class="grid2" style="align-items:start"><div>${qcol(byId(['goals', 'revenue']))}</div><div>${qcol(byId(['cost', 'people']))}</div></div>
     ${foot(5, L)}</section>
     <section class="page">${brand('Founder questionnaire')}
@@ -198,6 +199,7 @@ function leaveBehind() {
       <p>Hi everyone,</p>
       <p>We've brought in Andrew Price from The Growth Machine for the next three months. He'll help us look at how ${esc(cfg.client)} works: our processes, systems and costs. The aim is to make the business simpler and more efficient to run.</p>
       <p>Andrew will speak with each of you over the next few weeks to understand how your work flows: what helps, what gets in the way, and what you would change. Please be open with him. Your experience is exactly what he needs.</p>
+      <p>Before your conversation, you'll receive a short questionnaire from Andrew (about 10 minutes). It helps make the interview quicker and more useful.</p>
       <p>Conversations are confidential. Andrew reports themes, not who said what. If you have questions, speak to ${esc(cfg.contact)} or to us directly.</p>
     </div>
     <h3>Why this matters</h3>
@@ -217,18 +219,19 @@ function script() {
     <h3>Before you walk in</h3>
     <p><span class="tick"></span>Contract blanks filled: client legal name, registration number, address, both notice emails, client signatory name and title.<br>
     <span class="tick"></span>Two printed leave-behinds (or the PDF ready to send).<br>
-    <span class="tick"></span>Google Form created and tested, so you can send the link straight after the meeting.<br>
+    <span class="tick"></span>Laptop charged. Studio open: ${esc(cfg.client)} → Discovery → <b>▶ Live founder session</b> (★ priority questions only switched on).<br>
+    <span class="tick"></span>Founder Google Form tested (backup for anything you don't cover). Staff questionnaire form created, to send only after the team has been told.<br>
     <span class="tick"></span>Secure shared folder created for the documents (one folder per client, founder-only).<br>
-    <span class="tick"></span>Studio open with the ${esc(cfg.client)} file loaded, so you can log the meeting straight afterwards.</p>
+    <span class="tick"></span>Studio → Progress & time set up (Create plan), so you can log the meeting straight afterwards.</p>
     <h3>Running order</h3>
     <table><thead><tr><th>#</th><th>Section</th><th class="nowrap">Time</th><th>Outcome</th></tr></thead><tbody>
       <tr><td>0</td><td>Housekeeping: sign the agreement</td><td>5</td><td>Signed. The meeting becomes Day 1, not a sales call</td></tr>
       <tr><td>1</td><td>Open</td><td>3</td><td>Set the tone</td></tr>
-      <tr><td>2</td><td>Their view first</td><td>12</td><td>Their words anchor everything that follows</td></tr>
-      <tr><td>3</td><td>How I work + the plan</td><td>10</td><td>Confidence in the structure</td></tr>
-      <tr><td>4</td><td>Target, measurement & transparency</td><td>7</td><td>No surprises later about R150k or delays</td></tr>
-      <tr><td>5</td><td>Big foundational questions</td><td>13</td><td>Enough to start Monday's work</td></tr>
-      <tr><td>6</td><td>What I need & agree dates</td><td>7</td><td>Owners and dates for every request</td></tr>
+      <tr><td>2</td><td>Founder session, part 1: their view (typed live)</td><td>10</td><td>Their words anchor everything that follows</td></tr>
+      <tr><td>3</td><td>How I work + the plan</td><td>8</td><td>Confidence in the structure</td></tr>
+      <tr><td>4</td><td>Target, measurement & transparency</td><td>5</td><td>No surprises later about R150k or delays</td></tr>
+      <tr><td>5</td><td>Founder session, part 2: ★ priority questions</td><td>20</td><td>Enough to start Monday's work; gaps flagged automatically</td></tr>
+      <tr><td>6</td><td>What I need & agree dates</td><td>6</td><td>Owners and dates for every request</td></tr>
       <tr><td>7</td><td>Close</td><td>3</td><td>Recap, next contact, first review booked</td></tr>
     </tbody></table>
     <div class="callout"><b>Mindset:</b> you're there to understand, not to impress. Say less than you want to in the first 20 minutes. The founders should leave feeling heard <i>and</i> that you have a firm grip on the process.</div>
@@ -240,50 +243,46 @@ function script() {
     <p class="note">Sign first. It changes the dynamic from "selling" to "working". Confirm ${esc(cfg.contact)} as the single point of contact and decision-maker (clause 5.1).</p>
     <h2>1 · Open <span class="time">3 MIN</span></h2>
     <div class="say"><p>"Thank you for trusting us with this. Over the next three months my job is to understand how ${esc(cfg.client)} really runs, find where money and time leak, and help you fix what matters most. I'm not here to hand you a deck and disappear: I'll be in it with you."</p>
-    <p>"Today I want to do three things: hear your view first, walk you through how I'll run this, and agree what I need from you so we can move fast from Monday."</p></div>
-    <h2>2 · Their view first <span class="time">12 MIN</span></h2>
-    <p class="note">Ask, then stop talking. Write down their exact words: you'll quote them back in the Month-1 readout.</p>
+    <p>"Today I want to do three things: hear your view first, walk you through how I'll run this, and agree what I need from you so we can move fast from Monday. I'll type as you talk, so nothing gets lost and you won't have to fill in a long form later."</p></div>
+    <h2>2 · Founder session, part 1: their view <span class="time">10 MIN</span></h2>
+    <p class="note">Studio → Discovery → ▶ Live founder session → pick the person. It saves as you type. Start with <b>1. Goals & success</b>. Ask, then stop talking, and capture their exact words: you'll quote them back in the Month-1 readout.</p>
     <ol class="ask">
-      <li>"What made now the right time to bring someone in?"</li>
-      <li>"If we're sitting here on 1 February and this has gone brilliantly, what has changed?"</li>
-      <li>"What are you most worried about with this process?"</li>
-      <li>"Is there anything off-limits, already decided or sensitive that I should know before I start?"</li>
+      <li>Warm-up (type into "Anything else they raised"): "What made now the right time to bring someone in?" and "What worries you most about this process?"</li>
+      <li>★ "If we're sitting here on 1 February and this has gone brilliantly, what has changed?"</li>
+      <li>★ "What are the three things you most want fixed or improved?"</li>
+      <li>★ "Is anything off-limits, already decided or sensitive that I should know before I start?"</li>
     </ol>
-    <h2>3 · How I work + the plan <span class="time">10 MIN</span></h2>
+    <h2>3 · How I work + the plan <span class="time">8 MIN</span></h2>
     <p class="note">Hand over the leave-behind. Page 1 (principles), then page 2 (plan).</p>
     <div class="say"><p>"Four principles. I listen before I recommend. Everything I recommend comes with numbers. You make the decisions, especially anything involving people. And you'll always know where we are."</p>
     <p>"Month 1 is diagnosis: information, systems, interviews and a cost baseline, ending in a readout with ranked opportunities and their monthly value. Month 2 we execute what you approve. Month 3 we embed it, measure it and hand it over. Quick wins don't wait for the readout: if I find an unused subscription in week one, we cancel it in week one."</p></div>
     ${foot(2, L)}</section>`;
 
   const p3 = `<section class="page">${P}${brand('Talk track')}
-    <h2>4 · Target, measurement & transparency <span class="time">7 MIN</span></h2>
+    <h2>4 · Target, measurement & transparency <span class="time">5 MIN</span></h2>
     <div class="say"><p>"The target is around ${money(cfg.targetMonthly)} a month in recurring savings. I take it seriously. To keep it honest, we'll agree a cost baseline in Month 1 with whoever looks after your finances. Every initiative is then tracked through three stages: identified, approved, realised. Savings are net of any new costs, and one-off savings or time freed up are reported separately, so the number is never inflated."</p>
     <p>"You get a status report after every fortnightly review, or whenever you ask. It shows the days used out of ${cfg.daysTotal}, what's done, what's next, what I'm waiting on, and a <b>delays and changes log</b>. If something slips, whether it's my side or yours, a document arriving late or a decision taking longer, it's logged with the date, reason and impact. Not to point fingers, but so we always decide on facts."</p></div>
     <p class="note">This is your protection under clauses 3.3 and 5.6–5.7. Frame it as mutual accountability, which it genuinely is. Log your own slips too: that's what makes the log credible.</p>
-    <h2>5 · Big foundational questions <span class="time">13 MIN</span></h2>
-    <p class="note">Only the ones that shape next week. Everything else goes in the questionnaire. Tick as you go.</p>
+    <h2>5 · Founder session, part 2: ★ priority questions <span class="time">20 MIN</span></h2>
+    <p class="note">Back to the Studio. With "★ Priority questions only" on, the screen shows the ~15 that shape next week, in order: revenue (strongest, weakest, top-client share), costs (biggest lines, upcoming renewals), people (headcount, structure), systems (CRM, accounting, where the platform is hosted), top frustrations, and which managers to see first plus how to tell the team.</p>
     <table><tbody>
-      <tr><td><span class="tick"></span><b>Shape</b></td><td>"Roughly how many people, in which teams, and who leads each? Any contractors or outsourced work?" (Confirms the ${esc(cfg.headcountEstimate)} estimate and the interview plan.)</td></tr>
-      <tr><td><span class="tick"></span><b>Systems</b></td><td>"Talk me through the main systems: CRM, accounting, support, how the team communicates. Google or Microsoft?"</td></tr>
-      <tr><td><span class="tick"></span><b>Where data lives</b></td><td>"Where is the platform hosted? Do you run anything on your own servers or in the office? Where are files kept?"</td></tr>
-      <tr><td><span class="tick"></span><b>Money in</b></td><td>"Where is revenue strongest, and where is it weakest? Roughly what share comes from your biggest clients?"</td></tr>
-      <tr><td><span class="tick"></span><b>Money out</b></td><td>"Apart from salaries, what are the big monthly costs? What feels like poor value?"</td></tr>
-      <tr><td><span class="tick"></span><b>Quick wins</b></td><td>"What contracts or subscriptions renew in the next few months?" (Notice periods = fastest savings.)</td></tr>
-      <tr><td><span class="tick"></span><b>Pain</b></td><td>"If you could fix one thing tomorrow, what would it be?"</td></tr>
-      <tr><td><span class="tick"></span><b>Numbers</b></td><td>"Which numbers do you look at to run the business, and how much do you trust them?"</td></tr>
-      <tr><td><span class="tick"></span><b>Managers</b></td><td>"Which managers should I speak to first? Who's my day-to-day contact for information?"</td></tr>
+      <tr><td><b>Pace</b></td><td>About a minute per question. Capture the gist, not every word. Choice questions take a dropdown; you can also type freely.</td></tr>
+      <tr><td><b>Switching to the MD</b></td><td>Click <b>Switch person</b> and start a new respondent. Questions someone else has answered show "answered by …", so skip them unless a second view is useful.</td></tr>
+      <tr><td><b>Out of time?</b></td><td>Click <b>Done for now</b>. Whatever was answered is saved; everything else is listed under Discovery as <b>⚑ Still needed</b>. Send it afterwards with <b>Copy outstanding questions</b>, or send the Google Form link. Form answers merge in without overwriting anything.</td></tr>
+      <tr><td><b>If you only get 5 minutes</b></td><td>★ What success looks like · ★ biggest costs · ★ contracts renewing soon · ★ main systems · ★ which managers first.</td></tr>
     </tbody></table>
     ${foot(3, L)}</section>`;
 
   const p4 = `<section class="page">${P}${brand('Talk track')}
-    <h2>6 · What I need & agree dates <span class="time">7 MIN</span></h2>
+    <h2>6 · What I need & agree dates <span class="time">6 MIN</span></h2>
     <p class="note">Leave-behind page 4. Get a name and a date against every item. If they hesitate on payroll data, see the FAQ.</p>
-    <div class="say"><p>"Here's what I need to start properly. The questionnaire link comes to you by email today. Please answer what you can by ${fmtDate(addDays(cfg.start, cfg.questionnaireDueDays), { weekday: 'long' })}. The documents go into a secure folder I'll share, not over email. And it would help a lot if you could tell the team before I start interviewing. There's suggested wording at the back."</p></div>
-    <p><span class="tick"></span>Who sends the org chart / staff list, and the payroll?<br><span class="tick"></span>Who owns finance data (the baseline validator)?<br><span class="tick"></span>Who grants read-only system access?<br><span class="tick"></span>Team announcement: who sends it, and when?<br><span class="tick"></span>Decision turnaround of about 5 business days: agreed?<br><span class="tick"></span>Fortnightly review slot booked with ${esc(cfg.contact)} (first: ${fmtDate(cfg.reviewDates[0], { weekday: 'short', day: 'numeric', month: 'short' })}).</p>
+    <div class="say"><p>"Here's what I need to start properly. Anything we didn't get to today, I'll send as a short list, five minutes at most. The documents go into a secure folder I'll share, not over email. And it would help a lot if you could tell the team before I start. There's suggested wording at the back. Once you have, I'll send each team member a 10-minute questionnaire before their interview."</p></div>
+    <p><span class="tick"></span>Who sends the org chart / staff list, and the payroll?<br><span class="tick"></span>Who owns finance data (the baseline validator)?<br><span class="tick"></span>Who grants read-only system access?<br><span class="tick"></span>Team announcement: who sends it, and when?<br><span class="tick"></span>Staff list with email addresses, for the 10-minute questionnaire (sent after the announcement)?<br><span class="tick"></span>Decision turnaround of about 5 business days: agreed?<br><span class="tick"></span>Fortnightly review slot booked with ${esc(cfg.contact)} (first: ${fmtDate(cfg.reviewDates[0], { weekday: 'short', day: 'numeric', month: 'short' })}).</p>
     <h2>7 · Close <span class="time">3 MIN</span></h2>
-    <div class="say"><p>"So: the questionnaire link today, documents by the dates on page 4, the team hears from you before interviews, and our first review is on ${fmtDate(cfg.reviewDates[0], { weekday: 'long', day: 'numeric', month: 'long' })}. You'll get a short written summary of today by tomorrow. Anything you'd like me to do differently from what you've heard?"</p></div>
+    <div class="say"><p>"So: documents by the dates on page 4, the team hears from you first, then I send each person the short questionnaire, and our first review is on ${fmtDate(cfg.reviewDates[0], { weekday: 'long', day: 'numeric', month: 'long' })}. You'll get a short written summary of today by tomorrow. Anything you'd like me to do differently from what you've heard?"</p></div>
     <h3>Straight after the meeting</h3>
-    <p><span class="tick"></span>Send the email: thank-you, Form link, secure folder link, leave-behind PDF, the date list.<br>
+    <p><span class="tick"></span>Send the email: thank-you, secure folder link, leave-behind PDF, the date list, plus any outstanding founder questions (Discovery → Copy outstanding questions) or the founder form link.<br>
+    <span class="tick"></span>After the team announcement: send the staff questionnaire link to each person individually.<br>
     <span class="tick"></span>Studio → Progress: log the time, mark Kick-off in progress, record requests as "issued" with due dates.<br>
     <span class="tick"></span>Studio → Business: add what you learned (sector, goals, sensitivities, systems).<br>
     <span class="tick"></span>Note anything that should become a delay or risk entry.</p>
@@ -312,25 +311,31 @@ function script() {
 }
 
 /* ================= GOOGLE FORM GENERATOR (Apps Script) ================= */
-function appsScript() {
-  const spec = INTAKE_SECTIONS.map((s) => ({ title: s.title, intro: s.intro || '', questions: s.questions.map((q) => ({ id: q.id, q: q.q, type: q.type, required: !!q.required, options: q.options || [], other: !!q.other, help: q.help || '', low: q.low, high: q.high })) }));
+function appsScript(kind) {
+  const staff = kind === 'staff';
+  const sections = staff ? STAFF_SECTIONS : INTAKE_SECTIONS;
+  const title = staff ? `${cfg.client}: Team questionnaire (10 minutes)` : `${cfg.client} × The Growth Machine: Founder questionnaire`;
+  const fn = staff ? 'createStaffForm' : 'createIntakeForm';
+  const desc = staff
+    ? "Thanks for taking about 10 minutes. Short answers are perfect. Your answers go to Andrew Price (The Growth Machine) to prepare your conversation with him. Findings are reported as themes, not attributed to individuals."
+    : "Thank you for taking the time. Answer what you can; short answers are fine and \"don't know\" is useful too. You can come back and edit your answers after submitting. Your responses go straight to Andrew Price (The Growth Machine) and are kept confidential.";
+  const spec = sections.map((s) => ({ title: s.title, intro: s.intro || '', questions: s.questions.map((q) => ({ id: q.id, q: q.q, type: q.type, required: !!q.required, options: q.options || [], other: !!q.other, help: q.help || '', low: q.low, high: q.high })) }));
   return `/**
- * Creates the "${cfg.client} × The Growth Machine: Founder questionnaire" Google Form,
- * plus a linked Google Sheet that collects every response.
+ * Creates the "${title}" Google Form, plus a linked Google Sheet that collects every response.
  *
  * HOW TO USE (about 3 minutes):
  *  1. Go to https://script.google.com and click "New project".
- *  2. Delete the sample code, paste this whole file in, and click Save.
- *  3. Choose the function "createIntakeForm" and click Run. Approve the permissions (it's your own script).
- *  4. Open "Execution log": it prints the link to send to the founders, the edit link and the response Sheet.
- * Generated by Growth Machine Studio. Question ids are kept in this file so answers map back to the Studio.
+ *  2. Delete the sample code, paste this whole file in, and press Cmd+S (save).
+ *  3. Choose the function "${fn}" in the toolbar and click Run. Approve the permissions (it's your own script).
+ *  4. Open "Execution log": it prints the link to send, the edit link and the responses Sheet.
+ * Run it ONCE: every run creates another form.
+ * Generated by Growth Machine Studio. Question titles map answers back to the Studio when you import the responses CSV.
  */
 var SPEC = ${JSON.stringify(spec, null, 1)};
 
-function createIntakeForm() {
-  var form = FormApp.create('${cfg.client} × The Growth Machine: Founder questionnaire');
-  form.setDescription('Thank you for taking the time. Answer what you can; short answers are fine and "don\\'t know" is useful too. ' +
-    'You can come back and edit your answers after submitting. Your responses go straight to Andrew Price (The Growth Machine) and are kept confidential.');
+function ${fn}() {
+  var form = FormApp.create(${JSON.stringify(title)});
+  form.setDescription(${JSON.stringify(desc)});
   form.setProgressBar(true);
   form.setAllowResponseEdits(true);
   form.setCollectEmail(false);
@@ -351,9 +356,9 @@ function createIntakeForm() {
       if (q.required) item.setRequired(true);
     });
   });
-  var ss = SpreadsheetApp.create('${cfg.client}: Founder questionnaire responses');
+  var ss = SpreadsheetApp.create(${JSON.stringify(title + ': responses')});
   form.setDestination(FormApp.DestinationType.SPREADSHEET, ss.getId());
-  Logger.log('SEND THIS LINK TO THE FOUNDERS: ' + form.getPublishedUrl());
+  Logger.log('${staff ? 'SEND THIS LINK TO EACH TEAM MEMBER' : 'SEND THIS LINK TO THE FOUNDERS'}: ' + form.getPublishedUrl());
   Logger.log('Edit the form: ' + form.getEditUrl());
   Logger.log('Responses sheet: ' + ss.getUrl());
 }
@@ -362,8 +367,9 @@ function createIntakeForm() {
 
 fs.writeFileSync(path.join(outDir, 'leave-behind.html'), leaveBehind());
 fs.writeFileSync(path.join(outDir, 'kickoff-script.html'), script());
-fs.writeFileSync(path.join(outDir, 'intake-form.gs'), appsScript());
-fs.writeFileSync(path.join(outDir, 'intake-form (paste into Google Apps Script).txt'), appsScript()); // .txt opens in any text editor
+fs.writeFileSync(path.join(outDir, 'intake-form.gs'), appsScript('intake'));
+fs.writeFileSync(path.join(outDir, 'intake-form (paste into Google Apps Script).txt'), appsScript('intake')); // .txt opens in any text editor
+fs.writeFileSync(path.join(outDir, 'staff-form (paste into Google Apps Script).txt'), appsScript('staff'));
 
 (async () => {
   let chromium;

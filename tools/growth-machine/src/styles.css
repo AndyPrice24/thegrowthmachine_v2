@@ -147,3 +147,16 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 .heat.cov th{white-space:normal;max-width:130px}
 .status-preview .rpt{max-width:1000px}
 @media (max-width:1000px){.act-grid,.capture{grid-template-columns:1fr}.capture aside{position:static;max-height:none}}
+/* live founder session + outstanding */
+.session .qa{border-left:3px solid var(--line);padding-left:10px}
+.session .qa.qa-done{border-left-color:var(--good)}
+.session .qa input:not([type=checkbox]),.session .qa select{width:100%}
+.qa-meta{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.star{color:var(--red)}
+.chk{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+.chk label{display:inline-flex;gap:5px;align-items:center;font-size:13px}
+.chk input[data-intakeother]{flex:1;min-width:160px}
+.outstanding{border:1px solid var(--warn);border-radius:10px;padding:8px 12px;margin:10px 0;max-height:280px;overflow:auto}
+.outstanding h5{margin:2px 0 6px;color:var(--warn-ink);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+.outstanding ul{margin:0;padding-left:18px;font-size:12.5px}
+.pre{background:var(--surface-2);border-radius:10px;padding:8px 12px;margin-bottom:12px}
