@@ -1,0 +1,106 @@
+/* Shared visual tokens + chart/org/swimlane styles (also embedded in exported reports) */
+:root{
+  color-scheme:light;
+  --bg:#f6f1e9;--surface:#fffdf9;--surface-2:#eee7dd;--ink:#171715;--muted:#665f57;--faint:#8a8074;--line:#d7cfc3;--grid:#e6dfd4;
+  --red:#c8221c;--red-soft:rgba(200,34,28,.08);
+  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--s6:#008300;--s7:#6250d6;--s8:#e34948;--s-other:#9a948b;
+  --good:#0ca30c;--warn:#fab219;--serious:#ec835a;--crit:#d03b3b;
+  --good-ink:#0a7a0a;--warn-ink:#8a5a00;--crit-ink:#b02a2a;
+  --seq-1:#cde2fb;--seq-2:#9ec5f4;--seq-3:#6da7ec;--seq-4:#3987e5;--seq-5:#256abf;--seq-6:#184f95;--seq-7:#0d366b;
+}
+@media (prefers-color-scheme:dark){
+  :root:where(:not([data-theme="light"])){
+    color-scheme:dark;
+    --bg:#141311;--surface:#1c1b19;--surface-2:#252320;--ink:#f0efec;--muted:#b9b1a7;--faint:#8f877d;--line:#3a3733;--grid:#2c2a27;
+    --red:#e1453f;--red-soft:rgba(225,69,63,.12);
+    --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767;--s-other:#77726b;
+    --good-ink:#4cc94c;--warn-ink:#fab219;--crit-ink:#ef7676;
+    --seq-1:#1d2a3a;--seq-2:#104281;--seq-3:#184f95;--seq-4:#1c5cab;--seq-5:#2a78d6;--seq-6:#5598e7;--seq-7:#9ec5f4;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#141311;--surface:#1c1b19;--surface-2:#252320;--ink:#f0efec;--muted:#b9b1a7;--faint:#8f877d;--line:#3a3733;--grid:#2c2a27;
+  --red:#e1453f;--red-soft:rgba(225,69,63,.12);
+  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767;--s-other:#77726b;
+  --good-ink:#4cc94c;--warn-ink:#fab219;--crit-ink:#ef7676;
+  --seq-1:#1d2a3a;--seq-2:#104281;--seq-3:#184f95;--seq-4:#1c5cab;--seq-5:#2a78d6;--seq-6:#5598e7;--seq-7:#9ec5f4;
+}
+
+/* ---- KPI tiles ---- */
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.kpi .k-label{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+.kpi .k-value{font-family:Georgia,"Times New Roman",serif;font-size:28px;line-height:1.1;margin-top:6px;color:var(--ink)}
+.kpi .k-delta{font-size:12px;margin-top:4px;color:var(--muted)}
+.delta-good{color:var(--good-ink)}.delta-bad{color:var(--crit-ink)}
+
+/* ---- Horizontal bars ---- */
+.hbars{display:grid;gap:6px}
+.hbar{display:grid;grid-template-columns:minmax(90px,180px) 1fr auto;gap:10px;align-items:center;font-size:13px}
+.hbar .hb-label{color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hbar .hb-track{height:14px;background:transparent;position:relative}
+.hbar .hb-fill{height:100%;border-radius:0 4px 4px 0;min-width:2px}
+.hbar .hb-val{color:var(--muted);font-variant-numeric:tabular-nums;font-size:12px;min-width:64px;text-align:right}
+
+/* ---- SVG charts ---- */
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart .grid line{stroke:var(--grid);stroke-width:1}
+.chart .axis text,.chart text.axis{fill:var(--muted);font-size:11px;font-family:inherit}
+.chart .hit{fill:transparent}
+.chart .hit:hover{fill:var(--ink);fill-opacity:.04}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin:0 0 8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+/* ---- Heatmap ---- */
+.heat{border-collapse:separate;border-spacing:2px;font-size:12px}
+.heat th{font-weight:600;color:var(--muted);text-align:left;padding:4px 6px;white-space:nowrap}
+.heat th.col{writing-mode:vertical-rl;transform:rotate(180deg);height:120px;vertical-align:bottom;text-align:left}
+.heat td{width:38px;height:28px;text-align:center;border-radius:4px;font-variant-numeric:tabular-nums}
+
+/* ---- Org chart ---- */
+.org-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:12px;max-height:78vh}
+.org svg{display:block}
+.org .edge{fill:none;stroke:var(--line);stroke-width:1.5}
+.org .node rect.card{fill:var(--surface);stroke:var(--line);stroke-width:1}
+.org .node text{font-family:inherit;fill:var(--ink)}
+.org .node .n-name{font-size:12.5px;font-weight:700}
+.org .node .n-title{font-size:11px;fill:var(--muted)}
+.org .node .n-meta{font-size:10px;fill:var(--faint)}
+.org .node.removed{opacity:.6}
+.org .node.removed rect.card{stroke:var(--crit);stroke-dasharray:5 4;stroke-width:1.5}
+.org .node.added rect.card{stroke:var(--good);stroke-width:2}
+.org .node.changed rect.card{stroke:var(--warn);stroke-width:2}
+.org .badge text{font-size:9.5px;font-weight:700;fill:#fff}
+.org .badge.b-removed rect{fill:var(--crit)}.org .badge.b-added rect{fill:#0a7a0a}.org .badge.b-changed rect{fill:#8a5a00}
+
+/* ---- Swimlane ---- */
+.lane-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.lane svg{display:block}
+.lane .band{fill:var(--surface)}.lane .band.alt{fill:var(--surface-2)}
+.lane .lane-label{font-size:11.5px;font-weight:700;fill:var(--ink)}
+.lane .lane-sub{font-size:10px;fill:var(--muted)}
+.lane .step rect.box{fill:var(--surface);stroke:var(--line);stroke-width:1}
+.lane .step.manual rect.box{stroke:var(--ink);stroke-opacity:.35}
+.lane .step.auto rect.box{stroke:var(--s1);stroke-width:1.5;stroke-dasharray:3 2}
+.lane .step.removed{opacity:.5}.lane .step.removed rect.box{stroke:var(--crit);stroke-dasharray:5 4}
+.lane .step.added rect.box{stroke:var(--good);stroke-width:2}
+.lane .step.changed rect.box{stroke:var(--warn);stroke-width:2}
+.lane .step text{font-family:inherit;fill:var(--ink)}
+.lane .s-name{font-size:11.5px;font-weight:700}.lane .s-tool{font-size:10px;fill:var(--muted)}.lane .s-time{font-size:10px;fill:var(--faint)}
+.lane .flow{fill:none;stroke:var(--faint);stroke-width:1.5}
+.lane .flow.ghost{stroke-dasharray:4 4;opacity:.5}
+.lane .pain circle{fill:var(--crit)}.lane .pain text{fill:#fff;font-size:10px;font-weight:800}
+.lane .io{font-size:10.5px;fill:var(--muted)}
+
+/* ---- Status chips (always icon + label, never colour alone) ---- */
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:650;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);white-space:nowrap}
+.chip.sev-high{border-color:var(--crit);color:var(--crit-ink)}
+.chip.sev-medium{border-color:var(--warn);color:var(--warn-ink)}
+.chip.sev-low{border-color:var(--line);color:var(--muted)}
+.chip.st-added{border-color:var(--good);color:var(--good-ink)}
+.chip.st-removed{border-color:var(--crit);color:var(--crit-ink)}
+.chip.st-changed{border-color:var(--warn);color:var(--warn-ink)}
+.swatch{display:inline-block;width:10px;height:10px;border-radius:3px;vertical-align:-1px;margin-right:6px}
+.score-bar{height:6px;border-radius:3px;background:var(--grid);overflow:hidden;min-width:60px}
+.score-bar span{display:block;height:100%;background:var(--red);border-radius:3px}

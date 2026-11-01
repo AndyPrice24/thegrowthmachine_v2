@@ -1,0 +1,6 @@
+# Client data must never be committed (this repo deploys the public website)
+*.tgm.json
+tools/growth-machine/clients/
+node_modules/
+.next/
+.env*
