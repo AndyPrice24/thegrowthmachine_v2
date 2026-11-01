@@ -363,6 +363,7 @@ function createIntakeForm() {
 fs.writeFileSync(path.join(outDir, 'leave-behind.html'), leaveBehind());
 fs.writeFileSync(path.join(outDir, 'kickoff-script.html'), script());
 fs.writeFileSync(path.join(outDir, 'intake-form.gs'), appsScript());
+fs.writeFileSync(path.join(outDir, 'intake-form (paste into Google Apps Script).txt'), appsScript()); // .txt opens in any text editor
 
 (async () => {
   let chromium;
