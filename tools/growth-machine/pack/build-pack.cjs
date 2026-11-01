@@ -263,7 +263,6 @@ function script() {
     <h2>5 · Big foundational questions <span class="time">13 MIN</span></h2>
     <p class="note">Only the ones that shape next week. Everything else goes in the questionnaire. Tick as you go.</p>
     <table><tbody>
-      ${cfg.relatedEntities ? `<tr><td><span class="tick"></span><b>Group & scope</b></td><td>"How do ${esc(cfg.client)} and ${esc(cfg.relatedEntities)} fit together? Which people, systems, offices and costs are shared, and how are they recharged?" (The contract covers ${esc(cfg.client)} only, clause 1.3. Shared costs decide what counts towards the ${money(cfg.targetMonthly)} target.)</td></tr>` : ''}
       <tr><td><span class="tick"></span><b>Shape</b></td><td>"Roughly how many people, in which teams, and who leads each? Any contractors or outsourced work?" (Confirms the ${esc(cfg.headcountEstimate)} estimate and the interview plan.)</td></tr>
       <tr><td><span class="tick"></span><b>Systems</b></td><td>"Talk me through the main systems: CRM, accounting, support, how the team communicates. Google or Microsoft?"</td></tr>
       <tr><td><span class="tick"></span><b>Where data lives</b></td><td>"Where is the platform hosted? Do you run anything on your own servers or in the office? Where are files kept?"</td></tr>
@@ -307,8 +306,7 @@ function script() {
     <p class="small">• Founders disagreeing on priorities: note both views, don't resolve it in the room. It's diagnostic gold.<br>
     • "We already know the answer": ask what stopped them doing it. That's usually the real problem.<br>
     • Anyone named as a problem person: listen, don't agree. Form your own view from the interviews.<br>
-    ${cfg.relatedEntities ? `• Shared people or costs with ${esc(cfg.relatedEntities)}: agree up front whether savings on shared costs count towards the target, and record the answer in writing.<br>
-    ` : ''}• The headcount: confirm the real number. It changes the interview plan (2 days for ~20 people, more beyond 25).</p>
+    • The headcount: confirm the real number. It changes the interview plan (2 days for ~20 people, more beyond 25).</p>
     ${foot(5, L)}</section>`;
   return doc(`PRIVATE · Kick-off talk track · ${cfg.client}`, [p1, p2, p3, p4, p5]);
 }
