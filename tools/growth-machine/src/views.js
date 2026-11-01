@@ -2,7 +2,7 @@
    Views — each returns an HTML string for the main panel
    ============================================================ */
 const TABS = [
-  ['overview', 'Overview'], ['business', 'Business & market'], ['finance', 'Finance'], ['org', 'People & org'],
+  ['overview', 'Overview'], ['progress', 'Progress & time'], ['discovery', 'Discovery'], ['business', 'Business & market'], ['finance', 'Finance'], ['org', 'People & org'],
   ['tools', 'Tools'], ['processes', 'Processes'], ['interviews', 'Interviews'], ['crossover', 'Crossover'],
   ['recs', 'Recommendations'], ['scenarios', 'Scenarios'], ['report', 'Report'], ['data', 'Data & Claude']
 ];
@@ -20,7 +20,7 @@ function deltaHTML(cur, next, fmt, lowerIsGood = true) {
   const good = lowerIsGood ? d < 0 : d > 0;
   return `<span class="k-delta ${good ? 'delta-good' : 'delta-bad'}">${d > 0 ? '▲' : '▼'} ${fmt(Math.abs(d))} vs current</span>`;
 }
-const kpi = (label, value, delta = '') => `<div class="kpi"><div class="k-label">${label}</div><div class="k-value">${value}</div>${delta}</div>`;
+const kpi = (label, value, delta = '') => `<div class="kpi"><div class="k-label">${label}</div><div class="k-value${String(value).replace(/<[^>]+>/g, '').length > 14 ? ' k-text' : ''}">${value}</div>${delta}</div>`;
 
 function scenarioBanner(e) {
   if (ui.scenario === 'current') return '';
@@ -197,7 +197,7 @@ function viewProcesses(e) {
 /* ---------------- Interviews ---------------- */
 function viewInterviews(e) {
   const pById = byId(e.people); const themes = themeCounts(e);
-  return `<div class="page-h"><div><span class="eyebrow">Interviews</span><h1>What people told us</h1><p class="muted">Tag themes consistently, e.g. "manual reporting". Themes raised by several people become crossover signals.</p></div></div>
+  return `<div class="page-h"><div><span class="eyebrow">Interviews</span><h1>What people told us</h1><p class="muted">Tag themes consistently, e.g. "manual reporting". Themes raised by several people become crossover signals.</p></div><div class="btn-row"><button class="btn" data-action="startCapture">+ Capture an interview</button></div></div>
   ${card('Themes by number of interviews', hbars(themes.map((t) => ({ label: t.theme, value: t.count, tip: [...t.people].map((id) => pById[id] ? (ui.anon ? pById[id].title : pById[id].name) : '').join(', ') })), { fmt: (v) => v, color: 'var(--s7)' }))}
   <div class="iv-grid">${e.interviews.map((iv) => { const p = pById[iv.personId]; return `<article class="card iv">
     <header><strong>${p ? esc(ui.anon ? p.title : p.name) : esc(iv.personLabel || 'Unknown')}</strong><span class="muted small">${p && !ui.anon ? esc(p.title || '') + ' · ' : ''}${esc(iv.date || '')}</span></header>
@@ -205,7 +205,9 @@ function viewInterviews(e) {
     ${splitList(iv.painPoints).length ? `<h5>Pain points</h5><ul>${splitList(iv.painPoints).map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
     ${iv.ideas ? `<h5>Ideas</h5><p class="small">${esc(iv.ideas)}</p>` : ''}
     ${iv.quotes ? `<blockquote>${esc(iv.quotes)}</blockquote>` : ''}
-    <div class="tags">${splitList(iv.themes).map((t) => `<span class="chip">${esc(t)}</span>`).join('')}</div></article>`; }).join('') || empty('No interviews yet. Paste notes into Claude and ask for interview JSON (see Data & Claude).')}</div>`;
+    <div class="tags">${splitList(iv.themes).map((t) => `<span class="chip">${esc(t)}</span>`).join('')}</div>
+    ${Object.keys(iv.answers || {}).length || (iv.outliers || []).length ? `<details class="small"><summary>${Object.keys(iv.answers || {}).length} structured answers · ${(iv.outliers || []).length} unexpected points</summary>${CRITERIA.map((c) => { const qs = Object.entries(iv.answers || {}).filter(([q]) => QINDEX[q] && QINDEX[q].crit === c.id); const os = (iv.outliers || []).filter((o) => o.crit === c.id); return qs.length || os.length ? `<h5>${esc(c.label)}</h5><dl>${qs.map(([q, a]) => `<dt>${esc(QINDEX[q].q)}</dt><dd>${esc(a)}</dd>`).join('')}${os.map((o) => `<dt>Unexpected</dt><dd>${esc(o.text)}</dd>`).join('')}</dl>` : ''; }).join('')}</details>` : ''}
+    <div class="btn-row"><button class="btn sm" data-action="editInterview" data-id="${esc(iv.id)}">Open in capture form</button></div></article>`; }).join('') || empty('No interviews yet. Paste notes into Claude and ask for interview JSON (see Data & Claude).')}</div>`;
 }
 
 /* ---------------- Crossover ---------------- */
@@ -232,7 +234,7 @@ function viewRecs(e) {
   const rows = scoreRecommendations(e);
   const types = ['All', ...new Set(e.recommendations.map((r) => r.type).filter(Boolean))];
   const shown = ui.recType && ui.recType !== 'All' ? rows.filter((r) => r.rec.type === ui.recType) : rows;
-  const statusOpts = ['Proposed', 'Agreed', 'In progress', 'Done', 'Rejected'];
+  const statusOpts = REC_STAGES;
   return `<div class="page-h"><div><span class="eyebrow">Recommendations</span><h1>Ranked changes</h1><p class="muted">Each recommendation is scored on its own against the current state. Score = 50% value, 20% low effort, 15% low risk, 15% confidence. Value = cash saving + revenue uplift + half the value of freed hours. Freed hours are capacity, not cash, unless headcount changes.</p></div>
     <button class="btn" data-action="addRec">+ Add recommendation</button></div>
   <div class="toolbar">${types.map((t) => `<button class="btn sm ${((ui.recType || 'All') === t) ? 'on' : ''}" data-action="recType" data-id="${esc(t)}">${esc(t)}</button>`).join('')}</div>
@@ -263,10 +265,17 @@ function viewScenarios(e) {
 
 /* ---------------- Report (settings + preview) ---------------- */
 function viewReport(e) {
+  const toggle = `<div class="toolbar"><button class="btn sm ${ui.reportType === 'status' ? 'on' : ''}" data-action="reportType" data-id="status">Status report (progress, time, delays)</button><button class="btn sm ${ui.reportType !== 'status' ? 'on' : ''}" data-action="reportType" data-id="diagnostic">Diagnostic report (findings & recommendations)</button></div>`;
+  if (ui.reportType === 'status') {
+    return `<div class="page-h"><div><span class="eyebrow">Report</span><h1>Client status report</h1><p class="muted">Generated live from Progress & time. Send it after every fortnightly review, or whenever the founders ask. The Delays & changes section is always included, even when it is empty.</p></div>
+      <div class="btn-row"><button class="btn" data-action="printReport">Print / save PDF</button><button class="btn" data-action="downloadReport">Download HTML report</button></div></div>
+      ${toggle}<div class="report-preview status-preview"><div id="report-doc" class="rpt">${e.engagement.phases.length ? renderStatusReport(e) : '<p>Set up the engagement in Progress & time first.</p>'}</div></div>`;
+  }
   const r = e.report; const sec = r.sections;
   const secLabels = { snapshot: 'Current-state snapshot', findings: 'Key findings', org: 'Org chart: current vs proposed', processes: 'Process maps: before / after', recommendations: 'Recommendations roadmap', financials: 'Financial impact', nextSteps: 'Next steps' };
   return `<div class="page-h"><div><span class="eyebrow">Report</span><h1>Founder report</h1><p class="muted">Preview below. Export as PDF (print) or as one self-contained HTML file you can email. Exports hold no raw data and do not depend on this tool or on Claude.</p></div>
     <div class="btn-row"><button class="btn" data-action="printReport">Print / save PDF</button><button class="btn" data-action="downloadReport">Download HTML report</button></div></div>
+  ${toggle}
   <div class="report-layout">
     <aside class="card report-settings">
       ${field('report.title', 'Report title', r.title)}${field('report.preparedFor', 'Prepared for', r.preparedFor)}

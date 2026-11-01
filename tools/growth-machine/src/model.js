@@ -13,7 +13,7 @@ const live = (arr) => (arr || []).filter((x) => !x._removed);
 const byId = (arr) => Object.fromEntries((arr || []).map((x) => [x.id, x]));
 const splitList = (v) => Array.isArray(v) ? v : String(v || '').split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
 
-const COLLECTIONS = ['departments', 'people', 'tools', 'processes', 'segments', 'markets', 'topClients',
+const COLLECTIONS = ['intake', 'departments', 'people', 'tools', 'processes', 'segments', 'markets', 'topClients',
   'financePeriods', 'interviews', 'findings', 'recommendations', 'scenarios'];
 
 function blankEngagement(name) {
@@ -27,6 +27,7 @@ function blankEngagement(name) {
       lastExported: '', notes: '' },
     departments: [], people: [], tools: [], processes: [], segments: [], markets: [], topClients: [],
     financePeriods: [], interviews: [], findings: [], recommendations: [], scenarios: [],
+    intake: [], engagement: blankEngagementBlock(),
     report: { title: '', preparedFor: '', summary: '', nextSteps: '', anonymise: true, scenarioId: '', processIds: [],
       sections: { snapshot: true, findings: true, org: true, processes: true, recommendations: true, financials: true, nextSteps: true } }
   };
@@ -48,6 +49,7 @@ function normalise(e) {
   out.processes.forEach((p) => { if (!Array.isArray(p.steps)) p.steps = []; p.steps.forEach((s) => { if (!s.id) s.id = uid('s'); }); });
   out.recommendations.forEach((r) => { if (!Array.isArray(r.ops)) r.ops = []; });
   out.scenarios.forEach((s) => { s.recommendationIds = splitList(s.recommendationIds); });
+  normaliseEngagementBlock(out);
   out.schema = SCHEMA;
   return out;
 }
@@ -70,6 +72,16 @@ function mergeEngagement(base, incoming) {
       else { out[c].push(Object.assign({ id: uid(c.slice(0, 3)) }, item)); counts[c].added++; }
     });
   });
+  if (incoming.engagement && typeof incoming.engagement === 'object') {
+    const g = out.engagement = Object.assign(blankEngagementBlock(), out.engagement || {});
+    Object.entries(incoming.engagement).forEach(([k, v]) => {
+      if (Array.isArray(v)) {
+        g[k] = Array.isArray(g[k]) ? g[k] : [];
+        v.forEach((item) => { const i = item.id ? g[k].findIndex((x) => x.id === item.id) : -1; if (i >= 0) g[k][i] = Object.assign({}, g[k][i], item); else g[k].push(Object.assign({ id: uid(k.slice(0, 2)) }, item)); });
+        counts['engagement.' + k] = { added: v.length, updated: 0 };
+      } else if (v !== '' && v != null) g[k] = v;
+    });
+  }
   return { engagement: normalise(out), counts };
 }
 

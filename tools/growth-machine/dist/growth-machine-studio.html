@@ -39,6 +39,7 @@
 .kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
 .kpi .k-label{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
 .kpi .k-value{font-family:Georgia,"Times New Roman",serif;font-size:28px;line-height:1.1;margin-top:6px;color:var(--ink)}
+.kpi .k-value.k-text{font-size:18px;line-height:1.25}
 .kpi .k-delta{font-size:12px;margin-top:4px;color:var(--muted)}
 .delta-good{color:var(--good-ink)}.delta-bad{color:var(--crit-ink)}
 
@@ -111,6 +112,36 @@
 .swatch{display:inline-block;width:10px;height:10px;border-radius:3px;vertical-align:-1px;margin-right:6px}
 .score-bar{height:6px;border-radius:3px;background:var(--grid);overflow:hidden;min-width:60px}
 .score-bar span{display:block;height:100%;background:var(--red);border-radius:3px}
+
+/* ---- Engagement tracking (shared with exported status reports) ---- */
+.kpi.kpi-flag{border-color:var(--crit);box-shadow:inset 4px 0 0 var(--crit)}
+.kpi.kpi-flag .k-label{color:var(--crit-ink);font-weight:700}
+.flag-card{border:1.5px solid var(--crit)!important;box-shadow:inset 5px 0 0 var(--crit)}
+.flag-card h3{color:var(--crit-ink)}
+.rpt-sec.flag-sec{border:1.5px solid var(--crit);border-radius:10px;padding:16px 18px;margin:18px 0;box-shadow:inset 5px 0 0 var(--crit)}
+.rpt-sec.flag-sec h2{color:var(--crit-ink)}
+tr.row-flag td{background:rgba(208,59,59,.06)}
+.nowrap{white-space:nowrap}
+.gantt-wrap svg{width:100%;height:auto}
+.gantt-svg .g-grid{stroke:var(--grid);stroke-width:1}
+.gantt-svg .g-lab{font-size:10px;fill:var(--muted)}
+.gantt-svg .g-name{font-size:11.5px;fill:var(--ink);font-weight:600}
+.gantt-svg .g-bar.done{fill:var(--ink)}
+.gantt-svg .g-bar.doing{fill:var(--red)}
+.gantt-svg .g-bar.todo{fill:var(--grid);stroke:var(--faint);stroke-width:1}
+.gantt-svg .g-bar.hold{fill:var(--warn)}
+.gantt-svg .g-slip{fill:var(--crit);fill-opacity:.25;stroke:var(--crit);stroke-width:1.2;stroke-dasharray:3 2}
+.gantt-svg .g-sliplab{font-size:10.5px;font-weight:800;fill:var(--crit-ink)}
+.gantt-svg .g-review{stroke:var(--red);stroke-width:1.2;stroke-dasharray:4 3;opacity:.7}
+.gantt-svg .g-today{stroke:var(--ink);stroke-width:2}
+.gantt-svg .g-todaylab{font-size:10px;font-weight:700;fill:var(--ink)}
+.legend i.hatch{background:repeating-linear-gradient(45deg,rgba(208,59,59,.35) 0 3px,transparent 3px 6px);outline:1px dashed var(--crit)}
+.sv{display:grid;gap:8px;margin-bottom:12px}
+.sv-row{display:grid;grid-template-columns:90px 1fr 120px;gap:10px;align-items:center;font-size:13px}
+.sv-row b{text-align:right;font-variant-numeric:tabular-nums}
+.sv-track{position:relative;height:16px;background:var(--grid);border-radius:4px}
+.sv-track span{display:block;height:100%;border-radius:4px}
+.sv-track i{position:absolute;top:-4px;bottom:-4px;width:0;border-left:2px solid var(--ink)}
 </style>
 <style id="report-css">/* Founder report styles (also embedded in exported HTML reports) */
 .rpt{background:#fffdf9;color:#171715;border:1px solid #d7cfc3;border-radius:14px;padding:40px 46px;
@@ -264,6 +295,34 @@ input.inline{width:130px;font-size:12px;text-align:center}
   .app,#main,.report-layout{display:block;padding:0}
   .rpt{box-shadow:none;border:0;margin:0;padding:0}
 }
+/* engagement tracking (app only) */
+.flag-badge{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--crit);color:var(--crit-ink);background:var(--surface);border-radius:999px;padding:5px 12px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap}
+.flag-badge.ok{border-color:var(--good);color:var(--good-ink);cursor:default}
+.nav-badge{float:right;font-size:10.5px;font-weight:800;color:#fff;background:var(--crit);border-radius:999px;padding:1px 7px;margin-left:6px}
+.act-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.act-col h4{margin:0 0 6px!important}
+.act{border:1px solid var(--line);border-radius:10px;padding:6px 8px;margin-bottom:6px;background:var(--surface)}
+.act.act-wait{border-color:var(--warn)}
+.act textarea{border:0;padding:2px;font-weight:600;font-size:12.5px;background:transparent;resize:vertical}
+.act-meta{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.act-meta select,.act-meta input{font-size:11px;padding:2px 4px;max-width:140px}
+.capture{display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px;align-items:start}
+.capture aside{position:sticky;top:76px;max-height:calc(100vh - 96px);overflow:auto}
+.capture h5{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:14px 0 6px}
+.qcol h4{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--red);margin:18px 0 8px}
+.qcol h4:first-child{margin-top:0}
+.qa{margin-bottom:12px}
+.qa label{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;font-weight:600;font-size:13px;margin-bottom:4px}
+.qa.outlier{display:grid;grid-template-columns:1fr 200px;gap:8px}
+details.intake{border-bottom:1px solid var(--grid);padding:8px 0}
+details.intake summary,.iv details summary{cursor:pointer}
+details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8px}details dd{margin:2px 0 0;color:var(--muted);font-size:12.5px;white-space:pre-wrap}
+.iv details h5,details.intake h5{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--red);margin:12px 0 2px}
+.heat.cov td{width:auto;min-width:46px;padding:0 6px}
+.heat.cov td.cov-0{background:var(--surface-2);color:var(--faint)}
+.heat.cov th{white-space:normal;max-width:130px}
+.status-preview .rpt{max-width:1000px}
+@media (max-width:1000px){.act-grid,.capture{grid-template-columns:1fr}.capture aside{position:static;max-height:none}}
 </style>
 </head>
 <body>
@@ -292,7 +351,7 @@ const live = (arr) => (arr || []).filter((x) => !x._removed);
 const byId = (arr) => Object.fromEntries((arr || []).map((x) => [x.id, x]));
 const splitList = (v) => Array.isArray(v) ? v : String(v || '').split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
 
-const COLLECTIONS = ['departments', 'people', 'tools', 'processes', 'segments', 'markets', 'topClients',
+const COLLECTIONS = ['intake', 'departments', 'people', 'tools', 'processes', 'segments', 'markets', 'topClients',
   'financePeriods', 'interviews', 'findings', 'recommendations', 'scenarios'];
 
 function blankEngagement(name) {
@@ -306,6 +365,7 @@ function blankEngagement(name) {
       lastExported: '', notes: '' },
     departments: [], people: [], tools: [], processes: [], segments: [], markets: [], topClients: [],
     financePeriods: [], interviews: [], findings: [], recommendations: [], scenarios: [],
+    intake: [], engagement: blankEngagementBlock(),
     report: { title: '', preparedFor: '', summary: '', nextSteps: '', anonymise: true, scenarioId: '', processIds: [],
       sections: { snapshot: true, findings: true, org: true, processes: true, recommendations: true, financials: true, nextSteps: true } }
   };
@@ -327,6 +387,7 @@ function normalise(e) {
   out.processes.forEach((p) => { if (!Array.isArray(p.steps)) p.steps = []; p.steps.forEach((s) => { if (!s.id) s.id = uid('s'); }); });
   out.recommendations.forEach((r) => { if (!Array.isArray(r.ops)) r.ops = []; });
   out.scenarios.forEach((s) => { s.recommendationIds = splitList(s.recommendationIds); });
+  normaliseEngagementBlock(out);
   out.schema = SCHEMA;
   return out;
 }
@@ -349,6 +410,16 @@ function mergeEngagement(base, incoming) {
       else { out[c].push(Object.assign({ id: uid(c.slice(0, 3)) }, item)); counts[c].added++; }
     });
   });
+  if (incoming.engagement && typeof incoming.engagement === 'object') {
+    const g = out.engagement = Object.assign(blankEngagementBlock(), out.engagement || {});
+    Object.entries(incoming.engagement).forEach(([k, v]) => {
+      if (Array.isArray(v)) {
+        g[k] = Array.isArray(g[k]) ? g[k] : [];
+        v.forEach((item) => { const i = item.id ? g[k].findIndex((x) => x.id === item.id) : -1; if (i >= 0) g[k][i] = Object.assign({}, g[k][i], item); else g[k].push(Object.assign({ id: uid(k.slice(0, 2)) }, item)); });
+        counts['engagement.' + k] = { added: v.length, updated: 0 };
+      } else if (v !== '' && v != null) g[k] = v;
+    });
+  }
   return { engagement: normalise(out), counts };
 }
 
@@ -655,6 +726,383 @@ function completeness(eng) {
     ['Interviews', Math.min(1, eng.interviews.length / 6)],
     ['Recommendations', Math.min(1, eng.recommendations.length / 5)]
   ];
+}
+
+/* ---- questions.js ---- */
+/* ============================================================
+   Discovery question bank — the single source for:
+   - the founder intake form (Google Form generator + leave-behind PDF)
+   - the Studio's interview capture forms (core + level + department sets)
+   Every question is tagged to a discovery CRITERION, so answers are stored
+   against what we are trying to establish, not as loose notes.
+   ============================================================ */
+const CRITERIA = [
+  { id: 'strategy', label: 'Goals & strategy', feeds: 'Business profile' },
+  { id: 'revenue', label: 'Revenue', feeds: 'Finance · Segments' },
+  { id: 'customers', label: 'Customers & delivery', feeds: 'Segments · Processes' },
+  { id: 'cost', label: 'Cost base', feeds: 'Finance · Tools' },
+  { id: 'people', label: 'People & structure', feeds: 'People & org' },
+  { id: 'process', label: 'Processes & workload', feeds: 'Processes' },
+  { id: 'tech', label: 'Technology & systems', feeds: 'Tools' },
+  { id: 'data', label: 'Data & reporting', feeds: 'Tools · Findings' },
+  { id: 'decisions', label: 'Decisions & governance', feeds: 'Findings' },
+  { id: 'risk', label: 'Risk & dependencies', feeds: 'Findings' },
+  { id: 'pain', label: 'Pain points & ideas', feeds: 'Interviews · Recommendations' }
+];
+
+const DEPT_TYPES = [
+  ['leadership', 'Leadership / admin'], ['sales', 'Sales'], ['cs', 'Customer success / support'],
+  ['ops', 'Operations / data'], ['finance', 'Finance'], ['tech', 'Product / engineering'], ['marketing', 'Marketing']
+];
+
+/* ---------- Founder intake (sent as a form, also printed in the leave-behind) ---------- */
+const INTAKE_SECTIONS = [
+  { id: 'about', title: 'About you', intro: 'So we know who answered.', questions: [
+    { id: 'i_name', crit: 'people', type: 'short', q: 'Your name', required: true },
+    { id: 'i_role', crit: 'people', type: 'short', q: 'Your role', required: true }
+  ] },
+  { id: 'goals', title: '1. Goals & success', intro: 'What this engagement must achieve for you.', questions: [
+    { id: 'i_success', crit: 'strategy', type: 'long', q: 'By 1 February 2027, what would make this engagement a clear success for you?' },
+    { id: 'i_priorities', crit: 'strategy', type: 'long', q: 'What are the three things you most want fixed or improved?' },
+    { id: 'i_offlimits', crit: 'strategy', type: 'long', q: 'Is anything off-limits, sensitive or already decided (people, products, suppliers, systems)?' },
+    { id: 'i_plans', crit: 'strategy', type: 'long', q: 'What plans are already in motion that we should know about (hires, exits, new products, funding, system changes)?' }
+  ] },
+  { id: 'revenue', title: '2. Revenue & customers', intro: 'Where the money comes from, and where it is strongest and weakest.', questions: [
+    { id: 'i_streams', crit: 'revenue', type: 'long', q: 'What are your main revenue streams, and roughly what share of revenue does each bring?' },
+    { id: 'i_strong', crit: 'revenue', type: 'long', q: 'Where is revenue strongest (products, client types, markets, channels)? Why?' },
+    { id: 'i_weak', crit: 'revenue', type: 'long', q: 'Where is revenue weakest or declining? Why do you think that is?' },
+    { id: 'i_markets', crit: 'revenue', type: 'checkbox', q: 'Which markets do you sell into?', options: ['South Africa', 'India', 'Rest of Africa', 'Middle East', 'Europe / UK', 'United States'], other: true },
+    { id: 'i_market_split', crit: 'revenue', type: 'short', q: 'Roughly what share of revenue comes from each market?' },
+    { id: 'i_concentration', crit: 'customers', type: 'long', q: 'How many active clients do you have, and roughly what share of revenue do your top five bring in?' },
+    { id: 'i_pricing', crit: 'revenue', type: 'long', q: 'How do you price (per location, per month, set-up fees, reseller margins, discounts)?' },
+    { id: 'i_churn', crit: 'customers', type: 'long', q: 'Which clients leave, and why? Roughly how many left in the last 12 months?' }
+  ] },
+  { id: 'cost', title: '3. Cost base', intro: 'This helps us agree the cost baseline the savings target is measured against.', questions: [
+    { id: 'i_costs_top', crit: 'cost', type: 'long', q: 'Apart from salaries, what are your five biggest monthly costs?' },
+    { id: 'i_costs_high', crit: 'cost', type: 'long', q: 'Which costs feel too high or poor value?' },
+    { id: 'i_renewals', crit: 'cost', type: 'long', q: 'Which contracts or subscriptions renew in the next six months, and what are their notice periods?', help: 'Notice periods decide how quickly savings can land.' },
+    { id: 'i_cost_changes', crit: 'cost', type: 'long', q: 'Have costs changed significantly in the last 12 months? What drove it?' }
+  ] },
+  { id: 'people', title: '4. People & structure', questions: [
+    { id: 'i_headcount', crit: 'people', type: 'short', q: 'How many people work in the business: employees, contractors and outsourced?' },
+    { id: 'i_structure', crit: 'people', type: 'long', q: 'How is the team organised, and who leads each area?' },
+    { id: 'i_unclear', crit: 'people', type: 'long', q: 'Where are roles unclear, duplicated or overloaded?' },
+    { id: 'i_keyperson', crit: 'risk', type: 'long', q: 'If one person left tomorrow, whose absence would hurt most? Why?' },
+    { id: 'i_hiring', crit: 'people', type: 'long', q: 'What roles are open, or what hires or exits are planned?' },
+    { id: 'i_group', crit: 'cost', type: 'long', q: 'How does the business relate to any other group or sister companies? Which people, systems, offices or costs are shared, and how are they recharged between entities?', help: 'This sets the scope: savings are measured on this business\'s own costs.' }
+  ] },
+  { id: 'tech', title: '5. Technology & data', intro: 'Which systems you run, where they are hosted and where your data lives.', questions: [
+    { id: 'i_crm', crit: 'tech', type: 'choice', q: 'Which CRM do you use?', options: ['HubSpot', 'Salesforce', 'Pipedrive', 'Zoho', 'Spreadsheets / none'], other: true },
+    { id: 'i_accounting', crit: 'tech', type: 'choice', q: 'Which accounting system do you use?', options: ['Xero', 'Sage', 'QuickBooks', 'Pastel'], other: true },
+    { id: 'i_workspace', crit: 'tech', type: 'choice', q: 'Which email and office suite does the company use?', options: ['Google Workspace', 'Microsoft 365', 'Both'], other: true },
+    { id: 'i_comms', crit: 'tech', type: 'checkbox', q: 'How does the team communicate day to day?', options: ['Slack', 'Microsoft Teams', 'WhatsApp', 'Email'], other: true },
+    { id: 'i_support', crit: 'tech', type: 'short', q: 'What do you use for client support or tickets?' },
+    { id: 'i_pm', crit: 'tech', type: 'short', q: 'What project or task management tools do you use?' },
+    { id: 'i_platform_hosting', crit: 'tech', type: 'choice', q: 'Where is the Location Bank platform hosted?', options: ['Amazon Web Services (AWS)', 'Microsoft Azure', 'Google Cloud', 'Our own / local servers', 'A third-party hosting provider', 'Not sure'], other: true },
+    { id: 'i_local', crit: 'tech', type: 'choice', q: 'Do you run any servers, databases or file storage on your own premises?', options: ['Yes', 'No', 'Not sure'] },
+    { id: 'i_local_detail', crit: 'tech', type: 'long', q: 'If yes, what runs locally, and why?' },
+    { id: 'i_files', crit: 'data', type: 'choice', q: 'Where are company files mainly stored?', options: ['Google Drive', 'SharePoint / OneDrive', 'Dropbox', 'Local or network drive', 'A mix'], other: true },
+    { id: 'i_integrations', crit: 'data', type: 'long', q: 'Which systems share data automatically? Where is data re-typed or copied by hand?' },
+    { id: 'i_sysadmin', crit: 'tech', type: 'long', q: 'Who manages your systems, user access and licences? Do you use an external IT provider?' },
+    { id: 'i_subscriptions', crit: 'cost', type: 'short', q: 'Is there a list of all software subscriptions and their costs? Who holds it?' }
+  ] },
+  { id: 'reporting', title: '6. Reporting & decisions', questions: [
+    { id: 'i_numbers', crit: 'data', type: 'long', q: 'Which numbers do you look at weekly or monthly to run the business?' },
+    { id: 'i_numbers_source', crit: 'data', type: 'long', q: 'Where do those numbers come from, who prepares them and how long does it take?' },
+    { id: 'i_trust', crit: 'data', type: 'scale', q: 'How much do you trust the accuracy of your current financial and operational reporting?', low: 'Not at all', high: 'Completely' },
+    { id: 'i_decisions', crit: 'decisions', type: 'long', q: 'Which decisions wait on you (the founders) that you would rather did not?' },
+    { id: 'i_cadence', crit: 'decisions', type: 'long', q: 'What regular meetings run the business (who attends, how often)?' }
+  ] },
+  { id: 'pain', title: '7. Frustrations & ideas', questions: [
+    { id: 'i_frustrations', crit: 'pain', type: 'long', q: 'What are your three biggest operational frustrations right now?' },
+    { id: 'i_fix', crit: 'pain', type: 'long', q: 'If you could fix one thing tomorrow, what would it be?' },
+    { id: 'i_tried', crit: 'pain', type: 'long', q: 'What has been tried before that did not work? Why not?' }
+  ] },
+  { id: 'practical', title: '8. Getting started', questions: [
+    { id: 'i_managers', crit: 'people', type: 'long', q: 'Which managers should Andrew interview first (name and role)?' },
+    { id: 'i_staff_comms', crit: 'decisions', type: 'choice', q: 'How should the team hear about this engagement?', options: ['The founders announce it before interviews start (recommended)', 'Andrew introduces it at a team meeting', 'Both', "Let's discuss"] },
+    { id: 'i_access', crit: 'tech', type: 'short', q: 'Who can grant read-only access to systems (CRM, accounting, helpdesk)?' },
+    { id: 'i_other', crit: 'pain', type: 'long', q: 'Is there anything else you think I should know?' }
+  ] }
+];
+
+/* ---------- Interview bank (Studio capture forms) ----------
+   level: 'all' | 'founder' | 'manager' | 'staff'   dept: 'all' | one of DEPT_TYPES ids */
+const INTERVIEW_QUESTIONS = [
+  // Core — asked of everyone, so answers compare across the company
+  { id: 'c_role', level: 'all', dept: 'all', crit: 'people', q: 'In your own words, what is your role and what are you responsible for?' },
+  { id: 'c_week', level: 'all', dept: 'all', crit: 'process', q: 'Walk me through a typical week. Where does your time actually go?' },
+  { id: 'c_time_split', level: 'all', dept: 'all', crit: 'process', q: 'Roughly what % of your time goes on core work, admin/reporting, meetings and fixing problems?' },
+  { id: 'c_tools', level: 'all', dept: 'all', crit: 'tech', q: 'Which tools and systems do you use daily? Which help you most, and which get in your way?' },
+  { id: 'c_data_in', level: 'all', dept: 'all', crit: 'data', q: 'Where does the information you need come from? Do you ever re-type or copy data between systems?' },
+  { id: 'c_data_out', level: 'all', dept: 'all', crit: 'data', q: 'What do you produce or hand on to others (reports, files, updates)? Who uses it?' },
+  { id: 'c_handoffs', level: 'all', dept: 'all', crit: 'process', q: 'Who do you depend on, and who depends on you? Where do things get stuck between people or teams?' },
+  { id: 'c_pain', level: 'all', dept: 'all', crit: 'pain', q: 'What are the three biggest frustrations in your work?' },
+  { id: 'c_waste', level: 'all', dept: 'all', crit: 'process', q: 'What do you do that feels repetitive, duplicated or pointless?' },
+  { id: 'c_decisions', level: 'all', dept: 'all', crit: 'decisions', q: 'What do you need approval for, and how long does approval usually take?' },
+  { id: 'c_customer', level: 'all', dept: 'all', crit: 'customers', q: 'What do clients complain about or praise most, from what you see?' },
+  { id: 'c_fix', level: 'all', dept: 'all', crit: 'pain', q: 'If you ran the company for a week, what would you change first?' },
+  { id: 'c_anything', level: 'all', dept: 'all', crit: 'pain', q: "Is there anything I haven't asked that I should know?" },
+  // Founder
+  { id: 'f_vision', level: 'founder', dept: 'all', crit: 'strategy', q: 'Where do you want the business to be in 12–24 months?' },
+  { id: 'f_bottleneck', level: 'founder', dept: 'all', crit: 'decisions', q: 'Where are you personally the bottleneck?' },
+  { id: 'f_trust', level: 'founder', dept: 'all', crit: 'data', q: 'Which numbers do you trust least, and why?' },
+  { id: 'f_people', level: 'founder', dept: 'all', crit: 'people', q: 'Which roles or people are critical, and where do you have doubts?' },
+  // Manager
+  { id: 'm_team', level: 'manager', dept: 'all', crit: 'people', q: 'Who is in your team, what does each person do, and how is the work split?' },
+  { id: 'm_capacity', level: 'manager', dept: 'all', crit: 'people', q: 'Is your team over- or under-capacity? Where?' },
+  { id: 'm_kpis', level: 'manager', dept: 'all', crit: 'data', q: 'Which numbers or KPIs do you manage to? How do you get them, and how long does that take?' },
+  { id: 'm_budget', level: 'manager', dept: 'all', crit: 'cost', q: 'What does your area spend money on (tools, suppliers, contractors)? What is poor value?' },
+  { id: 'm_processes', level: 'manager', dept: 'all', crit: 'process', q: 'What are the 3–5 main processes your team runs? Which is most painful? (We will map one in detail.)' },
+  { id: 'm_keyperson', level: 'manager', dept: 'all', crit: 'risk', q: 'Which tasks does only one person know how to do?' },
+  { id: 'm_redesign', level: 'manager', dept: 'all', crit: 'people', q: 'If you could redesign your team from scratch, what would it look like?' },
+  // Staff
+  { id: 's_clarity', level: 'staff', dept: 'all', crit: 'people', q: 'Is it clear what is expected of you and how you are measured?' },
+  { id: 's_training', level: 'staff', dept: 'all', crit: 'people', q: 'Do you have the training and tools you need to do the job well?' },
+  { id: 's_hour', level: 'staff', dept: 'all', crit: 'pain', q: 'What one small change would save you an hour a week?' },
+  // Department-specific
+  { id: 'd_sales_pipeline', level: 'all', dept: 'sales', crit: 'process', q: 'How do leads come in and move to a signed deal? Where do deals stall?' },
+  { id: 'd_sales_proposal', level: 'all', dept: 'sales', crit: 'process', q: 'How long does a proposal or quote take to produce? Who approves pricing?' },
+  { id: 'd_sales_handover', level: 'all', dept: 'sales', crit: 'customers', q: 'What happens when a deal is signed? How is it handed over?' },
+  { id: 'd_sales_crm', level: 'all', dept: 'sales', crit: 'data', q: 'How accurate is the CRM? What lives outside it?' },
+  { id: 'd_cs_onboarding', level: 'all', dept: 'cs', crit: 'process', q: 'Walk me through onboarding a new client, step by step. How long does it take?' },
+  { id: 'd_cs_reporting', level: 'all', dept: 'cs', crit: 'customers', q: 'What reporting do clients receive, and how is it produced?' },
+  { id: 'd_cs_churn', level: 'all', dept: 'cs', crit: 'customers', q: 'Why do clients leave? What early warning signs do you see?' },
+  { id: 'd_cs_tickets', level: 'all', dept: 'cs', crit: 'process', q: 'What are the most common support requests? Could clients self-serve any of them?' },
+  { id: 'd_ops_volume', level: 'all', dept: 'ops', crit: 'process', q: 'How many locations or listings are processed per week or month? How is the work assigned?' },
+  { id: 'd_ops_manual', level: 'all', dept: 'ops', crit: 'process', q: 'Which steps are manual (data cleaning, uploads, verification, corrections)?' },
+  { id: 'd_ops_errors', level: 'all', dept: 'ops', crit: 'risk', q: 'Where do errors happen, and how are they caught?' },
+  { id: 'd_ops_sla', level: 'all', dept: 'ops', crit: 'customers', q: 'What turnaround targets do you have? Are they met?' },
+  { id: 'd_fin_billing', level: 'all', dept: 'finance', crit: 'process', q: 'How are invoices produced? How does billing know what to charge?' },
+  { id: 'd_fin_collections', level: 'all', dept: 'finance', crit: 'revenue', q: 'How are overdue payments chased? What are debtor days?' },
+  { id: 'd_fin_close', level: 'all', dept: 'finance', crit: 'process', q: 'How long does month-end take? What is manual?' },
+  { id: 'd_fin_spend', level: 'all', dept: 'finance', crit: 'cost', q: 'How are purchases and subscriptions approved and tracked?' },
+  { id: 'd_tech_hosting', level: 'all', dept: 'tech', crit: 'tech', q: 'Where is the platform hosted, and what do hosting and infrastructure cost per month?' },
+  { id: 'd_tech_internal', level: 'all', dept: 'tech', crit: 'process', q: 'How much dev time goes on internal requests and manual fixes, compared with product work?' },
+  { id: 'd_tech_fragile', level: 'all', dept: 'tech', crit: 'risk', q: 'Which systems or integrations are fragile, or depend on one person?' },
+  { id: 'd_tech_data', level: 'all', dept: 'tech', crit: 'data', q: 'Where does client and operational data live? Who has access? How is it backed up?' },
+  { id: 'd_mkt_channels', level: 'all', dept: 'marketing', crit: 'revenue', q: 'Which channels bring leads, and at what cost?' },
+  { id: 'd_mkt_tools', level: 'all', dept: 'marketing', crit: 'cost', q: 'Which marketing tools do you pay for? Which are actually used?' },
+  { id: 'd_mkt_measure', level: 'all', dept: 'marketing', crit: 'data', q: 'How do you measure what works?' },
+  { id: 'd_lead_admin', level: 'all', dept: 'leadership', crit: 'process', q: 'How are HR, leave and payroll administered?' },
+  { id: 'd_lead_suppliers', level: 'all', dept: 'leadership', crit: 'cost', q: 'Which suppliers and contracts do you manage? When do they renew?' }
+];
+
+/* Information & documents requested from the client (seeds the "Waiting on client" tracker) */
+const DOCUMENT_REQUESTS = [
+  { id: 'doc_org', crit: 'people', item: 'Org chart or staff list: name, role, department, manager, start date, employment type', dueDays: 4 },
+  { id: 'doc_payroll', crit: 'people', item: 'Payroll cost per person or role (founder-only, via secure folder)', dueDays: 4 },
+  { id: 'doc_pl', crit: 'cost', item: 'Management accounts / P&L: last 12 months, plus the current budget', dueDays: 4 },
+  { id: 'doc_ledger', crit: 'cost', item: 'Detailed expense listing for the last 6–12 months (recurring costs)', dueDays: 7 },
+  { id: 'doc_software', crit: 'cost', item: 'Software & subscriptions list: cost, seats, owner, renewal date (or card/bank statements)', dueDays: 7 },
+  { id: 'doc_contracts', crit: 'cost', item: 'Key supplier contracts with notice periods and renewal dates', dueDays: 7 },
+  { id: 'doc_clients', crit: 'revenue', item: 'Client list: monthly revenue, segment, number of locations, start date; plus churned clients (12 months)', dueDays: 7 },
+  { id: 'doc_pricing', crit: 'revenue', item: 'Pricing sheet / rate card and standard contract terms', dueDays: 7 },
+  { id: 'doc_reports', crit: 'data', item: 'Current management reports or dashboards (examples)', dueDays: 7 },
+  { id: 'doc_sops', crit: 'process', item: 'Any process documents, SOPs or onboarding checklists', dueDays: 10 },
+  { id: 'doc_jds', crit: 'people', item: 'Job or role descriptions, where they exist', dueDays: 10 },
+  { id: 'doc_access', crit: 'tech', item: 'Read-only system access as agreed (CRM, accounting, helpdesk)', dueDays: 10 }
+];
+
+/* Standard 3-month engagement plan (matches the TGM EIR Statement of Work structure) */
+function standardPlan(startISO) {
+  const d = (n) => { const x = new Date(startISO + 'T00:00:00'); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
+  const m = (k, n) => { const x = new Date(startISO + 'T00:00:00'); x.setMonth(x.getMonth() + k); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
+  return [
+    { id: 'ph0', name: 'Kick-off & alignment', month: 1, start: d(0), end: d(4), plannedDays: 1, status: 'In progress', deliverables: 'Agreed goals, point of contact, communication plan, information request issued' },
+    { id: 'ph1', name: 'Foundations: information, systems & cost baseline', month: 1, start: d(0), end: d(11), plannedDays: 3, status: 'Not started', deliverables: 'Information received, systems & data map, draft cost baseline' },
+    { id: 'ph2', name: 'Listening: manager & staff interviews', month: 1, start: d(7), end: d(18), plannedDays: 4, status: 'Not started', deliverables: 'All interviews complete, key processes mapped' },
+    { id: 'ph3', name: 'Diagnose & prioritise', month: 1, start: d(14), end: m(1, -1), plannedDays: 2, status: 'Not started', deliverables: 'Agreed cost baseline, opportunity register with monthly impact, roadmap, Month-1 readout' },
+    { id: 'ph4', name: 'Design & execute', month: 2, start: m(1, 0), end: m(2, -1), plannedDays: 10, status: 'Not started', deliverables: 'Approved initiatives implemented, tools/automations, structure recommendations' },
+    { id: 'ph5', name: 'Embed & measure', month: 3, start: m(2, 0), end: m(3, -1), plannedDays: 10, status: 'Not started', deliverables: 'Adoption & training, handover, savings report (identified/approved/realised), next-step roadmap' }
+  ];
+}
+
+/* ---- engagement.js ---- */
+/* ============================================================
+   Engagement tracking — phases, time log, delays & changes, client requests,
+   activities, contract savings tracker, discovery coverage.
+   ============================================================ */
+const DELAY_CAUSES = ['Client: information late', 'Client: access not granted', 'Client: decision / approval pending', 'Client: availability / cooperation',
+  'New information / finding', 'Scope change (agreed)', 'TGM side', 'External / other'];
+const PHASE_STATUSES = ['Not started', 'In progress', 'Done', 'On hold'];
+const ACTIVITY_STATUSES = ['Next', 'In progress', 'Waiting on client', 'Done'];
+const REC_STAGES = ['Identified', 'Approved', 'In progress', 'Realised', 'Rejected'];
+const LEGACY_STATUS = { Proposed: 'Identified', Agreed: 'Approved', Done: 'Realised' };
+
+const todayISO = () => new Date().toISOString().slice(0, 10);
+const addDaysISO = (iso, n) => { const d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+const daysBetween = (a, b) => Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 864e5);
+const fmtD = (iso, o) => (iso ? new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', o || { day: 'numeric', month: 'short' }) : '—');
+
+function blankEngagementBlock() {
+  return { contact: '', contactRole: '', start: '', end: '', daysTotal: 30, daysPerMonth: 10, targetMonthly: 0, baselineMonthly: 0,
+    reviewDates: '', phases: [], timeLog: [], delays: [], requests: [], activities: [] };
+}
+function normaliseEngagementBlock(e) {
+  e.engagement = Object.assign(blankEngagementBlock(), e.engagement || {});
+  ['phases', 'timeLog', 'delays', 'requests', 'activities'].forEach((k) => {
+    if (!Array.isArray(e.engagement[k])) e.engagement[k] = [];
+    e.engagement[k].forEach((x) => { if (!x.id) x.id = uid(k.slice(0, 2)); });
+  });
+  if (!Array.isArray(e.intake)) e.intake = [];
+  e.recommendations.forEach((r) => { if (LEGACY_STATUS[r.status]) r.status = LEGACY_STATUS[r.status]; if (!r.status) r.status = 'Identified'; });
+  e.interviews.forEach((iv) => { if (!iv.answers || typeof iv.answers !== 'object') iv.answers = {}; if (!Array.isArray(iv.outliers)) iv.outliers = []; });
+  return e;
+}
+
+/** Seed the standard 3-month plan, document requests and first activities. */
+function seedStandardPlan(e) {
+  const g = e.engagement; const start = g.start || todayISO();
+  g.start = start;
+  if (!g.end) { const d = new Date(start + 'T00:00:00'); d.setMonth(d.getMonth() + 3); d.setDate(d.getDate() - 1); g.end = d.toISOString().slice(0, 10); }
+  g.phases = standardPlan(start).map((p, i) => Object.assign(p, { status: i === 0 ? 'In progress' : 'Not started' }));
+  g.requests = DOCUMENT_REQUESTS.map((d) => ({ id: d.id, item: d.item, crit: d.crit, owner: g.contact || '', requestedDate: start, dueDate: addDaysISO(start, d.dueDays), receivedDate: '', status: '', notes: '' }));
+  const A = (phaseId, title, due, status) => ({ id: uid('ac'), phaseId, title, due, status: status || 'Next', doneDate: '' });
+  g.activities = [
+    A('ph0', 'Kick-off meeting with founders; agreement signed', start, 'In progress'),
+    A('ph0', 'Send founder questionnaire link + secure folder link', start),
+    A('ph0', 'Team announcement sent by founders', addDaysISO(start, 3)),
+    A('ph1', 'Receive org chart, payroll and P&L', addDaysISO(start, 4)),
+    A('ph1', 'Systems & data map', addDaysISO(start, 9)),
+    A('ph1', 'Draft cost baseline', addDaysISO(start, 11)),
+    A('ph2', 'Schedule manager and staff interviews', addDaysISO(start, 4)),
+    A('ph2', 'Complete all interviews', addDaysISO(start, 18)),
+    A('ph3', 'Opportunity register with monthly impact', addDaysISO(start, 24)),
+    A('ph3', 'Month-1 readout to founders', g.phases[3].end)
+  ];
+  if (!g.reviewDates) {
+    const first = new Date(start + 'T00:00:00'); while (first.getDay() !== 5) first.setDate(first.getDate() + 1); first.setDate(first.getDate() + 7);
+    const out = []; const endT = new Date(g.end + 'T00:00:00');
+    const holidays = ['12-16', '12-24', '12-25', '12-26', '12-31', '01-01']; // skip SA year-end public holidays
+    for (let d = new Date(first); d <= endT; d.setDate(d.getDate() + 14)) { const iso = d.toISOString().slice(0, 10); if (!holidays.includes(iso.slice(5))) out.push(iso); }
+    g.reviewDates = out.join(', ');
+  }
+}
+
+/** Contract month (1-based) for a date, from the engagement start. */
+function contractMonth(g, iso) {
+  if (!g.start || !iso) return 0;
+  const s = new Date(g.start + 'T00:00:00'), d = new Date(iso + 'T00:00:00');
+  let k = (d.getFullYear() - s.getFullYear()) * 12 + (d.getMonth() - s.getMonth());
+  if (d.getDate() < s.getDate()) k -= 1;
+  return k + 1;
+}
+
+function requestStatus(r, today) {
+  if (r.status === 'Not needed' || r.status === 'Not available') return r.status;
+  if (r.receivedDate) return 'Received';
+  if (r.dueDate && r.dueDate < today) return 'Overdue';
+  return 'Waiting';
+}
+
+function engagementStatus(e) {
+  const g = e.engagement; const today = todayISO();
+  const phases = g.phases;
+  const current = phases.find((p) => p.status === 'In progress') || phases.find((p) => p.start <= today && today <= p.end) || phases.find((p) => p.status !== 'Done') || null;
+  const used = sum(g.timeLog, (t) => t.days);
+  const byMonth = {}; g.timeLog.forEach((t) => { const m = contractMonth(g, t.date); byMonth[m] = (byMonth[m] || 0) + num(t.days); });
+  const byPhase = {}; g.timeLog.forEach((t) => { byPhase[t.phaseId || '—'] = (byPhase[t.phaseId || '—'] || 0) + num(t.days); });
+  const openDelays = g.delays.filter((d) => d.status !== 'Resolved');
+  const slipByPhase = {}; g.delays.forEach((d) => { if (d.phaseId) slipByPhase[d.phaseId] = (slipByPhase[d.phaseId] || 0) + num(d.daysImpact); });
+  const totalSlip = sum(g.delays, (d) => d.daysImpact);
+  const reqs = g.requests.map((r) => Object.assign({}, r, { _status: requestStatus(r, today) }));
+  const overdue = reqs.filter((r) => r._status === 'Overdue');
+  const thisMonth = contractMonth(g, today);
+  const termDays = g.start && g.end ? daysBetween(g.start, g.end) + 1 : 0;
+  const elapsed = g.start ? Math.max(0, Math.min(termDays, daysBetween(g.start, today) + 1)) : 0;
+  return { today, current, used, byMonth, byPhase, openDelays, slipByPhase, totalSlip, reqs, overdue, thisMonth, termDays, elapsed,
+    daysLeftInTerm: g.end ? Math.max(0, daysBetween(today, g.end)) : 0, remaining: num(g.daysTotal) - used,
+    done: g.activities.filter((a) => a.status === 'Done').sort((a, b) => (b.doneDate || '').localeCompare(a.doneDate || '')),
+    doing: g.activities.filter((a) => a.status === 'In progress' || a.status === 'Waiting on client'),
+    next: g.activities.filter((a) => a.status === 'Next').sort((a, b) => (a.due || '').localeCompare(b.due || '')) };
+}
+
+/** Contract savings tracker: monthly recurring, net of new recurring costs, by stage. */
+function savingsTracker(e) {
+  const rows = scoreRecommendations(e).map((r) => ({ rec: r.rec, monthlyNet: r.cash / 12, oneOffSaving: num(r.rec.oneOffSaving), oneOffCost: r.oneOff, hoursMonth: r.hoursSaved, stage: r.rec.status || 'Identified' }));
+  const live = rows.filter((r) => r.stage !== 'Rejected');
+  const by = (st) => sum(live.filter((r) => st.includes(r.stage)), (r) => Math.max(0, r.monthlyNet));
+  return { rows, target: num(e.engagement.targetMonthly), baseline: num(e.engagement.baselineMonthly),
+    identified: by(['Identified', 'Approved', 'In progress', 'Realised']), approved: by(['Approved', 'In progress', 'Realised']), realised: by(['Realised']),
+    oneOffSavings: sum(live, (r) => r.oneOffSaving), oneOffCosts: sum(live.filter((r) => r.stage !== 'Identified'), (r) => r.oneOffCost), hours: sum(live, (r) => Math.max(0, r.hoursMonth)) };
+}
+
+/* ---------- Discovery coverage: how well each criterion is evidenced ---------- */
+const QINDEX = (() => { const m = {}; INTAKE_SECTIONS.forEach((s) => s.questions.forEach((q) => { m[q.id] = q; })); INTERVIEW_QUESTIONS.forEach((q) => { m[q.id] = q; }); return m; })();
+function coverage(e) {
+  const cols = ['Founder intake', 'Founder interviews', 'Manager interviews', 'Staff interviews', 'Unexpected points'];
+  const m = {}; CRITERIA.forEach((c) => { m[c.id] = cols.map(() => 0); });
+  const hit = (crit, col) => { if (m[crit]) m[crit][col]++; };
+  e.intake.forEach((r) => Object.entries(r.answers || {}).forEach(([qid, v]) => { if (String(v || '').trim() && QINDEX[qid]) hit(QINDEX[qid].crit, 0); }));
+  e.interviews.forEach((iv) => {
+    const col = iv.level === 'founder' ? 1 : iv.level === 'manager' ? 2 : 3;
+    Object.entries(iv.answers || {}).forEach(([qid, v]) => { if (String(v || '').trim() && QINDEX[qid]) hit(QINDEX[qid].crit, col); });
+    (iv.outliers || []).forEach((o) => { if (o.text && o.crit) hit(o.crit, 4); });
+  });
+  return { cols, rows: CRITERIA.map((c) => ({ c, counts: m[c.id], total: sum(m[c.id]) })) };
+}
+
+/** Guess a department's question set from its name if no type was set. */
+function deptType(d) {
+  if (!d) return '';
+  if (d.type) return d.type;
+  const n = (d.name || '').toLowerCase();
+  if (/sales|business dev|commercial/.test(n)) return 'sales';
+  if (/success|support|account|client|customer|service/.test(n)) return 'cs';
+  if (/oper|data|listing|delivery|fulfil/.test(n)) return 'ops';
+  if (/financ|account(ing|s)|billing|admin/.test(n)) return 'finance';
+  if (/product|engineer|tech|dev|it\b/.test(n)) return 'tech';
+  if (/market|brand|growth/.test(n)) return 'marketing';
+  if (/lead|exec|founder|management|board/.test(n)) return 'leadership';
+  return '';
+}
+function guessLevel(e, p) {
+  if (!p) return 'staff';
+  const reports = e.people.filter((x) => x.managerId === p.id).length;
+  if (!p.managerId || /founder|ceo|owner|director|md\b|managing/i.test(p.title || '')) return 'founder';
+  return reports > 0 || /head|manager|lead|chief/i.test(p.title || '') ? 'manager' : 'staff';
+}
+function questionSet(level, dtype) {
+  return {
+    core: INTERVIEW_QUESTIONS.filter((q) => q.level === 'all' && q.dept === 'all'),
+    level: INTERVIEW_QUESTIONS.filter((q) => q.level === level && q.dept === 'all'),
+    dept: dtype ? INTERVIEW_QUESTIONS.filter((q) => q.dept === dtype) : []
+  };
+}
+
+/* ---------- CSV (Google Form / Sheet export) ---------- */
+function parseCSV(text) {
+  const rows = []; let row = [], cur = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; }
+    else if (c === '"') q = true;
+    else if (c === ',') { row.push(cur); cur = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cur); rows.push(row); row = []; cur = ''; }
+    else cur += c;
+  }
+  if (cur || row.length) { row.push(cur); rows.push(row); }
+  return rows.filter((r) => r.some((x) => x.trim()));
+}
+/** Map Google Form response columns (question titles) back to question ids. */
+function importIntakeCSV(e, text) {
+  const rows = parseCSV(text); if (rows.length < 2) return { added: 0, unmatched: [] };
+  const head = rows[0];
+  const byTitle = {}; INTAKE_SECTIONS.forEach((s) => s.questions.forEach((q) => { byTitle[q.q.trim().toLowerCase()] = q.id; }));
+  const map = head.map((h) => byTitle[h.trim().toLowerCase()] || null);
+  const unmatched = head.filter((h, i) => !map[i] && !/timestamp/i.test(h));
+  let added = 0, updated = 0;
+  rows.slice(1).forEach((r) => {
+    const answers = {}; map.forEach((qid, i) => { if (qid && r[i]) answers[qid] = r[i]; });
+    const ts = r[head.findIndex((h) => /timestamp/i.test(h))] || '';
+    const respondent = answers.i_name || 'Unknown';
+    const id = 'in_' + respondent.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 40);
+    const existing = e.intake.find((x) => x.id === id || String(x.respondent).toLowerCase() === respondent.toLowerCase());
+    const rec = { id, respondent, role: answers.i_role || '', timestamp: ts, date: todayISO(), source: 'Google Form', answers };
+    if (existing) { Object.assign(existing, rec); updated++; } else { e.intake.push(rec); added++; }
+  });
+  return { added, updated, unmatched };
 }
 
 /* ---- charts.js ---- */
@@ -1072,6 +1520,19 @@ function demoEngagement() {
     { id: 'sc2', name: 'B · Automation programme', description: 'Quick wins plus the three automation builds. No headcount change.', recommendationIds: ['r1', 'r2', 'r3', 'r4', 'r6', 'r7'] },
     { id: 'sc3', name: 'C · Automation + restructure', description: 'Everything in B plus the Data Ops restructure.', recommendationIds: ['r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7'] }
   ];
+  // Engagement tracking sample: started three weeks ago
+  const start = addDaysISO(todayISO(), -20);
+  e.engagement = Object.assign(blankEngagementBlock(), { contact: 'Alex Okafor', contactRole: 'COO, decision-maker', start, daysTotal: 30, daysPerMonth: 10, targetMonthly: 60000 });
+  seedStandardPlan(e);
+  const g = e.engagement;
+  g.phases[0].status = 'Done'; g.phases[1].status = 'Done'; g.phases[2].status = 'In progress';
+  g.requests.forEach((r, i) => { if (i < 7) r.receivedDate = addDaysISO(r.dueDate, i === 2 ? 3 : 0); });
+  g.activities.forEach((a, i) => { if (i < 6) { a.status = 'Done'; a.doneDate = a.due; } else if (i === 6 || i === 7) a.status = 'In progress'; });
+  [[0, 'ph0', '1', 'Kick-off meeting and set-up'], [2, 'ph1', '1', 'Finance review, cost lines, subscriptions'], [5, 'ph1', '1', 'Systems & data map'], [8, 'ph1', '0.5', 'Draft cost baseline'],
+   [9, 'ph2', '1', 'Manager interviews (4)'], [13, 'ph2', '1', 'Team interviews (6)'], [16, 'ph2', '0.5', 'Process mapping: onboarding']].forEach(([d, ph, days, act]) => g.timeLog.push({ id: uid('tl'), date: addDaysISO(start, d), phaseId: ph, days, activity: act, notes: '' }));
+  g.delays.push({ id: 'dl1', dateRaised: addDaysISO(start, 5), phaseId: 'ph1', cause: 'Client: information late', description: 'P&L and management accounts arrived 3 days after the agreed date.', daysImpact: 3, noticeDate: addDaysISO(start, 5), status: 'Resolved', resolution: 'Received; baseline work re-sequenced.' });
+  g.delays.push({ id: 'dl2', dateRaised: addDaysISO(start, 15), phaseId: 'ph2', cause: 'Client: availability / cooperation', description: 'Two team interviews rescheduled twice (Sales).', daysImpact: 2, noticeDate: addDaysISO(start, 16), status: 'Open', resolution: 'Raised with point of contact; new slots requested.' });
+  e.recommendations.forEach((r) => { if (r.id === 'r2') r.status = 'Realised'; if (r.id === 'r3' || r.id === 'r7') r.status = 'Approved'; });
   e.report = Object.assign(e.report, { title: 'Operational Diagnostic', preparedFor: 'Founders, Demo Co', scenarioId: 'sc2', processIds: ['pr1', 'pr2'],
     summary: 'Demo Co has strong product-market fit with retail chains. But growth is limited by manual operations: onboarding, reporting and billing are run by hand, and they absorb most of Customer Success and Data Ops capacity. We recommend a three-month automation programme that pays back within the year, before any structural change.',
     nextSteps: '1. Approve Scenario B.\n2. Scope the onboarding portal (2 weeks).\n3. Consolidate CRM this month.\n4. Review the Data Ops structure in Q2, once automation is live.' });
@@ -1094,7 +1555,7 @@ function locationBankShell() {
    Views — each returns an HTML string for the main panel
    ============================================================ */
 const TABS = [
-  ['overview', 'Overview'], ['business', 'Business & market'], ['finance', 'Finance'], ['org', 'People & org'],
+  ['overview', 'Overview'], ['progress', 'Progress & time'], ['discovery', 'Discovery'], ['business', 'Business & market'], ['finance', 'Finance'], ['org', 'People & org'],
   ['tools', 'Tools'], ['processes', 'Processes'], ['interviews', 'Interviews'], ['crossover', 'Crossover'],
   ['recs', 'Recommendations'], ['scenarios', 'Scenarios'], ['report', 'Report'], ['data', 'Data & Claude']
 ];
@@ -1112,7 +1573,7 @@ function deltaHTML(cur, next, fmt, lowerIsGood = true) {
   const good = lowerIsGood ? d < 0 : d > 0;
   return `<span class="k-delta ${good ? 'delta-good' : 'delta-bad'}">${d > 0 ? '▲' : '▼'} ${fmt(Math.abs(d))} vs current</span>`;
 }
-const kpi = (label, value, delta = '') => `<div class="kpi"><div class="k-label">${label}</div><div class="k-value">${value}</div>${delta}</div>`;
+const kpi = (label, value, delta = '') => `<div class="kpi"><div class="k-label">${label}</div><div class="k-value${String(value).replace(/<[^>]+>/g, '').length > 14 ? ' k-text' : ''}">${value}</div>${delta}</div>`;
 
 function scenarioBanner(e) {
   if (ui.scenario === 'current') return '';
@@ -1289,7 +1750,7 @@ function viewProcesses(e) {
 /* ---------------- Interviews ---------------- */
 function viewInterviews(e) {
   const pById = byId(e.people); const themes = themeCounts(e);
-  return `<div class="page-h"><div><span class="eyebrow">Interviews</span><h1>What people told us</h1><p class="muted">Tag themes consistently, e.g. "manual reporting". Themes raised by several people become crossover signals.</p></div></div>
+  return `<div class="page-h"><div><span class="eyebrow">Interviews</span><h1>What people told us</h1><p class="muted">Tag themes consistently, e.g. "manual reporting". Themes raised by several people become crossover signals.</p></div><div class="btn-row"><button class="btn" data-action="startCapture">+ Capture an interview</button></div></div>
   ${card('Themes by number of interviews', hbars(themes.map((t) => ({ label: t.theme, value: t.count, tip: [...t.people].map((id) => pById[id] ? (ui.anon ? pById[id].title : pById[id].name) : '').join(', ') })), { fmt: (v) => v, color: 'var(--s7)' }))}
   <div class="iv-grid">${e.interviews.map((iv) => { const p = pById[iv.personId]; return `<article class="card iv">
     <header><strong>${p ? esc(ui.anon ? p.title : p.name) : esc(iv.personLabel || 'Unknown')}</strong><span class="muted small">${p && !ui.anon ? esc(p.title || '') + ' · ' : ''}${esc(iv.date || '')}</span></header>
@@ -1297,7 +1758,9 @@ function viewInterviews(e) {
     ${splitList(iv.painPoints).length ? `<h5>Pain points</h5><ul>${splitList(iv.painPoints).map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
     ${iv.ideas ? `<h5>Ideas</h5><p class="small">${esc(iv.ideas)}</p>` : ''}
     ${iv.quotes ? `<blockquote>${esc(iv.quotes)}</blockquote>` : ''}
-    <div class="tags">${splitList(iv.themes).map((t) => `<span class="chip">${esc(t)}</span>`).join('')}</div></article>`; }).join('') || empty('No interviews yet. Paste notes into Claude and ask for interview JSON (see Data & Claude).')}</div>`;
+    <div class="tags">${splitList(iv.themes).map((t) => `<span class="chip">${esc(t)}</span>`).join('')}</div>
+    ${Object.keys(iv.answers || {}).length || (iv.outliers || []).length ? `<details class="small"><summary>${Object.keys(iv.answers || {}).length} structured answers · ${(iv.outliers || []).length} unexpected points</summary>${CRITERIA.map((c) => { const qs = Object.entries(iv.answers || {}).filter(([q]) => QINDEX[q] && QINDEX[q].crit === c.id); const os = (iv.outliers || []).filter((o) => o.crit === c.id); return qs.length || os.length ? `<h5>${esc(c.label)}</h5><dl>${qs.map(([q, a]) => `<dt>${esc(QINDEX[q].q)}</dt><dd>${esc(a)}</dd>`).join('')}${os.map((o) => `<dt>Unexpected</dt><dd>${esc(o.text)}</dd>`).join('')}</dl>` : ''; }).join('')}</details>` : ''}
+    <div class="btn-row"><button class="btn sm" data-action="editInterview" data-id="${esc(iv.id)}">Open in capture form</button></div></article>`; }).join('') || empty('No interviews yet. Paste notes into Claude and ask for interview JSON (see Data & Claude).')}</div>`;
 }
 
 /* ---------------- Crossover ---------------- */
@@ -1324,7 +1787,7 @@ function viewRecs(e) {
   const rows = scoreRecommendations(e);
   const types = ['All', ...new Set(e.recommendations.map((r) => r.type).filter(Boolean))];
   const shown = ui.recType && ui.recType !== 'All' ? rows.filter((r) => r.rec.type === ui.recType) : rows;
-  const statusOpts = ['Proposed', 'Agreed', 'In progress', 'Done', 'Rejected'];
+  const statusOpts = REC_STAGES;
   return `<div class="page-h"><div><span class="eyebrow">Recommendations</span><h1>Ranked changes</h1><p class="muted">Each recommendation is scored on its own against the current state. Score = 50% value, 20% low effort, 15% low risk, 15% confidence. Value = cash saving + revenue uplift + half the value of freed hours. Freed hours are capacity, not cash, unless headcount changes.</p></div>
     <button class="btn" data-action="addRec">+ Add recommendation</button></div>
   <div class="toolbar">${types.map((t) => `<button class="btn sm ${((ui.recType || 'All') === t) ? 'on' : ''}" data-action="recType" data-id="${esc(t)}">${esc(t)}</button>`).join('')}</div>
@@ -1355,10 +1818,17 @@ function viewScenarios(e) {
 
 /* ---------------- Report (settings + preview) ---------------- */
 function viewReport(e) {
+  const toggle = `<div class="toolbar"><button class="btn sm ${ui.reportType === 'status' ? 'on' : ''}" data-action="reportType" data-id="status">Status report (progress, time, delays)</button><button class="btn sm ${ui.reportType !== 'status' ? 'on' : ''}" data-action="reportType" data-id="diagnostic">Diagnostic report (findings & recommendations)</button></div>`;
+  if (ui.reportType === 'status') {
+    return `<div class="page-h"><div><span class="eyebrow">Report</span><h1>Client status report</h1><p class="muted">Generated live from Progress & time. Send it after every fortnightly review, or whenever the founders ask. The Delays & changes section is always included, even when it is empty.</p></div>
+      <div class="btn-row"><button class="btn" data-action="printReport">Print / save PDF</button><button class="btn" data-action="downloadReport">Download HTML report</button></div></div>
+      ${toggle}<div class="report-preview status-preview"><div id="report-doc" class="rpt">${e.engagement.phases.length ? renderStatusReport(e) : '<p>Set up the engagement in Progress & time first.</p>'}</div></div>`;
+  }
   const r = e.report; const sec = r.sections;
   const secLabels = { snapshot: 'Current-state snapshot', findings: 'Key findings', org: 'Org chart: current vs proposed', processes: 'Process maps: before / after', recommendations: 'Recommendations roadmap', financials: 'Financial impact', nextSteps: 'Next steps' };
   return `<div class="page-h"><div><span class="eyebrow">Report</span><h1>Founder report</h1><p class="muted">Preview below. Export as PDF (print) or as one self-contained HTML file you can email. Exports hold no raw data and do not depend on this tool or on Claude.</p></div>
     <div class="btn-row"><button class="btn" data-action="printReport">Print / save PDF</button><button class="btn" data-action="downloadReport">Download HTML report</button></div></div>
+  ${toggle}
   <div class="report-layout">
     <aside class="card report-settings">
       ${field('report.title', 'Report title', r.title)}${field('report.preparedFor', 'Prepared for', r.preparedFor)}
@@ -1372,6 +1842,213 @@ function viewReport(e) {
     </aside>
     <div class="report-preview"><div id="report-doc" class="rpt">${renderReport(e)}</div></div>
   </div>`;
+}
+
+/* ---- views2.js ---- */
+/* ============================================================
+   Progress & time, Discovery (coverage, founder intake, interview capture), Status report
+   ============================================================ */
+const sel = (opts, v, attrs, blank = true) => `<select ${attrs}>${blank ? '<option value=""></option>' : ''}${opts.map((o) => { const [val, lab] = Array.isArray(o) ? o : [o, o]; return `<option value="${esc(val)}" ${String(v) === String(val) ? 'selected' : ''}>${esc(lab)}</option>`; }).join('')}</select>`;
+const ecell = (coll, row, field, type = 'text', extra = '') => `<input data-cell data-coll="${coll}" data-id="${esc(row.id)}" data-field="${field}" data-type="${type === 'number' ? 'num' : type}" type="${type}" value="${esc(row[field])}" ${extra}>`;
+const ecellSel = (coll, row, field, opts, blank = true) => sel(opts, row[field], `data-cell data-coll="${coll}" data-id="${esc(row.id)}" data-field="${field}"`, blank);
+const ecellArea = (coll, row, field, rows = 2) => `<textarea data-cell data-coll="${coll}" data-id="${esc(row.id)}" data-field="${field}" rows="${rows}">${esc(row[field])}</textarea>`;
+const delBtn = (coll, id) => `<button class="btn sm ghost" data-action="delRow" data-coll="${coll}" data-id="${esc(id)}" title="Delete">✕</button>`;
+const reqChip = (s) => ({ Received: '<span class="chip st-added">✓ Received</span>', Overdue: '<span class="chip st-removed">▲ Overdue</span>', Waiting: '<span class="chip">○ Waiting</span>' }[s] || `<span class="chip">${esc(s)}</span>`);
+const phaseChip = (s) => ({ Done: '<span class="chip st-added">✓ Done</span>', 'In progress': '<span class="chip sev-high">● In progress</span>', 'On hold': '<span class="chip st-changed">❚❚ On hold</span>' }[s] || '<span class="chip">○ Not started</span>');
+
+/* ---------- Gantt (phases, slips, reviews, today) ---------- */
+function phaseGantt(e, { compact = false } = {}) {
+  const g = e.engagement; if (!g.phases.length || !g.start || !g.end) return '';
+  const st = engagementStatus(e);
+  const s = new Date(g.start + 'T00:00:00').getTime(), en = new Date(g.end + 'T00:00:00').getTime() + 864e5;
+  const W = 900, LW = compact ? 230 : 260, RH = 30, TOP = 22;
+  const x = (iso) => LW + (new Date(iso + 'T00:00:00').getTime() - s) / (en - s) * (W - LW - 10);
+  const H = TOP + g.phases.length * RH + 8;
+  let svg = `<svg viewBox="0 0 ${W} ${H}" class="gantt-svg" role="img" aria-label="Engagement timeline">`;
+  [0, 1, 2, 3].forEach((k) => { const d = new Date(g.start + 'T00:00:00'); d.setMonth(d.getMonth() + k); const iso = d.toISOString().slice(0, 10); if (iso > g.end) return; svg += `<line class="g-grid" x1="${x(iso)}" x2="${x(iso)}" y1="${TOP - 4}" y2="${H}"/><text class="g-lab" x="${x(iso) + 4}" y="12">Month ${k + 1} · ${fmtD(iso)}</text>`; });
+  splitList(g.reviewDates).forEach((r) => { if (r >= g.start && r <= g.end) svg += `<line class="g-review" x1="${x(r)}" x2="${x(r)}" y1="${TOP - 4}" y2="${H}"><title>Fortnightly review ${fmtD(r)}</title></line>`; });
+  g.phases.forEach((p, i) => {
+    const y = TOP + i * RH; const slip = num(st.slipByPhase[p.id]);
+    const cls = p.status === 'Done' ? 'done' : p.status === 'In progress' ? 'doing' : p.status === 'On hold' ? 'hold' : 'todo';
+    svg += `<text class="g-name" x="0" y="${y + 19}">${esc(trunc(p.name, compact ? 34 : 40))}</text>`;
+    if (p.start && p.end) {
+      const x1 = x(p.start), x2 = x(addDaysISO(p.end, 1));
+      svg += `<rect class="g-bar ${cls}" x="${x1}" y="${y + 7}" width="${Math.max(4, x2 - x1)}" height="16" rx="4" data-tip="${esc(p.name)} · ${fmtD(p.start)}–${fmtD(p.end)} · ${p.status} · ${num(p.plannedDays)} days planned, ${num(st.byPhase[p.id] || 0)} used"/>`;
+      if (slip > 0) { const x3 = x(addDaysISO(p.end, 1 + slip)); const dl = e.engagement.delays.filter((d) => d.phaseId === p.id).map((d) => `${d.cause}: +${num(d.daysImpact)}d`).join(' · '); svg += `<rect class="g-slip" x="${x2}" y="${y + 7}" width="${Math.max(4, x3 - x2)}" height="16" rx="3" data-tip="⚑ Slipped ${slip} days · ${esc(dl)}"/><text class="g-sliplab" x="${x3 + 4}" y="${y + 19}">⚑ +${slip}d</text>`; }
+    }
+  });
+  if (st.today >= g.start && st.today <= g.end) svg += `<line class="g-today" x1="${x(st.today)}" x2="${x(st.today)}" y1="${TOP - 8}" y2="${H}"/><text class="g-todaylab" x="${x(st.today) + 3}" y="${H - 2}">Today</text>`;
+  return `<div class="chart gantt-wrap">${svg}</div><div class="legend"><span><i style="background:var(--ink)"></i>Done</span><span><i style="background:var(--red)"></i>In progress</span><span><i style="background:var(--grid);outline:1px solid var(--faint)"></i>Not started</span><span><i class="hatch"></i>⚑ Slip from logged delays</span><span><i style="background:transparent;border-left:2px dashed var(--red);border-radius:0"></i>Fortnightly review</span></div>`;
+}
+
+/* ---------- Progress & time ---------- */
+function viewProgress(e) {
+  const g = e.engagement;
+  if (!g.phases.length) {
+    return `<div class="page-h"><div><span class="eyebrow">Progress & time</span><h1>Set up the engagement</h1><p class="muted">Enter the contract basics. The Studio then creates the standard three-month plan, the client information requests and the first activities. You can edit everything afterwards.</p></div></div>
+    ${card('Contract basics', `<div class="form-grid">
+      ${field('engagement.contact', 'Client point of contact (decision-maker)', g.contact)}${field('engagement.contactRole', 'Their role', g.contactRole)}
+      ${field('engagement.start', 'Start date', g.start, { type: 'date' })}${field('engagement.end', 'End date', g.end, { type: 'date' })}
+      ${field('engagement.daysTotal', 'Consulting days in total', g.daysTotal, { type: 'number' })}${field('engagement.daysPerMonth', 'Days per contract month', g.daysPerMonth, { type: 'number' })}
+      ${field('engagement.targetMonthly', 'Monthly recurring savings target', g.targetMonthly, { type: 'number' })}${field('engagement.reviewDates', 'Review dates (optional, comma separated)', g.reviewDates, { ph: 'Calculated if left blank' })}
+    </div><div class="btn-row"><button class="btn" data-action="seedPlan">Create plan</button></div>`)}`;
+  }
+  const st = engagementStatus(e); const sv = savingsTracker(e);
+  const monthUsed = num(st.byMonth[st.thisMonth] || 0);
+  const overMonth = monthUsed > num(g.daysPerMonth);
+  const phaseOpts = g.phases.map((p) => [p.id, p.name]);
+  const pName = (id) => (g.phases.find((p) => p.id === id) || {}).name || '—';
+  const flag = st.openDelays.length || st.totalSlip > 0;
+
+  const kpis = `<div class="kpis">
+    ${kpi('Current phase', esc(st.current ? st.current.name : '—'), st.current ? `<div class="k-delta">${fmtD(st.current.start)} – ${fmtD(st.current.end)}</div>` : '')}
+    ${kpi('Consulting days used', `${st.used.toFixed(1)} / ${num(g.daysTotal)}`, `<div class="k-delta ${st.remaining < 0 ? 'delta-bad' : ''}">${st.remaining.toFixed(1)} remaining</div>`)}
+    ${kpi(`Contract month ${Math.max(1, st.thisMonth)}`, `${monthUsed.toFixed(1)} / ${num(g.daysPerMonth)}`, `<div class="k-delta ${overMonth ? 'delta-bad' : ''}">${overMonth ? '▲ over the monthly allowance' : 'days this month'}</div>`)}
+    ${kpi('Term elapsed', st.termDays ? pct(st.elapsed / st.termDays * 100) : '—', `<div class="k-delta">${st.daysLeftInTerm} calendar days to ${fmtD(g.end)}</div>`)}
+    <div class="kpi ${flag ? 'kpi-flag' : ''}"><div class="k-label">⚑ Delays & changes</div><div class="k-value">${st.openDelays.length} open</div><div class="k-delta ${st.totalSlip > 0 ? 'delta-bad' : ''}">${st.totalSlip > 0 ? `+${st.totalSlip} days total slip` : 'no slip logged'}</div></div>
+    <div class="kpi ${st.overdue.length ? 'kpi-flag' : ''}"><div class="k-label">Waiting on client</div><div class="k-value">${st.reqs.filter((r) => r._status === 'Waiting' || r._status === 'Overdue').length}</div><div class="k-delta ${st.overdue.length ? 'delta-bad' : ''}">${st.overdue.length} overdue</div></div>
+    ${sv.target ? kpi('Savings approved / month', fmtMoney(sv.approved), `<div class="k-delta">target ${fmtMoney(sv.target)} · realised ${fmtMoney(sv.realised)}</div>`) : ''}
+  </div>`;
+
+  const delays = `<section class="card flag-card" id="delays"><header class="card-h"><div><h3>⚑ Delays & changes log</h3><p class="sub">Every slip, whatever the cause, with its date, reason, impact and the date written notice was given. This section appears in every status report. Log TGM-side slips too: that's what makes the log credible.</p></div><button class="btn" data-action="addDelay">+ Log delay / change</button></header>
+    ${g.delays.length ? `<div class="scroll-x"><table class="tbl grid-edit"><thead><tr><th>Raised</th><th>Phase</th><th>Cause</th><th>What happened</th><th>Days impact</th><th>Written notice sent</th><th>Status</th><th>Resolution / action</th><th></th></tr></thead><tbody>
+      ${g.delays.slice().sort((a, b) => (b.dateRaised || '').localeCompare(a.dateRaised || '')).map((d) => `<tr class="${d.status === 'Resolved' ? '' : 'row-flag'}"><td>${ecell('engagement.delays', d, 'dateRaised', 'date')}</td><td>${ecellSel('engagement.delays', d, 'phaseId', phaseOpts)}</td><td>${ecellSel('engagement.delays', d, 'cause', DELAY_CAUSES)}</td><td>${ecellArea('engagement.delays', d, 'description')}</td><td>${ecell('engagement.delays', d, 'daysImpact', 'number', 'style="width:70px"')}</td><td>${ecell('engagement.delays', d, 'noticeDate', 'date')}</td><td>${ecellSel('engagement.delays', d, 'status', ['Open', 'Resolved'], false)}</td><td>${ecellArea('engagement.delays', d, 'resolution')}</td><td>${delBtn('engagement.delays', d.id)}</td></tr>`).join('')}
+    </tbody></table></div>` : '<p class="empty">No delays or changes logged. That will show as "none recorded" in status reports, which is itself worth reporting.</p>'}
+    ${st.totalSlip > 0 ? `<p class="small delta-bad">⚑ ${st.totalSlip} days of slip logged. The contract end date (${fmtD(g.end)}) is fixed, so later phases are compressed unless an extension is agreed in writing (clauses 2.4 and 5.7).</p>` : ''}
+  </section>`;
+
+  const reqs = card(`Waiting on client (${st.reqs.filter((r) => r._status === 'Waiting' || r._status === 'Overdue').length} open · ${st.overdue.length} overdue)`, `<div class="scroll-x"><table class="tbl grid-edit"><thead><tr><th>Status</th><th>Item</th><th>Owner</th><th>Requested</th><th>Due</th><th>Received</th><th>Override</th><th>Notes</th><th></th></tr></thead><tbody>
+    ${st.reqs.map((r) => `<tr class="${r._status === 'Overdue' ? 'row-flag' : ''}"><td>${reqChip(r._status)}${r._status === 'Overdue' ? `<div><button class="link small" data-action="delayFromRequest" data-id="${esc(r.id)}">⚑ Log as delay</button></div>` : ''}</td><td>${ecellArea('engagement.requests', r, 'item')}</td><td>${ecell('engagement.requests', r, 'owner')}</td><td>${ecell('engagement.requests', r, 'requestedDate', 'date')}</td><td>${ecell('engagement.requests', r, 'dueDate', 'date')}</td><td>${ecell('engagement.requests', r, 'receivedDate', 'date')}</td><td>${ecellSel('engagement.requests', r, 'status', ['Not needed', 'Not available'])}</td><td>${ecellArea('engagement.requests', r, 'notes')}</td><td>${delBtn('engagement.requests', r.id)}</td></tr>`).join('')}
+    </tbody></table></div><div class="btn-row"><button class="btn sm" data-action="addRow" data-coll="engagement.requests">+ Add request</button></div>`, { sub: 'Requests become Overdue automatically after their due date. Log a delay when a late item holds up the work.' });
+
+  const actCol = (title, list, empty) => `<div class="act-col"><h4>${title} (${list.length})</h4>${list.length ? list.map((a) => `<div class="act ${a.status === 'Waiting on client' ? 'act-wait' : ''}"><div class="act-top">${ecellArea('engagement.activities', a, 'title', 1)}</div><div class="act-meta">${ecellSel('engagement.activities', a, 'phaseId', phaseOpts)} ${ecell('engagement.activities', a, a.status === 'Done' ? 'doneDate' : 'due', 'date')} ${ecellSel('engagement.activities', a, 'status', ACTIVITY_STATUSES, false)} ${delBtn('engagement.activities', a.id)}</div></div>`).join('') : `<p class="empty">${empty}</p>`}</div>`;
+  const acts = card('What\'s done, what\'s happening, what\'s next', `<div class="act-grid">${actCol('✓ Done', st.done, 'Nothing completed yet.')}${actCol('● In progress / waiting', st.doing, 'Nothing in progress.')}${actCol('→ Next', st.next, 'Nothing queued.')}</div><div class="btn-row"><button class="btn sm" data-action="addActivity">+ Add activity</button></div>`, { sub: 'Marking an activity Done stamps today\'s date automatically.' });
+
+  const timeRows = g.timeLog.slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const time = card(`Time log: ${st.used.toFixed(1)} of ${num(g.daysTotal)} days used`, `<div class="grid-2">
+      <div><h4>By phase (used vs planned)</h4>${hbars(g.phases.map((p) => ({ label: p.name, value: num(st.byPhase[p.id] || 0), tip: `${num(st.byPhase[p.id] || 0)} used of ${num(p.plannedDays)} planned`, color: num(st.byPhase[p.id] || 0) > num(p.plannedDays) ? 'var(--crit)' : 'var(--s1)' })), { fmt: (v) => v.toFixed(1) + ' d', max: Math.max(1, ...g.phases.map((p) => Math.max(num(p.plannedDays), num(st.byPhase[p.id] || 0)))) })}</div>
+      <div><h4>By contract month (allowance ${num(g.daysPerMonth)})</h4>${hbars([1, 2, 3].map((m) => ({ label: `Month ${m}`, value: num(st.byMonth[m] || 0), color: num(st.byMonth[m] || 0) > num(g.daysPerMonth) ? 'var(--crit)' : 'var(--s3)' })), { fmt: (v) => v.toFixed(1) + ' d', max: Math.max(num(g.daysPerMonth), ...Object.values(st.byMonth)) })}
+      <p class="faint small">Unused Month-2 days may carry into Month 3 by written agreement; the total of ${num(g.daysTotal)} cannot increase (clause 3.4).</p></div></div>
+    <div class="scroll-x"><table class="tbl grid-edit"><thead><tr><th>Date</th><th>Phase</th><th>Days</th><th>What was done</th><th>Notes</th><th></th></tr></thead><tbody>
+    ${timeRows.map((t) => `<tr><td>${ecell('engagement.timeLog', t, 'date', 'date')}</td><td>${ecellSel('engagement.timeLog', t, 'phaseId', phaseOpts)}</td><td>${ecellSel('engagement.timeLog', t, 'days', ['0.25', '0.5', '0.75', '1'], false)}</td><td>${ecellArea('engagement.timeLog', t, 'activity', 1)}</td><td>${ecellArea('engagement.timeLog', t, 'notes', 1)}</td><td>${delBtn('engagement.timeLog', t.id)}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">No time logged yet.</td></tr>'}
+    </tbody></table></div><div class="btn-row"><button class="btn sm" data-action="addTime">+ Log time</button></div>`, { sub: 'Logged in half days (8-hour day), as in the contract. Reported at every fortnightly review.' });
+
+  const savings = sv.target ? card('Savings tracker (contract)', savingsBlock(sv), { sub: 'Monthly recurring savings, net of new recurring costs. Stage comes from each recommendation\'s status.' }) : '';
+
+  const phases = card('Phases', `<div class="scroll-x"><table class="tbl grid-edit"><thead><tr><th>Phase</th><th>Start</th><th>End</th><th>Planned days</th><th>Used</th><th>Status</th><th>Deliverables</th></tr></thead><tbody>
+    ${g.phases.map((p) => `<tr><td>${ecell('engagement.phases', p, 'name')}</td><td>${ecell('engagement.phases', p, 'start', 'date')}</td><td>${ecell('engagement.phases', p, 'end', 'date')}</td><td>${ecell('engagement.phases', p, 'plannedDays', 'number', 'style="width:70px"')}</td><td class="r">${num(st.byPhase[p.id] || 0).toFixed(1)}</td><td>${ecellSel('engagement.phases', p, 'status', PHASE_STATUSES, false)}</td><td>${ecellArea('engagement.phases', p, 'deliverables')}</td></tr>`).join('')}</tbody></table></div>
+    <details class="small"><summary>Contract settings</summary><div class="form-grid">${field('engagement.contact', 'Point of contact', g.contact)}${field('engagement.contactRole', 'Role', g.contactRole)}${field('engagement.start', 'Start', g.start, { type: 'date' })}${field('engagement.end', 'End', g.end, { type: 'date' })}${field('engagement.daysTotal', 'Days total', g.daysTotal, { type: 'number' })}${field('engagement.daysPerMonth', 'Days / month', g.daysPerMonth, { type: 'number' })}${field('engagement.targetMonthly', 'Monthly savings target', g.targetMonthly, { type: 'number' })}${field('engagement.baselineMonthly', 'Agreed monthly cost baseline', g.baselineMonthly, { type: 'number' })}${field('engagement.reviewDates', 'Review dates', g.reviewDates)}</div></details>`);
+
+  return `<div class="page-h"><div><span class="eyebrow">Progress & time</span><h1>Where the engagement stands</h1><p class="muted">Point of contact: <strong>${esc(g.contact || '—')}</strong>${g.contactRole ? ' · ' + esc(g.contactRole) : ''}. Next review: <strong>${esc(fmtD(splitList(g.reviewDates).find((d) => d >= st.today) || ''))}</strong>.</p></div>
+    <div class="btn-row"><button class="btn" data-action="statusReport">Status report →</button></div></div>
+    ${kpis}${card('Timeline', phaseGantt(e))}${delays}<div class="grid-2">${acts}${reqs}</div>${time}${savings}${phases}`;
+}
+
+function savingsBlock(sv) {
+  const mx = Math.max(sv.target, sv.identified, 1);
+  const bar = (v, c, label) => `<div class="sv-row"><span>${label}</span><div class="sv-track"><span style="width:${v / mx * 100}%;background:${c}"></span><i style="left:${sv.target / mx * 100}%" title="Target"></i></div><b>${fmtMoney(v)}</b></div>`;
+  return `<div class="sv">${bar(sv.identified, 'var(--seq-3)', 'Identified')}${bar(sv.approved, 'var(--seq-5)', 'Approved')}${bar(sv.realised, 'var(--seq-7)', 'Realised')}
+    <p class="small muted">Target ${fmtMoney(sv.target)}/month (marker line)${sv.baseline ? ` against an agreed baseline of ${fmtMoney(sv.baseline)}/month` : ' · baseline not yet agreed'}. Reported separately: one-off savings ${fmtMoney(sv.oneOffSavings)}; one-off costs of approved items ${fmtMoney(sv.oneOffCosts)}; time freed ${Math.round(sv.hours)} hrs/month (capacity, not cash).</p></div>
+    ${sv.rows.length ? `<table class="tbl"><thead><tr><th>Initiative</th><th>Stage</th><th class="r">Net recurring / month</th><th class="r">One-off cost</th><th class="r">Hours freed / mo</th></tr></thead><tbody>${sv.rows.map((r) => `<tr class="${r.stage === 'Rejected' ? 'row-removed' : ''}"><td>${esc(r.rec.title)}</td><td><span class="chip ${r.stage === 'Realised' ? 'st-added' : r.stage === 'Approved' || r.stage === 'In progress' ? 'st-changed' : ''}">${esc(r.stage)}</span></td><td class="r ${r.monthlyNet < 0 ? 'delta-bad' : ''}">${fmtMoney(r.monthlyNet)}</td><td class="r">${fmtMoney(r.oneOffCost)}</td><td class="r">${Math.round(r.hoursMonth)}</td></tr>`).join('')}</tbody></table>` : ''}`;
+}
+
+/* ---------- Discovery: coverage, founder intake, interview capture ---------- */
+function viewDiscovery(e) {
+  if (ui.capture) return viewCapture(e);
+  const cov = coverage(e); const mx = Math.max(1, ...cov.rows.flatMap((r) => r.counts));
+  const cell = (n) => { if (!n) return '<td class="cov-0">—</td>'; const k = Math.min(6, Math.floor(n / mx * 6.999)); return `<td style="background:${SEQ[k]};color:${k >= 4 ? '#fff' : 'var(--ink)'}">${n}</td>`; };
+  const covTable = `<table class="heat cov"><tr><th>Criterion</th>${cov.cols.map((c) => `<th>${c}</th>`).join('')}<th>Total</th><th>Feeds</th></tr>
+    ${cov.rows.map((r) => `<tr><th>${esc(r.c.label)}</th>${r.counts.map(cell).join('')}<td><strong>${r.total}</strong>${r.total === 0 ? ' <span class="chip sev-high">▲ gap</span>' : r.total < 3 ? ' <span class="chip sev-medium">● thin</span>' : ''}</td><td class="faint small">${esc(r.c.feeds)}</td></tr>`).join('')}</table>`;
+  const people = e.people.slice().sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  const done = new Set(e.interviews.map((i) => i.personId));
+  const sections = INTAKE_SECTIONS;
+  const intake = e.intake.length ? e.intake.map((r) => `<details class="intake"><summary><strong>${esc(r.respondent)}</strong> <span class="muted small">${esc(r.role)} · ${esc(r.timestamp || r.date)} · ${Object.keys(r.answers).length} answers</span></summary>
+      ${sections.map((s) => { const qs = s.questions.filter((q) => r.answers[q.id]); return qs.length ? `<h5>${esc(s.title)}</h5><dl>${qs.map((q) => `<dt>${esc(q.q)} <span class="chip">${esc((CRITERIA.find((c) => c.id === q.crit) || {}).label || '')}</span></dt><dd>${esc(r.answers[q.id])}</dd>`).join('')}</dl>` : ''; }).join('')}</details>`).join('')
+    : '<p class="empty">No founder responses yet.</p>';
+  return `<div class="page-h"><div><span class="eyebrow">Discovery</span><h1>What we know, and where the gaps are</h1><p class="muted">Every answer is stored against a discovery criterion. Coverage shows which criteria are well evidenced and which still need questions.</p></div>
+    <div class="btn-row"><button class="btn" data-action="startCapture">+ Capture an interview</button></div></div>
+  ${card('Discovery coverage (answers per criterion)', `<div class="scroll-x">${covTable}</div>`, { sub: 'Darker means more evidence. "Gap" and "thin" show where to aim the next interviews.' })}
+  <div class="grid-2">
+    ${card(`Founder questionnaire (${e.intake.length} responses)`, `<div class="btn-row"><label class="btn sm">Import responses CSV<input type="file" accept=".csv,text/csv" id="intakeFile" hidden></label></div>
+      <p class="faint small">In the responses Google Sheet: File → Download → CSV, then import it here. Re-importing updates existing responses. Or ask Claude to read the Sheet from your Drive and produce the JSON.</p>${intake}`)}
+    ${card('Interview checklist', people.length ? `<table class="tbl"><thead><tr><th>Person</th><th>Level</th><th>Question set</th><th></th></tr></thead><tbody>${people.map((p) => { const d = e.departments.find((x) => x.id === p.departmentId); const dt = deptType(d); return `<tr><td>${esc(p.name)}<div class="faint small">${esc(p.title || '')}</div></td><td>${esc(guessLevel(e, p))}</td><td class="small">${esc((DEPT_TYPES.find((x) => x[0] === dt) || ['', 'core only'])[1])}</td><td>${done.has(p.id) ? '<span class="chip st-added">✓ Interviewed</span>' : `<button class="btn sm" data-action="startCapture" data-id="${esc(p.id)}">Interview</button>`}</td></tr>`; }).join('')}</tbody></table>` : '<p class="empty">Add the org chart (People) first. The checklist and question sets then build themselves from it.</p>', { sub: 'Built from the org chart. Level and department decide each person\'s questions.' })}
+  </div>`;
+}
+
+const DRAFT_KEY = () => STORE_KEY + '.draft';
+function loadDraft() { try { return JSON.parse(localStorage.getItem(DRAFT_KEY()) || 'null'); } catch (err) { return null; } }
+function saveDraft(d) { try { localStorage.setItem(DRAFT_KEY(), JSON.stringify(d)); } catch (err) { /* ignore */ } }
+
+function viewCapture(e) {
+  const d = ui.draft;
+  const p = e.people.find((x) => x.id === d.personId);
+  const dept = e.departments.find((x) => x.id === (p ? p.departmentId : d.departmentId));
+  const dtype = d.deptType || deptType(dept);
+  const set = questionSet(d.level, dtype);
+  const critLabel = (id) => (CRITERIA.find((c) => c.id === id) || {}).label || id;
+  const qBlock = (title, qs) => qs.length ? `<h4>${title}</h4>${qs.map((q) => `<div class="qa"><label><span>${esc(q.q)}</span><span class="chip">${esc(critLabel(q.crit))}</span></label><textarea data-draft="answers.${q.id}" rows="2">${esc(d.answers[q.id] || '')}</textarea></div>`).join('')}` : '';
+  const filled = Object.values(d.answers).filter((v) => String(v).trim()).length;
+  const total = set.core.length + set.level.length + set.dept.length;
+  return `<div class="page-h"><div><span class="eyebrow">Capture interview${d.editingId ? ' (editing)' : ''}</span><h1>${esc(p ? p.name : (d.personLabel || 'New interview'))}</h1><p class="muted">${filled} of ${total} questions answered. Your draft saves as you type. Skip anything that doesn't fit, and use Unexpected points for whatever comes up.</p></div>
+    <div class="btn-row"><button class="btn" data-action="saveCapture">Save interview</button><button class="btn ghost" data-action="cancelCapture">Close</button></div></div>
+  <div class="capture">
+    <aside class="card">
+      <label class="fld"><span>Person (from org chart)</span>${sel(e.people.map((x) => [x.id, x.name + (x.title ? ' · ' + x.title : '')]), d.personId, 'data-draftsel="personId"')}</label>
+      ${p ? '' : `<label class="fld"><span>…or name / role if not on the org chart</span><input data-draft="personLabel" value="${esc(d.personLabel || '')}"></label>`}
+      <label class="fld"><span>Level</span>${sel([['founder', 'Founder / director'], ['manager', 'Manager'], ['staff', 'Team member']], d.level, 'data-draftsel="level"', false)}</label>
+      <label class="fld"><span>Department question set</span>${sel(DEPT_TYPES, dtype, 'data-draftsel="deptType"')}</label>
+      <label class="fld"><span>Date</span><input type="date" data-draft="date" value="${esc(d.date)}"></label>
+      <label class="fld"><span>Interviewer</span><input data-draft="interviewer" value="${esc(d.interviewer || '')}"></label>
+      <label class="fld"><span>Duration (minutes)</span><input type="number" data-draft="durationMins" value="${esc(d.durationMins || '')}"></label>
+      <label class="tog"><input type="checkbox" data-draftchk="logTime" ${d.logTime ? 'checked' : ''}> Add to time log (Listening phase)</label>
+      <h5>Wrap-up</h5>
+      <label class="fld"><span>Summary (2–3 lines)</span><textarea data-draft="summary" rows="3">${esc(d.summary || '')}</textarea></label>
+      <label class="fld"><span>Themes (comma separated, keep consistent)</span><input data-draft="themes" value="${esc(d.themes || '')}" list="themeList"><datalist id="themeList">${themeCounts(e).map((t) => `<option value="${esc(t.theme)}">`).join('')}</datalist></label>
+      <label class="fld"><span>Pain points (one per line)</span><textarea data-draft="painPoints" rows="3">${esc(d.painPoints || '')}</textarea></label>
+      <label class="fld"><span>Ideas</span><textarea data-draft="ideas" rows="2">${esc(d.ideas || '')}</textarea></label>
+      <label class="fld"><span>Quote worth keeping</span><textarea data-draft="quotes" rows="2">${esc(d.quotes || '')}</textarea></label>
+    </aside>
+    <div class="card qcol">
+      ${qBlock('Core questions (everyone)', set.core)}
+      ${qBlock(d.level === 'founder' ? 'Founder questions' : d.level === 'manager' ? 'Manager questions' : 'Team member questions', set.level)}
+      ${qBlock(dtype ? `${(DEPT_TYPES.find((x) => x[0] === dtype) || ['', ''])[1]} questions` : '', set.dept)}
+      <h4>Unexpected points</h4><p class="faint small">Anything outside the script. Tag each one so it still lands against a criterion.</p>
+      ${(d.outliers || []).map((o, i) => `<div class="qa outlier"><textarea data-draft="outliers.${i}.text" rows="2" placeholder="What came up?">${esc(o.text || '')}</textarea>${sel(CRITERIA.map((c) => [c.id, c.label]), o.crit, `data-draftsel="outliers.${i}.crit"`)}</div>`).join('')}
+      <button class="btn sm" data-action="addOutlier">+ Add unexpected point</button>
+    </div>
+  </div>`;
+}
+
+/* ---------- Client status report ---------- */
+function renderStatusReport(e) {
+  const g = e.engagement; const st = engagementStatus(e); const sv = savingsTracker(e);
+  const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  const nextReview = splitList(g.reviewDates).find((d) => d > st.today);
+  const awaiting = e.recommendations.filter((r) => r.status === 'Identified');
+  const waiting = st.reqs.filter((r) => r._status === 'Waiting' || r._status === 'Overdue').sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''));
+  let h = `<header class="rpt-cover"><div class="rpt-brand">THE <strong>GROWTH</strong> MACHINE</div><h1>Status report</h1><p class="rpt-client">${esc(e.client.name)}</p>
+    <p class="rpt-meta">As at ${date}${g.contact ? ` · For ${esc(g.contact)}` : ''} · Engagement ${fmtD(g.start, { day: 'numeric', month: 'short', year: 'numeric' })} – ${fmtD(g.end, { day: 'numeric', month: 'short', year: 'numeric' })} · Confidential</p></header>`;
+  h += `<section class="rpt-sec"><h2>At a glance</h2><div class="kpis">
+    ${kpi('Current phase', esc(st.current ? st.current.name : '—'))}
+    ${kpi('Consulting days used', `${st.used.toFixed(1)} of ${num(g.daysTotal)}`, `<div class="k-delta">${st.remaining.toFixed(1)} remaining · month ${Math.max(1, st.thisMonth)}: ${num(st.byMonth[st.thisMonth] || 0).toFixed(1)} of ${num(g.daysPerMonth)}</div>`)}
+    ${kpi('Term elapsed', st.termDays ? pct(st.elapsed / st.termDays * 100) : '—', `<div class="k-delta">${st.daysLeftInTerm} days to go</div>`)}
+    <div class="kpi ${st.openDelays.length || st.totalSlip ? 'kpi-flag' : ''}"><div class="k-label">⚑ Delays & changes</div><div class="k-value">${st.openDelays.length} open</div><div class="k-delta">${st.totalSlip ? `+${st.totalSlip} days slip in total` : 'none affecting the timeline'}</div></div>
+    ${kpi('Waiting on you', `${waiting.length} items`, `<div class="k-delta ${st.overdue.length ? 'delta-bad' : ''}">${st.overdue.length} overdue</div>`)}
+    ${sv.target ? kpi('Savings approved', `${fmtMoney(sv.approved)}/mo`, `<div class="k-delta">target ${fmtMoney(sv.target)}/mo</div>`) : ''}
+  </div>${nextReview ? `<p class="small muted">Next review: ${fmtD(nextReview, { weekday: 'long', day: 'numeric', month: 'long' })}.</p>` : ''}</section>`;
+  h += `<section class="rpt-sec"><h2>Where we are in the plan</h2>${phaseGantt(e, { compact: true })}</section>`;
+  h += `<section class="rpt-sec flag-sec"><h2>⚑ Delays & changes</h2>${g.delays.length ? `<table class="tbl"><thead><tr><th>Raised</th><th>Phase</th><th>Cause</th><th>What happened</th><th class="r">Impact</th><th>Notice</th><th>Status / action</th></tr></thead><tbody>
+    ${g.delays.slice().sort((a, b) => (a.dateRaised || '').localeCompare(b.dateRaised || '')).map((d) => `<tr><td class="nowrap">${fmtD(d.dateRaised)}</td><td>${esc((g.phases.find((p) => p.id === d.phaseId) || {}).name || '—')}</td><td>${esc(d.cause || '')}</td><td>${esc(d.description || '')}</td><td class="r">${num(d.daysImpact) ? '+' + num(d.daysImpact) + ' days' : '—'}</td><td class="nowrap">${d.noticeDate ? fmtD(d.noticeDate) : '—'}</td><td>${d.status === 'Resolved' ? '✓ Resolved' : '⚑ Open'}${d.resolution ? ' · ' + esc(d.resolution) : ''}</td></tr>`).join('')}</tbody></table>
+    ${st.totalSlip ? `<p class="small">The end date (${fmtD(g.end, { day: 'numeric', month: 'long', year: 'numeric' })}) is fixed. The ${st.totalSlip} days of slip will be absorbed by reprioritising the later phases, unless a change is agreed in writing.</p>` : ''}` : '<p>No delays or changes recorded in this period.</p>'}</section>`;
+  const li = (a) => `<li>${esc(a.title)}${a.due && a.status !== 'Done' ? ` <span class="muted small">· due ${fmtD(a.due)}</span>` : ''}${a.doneDate && a.status === 'Done' ? ` <span class="muted small">· ${fmtD(a.doneDate)}</span>` : ''}${a.status === 'Waiting on client' ? ' <span class="chip st-changed">waiting on client</span>' : ''}</li>`;
+  h += `<section class="rpt-sec"><div class="rpt-2"><div><h3>✓ Done</h3>${st.done.length ? `<ul>${st.done.map(li).join('')}</ul>` : '<p class="muted">—</p>'}</div><div><h3>● In progress</h3>${st.doing.length ? `<ul>${st.doing.map(li).join('')}</ul>` : '<p class="muted">—</p>'}<h3>→ Next</h3>${st.next.length ? `<ul>${st.next.slice(0, 8).map(li).join('')}</ul>` : '<p class="muted">—</p>'}</div></div></section>`;
+  h += `<section class="rpt-sec"><h2>What we need from you</h2>${waiting.length ? `<table class="tbl"><thead><tr><th>Item</th><th>Owner</th><th>Due</th><th>Status</th></tr></thead><tbody>${waiting.map((r) => `<tr><td>${esc(r.item)}</td><td>${esc(r.owner || '')}</td><td class="nowrap">${fmtD(r.dueDate)}</td><td>${r._status === 'Overdue' ? '▲ Overdue' : 'Waiting'}</td></tr>`).join('')}</tbody></table>` : '<p>Nothing outstanding. Thank you.</p>'}
+    ${awaiting.length ? `<h3>Decisions awaiting approval</h3><ul>${awaiting.map((r) => `<li>${esc(r.title)}</li>`).join('')}</ul>` : ''}</section>`;
+  h += `<section class="rpt-sec"><h2>Time used</h2><div class="rpt-2"><div><h3>By phase</h3>${hbars(g.phases.map((p) => ({ label: p.name, value: num(st.byPhase[p.id] || 0), tip: `${num(p.plannedDays)} planned` })), { fmt: (v) => v.toFixed(1) + ' d', max: Math.max(1, ...g.phases.map((p) => Math.max(num(p.plannedDays), num(st.byPhase[p.id] || 0)))) })}</div>
+    <div><h3>By contract month</h3>${hbars([1, 2, 3].map((m) => ({ label: `Month ${m}`, value: num(st.byMonth[m] || 0) })), { fmt: (v) => `${v.toFixed(1)} of ${num(g.daysPerMonth)} d`, max: Math.max(num(g.daysPerMonth), ...Object.values(st.byMonth)), color: 'var(--s3)' })}</div></div></section>`;
+  if (sv.target) h += `<section class="rpt-sec"><h2>Savings tracker</h2>${savingsBlock(sv)}</section>`;
+  h += `<footer class="rpt-foot">The Growth Machine · Status report generated ${date}. Figures are working estimates until validated against the agreed baseline.</footer>`;
+  return h;
 }
 
 /* ---- report.js ---- */
@@ -1454,14 +2131,15 @@ function renderReport(e) {
   return h;
 }
 
-function downloadReportHTML(e) {
+function downloadReportHTML(e, kind) {
+  const isStatus = kind === 'status';
   const css = (document.getElementById('viz-css') || {}).textContent + '\n' + (document.getElementById('report-css') || {}).textContent;
   const html = `<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc((e.report.title || 'Report') + ' · ' + e.client.name)}</title><style>${css}
+<title>${esc((isStatus ? 'Status report' : (e.report.title || 'Report')) + ' · ' + e.client.name)}</title><style>${css}
 body{margin:0;background:#f6f1e9;font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#171715}
 .rpt{max-width:1100px;margin:24px auto;}
-</style></head><body><main class="rpt">${renderReport(e)}</main></body></html>`;
-  const slug = (e.client.name + '-' + (e.report.title || 'report')).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+</style></head><body><main class="rpt">${isStatus ? renderStatusReport(e) : renderReport(e)}</main></body></html>`;
+  const slug = (e.client.name + '-' + (isStatus ? 'status-report' : (e.report.title || 'report'))).toLowerCase().replace(/[^a-z0-9]+/g, '-');
   downloadFile(`${slug}-${new Date().toISOString().slice(0, 10)}.html`, html, 'text/html');
 }
 
@@ -1470,7 +2148,7 @@ body{margin:0;background:#f6f1e9;font-family:Inter,ui-sans-serif,-apple-system,B
    App shell — storage, routing, actions, data editor, Claude bridge
    ============================================================ */
 const STORE_KEY = 'tgm.studio.v1';
-const ui = { tab: 'overview', scenario: 'current', processId: '', anon: false, ghosts: true, showCost: true, compare: true, zoom: 1, area: 'All', recType: 'All', coll: 'people', theme: '' };
+const ui = { tab: 'overview', scenario: 'current', processId: '', anon: false, ghosts: true, showCost: true, compare: true, zoom: 1, area: 'All', recType: 'All', coll: 'people', theme: '', reportType: 'status', capture: false, draft: null };
 let db = { activeId: '', engagements: {} };
 
 /* ---------- storage (localStorage, wrapped; the JSON file export is the real backup) ---------- */
@@ -1481,6 +2159,7 @@ function loadDB() {
     db = { activeId: demo.id, engagements: { [lb.id]: lb, [demo.id]: demo } };
   }
   Object.keys(db.engagements).forEach((k) => { db.engagements[k] = normalise(db.engagements[k]); });
+  if (db.engagements.eng_demo && !db.engagements.eng_demo.engagement.phases.length) db.engagements.eng_demo = demoEngagement(); // refresh old demo with tracking sample
   if (!db.engagements[db.activeId]) db.activeId = Object.keys(db.engagements)[0];
   try { Object.assign(ui, JSON.parse(localStorage.getItem(STORE_KEY + '.ui') || '{}'), { scenario: 'current' }); } catch (err) { /* ignore */ }
 }
@@ -1495,6 +2174,12 @@ function save() {
 }
 function saveUI() { try { localStorage.setItem(STORE_KEY + '.ui', JSON.stringify({ tab: ui.tab, anon: ui.anon, showCost: ui.showCost, ghosts: ui.ghosts, compare: ui.compare, coll: ui.coll, theme: ui.theme })); } catch (err) { /* ignore */ } }
 const E = () => db.engagements[db.activeId];
+function flagBadge(e) {
+  if (!e.engagement.phases.length) return '';
+  const st = engagementStatus(e); const n = st.openDelays.length, o = st.overdue.length;
+  if (!n && !o && !st.totalSlip) return '<span class="flag-badge ok" title="No open delays or overdue client items">✓ On track</span>';
+  return `<button class="flag-badge" data-action="tab" data-id="progress" title="Open the delays & changes log">⚑ ${n} open delay${n === 1 ? '' : 's'}${st.totalSlip ? ` · +${st.totalSlip}d` : ''}${o ? ` · ${o} overdue from client` : ''}</button>`;
+}
 function setStatus(t) { const el = document.getElementById('status'); if (el) el.textContent = t; }
 
 /* ---------- formatting ---------- */
@@ -1523,14 +2208,17 @@ function renderHeader() {
     <div class="brand"><span class="cog" aria-hidden="true">✹</span><span>THE <strong>GROWTH</strong> MACHINE</span><em>Studio</em></div>
     <label class="hsel"><span>Client</span><select id="engSel">${engOpts}</select></label>
     <label class="hsel"><span>View as</span><select id="scSel">${scOpts}</select></label>
+    ${flagBadge(e)}
     <div class="hbtns"><button class="btn sm" data-action="newEng">+ New client</button><button class="btn sm" data-action="exportJSON">Export JSON</button><button class="btn sm ghost" data-action="theme" title="Toggle light/dark">◐</button></div>`;
-  document.getElementById('nav').innerHTML = TABS.map(([id, n]) => `<button class="nav-btn ${ui.tab === id ? 'on' : ''}" data-action="tab" data-id="${id}">${n}</button>`).join('')
+  const st = e.engagement.phases.length ? engagementStatus(e) : null;
+  const badge = (id) => id === 'progress' && st && (st.openDelays.length || st.overdue.length) ? `<span class="nav-badge" title="Open delays / overdue client items">⚑ ${st.openDelays.length + st.overdue.length}</span>` : '';
+  document.getElementById('nav').innerHTML = TABS.map(([id, n]) => `<button class="nav-btn ${ui.tab === id ? 'on' : ''}" data-action="tab" data-id="${id}">${n}${badge(id)}</button>`).join('')
     + `<div class="nav-foot"><div id="status" class="faint small">Saved in this browser</div><div class="faint small">Last export: ${e.meta.lastExported ? new Date(e.meta.lastExported).toLocaleString('en-GB') : 'never'}</div></div>`;
 }
 function render() {
   const e = E();
   renderHeader();
-  const views = { overview: viewOverview, business: viewBusiness, finance: viewFinance, org: viewOrg, tools: viewTools, processes: viewProcesses, interviews: viewInterviews, crossover: viewCrossover, recs: viewRecs, scenarios: viewScenarios, report: viewReport, data: viewData };
+  const views = { progress: viewProgress, discovery: viewDiscovery, overview: viewOverview, business: viewBusiness, finance: viewFinance, org: viewOrg, tools: viewTools, processes: viewProcesses, interviews: viewInterviews, crossover: viewCrossover, recs: viewRecs, scenarios: viewScenarios, report: viewReport, data: viewData };
   let html;
   try { html = (views[ui.tab] || viewOverview)(e); }
   catch (err) { console.error(err); html = `<div class="banner err">Something in this client's data could not be displayed: ${esc(err.message)}. Check the Data tab.</div>`; }
@@ -1541,7 +2229,7 @@ function render() {
 
 /* ---------- Data & Claude view (lives here because it is tied to the editor) ---------- */
 const FIELD_DEFS = {
-  departments: [['id', 'text'], ['name', 'text'], ['headId', 'person'], ['notes', 'text']],
+  departments: [['id', 'text'], ['name', 'text'], ['type', DEPT_TYPES.map((d) => d[0])], ['headId', 'person'], ['notes', 'text']],
   people: [['id', 'text'], ['name', 'text'], ['title', 'text'], ['departmentId', 'dept'], ['managerId', 'person'], ['employmentType', ['Full-time', 'Part-time', 'Contractor', 'Outsourced', 'Vacant']], ['fte', 'num'], ['annualCost', 'num'], ['location', 'text'], ['startDate', 'date'], ['notes', 'text']],
   tools: [['id', 'text'], ['name', 'text'], ['category', 'text'], ['vendor', 'text'], ['monthlyCost', 'num'], ['seats', 'num'], ['activeUsers', 'num'], ['departmentIds', 'text'], ['ownerId', 'person'], ['purpose', 'text'], ['notes', 'text']],
   processes: [['id', 'text'], ['name', 'text'], ['departmentId', 'dept'], ['ownerId', 'person'], ['frequency', 'text'], ['runsPerMonth', 'num'], ['hoursPerMonth', 'num'], ['inputs', 'text'], ['outputs', 'text'], ['steps', 'json']],
@@ -1551,7 +2239,7 @@ const FIELD_DEFS = {
   financePeriods: [['id', 'text'], ['label', 'text'], ['months', 'num'], ['revenue', 'num'], ['cogs', 'num'], ['payroll', 'num'], ['tools', 'num'], ['marketing', 'num'], ['premises', 'num'], ['other', 'num']],
   interviews: [['id', 'text'], ['personId', 'person'], ['date', 'date'], ['interviewer', 'text'], ['summary', 'long'], ['themes', 'text'], ['painPoints', 'long'], ['ideas', 'long'], ['quotes', 'long']],
   findings: [['id', 'text'], ['title', 'text'], ['area', 'text'], ['severity', ['high', 'medium', 'low']], ['evidence', 'long']],
-  recommendations: [['id', 'text'], ['title', 'text'], ['type', ['People', 'Process', 'Tool', 'Build', 'Structure', 'Commercial']], ['horizon', ['0-3 months', '3-6 months', '6-12 months', '12+ months']], ['description', 'long'], ['effort', 'num'], ['risk', 'num'], ['confidence', 'num'], ['oneOffCost', 'num'], ['otherAnnualSaving', 'num'], ['revenueUplift', 'num'], ['status', ['Proposed', 'Agreed', 'In progress', 'Done', 'Rejected']], ['ops', 'json']],
+  recommendations: [['id', 'text'], ['title', 'text'], ['type', ['People', 'Process', 'Tool', 'Build', 'Structure', 'Commercial']], ['horizon', ['0-3 months', '3-6 months', '6-12 months', '12+ months']], ['description', 'long'], ['effort', 'num'], ['risk', 'num'], ['confidence', 'num'], ['oneOffCost', 'num'], ['otherAnnualSaving', 'num'], ['oneOffSaving', 'num'], ['revenueUplift', 'num'], ['status', REC_STAGES], ['ops', 'json']],
   scenarios: [['id', 'text'], ['name', 'text'], ['description', 'text'], ['recommendationIds', 'json']]
 };
 const COLL_LABELS = { departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Top clients', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };
@@ -1665,13 +2353,53 @@ const actions = {
   copyPrompt: () => copyText(CLAUDE_PROMPT, 'Claude prompt copied. Paste it into Claude, then add your notes underneath.'),
   copyContext: () => copyText(JSON.stringify(stripMarks(E())), 'Client JSON copied. Paste it into Claude for analysis.'),
   addRow: (el) => {
-    const c = el.dataset.coll; const row = { id: uid(c.slice(0, 2)) };
-    if (c === 'processes') row.steps = []; if (c === 'recommendations') { row.ops = []; row.status = 'Proposed'; } if (c === 'scenarios') row.recommendationIds = [];
-    E()[c].push(row); save(); render();
+    const c = el.dataset.coll; const row = { id: uid(c.replace(/^engagement\./, '').slice(0, 2)) };
+    if (c === 'processes') row.steps = []; if (c === 'recommendations') { row.ops = []; row.status = 'Identified'; } if (c === 'scenarios') row.recommendationIds = [];
+    if (c === 'engagement.requests') Object.assign(row, { item: '', owner: E().engagement.contact || '', requestedDate: todayISO(), dueDate: addDaysISO(todayISO(), 5) });
+    getPath(E(), c).push(row); save(); render();
   },
-  delRow: (el) => { if (!confirm('Delete this row?')) return; const c = el.dataset.coll; E()[c] = E()[c].filter((x) => x.id !== el.dataset.id); save(); render(); },
+  delRow: (el) => { if (!confirm('Delete this row?')) return; const c = el.dataset.coll; const arr = getPath(E(), c); const i = arr.findIndex((x) => x.id === el.dataset.id); if (i >= 0) arr.splice(i, 1); save(); render(); },
+  seedPlan: () => { const g = E().engagement; if (!g.start) return toast('Add a start date first'); seedStandardPlan(E()); save(); render(); toast('Plan, requests and first activities created'); },
+  addDelay: () => { const g = E().engagement; const st = engagementStatus(E()); g.delays.push({ id: uid('dl'), dateRaised: todayISO(), phaseId: st.current ? st.current.id : '', cause: '', description: '', daysImpact: 0, noticeDate: '', status: 'Open', resolution: '' }); save(); render(); },
+  delayFromRequest: (el) => {
+    const g = E().engagement; const r = g.requests.find((x) => x.id === el.dataset.id); const st = engagementStatus(E());
+    g.delays.push({ id: uid('dl'), dateRaised: todayISO(), phaseId: st.current ? st.current.id : 'ph1', cause: 'Client: information late', description: `Outstanding since ${fmtD(r.dueDate)}: ${r.item}`, daysImpact: 0, noticeDate: '', status: 'Open', resolution: '' });
+    save(); render(); toast('Delay logged. Set the days impact and the date notice was sent.'); document.getElementById('delays')?.scrollIntoView({ behavior: 'smooth' });
+  },
+  addActivity: () => { const st = engagementStatus(E()); E().engagement.activities.push({ id: uid('ac'), phaseId: st.current ? st.current.id : '', title: '', due: todayISO(), status: 'Next', doneDate: '' }); save(); render(); },
+  addTime: () => { const st = engagementStatus(E()); E().engagement.timeLog.push({ id: uid('tl'), date: todayISO(), phaseId: st.current ? st.current.id : '', days: '0.5', activity: '', notes: '' }); save(); render(); },
+  statusReport: () => { ui.tab = 'report'; ui.reportType = 'status'; saveUI(); render(); },
+  reportType: (el) => { ui.reportType = el.dataset.id; render(); },
+  startCapture: (el) => {
+    const e = E(); const pid = el.dataset.id || '';
+    const existing = loadDraft();
+    if (existing && existing.engId === e.id && !pid && !existing.saved && confirm('Resume your unsaved interview draft?')) { ui.draft = existing; }
+    else { const p = e.people.find((x) => x.id === pid); ui.draft = { engId: e.id, personId: pid, level: guessLevel(e, p), deptType: '', date: todayISO(), interviewer: e.meta.consultant === 'The Growth Machine' ? '' : e.meta.consultant, durationMins: '', logTime: true, answers: {}, outliers: [{ text: '', crit: '' }], summary: '', themes: '', painPoints: '', ideas: '', quotes: '' }; }
+    ui.capture = true; ui.tab = 'discovery'; saveDraft(ui.draft); render(); window.scrollTo(0, 0);
+  },
+  editInterview: (el) => {
+    const iv = E().interviews.find((x) => x.id === el.dataset.id); if (!iv) return;
+    ui.draft = Object.assign({ engId: E().id, editingId: iv.id, level: iv.level || 'staff', deptType: iv.deptType || '', logTime: false, outliers: [] }, clone(iv));
+    if (!ui.draft.outliers.length) ui.draft.outliers.push({ text: '', crit: '' });
+    ui.capture = true; ui.tab = 'discovery'; render(); window.scrollTo(0, 0);
+  },
+  cancelCapture: () => { ui.capture = false; render(); },
+  addOutlier: () => { ui.draft.outliers.push({ text: '', crit: '' }); saveDraft(ui.draft); render(); },
+  saveCapture: () => {
+    const e = E(); const d = ui.draft; const p = e.people.find((x) => x.id === d.personId);
+    if (!p && !d.personLabel) return toast('Choose a person or enter a name');
+    const iv = { id: d.editingId || uid('iv'), personId: d.personId || '', personLabel: p ? '' : d.personLabel, level: d.level, deptType: d.deptType || deptType(e.departments.find((x) => x.id === (p || {}).departmentId)),
+      date: d.date, interviewer: d.interviewer || '', durationMins: d.durationMins, summary: d.summary, themes: d.themes, painPoints: d.painPoints, ideas: d.ideas, quotes: d.quotes,
+      answers: Object.fromEntries(Object.entries(d.answers).filter(([, v]) => String(v).trim())), outliers: d.outliers.filter((o) => String(o.text || '').trim()) };
+    const i = e.interviews.findIndex((x) => x.id === iv.id); if (i >= 0) e.interviews[i] = iv; else e.interviews.push(iv);
+    if (d.logTime && num(d.durationMins) > 0 && e.engagement.phases.length) {
+      const ph = e.engagement.phases.find((x) => /listen|interview/i.test(x.name)) || e.engagement.phases[0];
+      e.engagement.timeLog.push({ id: uid('tl'), date: d.date, phaseId: ph.id, days: String(Math.max(0.25, Math.round(num(d.durationMins) / 480 * 4) / 4)), activity: `Interview: ${p ? p.name : d.personLabel}`, notes: '' });
+    }
+    d.saved = true; saveDraft(d); ui.capture = false; save(); render(); toast('Interview saved');
+  },
   editJSON: (el) => {
-    const { coll, id, field } = el.dataset; const row = E()[coll].find((x) => x.id === id);
+    const { coll, id, field } = el.dataset; const row = getPath(E(), coll).find((x) => x.id === id);
     openModal(`${COLL_LABELS[coll]} → ${row.name || row.title || id} → ${field}`, JSON.stringify(row[field] || [], null, 2), (txt) => {
       let v; try { v = JSON.parse(txt); } catch (err) { toast('Invalid JSON: ' + err.message); return false; }
       row[field] = v; Object.assign(E(), normalise(E())); save(); render(); return true;
@@ -1686,7 +2414,7 @@ const actions = {
   },
   toggleReportProc: (el) => { const r = E().report; const ids = new Set(r.processIds || []); el.checked ? ids.add(el.dataset.id) : ids.delete(el.dataset.id); r.processIds = [...ids]; save(); render(); },
   printReport: () => { if (ui.tab !== 'report') { ui.tab = 'report'; render(); } setTimeout(() => window.print(), 50); },
-  downloadReport: () => downloadReportHTML(E())
+  downloadReport: () => downloadReportHTML(E(), ui.reportType)
 };
 
 /* ---------- modal ---------- */
@@ -1720,27 +2448,38 @@ document.addEventListener('change', (ev) => {
     };
     fr.readAsText(t.files[0]); return;
   }
+  if (t.id === 'intakeFile' && t.files[0]) {
+    const fr = new FileReader();
+    fr.onload = () => { const res = importIntakeCSV(E(), fr.result); save(); render(); toast(`Founder responses: ${res.added} added, ${res.updated || 0} updated${res.unmatched.length ? `, ${res.unmatched.length} columns not matched` : ''}`); };
+    fr.readAsText(t.files[0]); return;
+  }
+  if (t.dataset.draftsel) { setPath(ui.draft, t.dataset.draftsel, t.value); if (t.dataset.draftsel === 'personId') { const p = E().people.find((x) => x.id === t.value); ui.draft.level = guessLevel(E(), p); ui.draft.deptType = ''; } saveDraft(ui.draft); render(); return; }
+  if (t.dataset.draftchk) { ui.draft[t.dataset.draftchk] = t.checked; saveDraft(ui.draft); return; }
   if (t.dataset.action && t.type === 'checkbox') { const fn = actions[t.dataset.action]; if (fn) fn(t, ev); return; }
   if (t.dataset.ui) { ui[t.dataset.ui] = t.type === 'checkbox' ? t.checked : t.value; saveUI(); render(); return; }
   if (t.dataset.bind) {
     const v = t.type === 'checkbox' ? t.checked : t.value; setPath(E(), t.dataset.bind, v); save();
-    if (ui.tab === 'report' || t.dataset.bind === 'meta.currency' || t.dataset.bind === 'client.name') render();
+    if (ui.tab === 'report' || ui.tab === 'progress' || t.dataset.bind === 'meta.currency' || t.dataset.bind === 'client.name') render();
     return;
   }
   if (t.hasAttribute('data-cell')) {
-    const { coll, id, field, type } = t.dataset; const row = E()[coll].find((x) => x.id === id); if (!row) return;
+    const { coll, id, field, type } = t.dataset; const arr = getPath(E(), coll) || []; const row = arr.find((x) => x.id === id); if (!row) return;
     let v = t.value; if (type === 'num') v = v === '' ? '' : num(v);
     if (field === 'id') {
-      if (!v || E()[coll].some((x) => x.id === v)) { toast('ids must be unique and not empty'); t.value = id; return; }
+      if (!v || arr.some((x) => x.id === v)) { toast('ids must be unique and not empty'); t.value = id; return; }
       t.closest('tr').querySelectorAll('[data-id]').forEach((n) => { n.dataset.id = v; });
     }
-    row[field] = v; save();
-    if (coll === 'recommendations' && ui.tab === 'recs') render();
+    row[field] = v;
+    if (coll === 'engagement.activities' && field === 'status') row.doneDate = v === 'Done' ? (row.doneDate || todayISO()) : '';
+    if (coll === 'engagement.phases' && field === 'status' && v === 'Done') { const ps = E().engagement.phases; const i = ps.indexOf(row); if (ps[i + 1] && ps[i + 1].status === 'Not started') ps[i + 1].status = 'In progress'; }
+    save();
+    if ((coll === 'recommendations' && ui.tab === 'recs') || (ui.tab === 'progress' && (t.tagName === 'SELECT' || t.type === 'date' || t.type === 'number'))) render();
   }
 });
 document.addEventListener('input', (ev) => {
   const t = ev.target;
   if (t.tagName === 'TEXTAREA' && t.dataset.bind) { setPath(E(), t.dataset.bind, t.value); save(); }
+  if (t.dataset.draft && ui.draft) { setPath(ui.draft, t.dataset.draft, t.type === 'number' ? t.value : t.value); saveDraft(ui.draft); }
 });
 
 /* ---------- tooltip (hover layer for every chart mark) ---------- */

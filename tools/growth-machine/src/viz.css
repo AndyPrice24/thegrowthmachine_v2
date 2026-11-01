@@ -32,6 +32,7 @@
 .kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
 .kpi .k-label{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
 .kpi .k-value{font-family:Georgia,"Times New Roman",serif;font-size:28px;line-height:1.1;margin-top:6px;color:var(--ink)}
+.kpi .k-value.k-text{font-size:18px;line-height:1.25}
 .kpi .k-delta{font-size:12px;margin-top:4px;color:var(--muted)}
 .delta-good{color:var(--good-ink)}.delta-bad{color:var(--crit-ink)}
 
@@ -104,3 +105,33 @@
 .swatch{display:inline-block;width:10px;height:10px;border-radius:3px;vertical-align:-1px;margin-right:6px}
 .score-bar{height:6px;border-radius:3px;background:var(--grid);overflow:hidden;min-width:60px}
 .score-bar span{display:block;height:100%;background:var(--red);border-radius:3px}
+
+/* ---- Engagement tracking (shared with exported status reports) ---- */
+.kpi.kpi-flag{border-color:var(--crit);box-shadow:inset 4px 0 0 var(--crit)}
+.kpi.kpi-flag .k-label{color:var(--crit-ink);font-weight:700}
+.flag-card{border:1.5px solid var(--crit)!important;box-shadow:inset 5px 0 0 var(--crit)}
+.flag-card h3{color:var(--crit-ink)}
+.rpt-sec.flag-sec{border:1.5px solid var(--crit);border-radius:10px;padding:16px 18px;margin:18px 0;box-shadow:inset 5px 0 0 var(--crit)}
+.rpt-sec.flag-sec h2{color:var(--crit-ink)}
+tr.row-flag td{background:rgba(208,59,59,.06)}
+.nowrap{white-space:nowrap}
+.gantt-wrap svg{width:100%;height:auto}
+.gantt-svg .g-grid{stroke:var(--grid);stroke-width:1}
+.gantt-svg .g-lab{font-size:10px;fill:var(--muted)}
+.gantt-svg .g-name{font-size:11.5px;fill:var(--ink);font-weight:600}
+.gantt-svg .g-bar.done{fill:var(--ink)}
+.gantt-svg .g-bar.doing{fill:var(--red)}
+.gantt-svg .g-bar.todo{fill:var(--grid);stroke:var(--faint);stroke-width:1}
+.gantt-svg .g-bar.hold{fill:var(--warn)}
+.gantt-svg .g-slip{fill:var(--crit);fill-opacity:.25;stroke:var(--crit);stroke-width:1.2;stroke-dasharray:3 2}
+.gantt-svg .g-sliplab{font-size:10.5px;font-weight:800;fill:var(--crit-ink)}
+.gantt-svg .g-review{stroke:var(--red);stroke-width:1.2;stroke-dasharray:4 3;opacity:.7}
+.gantt-svg .g-today{stroke:var(--ink);stroke-width:2}
+.gantt-svg .g-todaylab{font-size:10px;font-weight:700;fill:var(--ink)}
+.legend i.hatch{background:repeating-linear-gradient(45deg,rgba(208,59,59,.35) 0 3px,transparent 3px 6px);outline:1px dashed var(--crit)}
+.sv{display:grid;gap:8px;margin-bottom:12px}
+.sv-row{display:grid;grid-template-columns:90px 1fr 120px;gap:10px;align-items:center;font-size:13px}
+.sv-row b{text-align:right;font-variant-numeric:tabular-nums}
+.sv-track{position:relative;height:16px;background:var(--grid);border-radius:4px}
+.sv-track span{display:block;height:100%;border-radius:4px}
+.sv-track i{position:absolute;top:-4px;bottom:-4px;width:0;border-left:2px solid var(--ink)}

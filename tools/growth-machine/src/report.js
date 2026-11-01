@@ -77,13 +77,14 @@ function renderReport(e) {
   return h;
 }
 
-function downloadReportHTML(e) {
+function downloadReportHTML(e, kind) {
+  const isStatus = kind === 'status';
   const css = (document.getElementById('viz-css') || {}).textContent + '\n' + (document.getElementById('report-css') || {}).textContent;
   const html = `<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc((e.report.title || 'Report') + ' · ' + e.client.name)}</title><style>${css}
+<title>${esc((isStatus ? 'Status report' : (e.report.title || 'Report')) + ' · ' + e.client.name)}</title><style>${css}
 body{margin:0;background:#f6f1e9;font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#171715}
 .rpt{max-width:1100px;margin:24px auto;}
-</style></head><body><main class="rpt">${renderReport(e)}</main></body></html>`;
-  const slug = (e.client.name + '-' + (e.report.title || 'report')).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+</style></head><body><main class="rpt">${isStatus ? renderStatusReport(e) : renderReport(e)}</main></body></html>`;
+  const slug = (e.client.name + '-' + (isStatus ? 'status-report' : (e.report.title || 'report'))).toLowerCase().replace(/[^a-z0-9]+/g, '-');
   downloadFile(`${slug}-${new Date().toISOString().slice(0, 10)}.html`, html, 'text/html');
 }

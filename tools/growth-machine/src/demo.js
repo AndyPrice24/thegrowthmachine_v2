@@ -166,6 +166,19 @@ function demoEngagement() {
     { id: 'sc2', name: 'B · Automation programme', description: 'Quick wins plus the three automation builds. No headcount change.', recommendationIds: ['r1', 'r2', 'r3', 'r4', 'r6', 'r7'] },
     { id: 'sc3', name: 'C · Automation + restructure', description: 'Everything in B plus the Data Ops restructure.', recommendationIds: ['r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7'] }
   ];
+  // Engagement tracking sample: started three weeks ago
+  const start = addDaysISO(todayISO(), -20);
+  e.engagement = Object.assign(blankEngagementBlock(), { contact: 'Alex Okafor', contactRole: 'COO, decision-maker', start, daysTotal: 30, daysPerMonth: 10, targetMonthly: 60000 });
+  seedStandardPlan(e);
+  const g = e.engagement;
+  g.phases[0].status = 'Done'; g.phases[1].status = 'Done'; g.phases[2].status = 'In progress';
+  g.requests.forEach((r, i) => { if (i < 7) r.receivedDate = addDaysISO(r.dueDate, i === 2 ? 3 : 0); });
+  g.activities.forEach((a, i) => { if (i < 6) { a.status = 'Done'; a.doneDate = a.due; } else if (i === 6 || i === 7) a.status = 'In progress'; });
+  [[0, 'ph0', '1', 'Kick-off meeting and set-up'], [2, 'ph1', '1', 'Finance review, cost lines, subscriptions'], [5, 'ph1', '1', 'Systems & data map'], [8, 'ph1', '0.5', 'Draft cost baseline'],
+   [9, 'ph2', '1', 'Manager interviews (4)'], [13, 'ph2', '1', 'Team interviews (6)'], [16, 'ph2', '0.5', 'Process mapping: onboarding']].forEach(([d, ph, days, act]) => g.timeLog.push({ id: uid('tl'), date: addDaysISO(start, d), phaseId: ph, days, activity: act, notes: '' }));
+  g.delays.push({ id: 'dl1', dateRaised: addDaysISO(start, 5), phaseId: 'ph1', cause: 'Client: information late', description: 'P&L and management accounts arrived 3 days after the agreed date.', daysImpact: 3, noticeDate: addDaysISO(start, 5), status: 'Resolved', resolution: 'Received; baseline work re-sequenced.' });
+  g.delays.push({ id: 'dl2', dateRaised: addDaysISO(start, 15), phaseId: 'ph2', cause: 'Client: availability / cooperation', description: 'Two team interviews rescheduled twice (Sales).', daysImpact: 2, noticeDate: addDaysISO(start, 16), status: 'Open', resolution: 'Raised with point of contact; new slots requested.' });
+  e.recommendations.forEach((r) => { if (r.id === 'r2') r.status = 'Realised'; if (r.id === 'r3' || r.id === 'r7') r.status = 'Approved'; });
   e.report = Object.assign(e.report, { title: 'Operational Diagnostic', preparedFor: 'Founders, Demo Co', scenarioId: 'sc2', processIds: ['pr1', 'pr2'],
     summary: 'Demo Co has strong product-market fit with retail chains. But growth is limited by manual operations: onboarding, reporting and billing are run by hand, and they absorb most of Customer Success and Data Ops capacity. We recommend a three-month automation programme that pays back within the year, before any structural change.',
     nextSteps: '1. Approve Scenario B.\n2. Scope the onboarding portal (2 weeks).\n3. Consolidate CRM this month.\n4. Review the Data Ops structure in Q2, once automation is live.' });

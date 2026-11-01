@@ -8,6 +8,27 @@ The Growth Machine's internal diagnostic tool, built for use across every client
 - **Scenarios.** A scenario is a set of recommendations applied to the current state. Every view can switch between "current" and any scenario, with changes flagged as New / Changed / Removed.
 - **A founder report.** Print it to PDF or download it as one self-contained HTML file. It holds no raw data and needs neither this tool nor Claude to open.
 
+## Running an engagement (Progress & time, Discovery)
+
+- **Progress & time.** Enter the contract basics once: point of contact, start and end dates, day allowance, savings target. The Studio then creates the standard three-month plan, the client information requests (with due dates) and the first activities. From then on it tracks:
+  - **⚑ Delays & changes log.** Its own section, flagged in red. Each entry records the date raised, phase, cause (client information, access, decisions, cooperation, new findings, scope, TGM side), days of impact, the date written notice was sent, status and resolution. Open delays show as a badge on every screen and in every status report. Logged slips appear on the timeline.
+  - **Time log.** Days in half-day steps against the total allowance and the monthly cap, by phase and by contract month.
+  - **Waiting on client.** Requests turn *Overdue* automatically. One click turns an overdue item into a delay entry.
+  - **Done / in progress / next.** Marking an activity Done stamps the date.
+  - **Savings tracker.** Monthly recurring savings net of new recurring costs, by stage (Identified → Approved → Realised), against the target. One-off savings, one-off costs and time freed are reported separately.
+- **Status report** (Report → Status report). One click produces a founder-ready report: where we are, done, next, what we need from you, decisions awaiting approval, time used, the savings tracker, and the **Delays & changes** section, which is always included. Print it to PDF or download it as HTML.
+- **Discovery.** Every answer is stored against a discovery criterion (`src/questions.js`). The coverage matrix shows which criteria are well evidenced and which are gaps.
+  - **Capture an interview.** Pick a person from the org chart. Their level (founder, manager or staff) and department choose the questions: core questions for everyone, plus level and department sets. "Unexpected points" are tagged to a criterion too. Drafts save as you type, and the interview's duration can go straight into the time log.
+  - **Founder questionnaire.** `pack/build-pack.cjs` generates a Google Apps Script that creates the Google Form. To bring responses in, export the response Sheet as CSV and import it. Columns map back to question ids by title.
+
+## Client kick-off pack
+
+```bash
+node tools/growth-machine/pack/build-pack.cjs clients/<client>/pack.config.json
+```
+
+This builds the founder leave-behind PDF, a private talk-track PDF and the Google Form script, from a per-client config. `clients/` is git-ignored: client material never goes into this repository.
+
 ## How to open it
 
 Open `dist/growth-machine-studio.html` in Chrome, Edge or Safari. That's it: no server, no install, no login. It works offline.

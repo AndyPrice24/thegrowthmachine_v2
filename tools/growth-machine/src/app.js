@@ -2,7 +2,7 @@
    App shell — storage, routing, actions, data editor, Claude bridge
    ============================================================ */
 const STORE_KEY = 'tgm.studio.v1';
-const ui = { tab: 'overview', scenario: 'current', processId: '', anon: false, ghosts: true, showCost: true, compare: true, zoom: 1, area: 'All', recType: 'All', coll: 'people', theme: '' };
+const ui = { tab: 'overview', scenario: 'current', processId: '', anon: false, ghosts: true, showCost: true, compare: true, zoom: 1, area: 'All', recType: 'All', coll: 'people', theme: '', reportType: 'status', capture: false, draft: null };
 let db = { activeId: '', engagements: {} };
 
 /* ---------- storage (localStorage, wrapped; the JSON file export is the real backup) ---------- */
@@ -13,6 +13,7 @@ function loadDB() {
     db = { activeId: demo.id, engagements: { [lb.id]: lb, [demo.id]: demo } };
   }
   Object.keys(db.engagements).forEach((k) => { db.engagements[k] = normalise(db.engagements[k]); });
+  if (db.engagements.eng_demo && !db.engagements.eng_demo.engagement.phases.length) db.engagements.eng_demo = demoEngagement(); // refresh old demo with tracking sample
   if (!db.engagements[db.activeId]) db.activeId = Object.keys(db.engagements)[0];
   try { Object.assign(ui, JSON.parse(localStorage.getItem(STORE_KEY + '.ui') || '{}'), { scenario: 'current' }); } catch (err) { /* ignore */ }
 }
@@ -27,6 +28,12 @@ function save() {
 }
 function saveUI() { try { localStorage.setItem(STORE_KEY + '.ui', JSON.stringify({ tab: ui.tab, anon: ui.anon, showCost: ui.showCost, ghosts: ui.ghosts, compare: ui.compare, coll: ui.coll, theme: ui.theme })); } catch (err) { /* ignore */ } }
 const E = () => db.engagements[db.activeId];
+function flagBadge(e) {
+  if (!e.engagement.phases.length) return '';
+  const st = engagementStatus(e); const n = st.openDelays.length, o = st.overdue.length;
+  if (!n && !o && !st.totalSlip) return '<span class="flag-badge ok" title="No open delays or overdue client items">✓ On track</span>';
+  return `<button class="flag-badge" data-action="tab" data-id="progress" title="Open the delays & changes log">⚑ ${n} open delay${n === 1 ? '' : 's'}${st.totalSlip ? ` · +${st.totalSlip}d` : ''}${o ? ` · ${o} overdue from client` : ''}</button>`;
+}
 function setStatus(t) { const el = document.getElementById('status'); if (el) el.textContent = t; }
 
 /* ---------- formatting ---------- */
@@ -55,14 +62,17 @@ function renderHeader() {
     <div class="brand"><span class="cog" aria-hidden="true">✹</span><span>THE <strong>GROWTH</strong> MACHINE</span><em>Studio</em></div>
     <label class="hsel"><span>Client</span><select id="engSel">${engOpts}</select></label>
     <label class="hsel"><span>View as</span><select id="scSel">${scOpts}</select></label>
+    ${flagBadge(e)}
     <div class="hbtns"><button class="btn sm" data-action="newEng">+ New client</button><button class="btn sm" data-action="exportJSON">Export JSON</button><button class="btn sm ghost" data-action="theme" title="Toggle light/dark">◐</button></div>`;
-  document.getElementById('nav').innerHTML = TABS.map(([id, n]) => `<button class="nav-btn ${ui.tab === id ? 'on' : ''}" data-action="tab" data-id="${id}">${n}</button>`).join('')
+  const st = e.engagement.phases.length ? engagementStatus(e) : null;
+  const badge = (id) => id === 'progress' && st && (st.openDelays.length || st.overdue.length) ? `<span class="nav-badge" title="Open delays / overdue client items">⚑ ${st.openDelays.length + st.overdue.length}</span>` : '';
+  document.getElementById('nav').innerHTML = TABS.map(([id, n]) => `<button class="nav-btn ${ui.tab === id ? 'on' : ''}" data-action="tab" data-id="${id}">${n}${badge(id)}</button>`).join('')
     + `<div class="nav-foot"><div id="status" class="faint small">Saved in this browser</div><div class="faint small">Last export: ${e.meta.lastExported ? new Date(e.meta.lastExported).toLocaleString('en-GB') : 'never'}</div></div>`;
 }
 function render() {
   const e = E();
   renderHeader();
-  const views = { overview: viewOverview, business: viewBusiness, finance: viewFinance, org: viewOrg, tools: viewTools, processes: viewProcesses, interviews: viewInterviews, crossover: viewCrossover, recs: viewRecs, scenarios: viewScenarios, report: viewReport, data: viewData };
+  const views = { progress: viewProgress, discovery: viewDiscovery, overview: viewOverview, business: viewBusiness, finance: viewFinance, org: viewOrg, tools: viewTools, processes: viewProcesses, interviews: viewInterviews, crossover: viewCrossover, recs: viewRecs, scenarios: viewScenarios, report: viewReport, data: viewData };
   let html;
   try { html = (views[ui.tab] || viewOverview)(e); }
   catch (err) { console.error(err); html = `<div class="banner err">Something in this client's data could not be displayed: ${esc(err.message)}. Check the Data tab.</div>`; }
@@ -73,7 +83,7 @@ function render() {
 
 /* ---------- Data & Claude view (lives here because it is tied to the editor) ---------- */
 const FIELD_DEFS = {
-  departments: [['id', 'text'], ['name', 'text'], ['headId', 'person'], ['notes', 'text']],
+  departments: [['id', 'text'], ['name', 'text'], ['type', DEPT_TYPES.map((d) => d[0])], ['headId', 'person'], ['notes', 'text']],
   people: [['id', 'text'], ['name', 'text'], ['title', 'text'], ['departmentId', 'dept'], ['managerId', 'person'], ['employmentType', ['Full-time', 'Part-time', 'Contractor', 'Outsourced', 'Vacant']], ['fte', 'num'], ['annualCost', 'num'], ['location', 'text'], ['startDate', 'date'], ['notes', 'text']],
   tools: [['id', 'text'], ['name', 'text'], ['category', 'text'], ['vendor', 'text'], ['monthlyCost', 'num'], ['seats', 'num'], ['activeUsers', 'num'], ['departmentIds', 'text'], ['ownerId', 'person'], ['purpose', 'text'], ['notes', 'text']],
   processes: [['id', 'text'], ['name', 'text'], ['departmentId', 'dept'], ['ownerId', 'person'], ['frequency', 'text'], ['runsPerMonth', 'num'], ['hoursPerMonth', 'num'], ['inputs', 'text'], ['outputs', 'text'], ['steps', 'json']],
@@ -83,7 +93,7 @@ const FIELD_DEFS = {
   financePeriods: [['id', 'text'], ['label', 'text'], ['months', 'num'], ['revenue', 'num'], ['cogs', 'num'], ['payroll', 'num'], ['tools', 'num'], ['marketing', 'num'], ['premises', 'num'], ['other', 'num']],
   interviews: [['id', 'text'], ['personId', 'person'], ['date', 'date'], ['interviewer', 'text'], ['summary', 'long'], ['themes', 'text'], ['painPoints', 'long'], ['ideas', 'long'], ['quotes', 'long']],
   findings: [['id', 'text'], ['title', 'text'], ['area', 'text'], ['severity', ['high', 'medium', 'low']], ['evidence', 'long']],
-  recommendations: [['id', 'text'], ['title', 'text'], ['type', ['People', 'Process', 'Tool', 'Build', 'Structure', 'Commercial']], ['horizon', ['0-3 months', '3-6 months', '6-12 months', '12+ months']], ['description', 'long'], ['effort', 'num'], ['risk', 'num'], ['confidence', 'num'], ['oneOffCost', 'num'], ['otherAnnualSaving', 'num'], ['revenueUplift', 'num'], ['status', ['Proposed', 'Agreed', 'In progress', 'Done', 'Rejected']], ['ops', 'json']],
+  recommendations: [['id', 'text'], ['title', 'text'], ['type', ['People', 'Process', 'Tool', 'Build', 'Structure', 'Commercial']], ['horizon', ['0-3 months', '3-6 months', '6-12 months', '12+ months']], ['description', 'long'], ['effort', 'num'], ['risk', 'num'], ['confidence', 'num'], ['oneOffCost', 'num'], ['otherAnnualSaving', 'num'], ['oneOffSaving', 'num'], ['revenueUplift', 'num'], ['status', REC_STAGES], ['ops', 'json']],
   scenarios: [['id', 'text'], ['name', 'text'], ['description', 'text'], ['recommendationIds', 'json']]
 };
 const COLL_LABELS = { departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Top clients', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };
@@ -197,13 +207,53 @@ const actions = {
   copyPrompt: () => copyText(CLAUDE_PROMPT, 'Claude prompt copied. Paste it into Claude, then add your notes underneath.'),
   copyContext: () => copyText(JSON.stringify(stripMarks(E())), 'Client JSON copied. Paste it into Claude for analysis.'),
   addRow: (el) => {
-    const c = el.dataset.coll; const row = { id: uid(c.slice(0, 2)) };
-    if (c === 'processes') row.steps = []; if (c === 'recommendations') { row.ops = []; row.status = 'Proposed'; } if (c === 'scenarios') row.recommendationIds = [];
-    E()[c].push(row); save(); render();
+    const c = el.dataset.coll; const row = { id: uid(c.replace(/^engagement\./, '').slice(0, 2)) };
+    if (c === 'processes') row.steps = []; if (c === 'recommendations') { row.ops = []; row.status = 'Identified'; } if (c === 'scenarios') row.recommendationIds = [];
+    if (c === 'engagement.requests') Object.assign(row, { item: '', owner: E().engagement.contact || '', requestedDate: todayISO(), dueDate: addDaysISO(todayISO(), 5) });
+    getPath(E(), c).push(row); save(); render();
   },
-  delRow: (el) => { if (!confirm('Delete this row?')) return; const c = el.dataset.coll; E()[c] = E()[c].filter((x) => x.id !== el.dataset.id); save(); render(); },
+  delRow: (el) => { if (!confirm('Delete this row?')) return; const c = el.dataset.coll; const arr = getPath(E(), c); const i = arr.findIndex((x) => x.id === el.dataset.id); if (i >= 0) arr.splice(i, 1); save(); render(); },
+  seedPlan: () => { const g = E().engagement; if (!g.start) return toast('Add a start date first'); seedStandardPlan(E()); save(); render(); toast('Plan, requests and first activities created'); },
+  addDelay: () => { const g = E().engagement; const st = engagementStatus(E()); g.delays.push({ id: uid('dl'), dateRaised: todayISO(), phaseId: st.current ? st.current.id : '', cause: '', description: '', daysImpact: 0, noticeDate: '', status: 'Open', resolution: '' }); save(); render(); },
+  delayFromRequest: (el) => {
+    const g = E().engagement; const r = g.requests.find((x) => x.id === el.dataset.id); const st = engagementStatus(E());
+    g.delays.push({ id: uid('dl'), dateRaised: todayISO(), phaseId: st.current ? st.current.id : 'ph1', cause: 'Client: information late', description: `Outstanding since ${fmtD(r.dueDate)}: ${r.item}`, daysImpact: 0, noticeDate: '', status: 'Open', resolution: '' });
+    save(); render(); toast('Delay logged. Set the days impact and the date notice was sent.'); document.getElementById('delays')?.scrollIntoView({ behavior: 'smooth' });
+  },
+  addActivity: () => { const st = engagementStatus(E()); E().engagement.activities.push({ id: uid('ac'), phaseId: st.current ? st.current.id : '', title: '', due: todayISO(), status: 'Next', doneDate: '' }); save(); render(); },
+  addTime: () => { const st = engagementStatus(E()); E().engagement.timeLog.push({ id: uid('tl'), date: todayISO(), phaseId: st.current ? st.current.id : '', days: '0.5', activity: '', notes: '' }); save(); render(); },
+  statusReport: () => { ui.tab = 'report'; ui.reportType = 'status'; saveUI(); render(); },
+  reportType: (el) => { ui.reportType = el.dataset.id; render(); },
+  startCapture: (el) => {
+    const e = E(); const pid = el.dataset.id || '';
+    const existing = loadDraft();
+    if (existing && existing.engId === e.id && !pid && !existing.saved && confirm('Resume your unsaved interview draft?')) { ui.draft = existing; }
+    else { const p = e.people.find((x) => x.id === pid); ui.draft = { engId: e.id, personId: pid, level: guessLevel(e, p), deptType: '', date: todayISO(), interviewer: e.meta.consultant === 'The Growth Machine' ? '' : e.meta.consultant, durationMins: '', logTime: true, answers: {}, outliers: [{ text: '', crit: '' }], summary: '', themes: '', painPoints: '', ideas: '', quotes: '' }; }
+    ui.capture = true; ui.tab = 'discovery'; saveDraft(ui.draft); render(); window.scrollTo(0, 0);
+  },
+  editInterview: (el) => {
+    const iv = E().interviews.find((x) => x.id === el.dataset.id); if (!iv) return;
+    ui.draft = Object.assign({ engId: E().id, editingId: iv.id, level: iv.level || 'staff', deptType: iv.deptType || '', logTime: false, outliers: [] }, clone(iv));
+    if (!ui.draft.outliers.length) ui.draft.outliers.push({ text: '', crit: '' });
+    ui.capture = true; ui.tab = 'discovery'; render(); window.scrollTo(0, 0);
+  },
+  cancelCapture: () => { ui.capture = false; render(); },
+  addOutlier: () => { ui.draft.outliers.push({ text: '', crit: '' }); saveDraft(ui.draft); render(); },
+  saveCapture: () => {
+    const e = E(); const d = ui.draft; const p = e.people.find((x) => x.id === d.personId);
+    if (!p && !d.personLabel) return toast('Choose a person or enter a name');
+    const iv = { id: d.editingId || uid('iv'), personId: d.personId || '', personLabel: p ? '' : d.personLabel, level: d.level, deptType: d.deptType || deptType(e.departments.find((x) => x.id === (p || {}).departmentId)),
+      date: d.date, interviewer: d.interviewer || '', durationMins: d.durationMins, summary: d.summary, themes: d.themes, painPoints: d.painPoints, ideas: d.ideas, quotes: d.quotes,
+      answers: Object.fromEntries(Object.entries(d.answers).filter(([, v]) => String(v).trim())), outliers: d.outliers.filter((o) => String(o.text || '').trim()) };
+    const i = e.interviews.findIndex((x) => x.id === iv.id); if (i >= 0) e.interviews[i] = iv; else e.interviews.push(iv);
+    if (d.logTime && num(d.durationMins) > 0 && e.engagement.phases.length) {
+      const ph = e.engagement.phases.find((x) => /listen|interview/i.test(x.name)) || e.engagement.phases[0];
+      e.engagement.timeLog.push({ id: uid('tl'), date: d.date, phaseId: ph.id, days: String(Math.max(0.25, Math.round(num(d.durationMins) / 480 * 4) / 4)), activity: `Interview: ${p ? p.name : d.personLabel}`, notes: '' });
+    }
+    d.saved = true; saveDraft(d); ui.capture = false; save(); render(); toast('Interview saved');
+  },
   editJSON: (el) => {
-    const { coll, id, field } = el.dataset; const row = E()[coll].find((x) => x.id === id);
+    const { coll, id, field } = el.dataset; const row = getPath(E(), coll).find((x) => x.id === id);
     openModal(`${COLL_LABELS[coll]} → ${row.name || row.title || id} → ${field}`, JSON.stringify(row[field] || [], null, 2), (txt) => {
       let v; try { v = JSON.parse(txt); } catch (err) { toast('Invalid JSON: ' + err.message); return false; }
       row[field] = v; Object.assign(E(), normalise(E())); save(); render(); return true;
@@ -218,7 +268,7 @@ const actions = {
   },
   toggleReportProc: (el) => { const r = E().report; const ids = new Set(r.processIds || []); el.checked ? ids.add(el.dataset.id) : ids.delete(el.dataset.id); r.processIds = [...ids]; save(); render(); },
   printReport: () => { if (ui.tab !== 'report') { ui.tab = 'report'; render(); } setTimeout(() => window.print(), 50); },
-  downloadReport: () => downloadReportHTML(E())
+  downloadReport: () => downloadReportHTML(E(), ui.reportType)
 };
 
 /* ---------- modal ---------- */
@@ -252,27 +302,38 @@ document.addEventListener('change', (ev) => {
     };
     fr.readAsText(t.files[0]); return;
   }
+  if (t.id === 'intakeFile' && t.files[0]) {
+    const fr = new FileReader();
+    fr.onload = () => { const res = importIntakeCSV(E(), fr.result); save(); render(); toast(`Founder responses: ${res.added} added, ${res.updated || 0} updated${res.unmatched.length ? `, ${res.unmatched.length} columns not matched` : ''}`); };
+    fr.readAsText(t.files[0]); return;
+  }
+  if (t.dataset.draftsel) { setPath(ui.draft, t.dataset.draftsel, t.value); if (t.dataset.draftsel === 'personId') { const p = E().people.find((x) => x.id === t.value); ui.draft.level = guessLevel(E(), p); ui.draft.deptType = ''; } saveDraft(ui.draft); render(); return; }
+  if (t.dataset.draftchk) { ui.draft[t.dataset.draftchk] = t.checked; saveDraft(ui.draft); return; }
   if (t.dataset.action && t.type === 'checkbox') { const fn = actions[t.dataset.action]; if (fn) fn(t, ev); return; }
   if (t.dataset.ui) { ui[t.dataset.ui] = t.type === 'checkbox' ? t.checked : t.value; saveUI(); render(); return; }
   if (t.dataset.bind) {
     const v = t.type === 'checkbox' ? t.checked : t.value; setPath(E(), t.dataset.bind, v); save();
-    if (ui.tab === 'report' || t.dataset.bind === 'meta.currency' || t.dataset.bind === 'client.name') render();
+    if (ui.tab === 'report' || ui.tab === 'progress' || t.dataset.bind === 'meta.currency' || t.dataset.bind === 'client.name') render();
     return;
   }
   if (t.hasAttribute('data-cell')) {
-    const { coll, id, field, type } = t.dataset; const row = E()[coll].find((x) => x.id === id); if (!row) return;
+    const { coll, id, field, type } = t.dataset; const arr = getPath(E(), coll) || []; const row = arr.find((x) => x.id === id); if (!row) return;
     let v = t.value; if (type === 'num') v = v === '' ? '' : num(v);
     if (field === 'id') {
-      if (!v || E()[coll].some((x) => x.id === v)) { toast('ids must be unique and not empty'); t.value = id; return; }
+      if (!v || arr.some((x) => x.id === v)) { toast('ids must be unique and not empty'); t.value = id; return; }
       t.closest('tr').querySelectorAll('[data-id]').forEach((n) => { n.dataset.id = v; });
     }
-    row[field] = v; save();
-    if (coll === 'recommendations' && ui.tab === 'recs') render();
+    row[field] = v;
+    if (coll === 'engagement.activities' && field === 'status') row.doneDate = v === 'Done' ? (row.doneDate || todayISO()) : '';
+    if (coll === 'engagement.phases' && field === 'status' && v === 'Done') { const ps = E().engagement.phases; const i = ps.indexOf(row); if (ps[i + 1] && ps[i + 1].status === 'Not started') ps[i + 1].status = 'In progress'; }
+    save();
+    if ((coll === 'recommendations' && ui.tab === 'recs') || (ui.tab === 'progress' && (t.tagName === 'SELECT' || t.type === 'date' || t.type === 'number'))) render();
   }
 });
 document.addEventListener('input', (ev) => {
   const t = ev.target;
   if (t.tagName === 'TEXTAREA' && t.dataset.bind) { setPath(E(), t.dataset.bind, t.value); save(); }
+  if (t.dataset.draft && ui.draft) { setPath(ui.draft, t.dataset.draft, t.type === 'number' ? t.value : t.value); saveDraft(ui.draft); }
 });
 
 /* ---------- tooltip (hover layer for every chart mark) ---------- */
