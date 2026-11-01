@@ -220,9 +220,10 @@ function viewIntakeSession(e) {
     return `<div class="page-h"><div><span class="eyebrow">Live founder session</span><h1>Who are you speaking with?</h1><p class="muted">You ask the questions and type the answers. Everything saves as you type, so you can stop at any point, switch person, and come back later.</p></div><button class="btn ghost" data-action="endIntake">Close</button></div>
     ${e.intake.length ? card('Continue with', `<div class="btn-row">${e.intake.map((x) => `<button class="btn sm" data-action="resumeIntake" data-id="${esc(x.id)}">${esc(x.respondent)}${x.role ? ' · ' + esc(x.role) : ''} (${Object.keys(x.answers).length} answers)</button>`).join('')}</div>`) : ''}
     ${card('New person', `<div class="form-grid">
-      <label class="fld"><span>From the org chart</span>${sel(leaders.concat(e.people.filter((p) => !leaders.includes(p))).map((p) => [p.id, p.name + (p.title ? ' · ' + p.title : '')]), '', 'id="sessPerson"')}</label>
-      <label class="fld"><span>…or name</span><input id="sessName" placeholder="e.g. Daryl"></label>
+      ${e.people.length ? `<label class="fld"><span>From the org chart</span>${sel(leaders.concat(e.people.filter((p) => !leaders.includes(p))).map((p) => [p.id, p.name + (p.title ? ' · ' + p.title : '')]), '', 'id="sessPerson"')}</label>` : '<input type="hidden" id="sessPerson" value="">'}
+      <label class="fld"><span>${e.people.length ? '…or name' : 'Name'}</span><input id="sessName" placeholder="e.g. Daryl"></label>
       <label class="fld"><span>Role</span><input id="sessRole" placeholder="e.g. Co-founder / MD"></label></div>
+      ${e.people.length ? '' : '<p class="faint small">No org chart yet, so just type the name. Once People & org is filled in, you can pick people from a list here.</p>'}
       <div class="btn-row"><button class="btn" data-action="newIntake">Start</button></div>`)}`;
   }
   const io = intakeOutstanding(e);
