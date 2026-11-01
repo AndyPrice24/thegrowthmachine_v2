@@ -2,7 +2,7 @@
    Views — each returns an HTML string for the main panel
    ============================================================ */
 const TABS = [
-  ['overview', 'Overview'], ['progress', 'Progress & time'], ['discovery', 'Discovery'], ['business', 'Business & market'], ['finance', 'Finance'], ['org', 'People & org'],
+  ['overview', 'Overview'], ['progress', 'Progress & time'], ['discovery', 'Discovery'], ['business', 'Business & market'], ['competitors', 'Competitors'], ['finance', 'Finance'], ['org', 'People & org'],
   ['tools', 'Tools'], ['processes', 'Processes'], ['interviews', 'Interviews'], ['crossover', 'Crossover'],
   ['recs', 'Recommendations'], ['scenarios', 'Scenarios'], ['report', 'Report'], ['data', 'Data & Claude']
 ];
@@ -272,7 +272,7 @@ function viewReport(e) {
       ${toggle}${e.engagement.phases.length ? `<div class="report-layout">${statusSettings(e)}<div class="report-preview status-preview"><div id="report-doc" class="rpt">${renderStatusReport(e)}</div></div></div>` : '<p>Set up the engagement in Progress & time first.</p>'}`;
   }
   const r = e.report; const sec = r.sections;
-  const secLabels = { snapshot: 'Current-state snapshot', findings: 'Key findings', org: 'Org chart: current vs proposed', processes: 'Process maps: before / after', recommendations: 'Recommendations roadmap', financials: 'Financial impact', nextSteps: 'Next steps' };
+  const secLabels = { snapshot: 'Current-state snapshot', competition: 'Market & competition', findings: 'Key findings', org: 'Org chart: current vs proposed', processes: 'Process maps: before / after', recommendations: 'Recommendations roadmap', financials: 'Financial impact', nextSteps: 'Next steps' };
   return `<div class="page-h"><div><span class="eyebrow">Report</span><h1>Founder report</h1><p class="muted">Preview below. Export as PDF (print) or as one self-contained HTML file you can email. Exports hold no raw data and do not depend on this tool or on Claude.</p></div>
     <div class="btn-row"><button class="btn" data-action="printReport">Print / save PDF</button><button class="btn" data-action="downloadReport">Download HTML report</button></div></div>
   ${toggle}

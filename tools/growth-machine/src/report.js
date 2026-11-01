@@ -31,6 +31,16 @@ function renderReport(e) {
       <div><h3>Revenue by customer segment</h3>${hbars(e.segments.map((s) => ({ label: s.name, value: num(s.annualRevenue) })).sort((a, b) => b.value - a.value), { fmt: fmtMoney, color: 'var(--s2)' })}</div>
     </div></section>`;
 
+  if (sec.competition && e.competitors.length) h += `<section class="rpt-sec rpt-break"><h2>Market & competition</h2>
+    <table class="tbl"><thead><tr><th>Competitor</th><th>Threat</th><th>Pricing</th><th>Where ${esc(e.client.name)} wins</th><th>Where it loses</th></tr></thead><tbody>
+    ${e.competitors.map((c) => `<tr><td><strong>${esc(c.name)}</strong><div class="muted small">${esc([c.type, c.markets].filter(Boolean).join(' · '))}</div></td><td>${esc(c.threat || '—')}</td><td class="small">${esc(c.pricingModel || '')}${num(c.pricePoint) ? ` · ~${esc(fmtMoney(num(c.pricePoint)))}/location/mo` : ''}</td><td class="small">${esc(c.whereWeWin || '—')}</td><td class="small">${esc(c.whereWeLose || '—')}</td></tr>`).join('')}</tbody></table>
+    ${e.capabilities.length ? `<h3>Capability comparison</h3><div class="rpt-fig">${capabilityMatrix(e, { editable: false })}</div>` : ''}
+    ${positioningMap(e).includes('<svg') ? `<h3>Positioning: price vs capability</h3>${positioningMap(e)}` : ''}
+    ${e.client.positioning ? `<h3>Positioning</h3><p class="rpt-lead">${esc(e.client.positioning)}</p>` : ''}
+    ${e.usps.length ? `<h3>USPs tested against competitors</h3><table class="tbl"><thead><tr><th>Claim</th><th>Versus competitors</th><th>Evidence</th></tr></thead><tbody>${e.usps.map((u) => `<tr><td>${esc(u.claim)}</td><td>${esc(u.strength || '')}</td><td class="small">${esc(u.proof || '')}</td></tr>`).join('')}</tbody></table>` : ''}
+    ${e.opportunities.filter((o) => o.status !== 'Idea').length ? `<h3>Opportunities</h3><ul>${e.opportunities.filter((o) => o.status !== 'Idea').map((o) => `<li><b>${esc(o.title)}</b> <span class="muted small">(${esc(o.area || '')} · impact ${esc(o.impact || '—')})</span>${o.description ? ' · ' + esc(o.description) : ''}</li>`).join('')}</ul>` : ''}
+    <p class="small muted">Competitor information comes from public sources and interviews, reviewed ${esc([...new Set(e.competitors.map((c) => c.lastReviewed).filter(Boolean))].sort().slice(-1)[0] || 'recently')}. Indicative prices are estimates.</p></section>`;
+
   if (sec.findings && (e.findings.length || ins.length)) h += `<section class="rpt-sec"><h2>Key findings</h2>
     ${e.findings.length ? `<ol class="rpt-findings">${e.findings.map((f) => `<li>${sevChip(f.severity || 'medium')} <strong>${esc(f.title)}</strong><p>${esc(f.evidence || '')}</p></li>`).join('')}</ol>` : ''}
     ${ins.length ? `<h3>What the data shows</h3><ul class="insights">${ins.map((x) => `<li>${sevChip(x.severity)} <strong>${esc(x.title)}</strong><div class="muted small">${esc(x.detail)}</div></li>`).join('')}</ul>` : ''}</section>`;

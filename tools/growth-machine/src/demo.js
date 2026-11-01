@@ -166,6 +166,34 @@ function demoEngagement() {
     { id: 'sc2', name: 'B · Automation programme', description: 'Quick wins plus the three automation builds. No headcount change.', recommendationIds: ['r1', 'r2', 'r3', 'r4', 'r6', 'r7'] },
     { id: 'sc3', name: 'C · Automation + restructure', description: 'Everything in B plus the Data Ops restructure.', recommendationIds: ['r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7'] }
   ];
+  // Competitor sample (fictional)
+  e.client.pricePoint = 450;
+  e.competitors = [
+    { id: 'co1', name: 'Competitor A (global platform)', type: 'Direct', threat: 'High', hq: 'USA', markets: 'Global incl. SA', segments: 'Enterprise retail', offering: 'Listings, reviews, social and reporting suite', pricingModel: 'Per location, annual', pricePoint: 520, strengths: 'Brand, breadth, integrations', weaknesses: 'No local support; USD pricing', whereWeWin: 'Local support, ZAR pricing, onboarding speed', whereWeLose: 'Large multinationals with global contracts', sources: 'https://example.com/pricing', lastReviewed: addDaysISO(todayISO(), -10) },
+    { id: 'co2', name: 'Competitor B (local agency)', type: 'Indirect', threat: 'Medium', hq: 'Johannesburg', markets: 'South Africa', segments: 'Franchise groups, SMB', offering: 'Managed local SEO service', pricingModel: 'Monthly retainer', pricePoint: 300, strengths: 'Hands-on service, relationships', weaknesses: 'Manual, limited reporting', whereWeWin: 'Scale and reporting', whereWeLose: 'Small franchise groups wanting a done-for-you service', sources: 'https://example.org', lastReviewed: addDaysISO(todayISO(), -10) },
+    { id: 'co3', name: 'Competitor C (budget SaaS)', type: 'Direct', threat: 'Low', hq: 'Europe', markets: 'Global', segments: 'SMB', offering: 'Self-serve listings sync', pricingModel: 'Per location, monthly', pricePoint: 180, strengths: 'Cheap, self-serve', weaknesses: 'Thin features, no reviews module', whereWeWin: 'Anything multi-location', whereWeLose: 'Price-only SMB buyers', sources: '', lastReviewed: '' }
+  ];
+  e.capabilities = [
+    { id: 'cap1', name: 'Listings sync across directories', importance: 'High', client: 'Strong', scores: { co1: 'Strong', co2: 'Partial', co3: 'Strong' } },
+    { id: 'cap2', name: 'Review management & responses', importance: 'High', client: 'Strong', scores: { co1: 'Strong', co2: 'Partial', co3: 'None' } },
+    { id: 'cap3', name: 'Client reporting dashboard', importance: 'Medium', client: 'Partial', scores: { co1: 'Strong', co2: 'None', co3: 'Partial' } },
+    { id: 'cap4', name: 'Local onboarding & support', importance: 'Medium', client: 'Strong', scores: { co1: 'None', co2: 'Strong', co3: 'None' } },
+    { id: 'cap5', name: 'API / integrations', importance: 'Low', client: 'Partial', scores: { co1: 'Strong', co2: 'None', co3: 'Partial' } }
+  ];
+  e.intel = [
+    { id: 'it1', competitorId: 'co1', topic: 'Pricing', note: 'Lists per-location pricing in USD on its website; annual contracts only.', sourceType: 'Online research', source: 'https://example.com/pricing', date: addDaysISO(todayISO(), -10) },
+    { id: 'it2', competitorId: 'co1', topic: 'Customers', note: 'Two lost deals in Q3 went to them via a global head-office contract.', sourceType: 'Staff', source: 'Sales interview', date: addDaysISO(todayISO(), -8) },
+    { id: 'it3', competitorId: 'co2', topic: 'Marketing', note: 'Runs a free local-SEO audit offer to franchise owners.', sourceType: 'Founder', source: 'Founder session', date: addDaysISO(todayISO(), -12) }
+  ];
+  e.usps = [
+    { id: 'us1', claim: 'Local onboarding and support in SA time zones', strength: 'Unique', proof: 'Only Competitor B offers local support, and it lacks the platform.', competitorsWithIt: 'Competitor B (partly)' },
+    { id: 'us2', claim: 'Most accurate listings data', strength: 'Claimed only', proof: 'No third-party evidence yet.', competitorsWithIt: '' }
+  ];
+  e.client.positioning = 'For multi-location brands in Africa, Demo Co is the location platform that keeps every store findable and reviewed, with local support, unlike global tools priced in dollars.';
+  e.opportunities = [
+    { id: 'op1', title: 'Free location-health audit as a lead magnet', area: 'Marketing', description: 'Counter Competitor B\'s audit offer with an automated, data-backed version.', basedOn: 'Intel: Competitor B audit offer', impact: 'High', effort: 'Low', status: 'Proposed' },
+    { id: 'op2', title: 'ZAR-priced enterprise bundle', area: 'Pricing', description: 'Lead with ZAR pricing against Competitor A at renewal time.', basedOn: 'Competitor A pricing (USD)', impact: 'Medium', effort: 'Low', status: 'Idea' }
+  ];
   // Engagement tracking sample: started three weeks ago
   const start = addDaysISO(todayISO(), -20);
   e.engagement = Object.assign(blankEngagementBlock(), { contact: 'Alex Okafor', contactRole: 'COO, decision-maker', start, daysTotal: 30, daysPerMonth: 10, targetMonthly: 60000 });

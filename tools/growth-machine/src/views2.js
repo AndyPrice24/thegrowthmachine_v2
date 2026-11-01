@@ -295,3 +295,98 @@ function viewIntakeSession(e) {
     ${ui.prioOnly ? `<h4>Anything else they raised</h4><div class="qa"><textarea data-intake="i_other" rows="3" placeholder="Unexpected points, worries, names mentioned…">${esc(r.answers.i_other || '')}</textarea></div>` : ''}
   </div>`;
 }
+
+/* ---------- Competitors: profiles, capability matrix, positioning ---------- */
+const CAP_LEVELS = ['Strong', 'Partial', 'None'];
+const INTEL_TOPICS = ['Pricing', 'Product', 'Marketing', 'Customers', 'Team', 'Technology', 'Partnerships', 'News', 'Other'];
+const SOURCE_TYPES = ['Online research', 'Founder', 'Staff', 'Client / customer', 'Other'];
+const OPP_AREAS = ['Positioning', 'Marketing', 'Product', 'Pricing', 'Sales', 'Systems & operations'];
+const CAP_VAL = { Strong: 1, Partial: 0.5, None: 0 };
+const IMP_W = { High: 3, Medium: 2, Low: 1 };
+function capabilityScore(e, getLevel) {
+  let w = 0, tot = 0;
+  e.capabilities.forEach((c) => { const lv = getLevel(c); if (!(lv in CAP_VAL)) return; const wt = IMP_W[c.importance] || 2; w += wt; tot += wt * CAP_VAL[lv]; });
+  return w ? tot / w * 100 : null;
+}
+function positioningMap(e) {
+  const pts = e.competitors.filter((c) => num(c.pricePoint) > 0).map((c) => ({ label: c.name, x: num(c.pricePoint), y: capabilityScore(e, (cap) => (cap.scores || {})[c.id]), threat: c.threat }));
+  if (num(e.client.pricePoint) > 0) pts.push({ label: e.client.name, x: num(e.client.pricePoint), y: capabilityScore(e, (cap) => cap.client), me: true });
+  const ok = pts.filter((p) => p.y != null);
+  if (ok.length < 2) return '<p class="empty">Add indicative price points and capability scores for at least two players to see the positioning map.</p>';
+  const W = 640, H = 300, L = 60, R = 20, T = 14, B = 36;
+  const xmax = niceMax(Math.max(...ok.map((p) => p.x)) * 1.1);
+  const x = (v) => L + v / xmax * (W - L - R), y = (v) => T + (1 - v / 100) * (H - T - B);
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Price versus capability">`;
+  svg += `<g class="grid">${[0, 25, 50, 75, 100].map((t) => `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}"/>`).join('')}</g>`;
+  svg += `<g class="axis">${[0, 50, 100].map((t) => `<text x="${L - 8}" y="${y(t) + 4}" text-anchor="end">${t}%</text>`).join('')}${[0, 0.5, 1].map((f) => `<text x="${x(f * xmax)}" y="${H - 16}" text-anchor="middle">${esc(fmtShort(f * xmax))}</text>`).join('')}
+    <text x="${(L + W - R) / 2}" y="${H - 2}" text-anchor="middle">Indicative price per location / month →</text><text x="12" y="${T + 6}" transform="rotate(-90 12 ${T + 6})" text-anchor="end">Capability →</text></g>`;
+  ok.forEach((p) => {
+    svg += `<circle cx="${x(p.x)}" cy="${y(p.y)}" r="${p.me ? 8 : 6}" fill="${p.me ? 'var(--red)' : 'var(--s1)'}" stroke="var(--surface)" stroke-width="2" data-tip="${esc(p.label)} · ${esc(fmtMoney(p.x))} · capability ${Math.round(p.y)}%${p.threat ? ' · threat ' + esc(p.threat) : ''}"/>`;
+    svg += `<text x="${x(p.x) + 11}" y="${y(p.y) + 4}" style="font-size:11px;fill:var(--ink);font-weight:${p.me ? 700 : 500}">${esc(trunc(p.label, 22))}</text>`;
+  });
+  return `<div class="chart pos-map"><div class="legend"><span><i style="background:var(--red)"></i>${esc(e.client.name)}</span><span><i style="background:var(--s1)"></i>Competitors</span></div>${svg}</div>`;
+}
+const capMark = (lv) => ({ Strong: '<span class="cap cap-s" title="Strong">● Strong</span>', Partial: '<span class="cap cap-p" title="Partial">◐ Partial</span>', None: '<span class="cap cap-n" title="None">○ None</span>' }[lv] || '<span class="faint">?</span>');
+function capabilityMatrix(e, { editable = true } = {}) {
+  if (!e.capabilities.length) return '<p class="empty">No capabilities listed yet. Add the features or services clients choose on (e.g. listings sync, review management, reporting, API, local support).</p>';
+  const cols = [{ id: '__client', name: e.client.name, me: true }, ...e.competitors];
+  const cell = (cap, col) => {
+    const lv = col.me ? cap.client : (cap.scores || {})[col.id];
+    return editable ? `<td class="c">${sel(CAP_LEVELS, lv || '', `data-capcell="${esc(cap.id)}" data-comp="${esc(col.id)}"`)}</td>` : `<td class="c">${capMark(lv)}</td>`;
+  };
+  return `<table class="tbl matrix capm"><thead><tr><th>Capability</th><th>Importance</th>${cols.map((c) => `<th class="c ${c.me ? 'me' : ''}">${esc(trunc(c.name, 18))}</th>`).join('')}</tr></thead><tbody>
+    ${e.capabilities.map((cap) => `<tr><td>${esc(cap.name)}</td><td class="small">${esc(cap.importance || '—')}</td>${cols.map((c) => cell(cap, c)).join('')}</tr>`).join('')}
+    <tr><td><b>Weighted score</b></td><td></td>${cols.map((c) => { const s = capabilityScore(e, (cap) => (c.me ? cap.client : (cap.scores || {})[c.id])); return `<td class="c"><b>${s == null ? '—' : Math.round(s) + '%'}</b></td>`; }).join('')}</tr></tbody></table>`;
+}
+function viewCompetitors(e) {
+  const comps = e.competitors;
+  const threatChip = (t) => t === 'High' ? '<span class="chip sev-high">▲ High threat</span>' : t === 'Medium' ? '<span class="chip sev-medium">● Medium threat</span>' : t === 'Low' ? '<span class="chip sev-low">○ Low threat</span>' : '';
+  const stale = comps.filter((c) => !c.lastReviewed || daysBetween(c.lastReviewed, todayISO()) > 90).length;
+  const unsourced = comps.filter((c) => !String(c.sources || '').trim()).length;
+  return `<div class="page-h"><div><span class="eyebrow">Market & competition</span><h1>Competitors</h1><p class="muted">Who ${esc(e.client.name)} competes with, where it wins and loses, and how it is positioned. Every profile should cite its sources and carry a review date: research goes stale.</p></div>
+    <div class="btn-row"><button class="btn" data-action="addCompetitor">+ Add competitor</button><button class="btn ghost" data-action="addCapability">+ Add capability</button></div></div>
+  <div class="kpis">${kpi('Competitors tracked', comps.length)}${kpi('High threat', comps.filter((c) => c.threat === 'High').length)}${kpi('Capabilities compared', e.capabilities.length)}
+    <div class="kpi ${unsourced || stale ? 'kpi-flag' : ''}"><div class="k-label">Evidence</div><div class="k-value k-text">${unsourced ? `${unsourced} without sources` : '✓ All sourced'}</div><div class="k-delta">${stale ? `${stale} not reviewed in 90 days` : 'all reviewed recently'}</div></div></div>
+  ${comps.length ? `<div class="comp-grid">${comps.map((c) => `<article class="card comp">
+    <header><div><h3>${esc(c.name)}</h3><div class="muted small">${esc([c.type, c.hq, c.markets].filter(Boolean).join(' · '))}</div></div>${threatChip(c.threat)}</header>
+    ${c.offering ? `<p class="small">${esc(c.offering)}</p>` : ''}
+    <dl class="comp-dl">
+      ${c.pricingModel || c.pricePoint ? `<dt>Pricing</dt><dd>${esc(c.pricingModel || '')}${num(c.pricePoint) ? ` · ~${esc(fmtMoney(num(c.pricePoint)))} per location / month` : ''}</dd>` : ''}
+      ${c.segments ? `<dt>Targets</dt><dd>${esc(c.segments)}</dd>` : ''}
+      ${c.strengths ? `<dt>Strengths</dt><dd>${esc(c.strengths)}</dd>` : ''}
+      ${c.weaknesses ? `<dt>Weaknesses</dt><dd>${esc(c.weaknesses)}</dd>` : ''}
+      ${c.whereWeWin ? `<dt>We win</dt><dd>${esc(c.whereWeWin)}</dd>` : ''}
+      ${c.whereWeLose ? `<dt>We lose</dt><dd>${esc(c.whereWeLose)}</dd>` : ''}
+    </dl>
+    <p class="faint small">${c.sources ? 'Sources: ' + esc(trunc(c.sources, 140)) : '⚑ No sources recorded'} · ${c.lastReviewed ? 'Reviewed ' + esc(fmtD(c.lastReviewed, { day: 'numeric', month: 'short', year: 'numeric' })) : 'Not reviewed'}</p>
+    <div class="btn-row"><button class="btn sm" data-action="editCompetitor" data-id="${esc(c.id)}">Edit profile</button><button class="btn sm ghost" data-action="addIntel" data-id="${esc(c.id)}">+ Intel</button><span class="faint small">${e.intel.filter((x) => x.competitorId === c.id).length} intel entries</span></div></article>`).join('')}</div>`
+    : card('', '<p class="empty">No competitors yet. Add them here or in Data & Claude, or ask Claude to research them and paste the result in (the prompt includes the competitor format).</p>')}
+  ${card('Capability comparison', `<div class="scroll-x">${capabilityMatrix(e)}</div>`, { sub: 'Choose Strong / Partial / None per cell. The weighted score uses each capability\'s importance (High 3, Medium 2, Low 1).' })}
+  ${intelBlock(e)}
+  ${sharpenBlock(e)}
+  ${card('Positioning: price vs capability', `<div class="form-grid"><label class="fld"><span>${esc(e.client.name)} indicative price per location / month</span><input type="number" data-bind="client.pricePoint" value="${esc(e.client.pricePoint || '')}"></label></div>${positioningMap(e)}`, { sub: 'Price is an indicative monthly price per location. Hover a point for detail.' })}`;
+}
+
+/* Knowledge bank: every fact with its source type, filterable by competitor */
+function intelBlock(e) {
+  const f = ui.intelComp || 'all'; const cById = byId(e.competitors);
+  const rows = e.intel.filter((x) => f === 'all' || x.competitorId === f).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const bySrc = SOURCE_TYPES.map((t) => [t, e.intel.filter((x) => x.sourceType === t).length]).filter(([, n]) => n);
+  return card(`Knowledge bank (${e.intel.length} entries)`, `<div class="toolbar"><button class="btn sm ${f === 'all' ? 'on' : ''}" data-action="setIntelFilter" data-id="all">All</button>${e.competitors.map((c) => `<button class="btn sm ${f === c.id ? 'on' : ''}" data-action="setIntelFilter" data-id="${esc(c.id)}">${esc(trunc(c.name, 22))}</button>`).join('')}<span class="faint small" style="margin-left:auto">${bySrc.map(([t, n]) => `${esc(t)}: ${n}`).join(' · ')}</span></div>
+    ${rows.length ? `<table class="tbl"><thead><tr><th>Date</th><th>Competitor</th><th>Topic</th><th>What we know</th><th>Source</th></tr></thead><tbody>${rows.map((x) => `<tr><td class="nowrap small">${fmtD(x.date)}</td><td class="small">${esc((cById[x.competitorId] || {}).name || '—')}</td><td><span class="chip">${esc(x.topic || '—')}</span></td><td>${esc(x.note || '')}</td><td class="small">${esc(x.sourceType || '')}${x.source ? `<div class="faint">${/^https?:/.test(x.source) ? `<a href="${esc(x.source)}" target="_blank" rel="noopener">${esc(trunc(x.source.replace(/^https?:\/\/(www\.)?/, ''), 40))}</a>` : esc(x.source)}</div>` : ''}</td></tr>`).join('')}</tbody></table>`
+      : '<p class="empty">Nothing banked yet. Add facts as they come in from founders, staff, clients and online research. Each entry is one fact with its source.</p>'}
+    <div class="btn-row"><button class="btn sm" data-action="addIntel">+ Add intel</button></div>`, { sub: 'One fact per entry, always with its source. Founder and staff answers about competitors appear under Discovery; bank the useful ones here.' });
+}
+
+/* Sharpening the client: positioning, USPs tested against competitors, opportunities */
+function sharpenBlock(e) {
+  const C = 'usps', O = 'opportunities';
+  const usp = e.usps.length ? `<table class="tbl grid-edit"><thead><tr><th>Claim</th><th>Versus competitors</th><th>Proof / evidence</th><th>Who else has it</th><th></th></tr></thead><tbody>${e.usps.map((u) => `<tr><td>${ecell(C, u, 'claim')}</td><td>${ecellSel(C, u, 'strength', ['Unique', 'Shared', 'Claimed only'], false)}</td><td>${ecellArea(C, u, 'proof')}</td><td>${ecell(C, u, 'competitorsWithIt')}</td><td>${delBtn(C, u.id)}</td></tr>`).join('')}</tbody></table>` : '<p class="empty">List what Location Bank says makes it different, then test each claim against the knowledge bank.</p>';
+  const opp = e.opportunities.length ? `<table class="tbl grid-edit"><thead><tr><th>Opportunity</th><th>Area</th><th>Based on</th><th>Impact</th><th>Effort</th><th>Status</th><th></th></tr></thead><tbody>${e.opportunities.map((o) => `<tr><td>${ecell(O, o, 'title')}${ecellArea(O, o, 'description', 1)}</td><td>${ecellSel(O, o, 'area', OPP_AREAS, false)}</td><td>${ecellArea(O, o, 'basedOn', 1)}</td><td>${ecellSel(O, o, 'impact', ['High', 'Medium', 'Low'], false)}</td><td>${ecellSel(O, o, 'effort', ['High', 'Medium', 'Low'], false)}</td><td>${o.status === 'Recommendation' ? '<span class="chip st-added">✓ In recommendations</span>' : `${ecellSel(O, o, 'status', ['Idea', 'Proposed'], false)}<div><button class="link small" data-action="oppToRec" data-id="${esc(o.id)}">→ Make recommendation</button></div>`}</td><td>${delBtn(O, o.id)}</td></tr>`).join('')}</tbody></table>` : '<p class="empty">Gaps competitors leave open, messages that work for them, prices you can defend, system or product moves. Each one can become a ranked recommendation.</p>';
+  const counts = ['Unique', 'Shared', 'Claimed only'].map((k) => `${k}: ${e.usps.filter((u) => u.strength === k).length}`).join(' · ');
+  return `<section class="card sharpen"><header class="card-h"><div><h3>Sharpening ${esc(e.client.name)}</h3><p class="sub">Use what the knowledge bank shows to tighten positioning, prove the USPs and find opportunities.</p></div></header>
+    <label class="fld"><span>Positioning statement (for [who], [client] is the [category] that [key benefit], unlike [alternative])</span><textarea data-bind="client.positioning" rows="2">${esc(e.client.positioning || '')}</textarea></label>
+    <h4>USPs tested against competitors <span class="faint small">${counts}</span></h4>${usp}<div class="btn-row"><button class="btn sm" data-action="addUsp">+ Add USP</button></div>
+    <h4>Opportunities</h4>${opp}<div class="btn-row"><button class="btn sm" data-action="addOpportunity">+ Add opportunity</button></div>
+  </section>`;
+}

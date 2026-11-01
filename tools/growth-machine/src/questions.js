@@ -9,6 +9,7 @@ const CRITERIA = [
   { id: 'strategy', label: 'Goals & strategy', feeds: 'Business profile' },
   { id: 'revenue', label: 'Revenue', feeds: 'Finance · Segments' },
   { id: 'customers', label: 'Customers & delivery', feeds: 'Segments · Processes' },
+  { id: 'market', label: 'Market & competition', feeds: 'Competitors' },
   { id: 'cost', label: 'Cost base', feeds: 'Finance · Tools' },
   { id: 'people', label: 'People & structure', feeds: 'People & org' },
   { id: 'process', label: 'Processes & workload', feeds: 'Processes' },
@@ -45,6 +46,12 @@ const INTAKE_SECTIONS = [
     { id: 'i_concentration', p: 1, crit: 'customers', type: 'long', q: 'How many active clients do you have, and roughly what share of revenue do your top five bring in?' },
     { id: 'i_pricing', crit: 'revenue', type: 'long', q: 'How do you price (per location, per month, set-up fees, reseller margins, discounts)?' },
     { id: 'i_churn', crit: 'customers', type: 'long', q: 'Which clients leave, and why? Roughly how many left in the last 12 months?' }
+  ] },
+  { id: 'competition', title: '2b. Competition', intro: 'Who you compete with, and where you win and lose.', questions: [
+    { id: 'i_comp_who', crit: 'market', type: 'long', q: 'Who are your main competitors, locally and internationally?' },
+    { id: 'i_comp_win', p: 1, crit: 'market', type: 'long', q: 'Where do you win against competitors, and where do you lose? Why?' },
+    { id: 'i_comp_threat', crit: 'market', type: 'long', q: 'Which competitor worries you most, and why?' },
+    { id: 'i_comp_price', crit: 'market', type: 'long', q: 'How does your pricing compare with theirs?' }
   ] },
   { id: 'cost', title: '3. Cost base', intro: 'This helps us agree the cost baseline the savings target is measured against.', questions: [
     { id: 'i_costs_top', p: 1, crit: 'cost', type: 'long', q: 'Apart from salaries, what are your five biggest monthly costs?' },
@@ -137,6 +144,7 @@ const INTERVIEW_QUESTIONS = [
   { id: 'f_vision', level: 'founder', dept: 'all', crit: 'strategy', q: 'Where do you want the business to be in 12–24 months?' },
   { id: 'f_bottleneck', level: 'founder', dept: 'all', crit: 'decisions', q: 'Where are you personally the bottleneck?' },
   { id: 'f_trust', level: 'founder', dept: 'all', crit: 'data', q: 'Which numbers do you trust least, and why?' },
+  { id: 'f_comp', level: 'founder', dept: 'all', crit: 'market', q: 'If a well-funded competitor copied you tomorrow, what would protect you?' },
   { id: 'f_people', level: 'founder', dept: 'all', crit: 'people', q: 'Which roles or people are critical, and where do you have doubts?' },
   // Manager
   { id: 'm_team', level: 'manager', dept: 'all', crit: 'people', q: 'Who is in your team, what does each person do, and how is the work split?' },
@@ -155,9 +163,11 @@ const INTERVIEW_QUESTIONS = [
   { id: 'd_sales_proposal', level: 'all', dept: 'sales', crit: 'process', q: 'How long does a proposal or quote take to produce? Who approves pricing?' },
   { id: 'd_sales_handover', level: 'all', dept: 'sales', crit: 'customers', q: 'What happens when a deal is signed? How is it handed over?' },
   { id: 'd_sales_crm', level: 'all', dept: 'sales', crit: 'data', q: 'How accurate is the CRM? What lives outside it?' },
+  { id: 'd_sales_comp', level: 'all', dept: 'sales', crit: 'market', q: 'Which competitors come up in deals? Why do we win or lose against them?' },
   { id: 'd_cs_onboarding', level: 'all', dept: 'cs', crit: 'process', q: 'Walk me through onboarding a new client, step by step. How long does it take?' },
   { id: 'd_cs_reporting', level: 'all', dept: 'cs', crit: 'customers', q: 'What reporting do clients receive, and how is it produced?' },
   { id: 'd_cs_churn', level: 'all', dept: 'cs', crit: 'customers', q: 'Why do clients leave? What early warning signs do you see?' },
+  { id: 'd_cs_comp', level: 'all', dept: 'cs', crit: 'market', q: 'Which competitors do clients mention, or leave us for? What do they say those competitors do better?' },
   { id: 'd_cs_tickets', level: 'all', dept: 'cs', crit: 'process', q: 'What are the most common support requests? Could clients self-serve any of them?' },
   { id: 'd_ops_volume', level: 'all', dept: 'ops', crit: 'process', q: 'How many locations or listings are processed per week or month? How is the work assigned?' },
   { id: 'd_ops_manual', level: 'all', dept: 'ops', crit: 'process', q: 'Which steps are manual (data cleaning, uploads, verification, corrections)?' },
@@ -173,6 +183,7 @@ const INTERVIEW_QUESTIONS = [
   { id: 'd_tech_data', level: 'all', dept: 'tech', crit: 'data', q: 'Where does client and operational data live? Who has access? How is it backed up?' },
   { id: 'd_mkt_channels', level: 'all', dept: 'marketing', crit: 'revenue', q: 'Which channels bring leads, and at what cost?' },
   { id: 'd_mkt_tools', level: 'all', dept: 'marketing', crit: 'cost', q: 'Which marketing tools do you pay for? Which are actually used?' },
+  { id: 'd_mkt_comp', level: 'all', dept: 'marketing', crit: 'market', q: 'How do we position against competitors? Which of their messages or channels are working?' },
   { id: 'd_mkt_measure', level: 'all', dept: 'marketing', crit: 'data', q: 'How do you measure what works?' },
   { id: 'd_lead_admin', level: 'all', dept: 'leadership', crit: 'process', q: 'How are HR, leave and payroll administered?' },
   { id: 'd_lead_suppliers', level: 'all', dept: 'leadership', crit: 'cost', q: 'Which suppliers and contracts do you manage? When do they renew?' }

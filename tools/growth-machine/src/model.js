@@ -13,7 +13,7 @@ const live = (arr) => (arr || []).filter((x) => !x._removed);
 const byId = (arr) => Object.fromEntries((arr || []).map((x) => [x.id, x]));
 const splitList = (v) => Array.isArray(v) ? v : String(v || '').split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
 
-const COLLECTIONS = ['intake', 'departments', 'people', 'tools', 'processes', 'segments', 'markets', 'topClients',
+const COLLECTIONS = ['intake', 'competitors', 'capabilities', 'intel', 'usps', 'opportunities', 'departments', 'people', 'tools', 'processes', 'segments', 'markets', 'topClients',
   'financePeriods', 'interviews', 'findings', 'recommendations', 'scenarios'];
 
 function blankEngagement(name) {
@@ -27,9 +27,9 @@ function blankEngagement(name) {
       lastExported: '', notes: '' },
     departments: [], people: [], tools: [], processes: [], segments: [], markets: [], topClients: [],
     financePeriods: [], interviews: [], findings: [], recommendations: [], scenarios: [],
-    intake: [], engagement: blankEngagementBlock(),
+    intake: [], competitors: [], capabilities: [], intel: [], usps: [], opportunities: [], engagement: blankEngagementBlock(),
     report: { title: '', preparedFor: '', summary: '', nextSteps: '', anonymise: true, scenarioId: '', processIds: [],
-      sections: { snapshot: true, findings: true, org: true, processes: true, recommendations: true, financials: true, nextSteps: true } }
+      sections: { snapshot: true, competition: true, findings: true, org: true, processes: true, recommendations: true, financials: true, nextSteps: true } }
   };
 }
 
@@ -350,6 +350,16 @@ function insights(eng, fmtMoney, anon) {
   });
   // Interviews
   themeCounts(eng).filter((t) => t.count >= 2).slice(0, 6).forEach((t) => add('Interviews', t.count >= 3 ? 'high' : 'medium', `"${t.theme}" raised in ${t.count} interviews`, 'Several people raised the same issue independently. That makes it a strong signal.'));
+  // Market & competition
+  (eng.competitors || []).forEach((c) => {
+    if (c.threat === 'High') add('Market × Competition', 'medium', `${c.name} rated a high threat`, c.whereWeLose ? `Where ${eng.client.name} loses: ${c.whereWeLose}` : 'Record where deals are lost to them.');
+    if (num(eng.client.pricePoint) > 0 && num(c.pricePoint) > 0 && num(c.pricePoint) < num(eng.client.pricePoint) && typeof capabilityScore === 'function') {
+      const mine = capabilityScore(eng, (cap) => cap.client), theirs = capabilityScore(eng, (cap) => (cap.scores || {})[c.id]);
+      if (mine != null && theirs != null && theirs >= mine) add('Market × Price', 'high', `Price pressure: ${c.name} is cheaper with equal or better capability`, `${fmtMoney(num(c.pricePoint))} vs ${fmtMoney(num(eng.client.pricePoint))} per location / month; capability ${Math.round(theirs)}% vs ${Math.round(mine)}%.`);
+    }
+  });
+  const unsourced = (eng.competitors || []).filter((c) => !String(c.sources || '').trim());
+  if (unsourced.length) add('Market × Competition', 'low', `${unsourced.length} competitor profile${unsourced.length > 1 ? 's have' : ' has'} no sources`, 'Add sources before these appear in a founder report.');
   // Department cost vs size
   const order = { high: 0, medium: 1, low: 2 };
   return out.sort((a, b) => order[a.severity] - order[b.severity]);

@@ -185,7 +185,7 @@ function leaveBehind() {
   const p5 = `<section class="page">${brand('Founder questionnaire')}
     <div class="eyebrow">Appendix A</div><h2>Founder questionnaire: the questions</h2>
     <p class="muted small">We'll cover these together, so there's nothing to prepare. Questions marked <b>★</b> are the ones we'll start with. Short answers are fine, and "don't know" is a useful answer too.</p>
-    <div class="grid2" style="align-items:start"><div>${qcol(byId(['goals', 'revenue']))}</div><div>${qcol(byId(['cost', 'people']))}</div></div>
+    <div class="grid2" style="align-items:start"><div>${qcol(byId(['goals', 'revenue']))}</div><div>${qcol(byId(['competition', 'cost', 'people']))}</div></div>
     ${foot(5, L)}</section>
     <section class="page">${brand('Founder questionnaire')}
     <div class="eyebrow">Appendix A, continued</div>
@@ -264,7 +264,7 @@ function script() {
     <p>"You get a status report after every fortnightly review, or whenever you ask. It shows the days used out of ${cfg.daysTotal}, what's done, what's next, what I'm waiting on, and a <b>delays and changes log</b>. If something slips, whether it's my side or yours, a document arriving late or a decision taking longer, it's logged with the date, reason and impact. Not to point fingers, but so we always decide on facts."</p></div>
     <p class="note">This is your protection under clauses 3.3 and 5.6–5.7. Frame it as mutual accountability, which it genuinely is. Log your own slips too: that's what makes the log credible.</p>
     <h2>5 · Founder session, part 2: ★ priority questions <span class="time">20 MIN</span></h2>
-    <p class="note">Back to the Studio. With "★ Priority questions only" on, the screen shows the ~15 that shape next week, in order: revenue (strongest, weakest, top-client share), costs (biggest lines, upcoming renewals), people (headcount, structure), systems (CRM, accounting, where the platform is hosted), top frustrations, and which managers to see first plus how to tell the team.</p>
+    <p class="note">Back to the Studio. With "★ Priority questions only" on, the screen shows the ~15 that shape next week, in order: revenue (strongest, weakest, top-client share), competition (where you win and lose), costs (biggest lines, upcoming renewals), people (headcount, structure), systems (CRM, accounting, where the platform is hosted), top frustrations, and which managers to see first plus how to tell the team.</p>
     <table><tbody>
       <tr><td><b>Pace</b></td><td>About a minute per question. Capture the gist, not every word. Choice questions take a dropdown; you can also type freely.</td></tr>
       <tr><td><b>Switching to the MD</b></td><td>Click <b>Switch person</b> and start a new respondent. Questions someone else has answered show "answered by …", so skip them unless a second view is useful.</td></tr>

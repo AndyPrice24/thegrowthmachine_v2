@@ -142,6 +142,10 @@ tr.row-flag td{background:rgba(208,59,59,.06)}
 .sv-track{position:relative;height:16px;background:var(--grid);border-radius:4px}
 .sv-track span{display:block;height:100%;border-radius:4px}
 .sv-track i{position:absolute;top:-4px;bottom:-4px;width:0;border-left:2px solid var(--ink)}
+.capm th.me{color:var(--red)}
+.cap{font-size:11.5px;white-space:nowrap}.cap-s{color:var(--ink);font-weight:650}.cap-p{color:var(--muted)}.cap-n{color:var(--faint)}
+
+.pos-map{max-width:760px}
 </style>
 <style id="report-css">/* Founder report styles (also embedded in exported HTML reports) */
 .rpt{background:#fffdf9;color:#171715;border:1px solid #d7cfc3;border-radius:14px;padding:40px 46px;
@@ -339,6 +343,15 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 .pre{background:var(--surface-2);border-radius:10px;padding:8px 12px;margin-bottom:12px}
 .diary td:nth-child(3) textarea{min-width:340px}
 .diary td:nth-child(4){min-width:200px}
+/* competitors */
+.comp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px}
+.comp header{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;margin-bottom:6px}
+.comp h3{font-size:15px}
+.comp-dl{margin:6px 0;display:grid;grid-template-columns:78px 1fr;gap:3px 10px;font-size:12.5px}
+.comp-dl dt{font-weight:650;color:var(--muted);margin:0}.comp-dl dd{margin:0}
+.capm select{font-size:12px;padding:2px 4px}
+.sharpen h4{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--red);margin:16px 0 6px}
+.sharpen .grid-edit textarea{min-width:200px}
 </style>
 </head>
 <body>
@@ -351,7 +364,7 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="tip" hidden></div>
 <script>
-const STUDIO_BUILD = '2026-11-01 16:34 UTC';
+const STUDIO_BUILD = '2026-11-01 16:44 UTC';
 /* ---- model.js ---- */
 /* ============================================================
    The Growth Machine — data model, scenario engine, scoring, insights
@@ -368,7 +381,7 @@ const live = (arr) => (arr || []).filter((x) => !x._removed);
 const byId = (arr) => Object.fromEntries((arr || []).map((x) => [x.id, x]));
 const splitList = (v) => Array.isArray(v) ? v : String(v || '').split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
 
-const COLLECTIONS = ['intake', 'departments', 'people', 'tools', 'processes', 'segments', 'markets', 'topClients',
+const COLLECTIONS = ['intake', 'competitors', 'capabilities', 'intel', 'usps', 'opportunities', 'departments', 'people', 'tools', 'processes', 'segments', 'markets', 'topClients',
   'financePeriods', 'interviews', 'findings', 'recommendations', 'scenarios'];
 
 function blankEngagement(name) {
@@ -382,9 +395,9 @@ function blankEngagement(name) {
       lastExported: '', notes: '' },
     departments: [], people: [], tools: [], processes: [], segments: [], markets: [], topClients: [],
     financePeriods: [], interviews: [], findings: [], recommendations: [], scenarios: [],
-    intake: [], engagement: blankEngagementBlock(),
+    intake: [], competitors: [], capabilities: [], intel: [], usps: [], opportunities: [], engagement: blankEngagementBlock(),
     report: { title: '', preparedFor: '', summary: '', nextSteps: '', anonymise: true, scenarioId: '', processIds: [],
-      sections: { snapshot: true, findings: true, org: true, processes: true, recommendations: true, financials: true, nextSteps: true } }
+      sections: { snapshot: true, competition: true, findings: true, org: true, processes: true, recommendations: true, financials: true, nextSteps: true } }
   };
 }
 
@@ -705,6 +718,16 @@ function insights(eng, fmtMoney, anon) {
   });
   // Interviews
   themeCounts(eng).filter((t) => t.count >= 2).slice(0, 6).forEach((t) => add('Interviews', t.count >= 3 ? 'high' : 'medium', `"${t.theme}" raised in ${t.count} interviews`, 'Several people raised the same issue independently. That makes it a strong signal.'));
+  // Market & competition
+  (eng.competitors || []).forEach((c) => {
+    if (c.threat === 'High') add('Market × Competition', 'medium', `${c.name} rated a high threat`, c.whereWeLose ? `Where ${eng.client.name} loses: ${c.whereWeLose}` : 'Record where deals are lost to them.');
+    if (num(eng.client.pricePoint) > 0 && num(c.pricePoint) > 0 && num(c.pricePoint) < num(eng.client.pricePoint) && typeof capabilityScore === 'function') {
+      const mine = capabilityScore(eng, (cap) => cap.client), theirs = capabilityScore(eng, (cap) => (cap.scores || {})[c.id]);
+      if (mine != null && theirs != null && theirs >= mine) add('Market × Price', 'high', `Price pressure: ${c.name} is cheaper with equal or better capability`, `${fmtMoney(num(c.pricePoint))} vs ${fmtMoney(num(eng.client.pricePoint))} per location / month; capability ${Math.round(theirs)}% vs ${Math.round(mine)}%.`);
+    }
+  });
+  const unsourced = (eng.competitors || []).filter((c) => !String(c.sources || '').trim());
+  if (unsourced.length) add('Market × Competition', 'low', `${unsourced.length} competitor profile${unsourced.length > 1 ? 's have' : ' has'} no sources`, 'Add sources before these appear in a founder report.');
   // Department cost vs size
   const order = { high: 0, medium: 1, low: 2 };
   return out.sort((a, b) => order[a.severity] - order[b.severity]);
@@ -757,6 +780,7 @@ const CRITERIA = [
   { id: 'strategy', label: 'Goals & strategy', feeds: 'Business profile' },
   { id: 'revenue', label: 'Revenue', feeds: 'Finance · Segments' },
   { id: 'customers', label: 'Customers & delivery', feeds: 'Segments · Processes' },
+  { id: 'market', label: 'Market & competition', feeds: 'Competitors' },
   { id: 'cost', label: 'Cost base', feeds: 'Finance · Tools' },
   { id: 'people', label: 'People & structure', feeds: 'People & org' },
   { id: 'process', label: 'Processes & workload', feeds: 'Processes' },
@@ -793,6 +817,12 @@ const INTAKE_SECTIONS = [
     { id: 'i_concentration', p: 1, crit: 'customers', type: 'long', q: 'How many active clients do you have, and roughly what share of revenue do your top five bring in?' },
     { id: 'i_pricing', crit: 'revenue', type: 'long', q: 'How do you price (per location, per month, set-up fees, reseller margins, discounts)?' },
     { id: 'i_churn', crit: 'customers', type: 'long', q: 'Which clients leave, and why? Roughly how many left in the last 12 months?' }
+  ] },
+  { id: 'competition', title: '2b. Competition', intro: 'Who you compete with, and where you win and lose.', questions: [
+    { id: 'i_comp_who', crit: 'market', type: 'long', q: 'Who are your main competitors, locally and internationally?' },
+    { id: 'i_comp_win', p: 1, crit: 'market', type: 'long', q: 'Where do you win against competitors, and where do you lose? Why?' },
+    { id: 'i_comp_threat', crit: 'market', type: 'long', q: 'Which competitor worries you most, and why?' },
+    { id: 'i_comp_price', crit: 'market', type: 'long', q: 'How does your pricing compare with theirs?' }
   ] },
   { id: 'cost', title: '3. Cost base', intro: 'This helps us agree the cost baseline the savings target is measured against.', questions: [
     { id: 'i_costs_top', p: 1, crit: 'cost', type: 'long', q: 'Apart from salaries, what are your five biggest monthly costs?' },
@@ -885,6 +915,7 @@ const INTERVIEW_QUESTIONS = [
   { id: 'f_vision', level: 'founder', dept: 'all', crit: 'strategy', q: 'Where do you want the business to be in 12–24 months?' },
   { id: 'f_bottleneck', level: 'founder', dept: 'all', crit: 'decisions', q: 'Where are you personally the bottleneck?' },
   { id: 'f_trust', level: 'founder', dept: 'all', crit: 'data', q: 'Which numbers do you trust least, and why?' },
+  { id: 'f_comp', level: 'founder', dept: 'all', crit: 'market', q: 'If a well-funded competitor copied you tomorrow, what would protect you?' },
   { id: 'f_people', level: 'founder', dept: 'all', crit: 'people', q: 'Which roles or people are critical, and where do you have doubts?' },
   // Manager
   { id: 'm_team', level: 'manager', dept: 'all', crit: 'people', q: 'Who is in your team, what does each person do, and how is the work split?' },
@@ -903,9 +934,11 @@ const INTERVIEW_QUESTIONS = [
   { id: 'd_sales_proposal', level: 'all', dept: 'sales', crit: 'process', q: 'How long does a proposal or quote take to produce? Who approves pricing?' },
   { id: 'd_sales_handover', level: 'all', dept: 'sales', crit: 'customers', q: 'What happens when a deal is signed? How is it handed over?' },
   { id: 'd_sales_crm', level: 'all', dept: 'sales', crit: 'data', q: 'How accurate is the CRM? What lives outside it?' },
+  { id: 'd_sales_comp', level: 'all', dept: 'sales', crit: 'market', q: 'Which competitors come up in deals? Why do we win or lose against them?' },
   { id: 'd_cs_onboarding', level: 'all', dept: 'cs', crit: 'process', q: 'Walk me through onboarding a new client, step by step. How long does it take?' },
   { id: 'd_cs_reporting', level: 'all', dept: 'cs', crit: 'customers', q: 'What reporting do clients receive, and how is it produced?' },
   { id: 'd_cs_churn', level: 'all', dept: 'cs', crit: 'customers', q: 'Why do clients leave? What early warning signs do you see?' },
+  { id: 'd_cs_comp', level: 'all', dept: 'cs', crit: 'market', q: 'Which competitors do clients mention, or leave us for? What do they say those competitors do better?' },
   { id: 'd_cs_tickets', level: 'all', dept: 'cs', crit: 'process', q: 'What are the most common support requests? Could clients self-serve any of them?' },
   { id: 'd_ops_volume', level: 'all', dept: 'ops', crit: 'process', q: 'How many locations or listings are processed per week or month? How is the work assigned?' },
   { id: 'd_ops_manual', level: 'all', dept: 'ops', crit: 'process', q: 'Which steps are manual (data cleaning, uploads, verification, corrections)?' },
@@ -921,6 +954,7 @@ const INTERVIEW_QUESTIONS = [
   { id: 'd_tech_data', level: 'all', dept: 'tech', crit: 'data', q: 'Where does client and operational data live? Who has access? How is it backed up?' },
   { id: 'd_mkt_channels', level: 'all', dept: 'marketing', crit: 'revenue', q: 'Which channels bring leads, and at what cost?' },
   { id: 'd_mkt_tools', level: 'all', dept: 'marketing', crit: 'cost', q: 'Which marketing tools do you pay for? Which are actually used?' },
+  { id: 'd_mkt_comp', level: 'all', dept: 'marketing', crit: 'market', q: 'How do we position against competitors? Which of their messages or channels are working?' },
   { id: 'd_mkt_measure', level: 'all', dept: 'marketing', crit: 'data', q: 'How do you measure what works?' },
   { id: 'd_lead_admin', level: 'all', dept: 'leadership', crit: 'process', q: 'How are HR, leave and payroll administered?' },
   { id: 'd_lead_suppliers', level: 'all', dept: 'leadership', crit: 'cost', q: 'Which suppliers and contracts do you manage? When do they renew?' }
@@ -1614,6 +1648,34 @@ function demoEngagement() {
     { id: 'sc2', name: 'B · Automation programme', description: 'Quick wins plus the three automation builds. No headcount change.', recommendationIds: ['r1', 'r2', 'r3', 'r4', 'r6', 'r7'] },
     { id: 'sc3', name: 'C · Automation + restructure', description: 'Everything in B plus the Data Ops restructure.', recommendationIds: ['r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7'] }
   ];
+  // Competitor sample (fictional)
+  e.client.pricePoint = 450;
+  e.competitors = [
+    { id: 'co1', name: 'Competitor A (global platform)', type: 'Direct', threat: 'High', hq: 'USA', markets: 'Global incl. SA', segments: 'Enterprise retail', offering: 'Listings, reviews, social and reporting suite', pricingModel: 'Per location, annual', pricePoint: 520, strengths: 'Brand, breadth, integrations', weaknesses: 'No local support; USD pricing', whereWeWin: 'Local support, ZAR pricing, onboarding speed', whereWeLose: 'Large multinationals with global contracts', sources: 'https://example.com/pricing', lastReviewed: addDaysISO(todayISO(), -10) },
+    { id: 'co2', name: 'Competitor B (local agency)', type: 'Indirect', threat: 'Medium', hq: 'Johannesburg', markets: 'South Africa', segments: 'Franchise groups, SMB', offering: 'Managed local SEO service', pricingModel: 'Monthly retainer', pricePoint: 300, strengths: 'Hands-on service, relationships', weaknesses: 'Manual, limited reporting', whereWeWin: 'Scale and reporting', whereWeLose: 'Small franchise groups wanting a done-for-you service', sources: 'https://example.org', lastReviewed: addDaysISO(todayISO(), -10) },
+    { id: 'co3', name: 'Competitor C (budget SaaS)', type: 'Direct', threat: 'Low', hq: 'Europe', markets: 'Global', segments: 'SMB', offering: 'Self-serve listings sync', pricingModel: 'Per location, monthly', pricePoint: 180, strengths: 'Cheap, self-serve', weaknesses: 'Thin features, no reviews module', whereWeWin: 'Anything multi-location', whereWeLose: 'Price-only SMB buyers', sources: '', lastReviewed: '' }
+  ];
+  e.capabilities = [
+    { id: 'cap1', name: 'Listings sync across directories', importance: 'High', client: 'Strong', scores: { co1: 'Strong', co2: 'Partial', co3: 'Strong' } },
+    { id: 'cap2', name: 'Review management & responses', importance: 'High', client: 'Strong', scores: { co1: 'Strong', co2: 'Partial', co3: 'None' } },
+    { id: 'cap3', name: 'Client reporting dashboard', importance: 'Medium', client: 'Partial', scores: { co1: 'Strong', co2: 'None', co3: 'Partial' } },
+    { id: 'cap4', name: 'Local onboarding & support', importance: 'Medium', client: 'Strong', scores: { co1: 'None', co2: 'Strong', co3: 'None' } },
+    { id: 'cap5', name: 'API / integrations', importance: 'Low', client: 'Partial', scores: { co1: 'Strong', co2: 'None', co3: 'Partial' } }
+  ];
+  e.intel = [
+    { id: 'it1', competitorId: 'co1', topic: 'Pricing', note: 'Lists per-location pricing in USD on its website; annual contracts only.', sourceType: 'Online research', source: 'https://example.com/pricing', date: addDaysISO(todayISO(), -10) },
+    { id: 'it2', competitorId: 'co1', topic: 'Customers', note: 'Two lost deals in Q3 went to them via a global head-office contract.', sourceType: 'Staff', source: 'Sales interview', date: addDaysISO(todayISO(), -8) },
+    { id: 'it3', competitorId: 'co2', topic: 'Marketing', note: 'Runs a free local-SEO audit offer to franchise owners.', sourceType: 'Founder', source: 'Founder session', date: addDaysISO(todayISO(), -12) }
+  ];
+  e.usps = [
+    { id: 'us1', claim: 'Local onboarding and support in SA time zones', strength: 'Unique', proof: 'Only Competitor B offers local support, and it lacks the platform.', competitorsWithIt: 'Competitor B (partly)' },
+    { id: 'us2', claim: 'Most accurate listings data', strength: 'Claimed only', proof: 'No third-party evidence yet.', competitorsWithIt: '' }
+  ];
+  e.client.positioning = 'For multi-location brands in Africa, Demo Co is the location platform that keeps every store findable and reviewed, with local support, unlike global tools priced in dollars.';
+  e.opportunities = [
+    { id: 'op1', title: 'Free location-health audit as a lead magnet', area: 'Marketing', description: 'Counter Competitor B\'s audit offer with an automated, data-backed version.', basedOn: 'Intel: Competitor B audit offer', impact: 'High', effort: 'Low', status: 'Proposed' },
+    { id: 'op2', title: 'ZAR-priced enterprise bundle', area: 'Pricing', description: 'Lead with ZAR pricing against Competitor A at renewal time.', basedOn: 'Competitor A pricing (USD)', impact: 'Medium', effort: 'Low', status: 'Idea' }
+  ];
   // Engagement tracking sample: started three weeks ago
   const start = addDaysISO(todayISO(), -20);
   e.engagement = Object.assign(blankEngagementBlock(), { contact: 'Alex Okafor', contactRole: 'COO, decision-maker', start, daysTotal: 30, daysPerMonth: 10, targetMonthly: 60000 });
@@ -1649,7 +1711,7 @@ function locationBankShell() {
    Views — each returns an HTML string for the main panel
    ============================================================ */
 const TABS = [
-  ['overview', 'Overview'], ['progress', 'Progress & time'], ['discovery', 'Discovery'], ['business', 'Business & market'], ['finance', 'Finance'], ['org', 'People & org'],
+  ['overview', 'Overview'], ['progress', 'Progress & time'], ['discovery', 'Discovery'], ['business', 'Business & market'], ['competitors', 'Competitors'], ['finance', 'Finance'], ['org', 'People & org'],
   ['tools', 'Tools'], ['processes', 'Processes'], ['interviews', 'Interviews'], ['crossover', 'Crossover'],
   ['recs', 'Recommendations'], ['scenarios', 'Scenarios'], ['report', 'Report'], ['data', 'Data & Claude']
 ];
@@ -1919,7 +1981,7 @@ function viewReport(e) {
       ${toggle}${e.engagement.phases.length ? `<div class="report-layout">${statusSettings(e)}<div class="report-preview status-preview"><div id="report-doc" class="rpt">${renderStatusReport(e)}</div></div></div>` : '<p>Set up the engagement in Progress & time first.</p>'}`;
   }
   const r = e.report; const sec = r.sections;
-  const secLabels = { snapshot: 'Current-state snapshot', findings: 'Key findings', org: 'Org chart: current vs proposed', processes: 'Process maps: before / after', recommendations: 'Recommendations roadmap', financials: 'Financial impact', nextSteps: 'Next steps' };
+  const secLabels = { snapshot: 'Current-state snapshot', competition: 'Market & competition', findings: 'Key findings', org: 'Org chart: current vs proposed', processes: 'Process maps: before / after', recommendations: 'Recommendations roadmap', financials: 'Financial impact', nextSteps: 'Next steps' };
   return `<div class="page-h"><div><span class="eyebrow">Report</span><h1>Founder report</h1><p class="muted">Preview below. Export as PDF (print) or as one self-contained HTML file you can email. Exports hold no raw data and do not depend on this tool or on Claude.</p></div>
     <div class="btn-row"><button class="btn" data-action="printReport">Print / save PDF</button><button class="btn" data-action="downloadReport">Download HTML report</button></div></div>
   ${toggle}
@@ -2237,6 +2299,101 @@ function viewIntakeSession(e) {
   </div>`;
 }
 
+/* ---------- Competitors: profiles, capability matrix, positioning ---------- */
+const CAP_LEVELS = ['Strong', 'Partial', 'None'];
+const INTEL_TOPICS = ['Pricing', 'Product', 'Marketing', 'Customers', 'Team', 'Technology', 'Partnerships', 'News', 'Other'];
+const SOURCE_TYPES = ['Online research', 'Founder', 'Staff', 'Client / customer', 'Other'];
+const OPP_AREAS = ['Positioning', 'Marketing', 'Product', 'Pricing', 'Sales', 'Systems & operations'];
+const CAP_VAL = { Strong: 1, Partial: 0.5, None: 0 };
+const IMP_W = { High: 3, Medium: 2, Low: 1 };
+function capabilityScore(e, getLevel) {
+  let w = 0, tot = 0;
+  e.capabilities.forEach((c) => { const lv = getLevel(c); if (!(lv in CAP_VAL)) return; const wt = IMP_W[c.importance] || 2; w += wt; tot += wt * CAP_VAL[lv]; });
+  return w ? tot / w * 100 : null;
+}
+function positioningMap(e) {
+  const pts = e.competitors.filter((c) => num(c.pricePoint) > 0).map((c) => ({ label: c.name, x: num(c.pricePoint), y: capabilityScore(e, (cap) => (cap.scores || {})[c.id]), threat: c.threat }));
+  if (num(e.client.pricePoint) > 0) pts.push({ label: e.client.name, x: num(e.client.pricePoint), y: capabilityScore(e, (cap) => cap.client), me: true });
+  const ok = pts.filter((p) => p.y != null);
+  if (ok.length < 2) return '<p class="empty">Add indicative price points and capability scores for at least two players to see the positioning map.</p>';
+  const W = 640, H = 300, L = 60, R = 20, T = 14, B = 36;
+  const xmax = niceMax(Math.max(...ok.map((p) => p.x)) * 1.1);
+  const x = (v) => L + v / xmax * (W - L - R), y = (v) => T + (1 - v / 100) * (H - T - B);
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Price versus capability">`;
+  svg += `<g class="grid">${[0, 25, 50, 75, 100].map((t) => `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}"/>`).join('')}</g>`;
+  svg += `<g class="axis">${[0, 50, 100].map((t) => `<text x="${L - 8}" y="${y(t) + 4}" text-anchor="end">${t}%</text>`).join('')}${[0, 0.5, 1].map((f) => `<text x="${x(f * xmax)}" y="${H - 16}" text-anchor="middle">${esc(fmtShort(f * xmax))}</text>`).join('')}
+    <text x="${(L + W - R) / 2}" y="${H - 2}" text-anchor="middle">Indicative price per location / month →</text><text x="12" y="${T + 6}" transform="rotate(-90 12 ${T + 6})" text-anchor="end">Capability →</text></g>`;
+  ok.forEach((p) => {
+    svg += `<circle cx="${x(p.x)}" cy="${y(p.y)}" r="${p.me ? 8 : 6}" fill="${p.me ? 'var(--red)' : 'var(--s1)'}" stroke="var(--surface)" stroke-width="2" data-tip="${esc(p.label)} · ${esc(fmtMoney(p.x))} · capability ${Math.round(p.y)}%${p.threat ? ' · threat ' + esc(p.threat) : ''}"/>`;
+    svg += `<text x="${x(p.x) + 11}" y="${y(p.y) + 4}" style="font-size:11px;fill:var(--ink);font-weight:${p.me ? 700 : 500}">${esc(trunc(p.label, 22))}</text>`;
+  });
+  return `<div class="chart pos-map"><div class="legend"><span><i style="background:var(--red)"></i>${esc(e.client.name)}</span><span><i style="background:var(--s1)"></i>Competitors</span></div>${svg}</div>`;
+}
+const capMark = (lv) => ({ Strong: '<span class="cap cap-s" title="Strong">● Strong</span>', Partial: '<span class="cap cap-p" title="Partial">◐ Partial</span>', None: '<span class="cap cap-n" title="None">○ None</span>' }[lv] || '<span class="faint">?</span>');
+function capabilityMatrix(e, { editable = true } = {}) {
+  if (!e.capabilities.length) return '<p class="empty">No capabilities listed yet. Add the features or services clients choose on (e.g. listings sync, review management, reporting, API, local support).</p>';
+  const cols = [{ id: '__client', name: e.client.name, me: true }, ...e.competitors];
+  const cell = (cap, col) => {
+    const lv = col.me ? cap.client : (cap.scores || {})[col.id];
+    return editable ? `<td class="c">${sel(CAP_LEVELS, lv || '', `data-capcell="${esc(cap.id)}" data-comp="${esc(col.id)}"`)}</td>` : `<td class="c">${capMark(lv)}</td>`;
+  };
+  return `<table class="tbl matrix capm"><thead><tr><th>Capability</th><th>Importance</th>${cols.map((c) => `<th class="c ${c.me ? 'me' : ''}">${esc(trunc(c.name, 18))}</th>`).join('')}</tr></thead><tbody>
+    ${e.capabilities.map((cap) => `<tr><td>${esc(cap.name)}</td><td class="small">${esc(cap.importance || '—')}</td>${cols.map((c) => cell(cap, c)).join('')}</tr>`).join('')}
+    <tr><td><b>Weighted score</b></td><td></td>${cols.map((c) => { const s = capabilityScore(e, (cap) => (c.me ? cap.client : (cap.scores || {})[c.id])); return `<td class="c"><b>${s == null ? '—' : Math.round(s) + '%'}</b></td>`; }).join('')}</tr></tbody></table>`;
+}
+function viewCompetitors(e) {
+  const comps = e.competitors;
+  const threatChip = (t) => t === 'High' ? '<span class="chip sev-high">▲ High threat</span>' : t === 'Medium' ? '<span class="chip sev-medium">● Medium threat</span>' : t === 'Low' ? '<span class="chip sev-low">○ Low threat</span>' : '';
+  const stale = comps.filter((c) => !c.lastReviewed || daysBetween(c.lastReviewed, todayISO()) > 90).length;
+  const unsourced = comps.filter((c) => !String(c.sources || '').trim()).length;
+  return `<div class="page-h"><div><span class="eyebrow">Market & competition</span><h1>Competitors</h1><p class="muted">Who ${esc(e.client.name)} competes with, where it wins and loses, and how it is positioned. Every profile should cite its sources and carry a review date: research goes stale.</p></div>
+    <div class="btn-row"><button class="btn" data-action="addCompetitor">+ Add competitor</button><button class="btn ghost" data-action="addCapability">+ Add capability</button></div></div>
+  <div class="kpis">${kpi('Competitors tracked', comps.length)}${kpi('High threat', comps.filter((c) => c.threat === 'High').length)}${kpi('Capabilities compared', e.capabilities.length)}
+    <div class="kpi ${unsourced || stale ? 'kpi-flag' : ''}"><div class="k-label">Evidence</div><div class="k-value k-text">${unsourced ? `${unsourced} without sources` : '✓ All sourced'}</div><div class="k-delta">${stale ? `${stale} not reviewed in 90 days` : 'all reviewed recently'}</div></div></div>
+  ${comps.length ? `<div class="comp-grid">${comps.map((c) => `<article class="card comp">
+    <header><div><h3>${esc(c.name)}</h3><div class="muted small">${esc([c.type, c.hq, c.markets].filter(Boolean).join(' · '))}</div></div>${threatChip(c.threat)}</header>
+    ${c.offering ? `<p class="small">${esc(c.offering)}</p>` : ''}
+    <dl class="comp-dl">
+      ${c.pricingModel || c.pricePoint ? `<dt>Pricing</dt><dd>${esc(c.pricingModel || '')}${num(c.pricePoint) ? ` · ~${esc(fmtMoney(num(c.pricePoint)))} per location / month` : ''}</dd>` : ''}
+      ${c.segments ? `<dt>Targets</dt><dd>${esc(c.segments)}</dd>` : ''}
+      ${c.strengths ? `<dt>Strengths</dt><dd>${esc(c.strengths)}</dd>` : ''}
+      ${c.weaknesses ? `<dt>Weaknesses</dt><dd>${esc(c.weaknesses)}</dd>` : ''}
+      ${c.whereWeWin ? `<dt>We win</dt><dd>${esc(c.whereWeWin)}</dd>` : ''}
+      ${c.whereWeLose ? `<dt>We lose</dt><dd>${esc(c.whereWeLose)}</dd>` : ''}
+    </dl>
+    <p class="faint small">${c.sources ? 'Sources: ' + esc(trunc(c.sources, 140)) : '⚑ No sources recorded'} · ${c.lastReviewed ? 'Reviewed ' + esc(fmtD(c.lastReviewed, { day: 'numeric', month: 'short', year: 'numeric' })) : 'Not reviewed'}</p>
+    <div class="btn-row"><button class="btn sm" data-action="editCompetitor" data-id="${esc(c.id)}">Edit profile</button><button class="btn sm ghost" data-action="addIntel" data-id="${esc(c.id)}">+ Intel</button><span class="faint small">${e.intel.filter((x) => x.competitorId === c.id).length} intel entries</span></div></article>`).join('')}</div>`
+    : card('', '<p class="empty">No competitors yet. Add them here or in Data & Claude, or ask Claude to research them and paste the result in (the prompt includes the competitor format).</p>')}
+  ${card('Capability comparison', `<div class="scroll-x">${capabilityMatrix(e)}</div>`, { sub: 'Choose Strong / Partial / None per cell. The weighted score uses each capability\'s importance (High 3, Medium 2, Low 1).' })}
+  ${intelBlock(e)}
+  ${sharpenBlock(e)}
+  ${card('Positioning: price vs capability', `<div class="form-grid"><label class="fld"><span>${esc(e.client.name)} indicative price per location / month</span><input type="number" data-bind="client.pricePoint" value="${esc(e.client.pricePoint || '')}"></label></div>${positioningMap(e)}`, { sub: 'Price is an indicative monthly price per location. Hover a point for detail.' })}`;
+}
+
+/* Knowledge bank: every fact with its source type, filterable by competitor */
+function intelBlock(e) {
+  const f = ui.intelComp || 'all'; const cById = byId(e.competitors);
+  const rows = e.intel.filter((x) => f === 'all' || x.competitorId === f).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const bySrc = SOURCE_TYPES.map((t) => [t, e.intel.filter((x) => x.sourceType === t).length]).filter(([, n]) => n);
+  return card(`Knowledge bank (${e.intel.length} entries)`, `<div class="toolbar"><button class="btn sm ${f === 'all' ? 'on' : ''}" data-action="setIntelFilter" data-id="all">All</button>${e.competitors.map((c) => `<button class="btn sm ${f === c.id ? 'on' : ''}" data-action="setIntelFilter" data-id="${esc(c.id)}">${esc(trunc(c.name, 22))}</button>`).join('')}<span class="faint small" style="margin-left:auto">${bySrc.map(([t, n]) => `${esc(t)}: ${n}`).join(' · ')}</span></div>
+    ${rows.length ? `<table class="tbl"><thead><tr><th>Date</th><th>Competitor</th><th>Topic</th><th>What we know</th><th>Source</th></tr></thead><tbody>${rows.map((x) => `<tr><td class="nowrap small">${fmtD(x.date)}</td><td class="small">${esc((cById[x.competitorId] || {}).name || '—')}</td><td><span class="chip">${esc(x.topic || '—')}</span></td><td>${esc(x.note || '')}</td><td class="small">${esc(x.sourceType || '')}${x.source ? `<div class="faint">${/^https?:/.test(x.source) ? `<a href="${esc(x.source)}" target="_blank" rel="noopener">${esc(trunc(x.source.replace(/^https?:\/\/(www\.)?/, ''), 40))}</a>` : esc(x.source)}</div>` : ''}</td></tr>`).join('')}</tbody></table>`
+      : '<p class="empty">Nothing banked yet. Add facts as they come in from founders, staff, clients and online research. Each entry is one fact with its source.</p>'}
+    <div class="btn-row"><button class="btn sm" data-action="addIntel">+ Add intel</button></div>`, { sub: 'One fact per entry, always with its source. Founder and staff answers about competitors appear under Discovery; bank the useful ones here.' });
+}
+
+/* Sharpening the client: positioning, USPs tested against competitors, opportunities */
+function sharpenBlock(e) {
+  const C = 'usps', O = 'opportunities';
+  const usp = e.usps.length ? `<table class="tbl grid-edit"><thead><tr><th>Claim</th><th>Versus competitors</th><th>Proof / evidence</th><th>Who else has it</th><th></th></tr></thead><tbody>${e.usps.map((u) => `<tr><td>${ecell(C, u, 'claim')}</td><td>${ecellSel(C, u, 'strength', ['Unique', 'Shared', 'Claimed only'], false)}</td><td>${ecellArea(C, u, 'proof')}</td><td>${ecell(C, u, 'competitorsWithIt')}</td><td>${delBtn(C, u.id)}</td></tr>`).join('')}</tbody></table>` : '<p class="empty">List what Location Bank says makes it different, then test each claim against the knowledge bank.</p>';
+  const opp = e.opportunities.length ? `<table class="tbl grid-edit"><thead><tr><th>Opportunity</th><th>Area</th><th>Based on</th><th>Impact</th><th>Effort</th><th>Status</th><th></th></tr></thead><tbody>${e.opportunities.map((o) => `<tr><td>${ecell(O, o, 'title')}${ecellArea(O, o, 'description', 1)}</td><td>${ecellSel(O, o, 'area', OPP_AREAS, false)}</td><td>${ecellArea(O, o, 'basedOn', 1)}</td><td>${ecellSel(O, o, 'impact', ['High', 'Medium', 'Low'], false)}</td><td>${ecellSel(O, o, 'effort', ['High', 'Medium', 'Low'], false)}</td><td>${o.status === 'Recommendation' ? '<span class="chip st-added">✓ In recommendations</span>' : `${ecellSel(O, o, 'status', ['Idea', 'Proposed'], false)}<div><button class="link small" data-action="oppToRec" data-id="${esc(o.id)}">→ Make recommendation</button></div>`}</td><td>${delBtn(O, o.id)}</td></tr>`).join('')}</tbody></table>` : '<p class="empty">Gaps competitors leave open, messages that work for them, prices you can defend, system or product moves. Each one can become a ranked recommendation.</p>';
+  const counts = ['Unique', 'Shared', 'Claimed only'].map((k) => `${k}: ${e.usps.filter((u) => u.strength === k).length}`).join(' · ');
+  return `<section class="card sharpen"><header class="card-h"><div><h3>Sharpening ${esc(e.client.name)}</h3><p class="sub">Use what the knowledge bank shows to tighten positioning, prove the USPs and find opportunities.</p></div></header>
+    <label class="fld"><span>Positioning statement (for [who], [client] is the [category] that [key benefit], unlike [alternative])</span><textarea data-bind="client.positioning" rows="2">${esc(e.client.positioning || '')}</textarea></label>
+    <h4>USPs tested against competitors <span class="faint small">${counts}</span></h4>${usp}<div class="btn-row"><button class="btn sm" data-action="addUsp">+ Add USP</button></div>
+    <h4>Opportunities</h4>${opp}<div class="btn-row"><button class="btn sm" data-action="addOpportunity">+ Add opportunity</button></div>
+  </section>`;
+}
+
 /* ---- report.js ---- */
 /* ============================================================
    Founder report — rendered from the engagement, exportable as PDF (print) or standalone HTML
@@ -2270,6 +2427,16 @@ function renderReport(e) {
       <div><h3>People + tool cost by department</h3>${hbars(departmentScorecard(e, cur).map((d) => ({ label: d.dept.name, value: d.payroll + d.toolSpend, swatch: deptColor(e.departments, d.dept.id) })).sort((a, b) => b.value - a.value), { fmt: fmtMoney })}</div>
       <div><h3>Revenue by customer segment</h3>${hbars(e.segments.map((s) => ({ label: s.name, value: num(s.annualRevenue) })).sort((a, b) => b.value - a.value), { fmt: fmtMoney, color: 'var(--s2)' })}</div>
     </div></section>`;
+
+  if (sec.competition && e.competitors.length) h += `<section class="rpt-sec rpt-break"><h2>Market & competition</h2>
+    <table class="tbl"><thead><tr><th>Competitor</th><th>Threat</th><th>Pricing</th><th>Where ${esc(e.client.name)} wins</th><th>Where it loses</th></tr></thead><tbody>
+    ${e.competitors.map((c) => `<tr><td><strong>${esc(c.name)}</strong><div class="muted small">${esc([c.type, c.markets].filter(Boolean).join(' · '))}</div></td><td>${esc(c.threat || '—')}</td><td class="small">${esc(c.pricingModel || '')}${num(c.pricePoint) ? ` · ~${esc(fmtMoney(num(c.pricePoint)))}/location/mo` : ''}</td><td class="small">${esc(c.whereWeWin || '—')}</td><td class="small">${esc(c.whereWeLose || '—')}</td></tr>`).join('')}</tbody></table>
+    ${e.capabilities.length ? `<h3>Capability comparison</h3><div class="rpt-fig">${capabilityMatrix(e, { editable: false })}</div>` : ''}
+    ${positioningMap(e).includes('<svg') ? `<h3>Positioning: price vs capability</h3>${positioningMap(e)}` : ''}
+    ${e.client.positioning ? `<h3>Positioning</h3><p class="rpt-lead">${esc(e.client.positioning)}</p>` : ''}
+    ${e.usps.length ? `<h3>USPs tested against competitors</h3><table class="tbl"><thead><tr><th>Claim</th><th>Versus competitors</th><th>Evidence</th></tr></thead><tbody>${e.usps.map((u) => `<tr><td>${esc(u.claim)}</td><td>${esc(u.strength || '')}</td><td class="small">${esc(u.proof || '')}</td></tr>`).join('')}</tbody></table>` : ''}
+    ${e.opportunities.filter((o) => o.status !== 'Idea').length ? `<h3>Opportunities</h3><ul>${e.opportunities.filter((o) => o.status !== 'Idea').map((o) => `<li><b>${esc(o.title)}</b> <span class="muted small">(${esc(o.area || '')} · impact ${esc(o.impact || '—')})</span>${o.description ? ' · ' + esc(o.description) : ''}</li>`).join('')}</ul>` : ''}
+    <p class="small muted">Competitor information comes from public sources and interviews, reviewed ${esc([...new Set(e.competitors.map((c) => c.lastReviewed).filter(Boolean))].sort().slice(-1)[0] || 'recently')}. Indicative prices are estimates.</p></section>`;
 
   if (sec.findings && (e.findings.length || ins.length)) h += `<section class="rpt-sec"><h2>Key findings</h2>
     ${e.findings.length ? `<ol class="rpt-findings">${e.findings.map((f) => `<li>${sevChip(f.severity || 'medium')} <strong>${esc(f.title)}</strong><p>${esc(f.evidence || '')}</p></li>`).join('')}</ol>` : ''}
@@ -2345,7 +2512,7 @@ function loadDB() {
     db = { activeId: demo.id, engagements: { [lb.id]: lb, [demo.id]: demo } };
   }
   Object.keys(db.engagements).forEach((k) => { db.engagements[k] = normalise(db.engagements[k]); });
-  if (db.engagements.eng_demo && !db.engagements.eng_demo.engagement.phases.length) db.engagements.eng_demo = demoEngagement(); // refresh old demo with tracking sample
+  if (db.engagements.eng_demo && (!db.engagements.eng_demo.engagement.phases.length || !db.engagements.eng_demo.competitors.length)) db.engagements.eng_demo = demoEngagement(); // refresh old demo with tracking sample
   if (!db.engagements[db.activeId]) db.activeId = Object.keys(db.engagements)[0];
   try { Object.assign(ui, JSON.parse(localStorage.getItem(STORE_KEY + '.ui') || '{}'), { scenario: 'current' }); } catch (err) { /* ignore */ }
 }
@@ -2424,7 +2591,7 @@ function renderHeader() {
 function render() {
   const e = E();
   renderHeader();
-  const views = { progress: viewProgress, discovery: viewDiscovery, overview: viewOverview, business: viewBusiness, finance: viewFinance, org: viewOrg, tools: viewTools, processes: viewProcesses, interviews: viewInterviews, crossover: viewCrossover, recs: viewRecs, scenarios: viewScenarios, report: viewReport, data: viewData };
+  const views = { competitors: viewCompetitors, progress: viewProgress, discovery: viewDiscovery, overview: viewOverview, business: viewBusiness, finance: viewFinance, org: viewOrg, tools: viewTools, processes: viewProcesses, interviews: viewInterviews, crossover: viewCrossover, recs: viewRecs, scenarios: viewScenarios, report: viewReport, data: viewData };
   let html;
   try { html = (views[ui.tab] || viewOverview)(e); }
   catch (err) { console.error(err); html = `<div class="banner err">Something in this client's data could not be displayed: ${esc(err.message)}. Check the Data tab.</div>`; }
@@ -2445,15 +2612,21 @@ const FIELD_DEFS = {
   financePeriods: [['id', 'text'], ['label', 'text'], ['months', 'num'], ['revenue', 'num'], ['cogs', 'num'], ['payroll', 'num'], ['tools', 'num'], ['marketing', 'num'], ['premises', 'num'], ['other', 'num']],
   interviews: [['id', 'text'], ['personId', 'person'], ['date', 'date'], ['interviewer', 'text'], ['summary', 'long'], ['themes', 'text'], ['painPoints', 'long'], ['ideas', 'long'], ['quotes', 'long']],
   findings: [['id', 'text'], ['title', 'text'], ['area', 'text'], ['severity', ['high', 'medium', 'low']], ['evidence', 'long']],
+  competitors: [['id', 'text'], ['name', 'text'], ['type', ['Direct', 'Indirect', 'Substitute', 'Adjacent']], ['threat', ['High', 'Medium', 'Low']], ['website', 'text'], ['hq', 'text'], ['markets', 'text'], ['segments', 'text'], ['offering', 'long'], ['pricingModel', 'text'], ['pricePoint', 'num'], ['size', 'text'], ['ownership', 'text'], ['strengths', 'long'], ['weaknesses', 'long'], ['whereWeWin', 'long'], ['whereWeLose', 'long'], ['sources', 'long'], ['lastReviewed', 'date']],
+  intel: [['id', 'text'], ['competitorId', 'comp'], ['topic', INTEL_TOPICS], ['note', 'long'], ['sourceType', SOURCE_TYPES], ['source', 'text'], ['date', 'date']],
+  usps: [['id', 'text'], ['claim', 'text'], ['strength', ['Unique', 'Shared', 'Claimed only']], ['proof', 'long'], ['competitorsWithIt', 'text'], ['notes', 'text']],
+  opportunities: [['id', 'text'], ['title', 'text'], ['area', OPP_AREAS], ['description', 'long'], ['basedOn', 'text'], ['impact', ['High', 'Medium', 'Low']], ['effort', ['High', 'Medium', 'Low']], ['status', ['Idea', 'Proposed', 'Recommendation']], ['recommendationId', 'text']],
+  capabilities: [['id', 'text'], ['name', 'text'], ['importance', ['High', 'Medium', 'Low']], ['client', ['Strong', 'Partial', 'None']], ['notes', 'text'], ['scores', 'json']],
   recommendations: [['id', 'text'], ['title', 'text'], ['type', ['People', 'Process', 'Tool', 'Build', 'Structure', 'Commercial']], ['horizon', ['0-3 months', '3-6 months', '6-12 months', '12+ months']], ['description', 'long'], ['effort', 'num'], ['risk', 'num'], ['confidence', 'num'], ['oneOffCost', 'num'], ['otherAnnualSaving', 'num'], ['oneOffSaving', 'num'], ['revenueUplift', 'num'], ['status', REC_STAGES], ['ops', 'json']],
   scenarios: [['id', 'text'], ['name', 'text'], ['description', 'text'], ['recommendationIds', 'json']]
 };
-const COLL_LABELS = { departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Top clients', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };
+const COLL_LABELS = { competitors: 'Competitors', capabilities: 'Capabilities', intel: 'Competitor intelligence', usps: 'USPs', opportunities: 'Opportunities', intake: 'Founder answers', departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Top clients', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };
 
 function cellInput(e, coll, row, [f, type]) {
   const v = row[f]; const base = `data-cell data-coll="${coll}" data-id="${esc(row.id)}" data-field="${f}"`;
   if (Array.isArray(type)) return `<select ${base}><option value=""></option>${type.map((o) => `<option ${v === o ? 'selected' : ''}>${o}</option>`).join('')}</select>`;
   if (type === 'person') return `<select ${base}><option value="">—</option>${e.people.map((p) => `<option value="${p.id}" ${v === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>`;
+  if (type === 'comp') return `<select ${base}><option value="">—</option>${e.competitors.map((c) => `<option value="${c.id}" ${v === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select>`;
   if (type === 'dept') return `<select ${base}><option value="">—</option>${e.departments.map((d) => `<option value="${d.id}" ${v === d.id ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}</select>`;
   if (type === 'json') return `<button class="btn sm" data-action="editJSON" data-coll="${coll}" data-id="${esc(row.id)}" data-field="${f}">Edit (${Array.isArray(v) ? v.length : 0})</button>`;
   if (type === 'long') return `<textarea ${base} rows="2">${esc(v)}</textarea>`;
@@ -2470,9 +2643,10 @@ function viewData(e) {
     ${card('Import / export', `<div class="btn-row">
         <button class="btn" data-action="exportJSON">Export this client (.json)</button>
         <label class="btn">Import client file<input type="file" accept=".json,application/json" id="importFile" hidden></label>
+        <label class="btn ghost">Merge a JSON file<input type="file" accept=".json,application/json" id="mergeFile" hidden></label>
         <button class="btn ghost" data-action="exportAll">Export all clients</button>
       </div>
-      <p class="faint small">Importing a file whose id matches an existing client replaces that client. Use "Paste from Claude" to merge partial data.</p>`)}
+      <p class="faint small">"Import client file" loads a whole client, replacing it if it already exists. "Merge a JSON file" adds a partial file (e.g. competitor research from Claude) into ${esc(e.client.name)} without deleting anything.</p>`)}
     ${card('Paste from Claude', `<textarea id="pasteBox" rows="7" placeholder='Paste JSON here, e.g. {"people":[...],"interviews":[...]}'></textarea>
       <div class="btn-row"><button class="btn" data-action="mergePaste">Merge into ${esc(e.client.name)}</button><button class="btn ghost" data-action="copyPrompt">Copy Claude prompt</button><button class="btn ghost" data-action="copyContext">Copy client JSON for Claude</button></div>
       <p class="faint small">Merge adds new records and updates records with the same id. Nothing is deleted.</p>`)}
@@ -2509,9 +2683,15 @@ Schema "tgm.engagement/1". Include only the collections you have data for. Every
        {"op":"addProcess","process":{...}}, {"op":"removeProcess","processId"}, {"op":"updateProcess","processId","changes":{...}},
        {"op":"addStep","processId","afterStepId","step":{...}}, {"op":"updateStep","processId","stepId","changes":{...}}, {"op":"removeStep","processId","stepId"} ] }],
   "scenarios": [{ "id","name","description","recommendationIds":["r1","r2"] }],
+  "competitors": [{ "id","name","type":"Direct|Indirect|Substitute|Adjacent","threat":"High|Medium|Low","website","hq","markets","segments","offering","pricingModel","pricePoint":0,"size","ownership","strengths","weaknesses","whereWeWin","whereWeLose","sources":"URLs, one per line (required)","lastReviewed":"YYYY-MM-DD" }],
+  "intel": [{ "id","competitorId","topic":"Pricing|Product|Marketing|Customers|Team|Technology|Partnerships|News|Other","note":"one fact per entry","sourceType":"Online research|Founder|Staff|Client / customer|Other","source":"URL or who said it","date":"YYYY-MM-DD" }],
+  "usps": [{ "id","claim","strength":"Unique|Shared|Claimed only","proof","competitorsWithIt" }],
+  "opportunities": [{ "id","title","area":"Positioning|Marketing|Product|Pricing|Sales|Systems & operations","description","basedOn","impact":"High|Medium|Low","effort":"High|Medium|Low","status":"Idea" }],
+  "capabilities": [{ "id","name","importance":"High|Medium|Low","client":"Strong|Partial|None","scores":{ "<competitor id>":"Strong|Partial|None" } }],
   "engagement": { "timeLog": [{ "id":"day_YYYY-MM-DD","date":"YYYY-MM-DD","dayType":"Full|Half","items":"one output per line" }] }
 }
 Rules: amounts are annual unless the field says monthly. Use the client's currency. Never invent numbers. Leave a field out if it is unknown, and list what is missing in a separate message after the JSON. Keep theme tags consistent across interviews.
+Competitor research: every competitor needs sources (URLs) and a lastReviewed date. pricePoint is an indicative monthly price per location in the client's currency; leave it out rather than guess. Only score a capability when there is evidence.
 
 MATERIAL:
 `;
@@ -2601,6 +2781,19 @@ const actions = {
     ui.capture = true; ui.tab = 'discovery'; render(); window.scrollTo(0, 0);
   },
   cancelCapture: () => { ui.capture = false; render(); },
+  addCompetitor: () => { E().competitors.push({ id: uid('co'), name: 'New competitor', type: 'Direct', lastReviewed: todayISO() }); ui.tab = 'data'; ui.coll = 'competitors'; save(); render(); toast('Fill in the new row (scroll right for all fields)'); },
+  editCompetitor: () => { ui.tab = 'data'; ui.coll = 'competitors'; render(); },
+  addIntel: (el) => { E().intel.push({ id: uid('it'), competitorId: el.dataset.id || '', topic: '', note: '', sourceType: 'Online research', source: '', date: todayISO() }); ui.tab = 'data'; ui.coll = 'intel'; save(); render(); },
+  addUsp: () => { E().usps.push({ id: uid('us'), claim: '', strength: 'Claimed only', proof: '' }); save(); render(); },
+  addOpportunity: () => { E().opportunities.push({ id: uid('op'), title: '', area: 'Positioning', status: 'Idea', impact: 'Medium', effort: 'Medium' }); save(); render(); },
+  oppToRec: (el) => {
+    const e = E(); const o = e.opportunities.find((x) => x.id === el.dataset.id); if (!o) return;
+    const w = { High: 2, Medium: 3, Low: 4 };
+    const r = { id: uid('r'), title: o.title || 'Untitled opportunity', type: 'Commercial', horizon: '0-3 months', description: [o.description, o.basedOn ? 'Based on: ' + o.basedOn : ''].filter(Boolean).join(' '), effort: { High: 4, Medium: 3, Low: 2 }[o.effort] || 3, risk: 2, confidence: w[o.impact] ? 5 - w[o.impact] + 1 : 3, status: 'Identified', ops: [] };
+    e.recommendations.push(r); o.status = 'Recommendation'; o.recommendationId = r.id; save(); render(); toast('Added to Recommendations. Add the revenue uplift or saving there so it can be ranked.');
+  },
+  setIntelFilter: (el) => { ui.intelComp = el.dataset.id; render(); },
+  addCapability: () => { const n = prompt('Capability or feature clients choose on (e.g. "Review management")'); if (!n) return; E().capabilities.push({ id: uid('cap'), name: n, importance: 'Medium', client: '', scores: {} }); save(); render(); },
   startIntake: () => { ui.session = true; ui.sessionId = ''; ui.capture = false; ui.tab = 'discovery'; render(); window.scrollTo(0, 0); },
   resumeIntake: (el) => { ui.session = true; ui.sessionId = el.dataset.id; ui.capture = false; ui.tab = 'discovery'; render(); window.scrollTo(0, 0); },
   switchIntake: () => { ui.sessionId = ''; render(); window.scrollTo(0, 0); },
@@ -2678,11 +2871,21 @@ document.addEventListener('change', (ev) => {
     };
     fr.readAsText(t.files[0]); return;
   }
+  if (t.id === 'mergeFile' && t.files[0]) {
+    const fr = new FileReader();
+    fr.onload = () => {
+      let obj; try { obj = JSON.parse(fr.result); } catch (err) { return toast('That file is not valid JSON: ' + err.message); }
+      const { engagement, counts } = mergeEngagement(E(), obj); engagement.id = db.activeId; db.engagements[db.activeId] = engagement; save(); render();
+      toast('Merged: ' + (Object.entries(counts).map(([k, v]) => `${k} +${v.added}/~${v.updated}`).join(', ') || 'profile fields'));
+    };
+    fr.readAsText(t.files[0]); t.value = ''; return;
+  }
   if (t.id === 'staffFile' && t.files[0]) {
     const fr = new FileReader();
     fr.onload = () => { const res = importFormCSV(E(), fr.result, 'staff'); save(); render(); toast(`Staff responses: ${res.added} added, ${res.updated} updated${res.unmatched.length ? `, ${res.unmatched.length} columns not matched` : ''}`); };
     fr.readAsText(t.files[0]); return;
   }
+  if (t.dataset.capcell) { const cap = E().capabilities.find((x) => x.id === t.dataset.capcell); if (cap) { if (t.dataset.comp === '__client') cap.client = t.value; else { cap.scores = cap.scores || {}; cap.scores[t.dataset.comp] = t.value; } save(); render(); } return; }
   if (t.dataset.intakesel || t.dataset.intakemulti) { intakeWrite(t); return; }
   if (t.dataset.intake) { intakeWrite(t); return; }
   if (t.id === 'intakeFile' && t.files[0]) {

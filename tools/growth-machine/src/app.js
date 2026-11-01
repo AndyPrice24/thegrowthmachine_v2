@@ -13,7 +13,7 @@ function loadDB() {
     db = { activeId: demo.id, engagements: { [lb.id]: lb, [demo.id]: demo } };
   }
   Object.keys(db.engagements).forEach((k) => { db.engagements[k] = normalise(db.engagements[k]); });
-  if (db.engagements.eng_demo && !db.engagements.eng_demo.engagement.phases.length) db.engagements.eng_demo = demoEngagement(); // refresh old demo with tracking sample
+  if (db.engagements.eng_demo && (!db.engagements.eng_demo.engagement.phases.length || !db.engagements.eng_demo.competitors.length)) db.engagements.eng_demo = demoEngagement(); // refresh old demo with tracking sample
   if (!db.engagements[db.activeId]) db.activeId = Object.keys(db.engagements)[0];
   try { Object.assign(ui, JSON.parse(localStorage.getItem(STORE_KEY + '.ui') || '{}'), { scenario: 'current' }); } catch (err) { /* ignore */ }
 }
@@ -92,7 +92,7 @@ function renderHeader() {
 function render() {
   const e = E();
   renderHeader();
-  const views = { progress: viewProgress, discovery: viewDiscovery, overview: viewOverview, business: viewBusiness, finance: viewFinance, org: viewOrg, tools: viewTools, processes: viewProcesses, interviews: viewInterviews, crossover: viewCrossover, recs: viewRecs, scenarios: viewScenarios, report: viewReport, data: viewData };
+  const views = { competitors: viewCompetitors, progress: viewProgress, discovery: viewDiscovery, overview: viewOverview, business: viewBusiness, finance: viewFinance, org: viewOrg, tools: viewTools, processes: viewProcesses, interviews: viewInterviews, crossover: viewCrossover, recs: viewRecs, scenarios: viewScenarios, report: viewReport, data: viewData };
   let html;
   try { html = (views[ui.tab] || viewOverview)(e); }
   catch (err) { console.error(err); html = `<div class="banner err">Something in this client's data could not be displayed: ${esc(err.message)}. Check the Data tab.</div>`; }
@@ -113,15 +113,21 @@ const FIELD_DEFS = {
   financePeriods: [['id', 'text'], ['label', 'text'], ['months', 'num'], ['revenue', 'num'], ['cogs', 'num'], ['payroll', 'num'], ['tools', 'num'], ['marketing', 'num'], ['premises', 'num'], ['other', 'num']],
   interviews: [['id', 'text'], ['personId', 'person'], ['date', 'date'], ['interviewer', 'text'], ['summary', 'long'], ['themes', 'text'], ['painPoints', 'long'], ['ideas', 'long'], ['quotes', 'long']],
   findings: [['id', 'text'], ['title', 'text'], ['area', 'text'], ['severity', ['high', 'medium', 'low']], ['evidence', 'long']],
+  competitors: [['id', 'text'], ['name', 'text'], ['type', ['Direct', 'Indirect', 'Substitute', 'Adjacent']], ['threat', ['High', 'Medium', 'Low']], ['website', 'text'], ['hq', 'text'], ['markets', 'text'], ['segments', 'text'], ['offering', 'long'], ['pricingModel', 'text'], ['pricePoint', 'num'], ['size', 'text'], ['ownership', 'text'], ['strengths', 'long'], ['weaknesses', 'long'], ['whereWeWin', 'long'], ['whereWeLose', 'long'], ['sources', 'long'], ['lastReviewed', 'date']],
+  intel: [['id', 'text'], ['competitorId', 'comp'], ['topic', INTEL_TOPICS], ['note', 'long'], ['sourceType', SOURCE_TYPES], ['source', 'text'], ['date', 'date']],
+  usps: [['id', 'text'], ['claim', 'text'], ['strength', ['Unique', 'Shared', 'Claimed only']], ['proof', 'long'], ['competitorsWithIt', 'text'], ['notes', 'text']],
+  opportunities: [['id', 'text'], ['title', 'text'], ['area', OPP_AREAS], ['description', 'long'], ['basedOn', 'text'], ['impact', ['High', 'Medium', 'Low']], ['effort', ['High', 'Medium', 'Low']], ['status', ['Idea', 'Proposed', 'Recommendation']], ['recommendationId', 'text']],
+  capabilities: [['id', 'text'], ['name', 'text'], ['importance', ['High', 'Medium', 'Low']], ['client', ['Strong', 'Partial', 'None']], ['notes', 'text'], ['scores', 'json']],
   recommendations: [['id', 'text'], ['title', 'text'], ['type', ['People', 'Process', 'Tool', 'Build', 'Structure', 'Commercial']], ['horizon', ['0-3 months', '3-6 months', '6-12 months', '12+ months']], ['description', 'long'], ['effort', 'num'], ['risk', 'num'], ['confidence', 'num'], ['oneOffCost', 'num'], ['otherAnnualSaving', 'num'], ['oneOffSaving', 'num'], ['revenueUplift', 'num'], ['status', REC_STAGES], ['ops', 'json']],
   scenarios: [['id', 'text'], ['name', 'text'], ['description', 'text'], ['recommendationIds', 'json']]
 };
-const COLL_LABELS = { departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Top clients', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };
+const COLL_LABELS = { competitors: 'Competitors', capabilities: 'Capabilities', intel: 'Competitor intelligence', usps: 'USPs', opportunities: 'Opportunities', intake: 'Founder answers', departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Top clients', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };
 
 function cellInput(e, coll, row, [f, type]) {
   const v = row[f]; const base = `data-cell data-coll="${coll}" data-id="${esc(row.id)}" data-field="${f}"`;
   if (Array.isArray(type)) return `<select ${base}><option value=""></option>${type.map((o) => `<option ${v === o ? 'selected' : ''}>${o}</option>`).join('')}</select>`;
   if (type === 'person') return `<select ${base}><option value="">—</option>${e.people.map((p) => `<option value="${p.id}" ${v === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>`;
+  if (type === 'comp') return `<select ${base}><option value="">—</option>${e.competitors.map((c) => `<option value="${c.id}" ${v === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select>`;
   if (type === 'dept') return `<select ${base}><option value="">—</option>${e.departments.map((d) => `<option value="${d.id}" ${v === d.id ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}</select>`;
   if (type === 'json') return `<button class="btn sm" data-action="editJSON" data-coll="${coll}" data-id="${esc(row.id)}" data-field="${f}">Edit (${Array.isArray(v) ? v.length : 0})</button>`;
   if (type === 'long') return `<textarea ${base} rows="2">${esc(v)}</textarea>`;
@@ -138,9 +144,10 @@ function viewData(e) {
     ${card('Import / export', `<div class="btn-row">
         <button class="btn" data-action="exportJSON">Export this client (.json)</button>
         <label class="btn">Import client file<input type="file" accept=".json,application/json" id="importFile" hidden></label>
+        <label class="btn ghost">Merge a JSON file<input type="file" accept=".json,application/json" id="mergeFile" hidden></label>
         <button class="btn ghost" data-action="exportAll">Export all clients</button>
       </div>
-      <p class="faint small">Importing a file whose id matches an existing client replaces that client. Use "Paste from Claude" to merge partial data.</p>`)}
+      <p class="faint small">"Import client file" loads a whole client, replacing it if it already exists. "Merge a JSON file" adds a partial file (e.g. competitor research from Claude) into ${esc(e.client.name)} without deleting anything.</p>`)}
     ${card('Paste from Claude', `<textarea id="pasteBox" rows="7" placeholder='Paste JSON here, e.g. {"people":[...],"interviews":[...]}'></textarea>
       <div class="btn-row"><button class="btn" data-action="mergePaste">Merge into ${esc(e.client.name)}</button><button class="btn ghost" data-action="copyPrompt">Copy Claude prompt</button><button class="btn ghost" data-action="copyContext">Copy client JSON for Claude</button></div>
       <p class="faint small">Merge adds new records and updates records with the same id. Nothing is deleted.</p>`)}
@@ -177,9 +184,15 @@ Schema "tgm.engagement/1". Include only the collections you have data for. Every
        {"op":"addProcess","process":{...}}, {"op":"removeProcess","processId"}, {"op":"updateProcess","processId","changes":{...}},
        {"op":"addStep","processId","afterStepId","step":{...}}, {"op":"updateStep","processId","stepId","changes":{...}}, {"op":"removeStep","processId","stepId"} ] }],
   "scenarios": [{ "id","name","description","recommendationIds":["r1","r2"] }],
+  "competitors": [{ "id","name","type":"Direct|Indirect|Substitute|Adjacent","threat":"High|Medium|Low","website","hq","markets","segments","offering","pricingModel","pricePoint":0,"size","ownership","strengths","weaknesses","whereWeWin","whereWeLose","sources":"URLs, one per line (required)","lastReviewed":"YYYY-MM-DD" }],
+  "intel": [{ "id","competitorId","topic":"Pricing|Product|Marketing|Customers|Team|Technology|Partnerships|News|Other","note":"one fact per entry","sourceType":"Online research|Founder|Staff|Client / customer|Other","source":"URL or who said it","date":"YYYY-MM-DD" }],
+  "usps": [{ "id","claim","strength":"Unique|Shared|Claimed only","proof","competitorsWithIt" }],
+  "opportunities": [{ "id","title","area":"Positioning|Marketing|Product|Pricing|Sales|Systems & operations","description","basedOn","impact":"High|Medium|Low","effort":"High|Medium|Low","status":"Idea" }],
+  "capabilities": [{ "id","name","importance":"High|Medium|Low","client":"Strong|Partial|None","scores":{ "<competitor id>":"Strong|Partial|None" } }],
   "engagement": { "timeLog": [{ "id":"day_YYYY-MM-DD","date":"YYYY-MM-DD","dayType":"Full|Half","items":"one output per line" }] }
 }
 Rules: amounts are annual unless the field says monthly. Use the client's currency. Never invent numbers. Leave a field out if it is unknown, and list what is missing in a separate message after the JSON. Keep theme tags consistent across interviews.
+Competitor research: every competitor needs sources (URLs) and a lastReviewed date. pricePoint is an indicative monthly price per location in the client's currency; leave it out rather than guess. Only score a capability when there is evidence.
 
 MATERIAL:
 `;
@@ -269,6 +282,19 @@ const actions = {
     ui.capture = true; ui.tab = 'discovery'; render(); window.scrollTo(0, 0);
   },
   cancelCapture: () => { ui.capture = false; render(); },
+  addCompetitor: () => { E().competitors.push({ id: uid('co'), name: 'New competitor', type: 'Direct', lastReviewed: todayISO() }); ui.tab = 'data'; ui.coll = 'competitors'; save(); render(); toast('Fill in the new row (scroll right for all fields)'); },
+  editCompetitor: () => { ui.tab = 'data'; ui.coll = 'competitors'; render(); },
+  addIntel: (el) => { E().intel.push({ id: uid('it'), competitorId: el.dataset.id || '', topic: '', note: '', sourceType: 'Online research', source: '', date: todayISO() }); ui.tab = 'data'; ui.coll = 'intel'; save(); render(); },
+  addUsp: () => { E().usps.push({ id: uid('us'), claim: '', strength: 'Claimed only', proof: '' }); save(); render(); },
+  addOpportunity: () => { E().opportunities.push({ id: uid('op'), title: '', area: 'Positioning', status: 'Idea', impact: 'Medium', effort: 'Medium' }); save(); render(); },
+  oppToRec: (el) => {
+    const e = E(); const o = e.opportunities.find((x) => x.id === el.dataset.id); if (!o) return;
+    const w = { High: 2, Medium: 3, Low: 4 };
+    const r = { id: uid('r'), title: o.title || 'Untitled opportunity', type: 'Commercial', horizon: '0-3 months', description: [o.description, o.basedOn ? 'Based on: ' + o.basedOn : ''].filter(Boolean).join(' '), effort: { High: 4, Medium: 3, Low: 2 }[o.effort] || 3, risk: 2, confidence: w[o.impact] ? 5 - w[o.impact] + 1 : 3, status: 'Identified', ops: [] };
+    e.recommendations.push(r); o.status = 'Recommendation'; o.recommendationId = r.id; save(); render(); toast('Added to Recommendations. Add the revenue uplift or saving there so it can be ranked.');
+  },
+  setIntelFilter: (el) => { ui.intelComp = el.dataset.id; render(); },
+  addCapability: () => { const n = prompt('Capability or feature clients choose on (e.g. "Review management")'); if (!n) return; E().capabilities.push({ id: uid('cap'), name: n, importance: 'Medium', client: '', scores: {} }); save(); render(); },
   startIntake: () => { ui.session = true; ui.sessionId = ''; ui.capture = false; ui.tab = 'discovery'; render(); window.scrollTo(0, 0); },
   resumeIntake: (el) => { ui.session = true; ui.sessionId = el.dataset.id; ui.capture = false; ui.tab = 'discovery'; render(); window.scrollTo(0, 0); },
   switchIntake: () => { ui.sessionId = ''; render(); window.scrollTo(0, 0); },
@@ -346,11 +372,21 @@ document.addEventListener('change', (ev) => {
     };
     fr.readAsText(t.files[0]); return;
   }
+  if (t.id === 'mergeFile' && t.files[0]) {
+    const fr = new FileReader();
+    fr.onload = () => {
+      let obj; try { obj = JSON.parse(fr.result); } catch (err) { return toast('That file is not valid JSON: ' + err.message); }
+      const { engagement, counts } = mergeEngagement(E(), obj); engagement.id = db.activeId; db.engagements[db.activeId] = engagement; save(); render();
+      toast('Merged: ' + (Object.entries(counts).map(([k, v]) => `${k} +${v.added}/~${v.updated}`).join(', ') || 'profile fields'));
+    };
+    fr.readAsText(t.files[0]); t.value = ''; return;
+  }
   if (t.id === 'staffFile' && t.files[0]) {
     const fr = new FileReader();
     fr.onload = () => { const res = importFormCSV(E(), fr.result, 'staff'); save(); render(); toast(`Staff responses: ${res.added} added, ${res.updated} updated${res.unmatched.length ? `, ${res.unmatched.length} columns not matched` : ''}`); };
     fr.readAsText(t.files[0]); return;
   }
+  if (t.dataset.capcell) { const cap = E().capabilities.find((x) => x.id === t.dataset.capcell); if (cap) { if (t.dataset.comp === '__client') cap.client = t.value; else { cap.scores = cap.scores || {}; cap.scores[t.dataset.comp] = t.value; } save(); render(); } return; }
   if (t.dataset.intakesel || t.dataset.intakemulti) { intakeWrite(t); return; }
   if (t.dataset.intake) { intakeWrite(t); return; }
   if (t.id === 'intakeFile' && t.files[0]) {
