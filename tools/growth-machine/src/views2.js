@@ -121,7 +121,7 @@ function viewDiscovery(e) {
       ${sections.map((s) => { const qs = s.questions.filter((q) => r.answers[q.id]); return qs.length ? `<h5>${esc(s.title)}</h5><dl>${qs.map((q) => `<dt>${esc(q.q)} <span class="chip">${esc((CRITERIA.find((c) => c.id === q.crit) || {}).label || '')}</span></dt><dd>${esc(r.answers[q.id])}</dd>`).join('')}</dl>` : ''; }).join('')}</details>`).join('')
     : '<p class="empty">No founder responses yet.</p>';
   return `<div class="page-h"><div><span class="eyebrow">Discovery</span><h1>What we know, and where the gaps are</h1><p class="muted">Every answer is stored against a discovery criterion. Coverage shows which criteria are well evidenced and which still need questions.</p></div>
-    <div class="btn-row"><button class="btn" data-action="startCapture">+ Capture an interview</button></div></div>
+    <div class="btn-row"><button class="btn" data-action="startIntake">▶ Live founder session</button><button class="btn ghost" data-action="startCapture">+ Capture a manager / staff interview</button></div></div>
   ${card('Discovery coverage (answers per criterion)', `<div class="scroll-x">${covTable}</div>`, { sub: 'Darker means more evidence. "Gap" and "thin" show where to aim the next interviews.' })}
   <div class="grid-2">
     ${card(`Founder questionnaire: ${io.answered} of ${io.total} answered`, `<div class="btn-row"><button class="btn" data-action="startIntake">▶ Live founder session</button><label class="btn sm">Import form responses (CSV)<input type="file" accept=".csv,text/csv" id="intakeFile" hidden></label></div>
