@@ -4,3 +4,4 @@ tools/growth-machine/clients/
 node_modules/
 .next/
 .env*
+clients/
