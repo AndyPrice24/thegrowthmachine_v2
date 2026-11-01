@@ -267,9 +267,9 @@ function viewScenarios(e) {
 function viewReport(e) {
   const toggle = `<div class="toolbar"><button class="btn sm ${ui.reportType === 'status' ? 'on' : ''}" data-action="reportType" data-id="status">Status report (progress, time, delays)</button><button class="btn sm ${ui.reportType !== 'status' ? 'on' : ''}" data-action="reportType" data-id="diagnostic">Diagnostic report (findings & recommendations)</button></div>`;
   if (ui.reportType === 'status') {
-    return `<div class="page-h"><div><span class="eyebrow">Report</span><h1>Client status report</h1><p class="muted">Generated live from Progress & time. Send it after every fortnightly review, or whenever the founders ask. The Delays & changes section is always included, even when it is empty.</p></div>
+    return `<div class="page-h"><div><span class="eyebrow">Report</span><h1>Client status report</h1><p class="muted">Output-led: what was delivered, what's next, what we need, delays, savings and one capacity line. Send it after every fortnightly review. Delays & changes is always included.</p></div>
       <div class="btn-row"><button class="btn" data-action="printReport">Print / save PDF</button><button class="btn" data-action="downloadReport">Download HTML report</button></div></div>
-      ${toggle}<div class="report-preview status-preview"><div id="report-doc" class="rpt">${e.engagement.phases.length ? renderStatusReport(e) : '<p>Set up the engagement in Progress & time first.</p>'}</div></div>`;
+      ${toggle}${e.engagement.phases.length ? `<div class="report-layout">${statusSettings(e)}<div class="report-preview status-preview"><div id="report-doc" class="rpt">${renderStatusReport(e)}</div></div></div>` : '<p>Set up the engagement in Progress & time first.</p>'}`;
   }
   const r = e.report; const sec = r.sections;
   const secLabels = { snapshot: 'Current-state snapshot', findings: 'Key findings', org: 'Org chart: current vs proposed', processes: 'Process maps: before / after', recommendations: 'Recommendations roadmap', financials: 'Financial impact', nextSteps: 'Next steps' };

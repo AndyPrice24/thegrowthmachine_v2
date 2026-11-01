@@ -160,3 +160,5 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 .outstanding h5{margin:2px 0 6px;color:var(--warn-ink);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
 .outstanding ul{margin:0;padding-left:18px;font-size:12.5px}
 .pre{background:var(--surface-2);border-radius:10px;padding:8px 12px;margin-bottom:12px}
+.diary td:nth-child(3) textarea{min-width:340px}
+.diary td:nth-child(4){min-width:200px}

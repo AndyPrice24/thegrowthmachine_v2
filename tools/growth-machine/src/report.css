@@ -28,3 +28,4 @@
 .rpt-foot{margin-top:26px;font-size:11px;color:#8a8074}
 @media (max-width:700px){.rpt{padding:22px 18px}.rpt-2{grid-template-columns:1fr}.rpt-cover h1{font-size:34px}}
 @media print{.rpt-break{break-before:page}.rpt-fig{overflow:visible}.rpt-fig svg{max-width:100%;height:auto}.rpt-sec{break-inside:auto}.rpt .tbl tr{break-inside:avoid}}
+.rpt-lead{font-family:Georgia,serif;font-size:15pt;line-height:1.45;color:#171715;margin:0 0 12px}

@@ -24,6 +24,15 @@ function normaliseEngagementBlock(e) {
     if (!Array.isArray(e.engagement[k])) e.engagement[k] = [];
     e.engagement[k].forEach((x) => { if (!x.id) x.id = uid(k.slice(0, 2)); });
   });
+  // Work diary: whole or half days only; what happened is a simple list (no durations)
+  e.engagement.timeLog.forEach((t) => {
+    if (t.dayType !== 'Full' && t.dayType !== 'Half') t.dayType = num(t.days) >= 0.75 ? 'Full' : 'Half';
+    t.days = t.dayType === 'Full' ? 1 : 0.5;
+    if (t.items == null) t.items = [t.activity, t.notes].filter(Boolean).join('\n');
+    delete t.activity;
+    if (!t.phaseId) t.phaseId = phaseForDate(e.engagement, t.date);
+  });
+  e.engagement.status = Object.assign({ headline: '', delivered: '', next: '', includeDiary: false }, e.engagement.status || {});
   if (!Array.isArray(e.intake)) e.intake = [];
   if (!Array.isArray(e.staffSurvey)) e.staffSurvey = [];
   e.recommendations.forEach((r) => { if (LEGACY_STATUS[r.status]) r.status = LEGACY_STATUS[r.status]; if (!r.status) r.status = 'Identified'; });
@@ -58,6 +67,37 @@ function seedStandardPlan(e) {
     for (let d = new Date(first); d <= endT; d.setDate(d.getDate() + 14)) { const iso = d.toISOString().slice(0, 10); if (!holidays.includes(iso.slice(5))) out.push(iso); }
     g.reviewDates = out.join(', ');
   }
+}
+
+/** The phase a date falls in (latest-starting phase that contains it). */
+function phaseForDate(g, iso) {
+  if (!iso || !g.phases || !g.phases.length) return '';
+  const hits = g.phases.filter((p) => p.start <= iso && iso <= p.end).sort((a, b) => (b.start || '').localeCompare(a.start || ''));
+  if (hits.length) return hits[0].id;
+  return iso < g.phases[0].start ? g.phases[0].id : g.phases[g.phases.length - 1].id;
+}
+/** Things the Studio recorded on a given date, so the diary fills itself in. Roles, never names. */
+function dayEvents(e, iso) {
+  const g = e.engagement; const out = [];
+  const pById = byId(e.people);
+  const roleOf = (iv) => iv.role || (pById[iv.personId] && pById[iv.personId].title) || 'team member';
+  const ivs = e.interviews.filter((iv) => iv.date === iso);
+  if (ivs.length) out.push(`Interview${ivs.length > 1 ? 's' : ''}: ${ivs.map(roleOf).join(', ')}`);
+  const fs = e.intake.filter((r) => (r.sessionDates || []).includes(iso));
+  if (fs.length) out.push(`Founder session: ${fs.map((r) => r.role || 'founder').join(', ')}`);
+  const rec = g.requests.filter((r) => r.receivedDate === iso);
+  if (rec.length) out.push(`Information received: ${rec.length} item${rec.length > 1 ? 's' : ''}`);
+  g.activities.filter((a) => a.status === 'Done' && a.doneDate === iso).forEach((a) => out.push(`Done: ${a.title}`));
+  g.delays.filter((d) => d.dateRaised === iso).forEach((d) => out.push(`Delay logged: ${d.cause || 'see log'}`));
+  const ss = e.staffSurvey.filter((r) => r.date === iso);
+  if (ss.length) out.push(`Staff questionnaires received: ${ss.length}`);
+  return out;
+}
+/** Start of the current reporting period: the most recent review date before today (or the engagement start). */
+function statusPeriodStart(g) {
+  const t = todayISO();
+  const past = splitList(g.reviewDates).filter((d) => d < t).sort();
+  return past.length ? past[past.length - 1] : g.start;
 }
 
 /** Contract month (1-based) for a date, from the engagement start. */

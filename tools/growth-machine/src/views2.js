@@ -77,14 +77,16 @@ function viewProgress(e) {
   const actCol = (title, list, empty) => `<div class="act-col"><h4>${title} (${list.length})</h4>${list.length ? list.map((a) => `<div class="act ${a.status === 'Waiting on client' ? 'act-wait' : ''}"><div class="act-top">${ecellArea('engagement.activities', a, 'title', 1)}</div><div class="act-meta">${ecellSel('engagement.activities', a, 'phaseId', phaseOpts)} ${ecell('engagement.activities', a, a.status === 'Done' ? 'doneDate' : 'due', 'date')} ${ecellSel('engagement.activities', a, 'status', ACTIVITY_STATUSES, false)} ${delBtn('engagement.activities', a.id)}</div></div>`).join('') : `<p class="empty">${empty}</p>`}</div>`;
   const acts = card('What\'s done, what\'s happening, what\'s next', `<div class="act-grid">${actCol('✓ Done', st.done, 'Nothing completed yet.')}${actCol('● In progress / waiting', st.doing, 'Nothing in progress.')}${actCol('→ Next', st.next, 'Nothing queued.')}</div><div class="btn-row"><button class="btn sm" data-action="addActivity">+ Add activity</button></div>`, { sub: 'Marking an activity Done stamps today\'s date automatically.' });
 
-  const timeRows = g.timeLog.slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-  const time = card(`Time log: ${st.used.toFixed(1)} of ${num(g.daysTotal)} days used`, `<div class="grid-2">
-      <div><h4>By phase (used vs planned)</h4>${hbars(g.phases.map((p) => ({ label: p.name, value: num(st.byPhase[p.id] || 0), tip: `${num(st.byPhase[p.id] || 0)} used of ${num(p.plannedDays)} planned`, color: num(st.byPhase[p.id] || 0) > num(p.plannedDays) ? 'var(--crit)' : 'var(--s1)' })), { fmt: (v) => v.toFixed(1) + ' d', max: Math.max(1, ...g.phases.map((p) => Math.max(num(p.plannedDays), num(st.byPhase[p.id] || 0)))) })}</div>
-      <div><h4>By contract month (allowance ${num(g.daysPerMonth)})</h4>${hbars([1, 2, 3].map((m) => ({ label: `Month ${m}`, value: num(st.byMonth[m] || 0), color: num(st.byMonth[m] || 0) > num(g.daysPerMonth) ? 'var(--crit)' : 'var(--s3)' })), { fmt: (v) => v.toFixed(1) + ' d', max: Math.max(num(g.daysPerMonth), ...Object.values(st.byMonth)) })}
-      <p class="faint small">Unused Month-2 days may carry into Month 3 by written agreement; the total of ${num(g.daysTotal)} cannot increase (clause 3.4).</p></div></div>
-    <div class="scroll-x"><table class="tbl grid-edit"><thead><tr><th>Date</th><th>Phase</th><th>Days</th><th>What was done</th><th>Notes</th><th></th></tr></thead><tbody>
-    ${timeRows.map((t) => `<tr><td>${ecell('engagement.timeLog', t, 'date', 'date')}</td><td>${ecellSel('engagement.timeLog', t, 'phaseId', phaseOpts)}</td><td>${ecellSel('engagement.timeLog', t, 'days', ['0.25', '0.5', '0.75', '1'], false)}</td><td>${ecellArea('engagement.timeLog', t, 'activity', 1)}</td><td>${ecellArea('engagement.timeLog', t, 'notes', 1)}</td><td>${delBtn('engagement.timeLog', t.id)}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">No time logged yet.</td></tr>'}
-    </tbody></table></div><div class="btn-row"><button class="btn sm" data-action="addTime">+ Log time</button></div>`, { sub: 'Logged in half days (8-hour day), as in the contract. Reported at every fortnightly review.' });
+  const entryDates = new Set(g.timeLog.map((t) => t.date));
+  const missing = []; if (g.start) { for (let d = g.start; d <= st.today && d <= g.end; d = addDaysISO(d, 1)) { if (!entryDates.has(d) && dayEvents(e, d).length) missing.push(d); } }
+  const diaryRows = g.timeLog.slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const time = card(`Work diary · ${st.used % 1 ? st.used.toFixed(1) : st.used} of ${num(g.daysTotal)} days`, `<div class="grid-2">
+      <div><h4>Days by contract month (allowance ${num(g.daysPerMonth)})</h4>${hbars([1, 2, 3].map((m) => ({ label: `Month ${m}`, value: num(st.byMonth[m] || 0), color: num(st.byMonth[m] || 0) > num(g.daysPerMonth) ? 'var(--crit)' : 'var(--s3)' })), { fmt: (v) => (v % 1 ? v.toFixed(1) : v) + ' d', max: Math.max(num(g.daysPerMonth), ...Object.values(st.byMonth)) })}</div>
+      <div class="small muted"><p><b>Private.</b> Founders see a single capacity line in the status report, never this diary, unless you switch "Include work diary" on.</p><p>Record each working day as a <b>half</b> or <b>full</b> day and list what happened. No durations. Things captured in the Studio that day appear automatically.</p><p class="faint">Unused Month-2 days may carry into Month 3 by written agreement; the total of ${num(g.daysTotal)} cannot increase (clause 3.4).</p></div></div>
+    ${missing.length ? `<div class="banner">Studio activity recorded on ${missing.map((d) => `<button class="link" data-action="addDay" data-id="${d}">${fmtD(d, { weekday: 'short', day: 'numeric', month: 'short' })}</button>`).join(' ')} with no diary entry yet. Click a date to add it.</div>` : ''}
+    <div class="scroll-x"><table class="tbl grid-edit diary"><thead><tr><th>Date</th><th>Day</th><th>What happened (one item per line)</th><th>Recorded automatically</th><th></th></tr></thead><tbody>
+    ${diaryRows.map((t) => { const auto = dayEvents(e, t.date); return `<tr><td>${ecell('engagement.timeLog', t, 'date', 'date')}<div class="faint small">${esc((g.phases.find((p) => p.id === phaseForDate(g, t.date)) || {}).name || '')}</div></td><td>${ecellSel('engagement.timeLog', t, 'dayType', [['Full', 'Full day'], ['Half', 'Half day']], false)}</td><td>${ecellArea('engagement.timeLog', t, 'items', Math.max(2, String(t.items || '').split('\n').length))}</td><td class="small muted">${auto.length ? auto.map((x) => `• ${esc(x)}`).join('<br>') : '<span class="faint">—</span>'}</td><td>${delBtn('engagement.timeLog', t.id)}</td></tr>`; }).join('') || '<tr><td colspan="5" class="empty">No working days recorded yet.</td></tr>'}
+    </tbody></table></div><div class="btn-row"><button class="btn sm" data-action="addDay">+ Add today</button><button class="btn sm ghost" data-action="exportDiary">Export diary (CSV, on request)</button></div>`, { sub: 'One line per working day. This is your private record of what the days delivered.' });
 
   const savings = sv.target ? card('Savings tracker (contract)', savingsBlock(sv), { sub: 'Monthly recurring savings, net of new recurring costs. Stage comes from each recommendation\'s status.' }) : '';
 
@@ -153,13 +155,11 @@ function viewCapture(e) {
   <div class="capture">
     <aside class="card">
       <label class="fld"><span>Person (from org chart)</span>${sel(e.people.map((x) => [x.id, x.name + (x.title ? ' · ' + x.title : '')]), d.personId, 'data-draftsel="personId"')}</label>
-      ${p ? '' : `<label class="fld"><span>…or name / role if not on the org chart</span><input data-draft="personLabel" value="${esc(d.personLabel || '')}"></label>`}
+      ${p ? '' : `<label class="fld"><span>${e.people.length ? '…or name, if not on the org chart' : 'Name'}</span><input data-draft="personLabel" value="${esc(d.personLabel || '')}"></label><label class="fld"><span>Position / role</span><input data-draft="role" value="${esc(d.role || '')}" placeholder="Shown in reports instead of the name"></label>`}
       <label class="fld"><span>Level</span>${sel([['founder', 'Founder / director'], ['manager', 'Manager'], ['staff', 'Team member']], d.level, 'data-draftsel="level"', false)}</label>
       <label class="fld"><span>Department question set</span>${sel(DEPT_TYPES, dtype, 'data-draftsel="deptType"')}</label>
       <label class="fld"><span>Date</span><input type="date" data-draft="date" value="${esc(d.date)}"></label>
       <label class="fld"><span>Interviewer</span><input data-draft="interviewer" value="${esc(d.interviewer || '')}"></label>
-      <label class="fld"><span>Duration (minutes)</span><input type="number" data-draft="durationMins" value="${esc(d.durationMins || '')}"></label>
-      <label class="tog"><input type="checkbox" data-draftchk="logTime" ${d.logTime ? 'checked' : ''}> Add to time log (Listening phase)</label>
       <h5>Wrap-up</h5>
       <label class="fld"><span>Summary (2–3 lines)</span><textarea data-draft="summary" rows="3">${esc(d.summary || '')}</textarea></label>
       <label class="fld"><span>Themes (comma separated, keep consistent)</span><input data-draft="themes" value="${esc(d.themes || '')}" list="themeList"><datalist id="themeList">${themeCounts(e).map((t) => `<option value="${esc(t.theme)}">`).join('')}</datalist></label>
@@ -179,37 +179,79 @@ function viewCapture(e) {
   </div>`;
 }
 
-/* ---------- Client status report ---------- */
+/* ---------- Client status report (output-led: what was delivered, not how time was spent) ---------- */
+function interviewsByRole(e) {
+  const pById = byId(e.people), dById = byId(e.departments);
+  const groups = {};
+  e.interviews.forEach((iv) => {
+    const p = pById[iv.personId]; const role = iv.role || (p && p.title) || 'Team member';
+    const dept = (p && dById[p.departmentId] && dById[p.departmentId].name) || (DEPT_TYPES.find((x) => x[0] === iv.deptType) || [])[1] || 'Other';
+    groups[dept] = groups[dept] || {}; groups[dept][role] = (groups[dept][role] || 0) + 1;
+  });
+  return groups;
+}
+function suggestDelivered(e) {
+  const g = e.engagement; const since = statusPeriodStart(g); const out = [];
+  g.activities.filter((a) => a.status === 'Done' && (a.doneDate || '') >= since).forEach((a) => out.push(a.title));
+  const rec = g.requests.filter((r) => r.receivedDate && r.receivedDate >= since).length;
+  if (rec) out.push(`Information received: ${g.requests.filter((r) => r.receivedDate).length} of ${g.requests.length} requested items`);
+  const iv = e.interviews.filter((x) => (x.date || '') >= since).length;
+  if (iv) out.push(`${iv} interview${iv > 1 ? 's' : ''} completed this period`);
+  return out.join('\n');
+}
+function suggestNext(e) {
+  return e.engagement.activities.filter((a) => a.status !== 'Done').sort((a, b) => (a.due || '').localeCompare(b.due || '')).slice(0, 5).map((a) => a.title).join('\n');
+}
 function renderStatusReport(e) {
-  const g = e.engagement; const st = engagementStatus(e); const sv = savingsTracker(e);
+  const g = e.engagement; const st = engagementStatus(e); const sv = savingsTracker(e); const S = g.status || {};
   const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  const since = statusPeriodStart(g);
   const nextReview = splitList(g.reviewDates).find((d) => d > st.today);
   const awaiting = e.recommendations.filter((r) => r.status === 'Identified');
   const waiting = st.reqs.filter((r) => r._status === 'Waiting' || r._status === 'Overdue').sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''));
+  const onTrack = !st.openDelays.length && !st.overdue.length;
+  const m = Math.max(1, Math.min(3, st.thisMonth));
+  const dfmt = (v) => (v % 1 ? v.toFixed(1) : String(v));
+  const capacity = `Month ${m}: ${dfmt(num(st.byMonth[m] || 0))} of ${num(g.daysPerMonth)} days used · ${dfmt(Math.max(0, st.remaining))} of ${num(g.daysTotal)} remaining overall`;
+  const bullets = (txt) => { const l = splitList(String(txt || '').replace(/\n/g, ';')); return l.length ? `<ul>${l.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : '<p class="muted">—</p>'; };
+  const groups = interviewsByRole(e); const ivTotal = e.interviews.length; const planned = e.people.length;
   let h = `<header class="rpt-cover"><div class="rpt-brand">THE <strong>GROWTH</strong> MACHINE</div><h1>Status report</h1><p class="rpt-client">${esc(e.client.name)}</p>
-    <p class="rpt-meta">As at ${date}${g.contact ? ` · For ${esc(g.contact)}` : ''} · Engagement ${fmtD(g.start, { day: 'numeric', month: 'short', year: 'numeric' })} – ${fmtD(g.end, { day: 'numeric', month: 'short', year: 'numeric' })} · Confidential</p></header>`;
-  h += `<section class="rpt-sec"><h2>At a glance</h2><div class="kpis">
-    ${kpi('Current phase', esc(st.current ? st.current.name : '—'))}
-    ${kpi('Consulting days used', `${st.used.toFixed(1)} of ${num(g.daysTotal)}`, `<div class="k-delta">${st.remaining.toFixed(1)} remaining · month ${Math.max(1, st.thisMonth)}: ${num(st.byMonth[st.thisMonth] || 0).toFixed(1)} of ${num(g.daysPerMonth)}</div>`)}
-    ${kpi('Term elapsed', st.termDays ? pct(st.elapsed / st.termDays * 100) : '—', `<div class="k-delta">${st.daysLeftInTerm} days to go</div>`)}
-    <div class="kpi ${st.openDelays.length || st.totalSlip ? 'kpi-flag' : ''}"><div class="k-label">⚑ Delays & changes</div><div class="k-value">${st.openDelays.length} open</div><div class="k-delta">${st.totalSlip ? `+${st.totalSlip} days slip in total` : 'none affecting the timeline'}</div></div>
-    ${kpi('Waiting on you', `${waiting.length} items`, `<div class="k-delta ${st.overdue.length ? 'delta-bad' : ''}">${st.overdue.length} overdue</div>`)}
-    ${sv.target ? kpi('Savings approved', `${fmtMoney(sv.approved)}/mo`, `<div class="k-delta">target ${fmtMoney(sv.target)}/mo</div>`) : ''}
+    <p class="rpt-meta">${fmtD(since, { day: 'numeric', month: 'short' })} – ${date}${g.contact ? ` · For ${esc(g.contact)}` : ''} · Confidential</p></header>`;
+  h += `<section class="rpt-sec"><h2>Headline</h2>${S.headline ? `<p class="rpt-lead">${esc(S.headline)}</p>` : ''}<div class="kpis">
+    ${kpi('Where we are', esc(st.current ? st.current.name : '—'))}
+    <div class="kpi ${onTrack ? '' : 'kpi-flag'}"><div class="k-label">Status</div><div class="k-value k-text">${onTrack ? '✓ On track' : '⚑ Needs attention'}</div><div class="k-delta">${onTrack ? 'no open delays' : `${st.openDelays.length} open delay${st.openDelays.length === 1 ? '' : 's'} · ${st.overdue.length} overdue item${st.overdue.length === 1 ? '' : 's'}`}</div></div>
+    ${sv.target ? kpi('Savings approved', `${fmtMoney(sv.approved)}/mo`, `<div class="k-delta">target ${fmtMoney(sv.target)}/mo · identified ${fmtMoney(sv.identified)}/mo</div>`) : ''}
   </div>${nextReview ? `<p class="small muted">Next review: ${fmtD(nextReview, { weekday: 'long', day: 'numeric', month: 'long' })}.</p>` : ''}</section>`;
+  h += `<section class="rpt-sec"><div class="rpt-2"><div><h3>✓ Delivered</h3>${bullets(S.delivered)}</div><div><h3>→ Next fortnight</h3>${bullets(S.next)}</div></div></section>`;
+  if (ivTotal) h += `<section class="rpt-sec"><h2>Interviews</h2><p>${ivTotal}${planned ? ` of ${planned}` : ''} completed. Roles interviewed so far:</p><table class="tbl"><tbody>${Object.entries(groups).map(([d, roles]) => `<tr><td class="nowrap"><b>${esc(d)}</b></td><td>${Object.entries(roles).map(([r, n]) => esc(r) + (n > 1 ? ` ×${n}` : '')).join(', ')}</td></tr>`).join('')}</tbody></table><p class="small muted">Findings are reported as themes and are never attributed to individuals or roles.</p></section>`;
   h += `<section class="rpt-sec"><h2>Where we are in the plan</h2>${phaseGantt(e, { compact: true })}</section>`;
+  h += `<section class="rpt-sec"><h2>What we need from you</h2>${waiting.length ? `<table class="tbl"><thead><tr><th>Item</th><th>Owner</th><th>Due</th><th>Status</th></tr></thead><tbody>${waiting.map((r) => `<tr><td>${esc(r.item)}</td><td>${esc(r.owner || '')}</td><td class="nowrap">${fmtD(r.dueDate)}</td><td>${r._status === 'Overdue' ? '▲ Overdue' : 'Waiting'}</td></tr>`).join('')}</tbody></table>` : '<p>Nothing outstanding. Thank you.</p>'}
+    ${(() => { const io = intakeOutstanding(e); return e.intake.length && io.open.length ? `<p><b>Founder questions still open:</b> ${io.open.length} of ${io.total}${io.openPriority.length ? ` (${io.openPriority.length} priority)` : ''}. These can be finished in a short follow-up or through the online form.</p>` : ''; })()}
+    ${awaiting.length ? `<h3>Decisions awaiting approval</h3><ul>${awaiting.map((r) => `<li>${esc(r.title)}</li>`).join('')}</ul>` : ''}</section>`;
   h += `<section class="rpt-sec flag-sec"><h2>⚑ Delays & changes</h2>${g.delays.length ? `<table class="tbl"><thead><tr><th>Raised</th><th>Phase</th><th>Cause</th><th>What happened</th><th class="r">Impact</th><th>Notice</th><th>Status / action</th></tr></thead><tbody>
     ${g.delays.slice().sort((a, b) => (a.dateRaised || '').localeCompare(b.dateRaised || '')).map((d) => `<tr><td class="nowrap">${fmtD(d.dateRaised)}</td><td>${esc((g.phases.find((p) => p.id === d.phaseId) || {}).name || '—')}</td><td>${esc(d.cause || '')}</td><td>${esc(d.description || '')}</td><td class="r">${num(d.daysImpact) ? '+' + num(d.daysImpact) + ' days' : '—'}</td><td class="nowrap">${d.noticeDate ? fmtD(d.noticeDate) : '—'}</td><td>${d.status === 'Resolved' ? '✓ Resolved' : '⚑ Open'}${d.resolution ? ' · ' + esc(d.resolution) : ''}</td></tr>`).join('')}</tbody></table>
-    ${st.totalSlip ? `<p class="small">The end date (${fmtD(g.end, { day: 'numeric', month: 'long', year: 'numeric' })}) is fixed. The ${st.totalSlip} days of slip will be absorbed by reprioritising the later phases, unless a change is agreed in writing.</p>` : ''}` : '<p>No delays or changes recorded in this period.</p>'}</section>`;
-  const li = (a) => `<li>${esc(a.title)}${a.due && a.status !== 'Done' ? ` <span class="muted small">· due ${fmtD(a.due)}</span>` : ''}${a.doneDate && a.status === 'Done' ? ` <span class="muted small">· ${fmtD(a.doneDate)}</span>` : ''}${a.status === 'Waiting on client' ? ' <span class="chip st-changed">waiting on client</span>' : ''}</li>`;
-  h += `<section class="rpt-sec"><div class="rpt-2"><div><h3>✓ Done</h3>${st.done.length ? `<ul>${st.done.map(li).join('')}</ul>` : '<p class="muted">—</p>'}</div><div><h3>● In progress</h3>${st.doing.length ? `<ul>${st.doing.map(li).join('')}</ul>` : '<p class="muted">—</p>'}<h3>→ Next</h3>${st.next.length ? `<ul>${st.next.slice(0, 8).map(li).join('')}</ul>` : '<p class="muted">—</p>'}</div></div></section>`;
-  h += `<section class="rpt-sec"><h2>What we need from you</h2>${waiting.length ? `<table class="tbl"><thead><tr><th>Item</th><th>Owner</th><th>Due</th><th>Status</th></tr></thead><tbody>${waiting.map((r) => `<tr><td>${esc(r.item)}</td><td>${esc(r.owner || '')}</td><td class="nowrap">${fmtD(r.dueDate)}</td><td>${r._status === 'Overdue' ? '▲ Overdue' : 'Waiting'}</td></tr>`).join('')}</tbody></table>` : '<p>Nothing outstanding. Thank you.</p>'}
-    ${(() => { const io = intakeOutstanding(e); return e.intake.length && io.open.length ? `<p><b>Founder questions still open:</b> ${io.open.length} of ${io.total}${io.openPriority.length ? ` (${io.openPriority.length} priority)` : ''}. They can be finished in a short follow-up or through the online form.</p>` : ''; })()}
-    ${awaiting.length ? `<h3>Decisions awaiting approval</h3><ul>${awaiting.map((r) => `<li>${esc(r.title)}</li>`).join('')}</ul>` : ''}</section>`;
-  h += `<section class="rpt-sec"><h2>Time used</h2><div class="rpt-2"><div><h3>By phase</h3>${hbars(g.phases.map((p) => ({ label: p.name, value: num(st.byPhase[p.id] || 0), tip: `${num(p.plannedDays)} planned` })), { fmt: (v) => v.toFixed(1) + ' d', max: Math.max(1, ...g.phases.map((p) => Math.max(num(p.plannedDays), num(st.byPhase[p.id] || 0)))) })}</div>
-    <div><h3>By contract month</h3>${hbars([1, 2, 3].map((m) => ({ label: `Month ${m}`, value: num(st.byMonth[m] || 0) })), { fmt: (v) => `${v.toFixed(1)} of ${num(g.daysPerMonth)} d`, max: Math.max(num(g.daysPerMonth), ...Object.values(st.byMonth)), color: 'var(--s3)' })}</div></div></section>`;
+    ${st.totalSlip ? `<p class="small">The end date (${fmtD(g.end, { day: 'numeric', month: 'long', year: 'numeric' })}) is fixed. The ${st.totalSlip} days of slip will be absorbed by reprioritising later work, unless a change is agreed in writing.</p>` : ''}` : '<p>No delays or changes recorded.</p>'}</section>`;
   if (sv.target) h += `<section class="rpt-sec"><h2>Savings tracker</h2>${savingsBlock(sv)}</section>`;
+  h += `<section class="rpt-sec"><h2>Capacity</h2><p>${capacity}</p></section>`;
+  if (S.includeDiary && g.timeLog.length) h += `<section class="rpt-sec rpt-break"><h2>Appendix: work diary</h2><table class="tbl"><thead><tr><th>Date</th><th>Day</th><th>What happened</th></tr></thead><tbody>${g.timeLog.slice().sort((a, b) => (a.date || '').localeCompare(b.date || '')).map((t) => `<tr><td class="nowrap">${fmtD(t.date, { weekday: 'short', day: 'numeric', month: 'short' })}</td><td>${t.dayType === 'Full' ? 'Full' : 'Half'}</td><td>${esc(String(t.items || '').split('\n').filter(Boolean).join(' · '))}</td></tr>`).join('')}</tbody></table></section>`;
   h += `<footer class="rpt-foot">The Growth Machine · Status report generated ${date}. Figures are working estimates until validated against the agreed baseline.</footer>`;
   return h;
+}
+
+/** Settings panel shown beside the status report preview. */
+function statusSettings(e) {
+  const S = e.engagement.status || {}; const since = statusPeriodStart(e.engagement);
+  return `<aside class="card report-settings">
+    <p class="small muted">This period: since <b>${fmtD(since, { weekday: 'short', day: 'numeric', month: 'short' })}</b> (the last review). Keep it to outputs, not activity.</p>
+    ${field('engagement.status.headline', 'Headline (2–3 sentences)', S.headline, { area: true, ph: 'Where we are, and whether it is on track.' })}
+    <label class="fld"><span>Delivered (one per line, 3–6 outputs)</span><textarea data-bind="engagement.status.delivered" rows="6">${esc(S.delivered || '')}</textarea></label>
+    <div class="btn-row" style="margin-top:-4px"><button class="btn sm" data-action="suggestDelivered">Suggest from this period</button></div>
+    <label class="fld"><span>Next fortnight (one per line, 3–5)</span><textarea data-bind="engagement.status.next" rows="5">${esc(S.next || '')}</textarea></label>
+    <div class="btn-row" style="margin-top:-4px"><button class="btn sm" data-action="suggestNext">Suggest from activities</button></div>
+    <h5>On request only</h5>
+    <label class="tog"><input type="checkbox" data-bind="engagement.status.includeDiary" ${S.includeDiary ? 'checked' : ''}> Include work diary as an appendix</label>
+    <p class="faint small">Off by default. Founders see one capacity line, not a day-by-day account (clause 3.3: "not a timesheet-based or hourly charge").</p>
+  </aside>`;
 }
 
 /* ---------- Live founder session: you ask, you type; every keystroke is saved ---------- */

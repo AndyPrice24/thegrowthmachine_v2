@@ -43,6 +43,7 @@ function intakeWrite(t) {
     v = [...picked, ...splitList(other)].join(', ');
   } else v = t.value;
   if (String(v).trim()) r.answers[qid] = v; else delete r.answers[qid];
+  r.sessionDates = Array.from(new Set([...(r.sessionDates || []), todayISO()]));
   if (!/Live session/.test(r.source || '')) r.source = r.source ? r.source + ' + Live session' : 'Live session';
   const qa = t.closest('.qa'); if (qa) qa.classList.toggle('qa-done', !!String(v).trim());
   save();
@@ -175,7 +176,8 @@ Schema "tgm.engagement/1". Include only the collections you have data for. Every
        {"op":"removeTool","toolId"}, {"op":"addTool","tool":{...}}, {"op":"updateTool","toolId","changes":{...}},
        {"op":"addProcess","process":{...}}, {"op":"removeProcess","processId"}, {"op":"updateProcess","processId","changes":{...}},
        {"op":"addStep","processId","afterStepId","step":{...}}, {"op":"updateStep","processId","stepId","changes":{...}}, {"op":"removeStep","processId","stepId"} ] }],
-  "scenarios": [{ "id","name","description","recommendationIds":["r1","r2"] }]
+  "scenarios": [{ "id","name","description","recommendationIds":["r1","r2"] }],
+  "engagement": { "timeLog": [{ "id":"day_YYYY-MM-DD","date":"YYYY-MM-DD","dayType":"Full|Half","items":"one output per line" }] }
 }
 Rules: amounts are annual unless the field says monthly. Use the client's currency. Never invent numbers. Leave a field out if it is unknown, and list what is missing in a separate message after the JSON. Keep theme tags consistent across interviews.
 
@@ -240,19 +242,29 @@ const actions = {
     save(); render(); toast('Delay logged. Set the days impact and the date notice was sent.'); document.getElementById('delays')?.scrollIntoView({ behavior: 'smooth' });
   },
   addActivity: () => { const st = engagementStatus(E()); E().engagement.activities.push({ id: uid('ac'), phaseId: st.current ? st.current.id : '', title: '', due: todayISO(), status: 'Next', doneDate: '' }); save(); render(); },
-  addTime: () => { const st = engagementStatus(E()); E().engagement.timeLog.push({ id: uid('tl'), date: todayISO(), phaseId: st.current ? st.current.id : '', days: '0.5', activity: '', notes: '' }); save(); render(); },
+  addDay: (el) => {
+    const g = E().engagement; const d = (el && el.dataset.id) || todayISO();
+    if (g.timeLog.some((t) => t.date === d)) return toast('That day already has an entry. Edit it in the diary.');
+    g.timeLog.push({ id: 'day_' + d, date: d, dayType: 'Full', days: 1, items: '', phaseId: phaseForDate(g, d) }); save(); render();
+  },
+  exportDiary: () => {
+    const e = E(); const rows = [['Date', 'Day', 'Phase', 'What happened', 'Recorded automatically']].concat(e.engagement.timeLog.slice().sort((a, b) => (a.date || '').localeCompare(b.date || '')).map((t) => [t.date, t.dayType, (e.engagement.phases.find((p) => p.id === phaseForDate(e.engagement, t.date)) || {}).name || '', String(t.items || '').split('\n').filter(Boolean).join('; '), dayEvents(e, t.date).join('; ')]));
+    downloadFile(`${slugify(e.client.name)}-work-diary-${todayISO()}.csv`, rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n'), 'text/csv');
+  },
+  suggestDelivered: () => { const S = E().engagement.status; const sug = suggestDelivered(E()); S.delivered = S.delivered ? S.delivered + '\n' + sug : sug; save(); render(); toast('Suggested from this period. Edit them into outputs.'); },
+  suggestNext: () => { const S = E().engagement.status; S.next = suggestNext(E()); save(); render(); },
   statusReport: () => { ui.tab = 'report'; ui.reportType = 'status'; saveUI(); render(); },
   reportType: (el) => { ui.reportType = el.dataset.id; render(); },
   startCapture: (el) => {
     const e = E(); const pid = el.dataset.id || '';
     const existing = loadDraft();
     if (existing && existing.engId === e.id && !pid && !existing.saved && confirm('Resume your unsaved interview draft?')) { ui.draft = existing; }
-    else { const p = e.people.find((x) => x.id === pid); ui.draft = { engId: e.id, personId: pid, level: guessLevel(e, p), deptType: '', date: todayISO(), interviewer: e.meta.consultant === 'The Growth Machine' ? '' : e.meta.consultant, durationMins: '', logTime: true, answers: {}, outliers: [{ text: '', crit: '' }], summary: '', themes: '', painPoints: '', ideas: '', quotes: '' }; }
+    else { const p = e.people.find((x) => x.id === pid); ui.draft = { engId: e.id, personId: pid, level: guessLevel(e, p), deptType: '', date: todayISO(), interviewer: e.meta.consultant === 'The Growth Machine' ? '' : e.meta.consultant, answers: {}, outliers: [{ text: '', crit: '' }], summary: '', themes: '', painPoints: '', ideas: '', quotes: '' }; }
     ui.capture = true; ui.tab = 'discovery'; saveDraft(ui.draft); render(); window.scrollTo(0, 0);
   },
   editInterview: (el) => {
     const iv = E().interviews.find((x) => x.id === el.dataset.id); if (!iv) return;
-    ui.draft = Object.assign({ engId: E().id, editingId: iv.id, level: iv.level || 'staff', deptType: iv.deptType || '', logTime: false, outliers: [] }, clone(iv));
+    ui.draft = Object.assign({ engId: E().id, editingId: iv.id, level: iv.level || 'staff', deptType: iv.deptType || '', outliers: [] }, clone(iv));
     if (!ui.draft.outliers.length) ui.draft.outliers.push({ text: '', crit: '' });
     ui.capture = true; ui.tab = 'discovery'; render(); window.scrollTo(0, 0);
   },
@@ -279,13 +291,9 @@ const actions = {
     const e = E(); const d = ui.draft; const p = e.people.find((x) => x.id === d.personId);
     if (!p && !d.personLabel) return toast('Choose a person or enter a name');
     const iv = { id: d.editingId || uid('iv'), personId: d.personId || '', personLabel: p ? '' : d.personLabel, level: d.level, deptType: d.deptType || deptType(e.departments.find((x) => x.id === (p || {}).departmentId)),
-      date: d.date, interviewer: d.interviewer || '', durationMins: d.durationMins, summary: d.summary, themes: d.themes, painPoints: d.painPoints, ideas: d.ideas, quotes: d.quotes,
+      date: d.date, role: p ? (p.title || '') : (d.role || ''), interviewer: d.interviewer || '', summary: d.summary, themes: d.themes, painPoints: d.painPoints, ideas: d.ideas, quotes: d.quotes,
       answers: Object.fromEntries(Object.entries(d.answers).filter(([, v]) => String(v).trim())), outliers: d.outliers.filter((o) => String(o.text || '').trim()) };
     const i = e.interviews.findIndex((x) => x.id === iv.id); if (i >= 0) e.interviews[i] = iv; else e.interviews.push(iv);
-    if (d.logTime && num(d.durationMins) > 0 && e.engagement.phases.length) {
-      const ph = e.engagement.phases.find((x) => /listen|interview/i.test(x.name)) || e.engagement.phases[0];
-      e.engagement.timeLog.push({ id: uid('tl'), date: d.date, phaseId: ph.id, days: String(Math.max(0.25, Math.round(num(d.durationMins) / 480 * 4) / 4)), activity: `Interview: ${p ? p.name : d.personLabel}`, notes: '' });
-    }
     d.saved = true; saveDraft(d); ui.capture = false; save(); render(); toast('Interview saved');
   },
   editJSON: (el) => {
@@ -367,6 +375,8 @@ document.addEventListener('change', (ev) => {
       t.closest('tr').querySelectorAll('[data-id]').forEach((n) => { n.dataset.id = v; });
     }
     row[field] = v;
+    if (coll === 'engagement.timeLog' && field === 'dayType') row.days = v === 'Full' ? 1 : 0.5;
+    if (coll === 'engagement.timeLog' && field === 'date') row.phaseId = phaseForDate(E().engagement, v);
     if (coll === 'engagement.activities' && field === 'status') row.doneDate = v === 'Done' ? (row.doneDate || todayISO()) : '';
     if (coll === 'engagement.phases' && field === 'status' && v === 'Done') { const ps = E().engagement.phases; const i = ps.indexOf(row); if (ps[i + 1] && ps[i + 1].status === 'Not started') ps[i + 1].status = 'In progress'; }
     save();
