@@ -54,35 +54,63 @@ function normalise(e) {
   return out;
 }
 
-/** Merge a (partial) engagement — e.g. pasted from Claude — into an existing one. Upserts by id. */
+/** Merge a (partial) engagement, e.g. a file from Claude, into an existing one.
+    - Upserts by id (no duplicates).
+    - Freshness: a stamped file (_meta.generatedAt) only overwrites records whose updatedAt is older; unstamped files
+      can only fill records that were never stamped. Anything edited by hand later than the file is kept.
+    - Deleted records (meta.deleted tombstones) are not resurrected by an older file. */
 function mergeEngagement(base, incoming) {
   const out = clone(base);
-  ['client', 'meta', 'report'].forEach((k) => {
-    if (incoming[k] && typeof incoming[k] === 'object') {
-      Object.entries(incoming[k]).forEach(([kk, v]) => { if (v !== '' && v != null) out[k][kk] = v; });
-    }
-  });
-  const counts = {};
-  COLLECTIONS.forEach((c) => {
-    if (!Array.isArray(incoming[c])) return;
-    counts[c] = { added: 0, updated: 0 };
-    incoming[c].forEach((item) => {
-      const i = item.id ? out[c].findIndex((x) => x.id === item.id) : -1;
-      if (i >= 0) { out[c][i] = Object.assign({}, out[c][i], item); counts[c].updated++; }
-      else { out[c].push(Object.assign({ id: uid(c.slice(0, 3)) }, item)); counts[c].added++; }
+  const ts = (incoming._meta && incoming._meta.generatedAt) || '';
+  const counts = {}; const skipped = [];
+  const isNewer = (rec) => !!(rec && rec.updatedAt && (!ts || rec.updatedAt > ts));
+  const dead = (out.meta && out.meta.deleted) || {};
+  const tomb = (coll, id) => dead[coll + ':' + id] && (!ts || dead[coll + ':' + id] > ts);
+  const upsert = (arr, items, coll, prefix) => {
+    const c = counts[coll] = { added: 0, updated: 0, skipped: 0 };
+    items.forEach((item) => {
+      const i = item.id ? arr.findIndex((x) => x.id === item.id) : -1;
+      if (i >= 0) {
+        if (isNewer(arr[i])) { c.skipped++; skipped.push({ coll, id: item.id, why: 'newer data kept' }); return; }
+        arr[i] = Object.assign({}, arr[i], item, ts ? { updatedAt: ts } : {}); c.updated++;
+      } else {
+        if (item.id && tomb(coll, item.id)) { c.skipped++; skipped.push({ coll, id: item.id, why: 'deleted after this file was made' }); return; }
+        arr.push(Object.assign({ id: uid(prefix) }, item, ts ? { updatedAt: ts } : {})); c.added++;
+      }
     });
+  };
+  ['client', 'meta', 'report'].forEach((k) => {
+    if (!incoming[k] || typeof incoming[k] !== 'object') return;
+    if (isNewer(out[k])) { skipped.push({ coll: k, id: '', why: 'newer data kept' }); return; }
+    Object.entries(incoming[k]).forEach(([kk, v]) => { if (v !== '' && v != null && kk !== 'mergeLog' && kk !== 'deleted') out[k][kk] = v; });
+    if (ts) out[k].updatedAt = ts;
   });
+  COLLECTIONS.forEach((c) => { if (Array.isArray(incoming[c])) upsert(out[c], incoming[c], c, c.slice(0, 3)); });
   if (incoming.engagement && typeof incoming.engagement === 'object') {
     const g = out.engagement = Object.assign(blankEngagementBlock(), out.engagement || {});
+    const scalarsNewer = isNewer(g);
+    let scalarSet = false;
     Object.entries(incoming.engagement).forEach(([k, v]) => {
-      if (Array.isArray(v)) {
-        g[k] = Array.isArray(g[k]) ? g[k] : [];
-        v.forEach((item) => { const i = item.id ? g[k].findIndex((x) => x.id === item.id) : -1; if (i >= 0) g[k][i] = Object.assign({}, g[k][i], item); else g[k].push(Object.assign({ id: uid(k.slice(0, 2)) }, item)); });
-        counts['engagement.' + k] = { added: v.length, updated: 0 };
-      } else if (v !== '' && v != null) g[k] = v;
+      if (Array.isArray(v)) { g[k] = Array.isArray(g[k]) ? g[k] : []; upsert(g[k], v, 'engagement.' + k, k.slice(0, 2)); }
+      else if (v !== '' && v != null) { if (scalarsNewer) skipped.push({ coll: 'engagement', id: k, why: 'newer data kept' }); else { g[k] = v; scalarSet = true; } }
     });
+    if (scalarSet && ts) g.updatedAt = ts;
   }
-  return { engagement: normalise(out), counts };
+  return { engagement: normalise(out), counts, skipped, stamped: !!ts };
+}
+
+/* Records that existed before freshness tracking are stamped with this fixed cut-off (not "now"), so stamped files
+   generated after it still apply, while unstamped legacy files can never overwrite them. */
+const LEGACY_CUTOFF = '2026-11-02T11:30:00.000Z';
+
+/** One-off: stamp every record that has no updatedAt, so files made before freshness tracking cannot overwrite them. */
+function stampAll(e, ts) {
+  const st = (x) => { if (x && typeof x === 'object' && !x.updatedAt) x.updatedAt = ts; };
+  ['client', 'meta', 'report'].forEach((k) => st(e[k]));
+  COLLECTIONS.forEach((c) => (e[c] || []).forEach(st));
+  const g = e.engagement || {}; st(g);
+  Object.values(g).forEach((v) => { if (Array.isArray(v)) v.forEach(st); });
+  e.meta.tsMigrated = ts;
 }
 
 /* ---------------- Scenario engine ----------------

@@ -368,7 +368,7 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="tip" hidden></div>
 <script>
-const STUDIO_BUILD = '2026-11-02 11:22 UTC';
+const STUDIO_BUILD = '2026-11-02 11:35 UTC';
 /* ---- model.js ---- */
 /* ============================================================
    The Growth Machine — data model, scenario engine, scoring, insights
@@ -426,35 +426,63 @@ function normalise(e) {
   return out;
 }
 
-/** Merge a (partial) engagement — e.g. pasted from Claude — into an existing one. Upserts by id. */
+/** Merge a (partial) engagement, e.g. a file from Claude, into an existing one.
+    - Upserts by id (no duplicates).
+    - Freshness: a stamped file (_meta.generatedAt) only overwrites records whose updatedAt is older; unstamped files
+      can only fill records that were never stamped. Anything edited by hand later than the file is kept.
+    - Deleted records (meta.deleted tombstones) are not resurrected by an older file. */
 function mergeEngagement(base, incoming) {
   const out = clone(base);
-  ['client', 'meta', 'report'].forEach((k) => {
-    if (incoming[k] && typeof incoming[k] === 'object') {
-      Object.entries(incoming[k]).forEach(([kk, v]) => { if (v !== '' && v != null) out[k][kk] = v; });
-    }
-  });
-  const counts = {};
-  COLLECTIONS.forEach((c) => {
-    if (!Array.isArray(incoming[c])) return;
-    counts[c] = { added: 0, updated: 0 };
-    incoming[c].forEach((item) => {
-      const i = item.id ? out[c].findIndex((x) => x.id === item.id) : -1;
-      if (i >= 0) { out[c][i] = Object.assign({}, out[c][i], item); counts[c].updated++; }
-      else { out[c].push(Object.assign({ id: uid(c.slice(0, 3)) }, item)); counts[c].added++; }
+  const ts = (incoming._meta && incoming._meta.generatedAt) || '';
+  const counts = {}; const skipped = [];
+  const isNewer = (rec) => !!(rec && rec.updatedAt && (!ts || rec.updatedAt > ts));
+  const dead = (out.meta && out.meta.deleted) || {};
+  const tomb = (coll, id) => dead[coll + ':' + id] && (!ts || dead[coll + ':' + id] > ts);
+  const upsert = (arr, items, coll, prefix) => {
+    const c = counts[coll] = { added: 0, updated: 0, skipped: 0 };
+    items.forEach((item) => {
+      const i = item.id ? arr.findIndex((x) => x.id === item.id) : -1;
+      if (i >= 0) {
+        if (isNewer(arr[i])) { c.skipped++; skipped.push({ coll, id: item.id, why: 'newer data kept' }); return; }
+        arr[i] = Object.assign({}, arr[i], item, ts ? { updatedAt: ts } : {}); c.updated++;
+      } else {
+        if (item.id && tomb(coll, item.id)) { c.skipped++; skipped.push({ coll, id: item.id, why: 'deleted after this file was made' }); return; }
+        arr.push(Object.assign({ id: uid(prefix) }, item, ts ? { updatedAt: ts } : {})); c.added++;
+      }
     });
+  };
+  ['client', 'meta', 'report'].forEach((k) => {
+    if (!incoming[k] || typeof incoming[k] !== 'object') return;
+    if (isNewer(out[k])) { skipped.push({ coll: k, id: '', why: 'newer data kept' }); return; }
+    Object.entries(incoming[k]).forEach(([kk, v]) => { if (v !== '' && v != null && kk !== 'mergeLog' && kk !== 'deleted') out[k][kk] = v; });
+    if (ts) out[k].updatedAt = ts;
   });
+  COLLECTIONS.forEach((c) => { if (Array.isArray(incoming[c])) upsert(out[c], incoming[c], c, c.slice(0, 3)); });
   if (incoming.engagement && typeof incoming.engagement === 'object') {
     const g = out.engagement = Object.assign(blankEngagementBlock(), out.engagement || {});
+    const scalarsNewer = isNewer(g);
+    let scalarSet = false;
     Object.entries(incoming.engagement).forEach(([k, v]) => {
-      if (Array.isArray(v)) {
-        g[k] = Array.isArray(g[k]) ? g[k] : [];
-        v.forEach((item) => { const i = item.id ? g[k].findIndex((x) => x.id === item.id) : -1; if (i >= 0) g[k][i] = Object.assign({}, g[k][i], item); else g[k].push(Object.assign({ id: uid(k.slice(0, 2)) }, item)); });
-        counts['engagement.' + k] = { added: v.length, updated: 0 };
-      } else if (v !== '' && v != null) g[k] = v;
+      if (Array.isArray(v)) { g[k] = Array.isArray(g[k]) ? g[k] : []; upsert(g[k], v, 'engagement.' + k, k.slice(0, 2)); }
+      else if (v !== '' && v != null) { if (scalarsNewer) skipped.push({ coll: 'engagement', id: k, why: 'newer data kept' }); else { g[k] = v; scalarSet = true; } }
     });
+    if (scalarSet && ts) g.updatedAt = ts;
   }
-  return { engagement: normalise(out), counts };
+  return { engagement: normalise(out), counts, skipped, stamped: !!ts };
+}
+
+/* Records that existed before freshness tracking are stamped with this fixed cut-off (not "now"), so stamped files
+   generated after it still apply, while unstamped legacy files can never overwrite them. */
+const LEGACY_CUTOFF = '2026-11-02T11:30:00.000Z';
+
+/** One-off: stamp every record that has no updatedAt, so files made before freshness tracking cannot overwrite them. */
+function stampAll(e, ts) {
+  const st = (x) => { if (x && typeof x === 'object' && !x.updatedAt) x.updatedAt = ts; };
+  ['client', 'meta', 'report'].forEach((k) => st(e[k]));
+  COLLECTIONS.forEach((c) => (e[c] || []).forEach(st));
+  const g = e.engagement || {}; st(g);
+  Object.values(g).forEach((v) => { if (Array.isArray(v)) v.forEach(st); });
+  e.meta.tsMigrated = ts;
 }
 
 /* ---------------- Scenario engine ----------------
@@ -2553,7 +2581,7 @@ function loadDB() {
     const lb = locationBankShell(), demo = demoEngagement();
     db = { activeId: demo.id, engagements: { [lb.id]: lb, [demo.id]: demo } };
   }
-  Object.keys(db.engagements).forEach((k) => { db.engagements[k] = normalise(db.engagements[k]); });
+  Object.keys(db.engagements).forEach((k) => { db.engagements[k] = normalise(db.engagements[k]); if (!db.engagements[k].meta.tsMigrated) stampAll(db.engagements[k], LEGACY_CUTOFF); });
   if (db.engagements.eng_demo && (!db.engagements.eng_demo.engagement.phases.length || !db.engagements.eng_demo.competitors.length)) db.engagements.eng_demo = demoEngagement(); // refresh old demo with tracking sample
   if (!db.engagements[db.activeId]) db.activeId = Object.keys(db.engagements)[0];
   try { Object.assign(ui, JSON.parse(localStorage.getItem(STORE_KEY + '.ui') || '{}'), { scenario: 'current' }); } catch (err) { /* ignore */ }
@@ -2573,6 +2601,24 @@ window.addEventListener('pagehide', flushSave);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
 function saveUI() { try { localStorage.setItem(STORE_KEY + '.ui', JSON.stringify({ tab: ui.tab, anon: ui.anon, showCost: ui.showCost, ghosts: ui.ghosts, compare: ui.compare, coll: ui.coll, theme: ui.theme })); } catch (err) { /* ignore */ } }
 const E = () => db.engagements[db.activeId];
+const nowISO = () => new Date().toISOString();
+const touch = (o) => { if (o && typeof o === 'object') o.updatedAt = nowISO(); };
+function hashStr(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
+/** Merge with history, duplicate warning and freshness protection. Returns false if cancelled. */
+function doMerge(obj, label) {
+  const e = E(); e.meta.mergeLog = Array.isArray(e.meta.mergeLog) ? e.meta.mergeLog : [];
+  const fp = (obj._meta && obj._meta.fileId) || hashStr(JSON.stringify(obj));
+  const prior = e.meta.mergeLog.find((l) => l.fp === fp);
+  if (prior && !confirm(`You already merged "${prior.label}" on ${new Date(prior.mergedAt).toLocaleString('en-GB')}.\n\nMerge it again? (Nothing will be duplicated, and newer data is protected.)`)) return false;
+  if (!obj._meta && !confirm(`"${label}" has no date stamp (it was made before freshness tracking).\n\nIt can ADD new records but will NOT overwrite anything already in the Studio. Continue?`)) return false;
+  const { engagement, counts, skipped } = mergeEngagement(e, obj);
+  engagement.id = db.activeId; db.engagements[db.activeId] = engagement;
+  const sum = Object.entries(counts).filter(([, v]) => v.added || v.updated || v.skipped).map(([k, v]) => `${k} +${v.added}/~${v.updated}${v.skipped ? `/✕${v.skipped}` : ''}`).join(', ');
+  engagement.meta.mergeLog = [{ fp, label, generatedAt: (obj._meta && obj._meta.generatedAt) || '', mergedAt: nowISO(), summary: sum || 'profile fields', skipped: skipped.slice(0, 50) }, ...(e.meta.mergeLog || [])].slice(0, 100);
+  save(); render();
+  toast(`Merged: ${sum || 'profile fields'}${skipped.length ? ` · ${skipped.length} skipped (newer data kept)` : ''}`);
+  return true;
+}
 /** Live founder session: write one answer straight into the respondent's record (no re-render, so typing is never interrupted). */
 function intakeWrite(t) {
   const r = E().intake.find((x) => x.id === ui.sessionId); if (!r) return;
@@ -2584,7 +2630,7 @@ function intakeWrite(t) {
     v = [...picked, ...splitList(other)].join(', ');
   } else v = t.value;
   if (String(v).trim()) r.answers[qid] = v; else delete r.answers[qid];
-  r.sessionDates = Array.from(new Set([...(r.sessionDates || []), todayISO()]));
+  touch(r); r.sessionDates = Array.from(new Set([...(r.sessionDates || []), todayISO()]));
   if (!/Live session/.test(r.source || '')) r.source = r.source ? r.source + ' + Live session' : 'Live session';
   const qa = t.closest('.qa'); if (qa) qa.classList.toggle('qa-done', !!String(v).trim());
   save();
@@ -2698,6 +2744,7 @@ function viewData(e) {
     <div class="scroll-x">${grid}</div>
     <div class="btn-row"><button class="btn" data-action="addRow" data-coll="${coll}">+ Add ${COLL_LABELS[coll].toLowerCase().replace(/s$/, '')}</button></div>
     <p class="faint small">Changes save as you leave each cell. Lists (process steps, recommendation ops, scenario recommendation ids) are edited as JSON. See the README for the format.</p>`)}
+  ${card(`Merge history (${(e.meta.mergeLog || []).length})`, (e.meta.mergeLog || []).length ? `<table class="tbl"><thead><tr><th>Merged</th><th>File</th><th>File date</th><th>What changed</th></tr></thead><tbody>${(e.meta.mergeLog || []).slice(0, 30).map((l) => `<tr><td class="nowrap small">${esc(new Date(l.mergedAt).toLocaleString('en-GB'))}</td><td class="small">${esc(l.label)}</td><td class="nowrap small">${l.generatedAt ? esc(new Date(l.generatedAt).toLocaleString('en-GB')) : '<span class="chip sev-medium">● no stamp</span>'}</td><td class="small">${esc(l.summary)}${l.skipped && l.skipped.length ? `<div class="faint">Skipped (newer data kept): ${esc(l.skipped.map((s) => s.coll + (s.id ? ':' + s.id : '')).join(', '))}</div>` : ''}</td></tr>`).join('')}</tbody></table>` : '<p class="empty">No merges recorded yet. Every merge from now on is listed here, and merging the same file twice asks you first.</p>', { sub: '+ added · ~ updated · ✕ skipped because the Studio already had newer data. Hand edits always count as newer than earlier files.' })}
   ${card('Danger zone', `<div class="btn-row"><button class="btn ghost" data-action="duplicateEng">Duplicate this client</button><button class="btn danger" data-action="deleteEng">Delete ${esc(e.client.name)} from this browser</button></div>`)}`;
 }
 
@@ -2777,8 +2824,7 @@ const actions = {
   mergePaste: () => {
     const raw = document.getElementById('pasteBox').value.trim(); if (!raw) return toast('Nothing to merge');
     let obj; try { obj = JSON.parse(raw.replace(/^```(json)?|```$/gm, '')); } catch (err) { return toast('That is not valid JSON: ' + err.message); }
-    const { engagement, counts } = mergeEngagement(E(), obj); engagement.id = db.activeId; db.engagements[db.activeId] = engagement; save(); render();
-    toast('Merged: ' + (Object.entries(counts).map(([k, v]) => `${k} +${v.added}/~${v.updated}`).join(', ') || 'profile fields'));
+    doMerge(obj, 'Pasted text');
   },
   copyPrompt: () => copyText(CLAUDE_PROMPT, 'Claude prompt copied. Paste it into Claude, then add your notes underneath.'),
   copyContext: () => copyText(JSON.stringify(stripMarks(E())), 'Client JSON copied. Paste it into Claude for analysis.'),
@@ -2788,7 +2834,7 @@ const actions = {
     if (c === 'engagement.requests') Object.assign(row, { item: '', owner: E().engagement.contact || '', requestedDate: todayISO(), dueDate: addDaysISO(todayISO(), 5) });
     getPath(E(), c).push(row); save(); render();
   },
-  delRow: (el) => { if (!confirm('Delete this row?')) return; const c = el.dataset.coll; const arr = getPath(E(), c); const i = arr.findIndex((x) => x.id === el.dataset.id); if (i >= 0) arr.splice(i, 1); save(); render(); },
+  delRow: (el) => { if (!confirm('Delete this row?')) return; const c = el.dataset.coll; const arr = getPath(E(), c); const i = arr.findIndex((x) => x.id === el.dataset.id); if (i >= 0) { arr.splice(i, 1); E().meta.deleted = Object.assign({}, E().meta.deleted, { [c + ':' + el.dataset.id]: nowISO() }); } save(); render(); },
   seedPlan: () => { const g = E().engagement; if (!g.start) return toast('Add a start date first'); seedStandardPlan(E()); save(); render(); toast('Plan, requests and first activities created'); },
   addDelay: () => { const g = E().engagement; const st = engagementStatus(E()); g.delays.push({ id: uid('dl'), dateRaised: todayISO(), phaseId: st.current ? st.current.id : '', cause: '', description: '', daysImpact: 0, noticeDate: '', status: 'Open', resolution: '' }); save(); render(); },
   delayFromRequest: (el) => {
@@ -2861,6 +2907,7 @@ const actions = {
     const iv = { id: d.editingId || uid('iv'), personId: d.personId || '', personLabel: p ? '' : d.personLabel, level: d.level, deptType: d.deptType || deptType(e.departments.find((x) => x.id === (p || {}).departmentId)),
       date: d.date, role: p ? (p.title || '') : (d.role || ''), interviewer: d.interviewer || '', summary: d.summary, themes: d.themes, painPoints: d.painPoints, ideas: d.ideas, quotes: d.quotes,
       answers: Object.fromEntries(Object.entries(d.answers).filter(([, v]) => String(v).trim())), outliers: d.outliers.filter((o) => String(o.text || '').trim()) };
+    iv.updatedAt = nowISO();
     const i = e.interviews.findIndex((x) => x.id === iv.id); if (i >= 0) e.interviews[i] = iv; else e.interviews.push(iv);
     d.saved = true; saveDraft(d); ui.capture = false; save(); render(); toast('Interview saved');
   },
@@ -2868,7 +2915,7 @@ const actions = {
     const { coll, id, field } = el.dataset; const row = getPath(E(), coll).find((x) => x.id === id);
     openModal(`${COLL_LABELS[coll]} → ${row.name || row.title || id} → ${field}`, JSON.stringify(row[field] || [], null, 2), (txt) => {
       let v; try { v = JSON.parse(txt); } catch (err) { toast('Invalid JSON: ' + err.message); return false; }
-      row[field] = v; Object.assign(E(), normalise(E())); save(); render(); return true;
+      row[field] = v; touch(row); Object.assign(E(), normalise(E())); save(); render(); return true;
     });
   },
   addRec: () => { const r = { id: uid('r'), title: 'New recommendation', type: 'Process', horizon: '0-3 months', effort: 3, risk: 3, confidence: 3, status: 'Proposed', ops: [] }; E().recommendations.push(r); ui.tab = 'data'; ui.coll = 'recommendations'; save(); render(); },
@@ -2876,7 +2923,7 @@ const actions = {
   delScenario: (el) => { if (!confirm('Delete this scenario?')) return; E().scenarios = E().scenarios.filter((s) => s.id !== el.dataset.id); if (ui.scenario === el.dataset.id) ui.scenario = 'current'; save(); render(); },
   toggleRecInScenario: (el) => {
     const s = E().scenarios.find((x) => x.id === el.dataset.scenario); const ids = new Set(splitList(s.recommendationIds));
-    el.checked ? ids.add(el.dataset.rec) : ids.delete(el.dataset.rec); s.recommendationIds = [...ids]; save(); render();
+    el.checked ? ids.add(el.dataset.rec) : ids.delete(el.dataset.rec); s.recommendationIds = [...ids]; touch(s); save(); render();
   },
   toggleReportProc: (el) => { const r = E().report; const ids = new Set(r.processIds || []); el.checked ? ids.add(el.dataset.id) : ids.delete(el.dataset.id); r.processIds = [...ids]; save(); render(); },
   printReport: () => { if (ui.tab !== 'report') { ui.tab = 'report'; render(); } setTimeout(() => window.print(), 50); },
@@ -2908,18 +2955,17 @@ document.addEventListener('change', (ev) => {
       try {
         const obj = JSON.parse(fr.result);
         const list = obj.engagements ? obj.engagements : [obj];
-        list.forEach((x) => { const e = normalise(x); db.engagements[e.id] = e; db.activeId = e.id; });
+        list.forEach((x) => { const e = normalise(x); if (!e.meta.tsMigrated) stampAll(e, LEGACY_CUTOFF); db.engagements[e.id] = e; db.activeId = e.id; });
         ui.scenario = 'current'; save(); render(); toast(`Imported ${list.length} client${list.length > 1 ? 's' : ''}`);
       } catch (err) { toast('Could not read file: ' + err.message); }
     };
     fr.readAsText(t.files[0]); return;
   }
   if (t.id === 'mergeFile' && t.files[0]) {
-    const fr = new FileReader();
+    const fr = new FileReader(); const fname = t.files[0].name;
     fr.onload = () => {
       let obj; try { obj = JSON.parse(fr.result); } catch (err) { return toast('That file is not valid JSON: ' + err.message); }
-      const { engagement, counts } = mergeEngagement(E(), obj); engagement.id = db.activeId; db.engagements[db.activeId] = engagement; save(); render();
-      toast('Merged: ' + (Object.entries(counts).map(([k, v]) => `${k} +${v.added}/~${v.updated}`).join(', ') || 'profile fields'));
+      doMerge(obj, fname);
     };
     fr.readAsText(t.files[0]); t.value = ''; return;
   }
@@ -2928,7 +2974,7 @@ document.addEventListener('change', (ev) => {
     fr.onload = () => { const res = importFormCSV(E(), fr.result, 'staff'); save(); render(); toast(`Staff responses: ${res.added} added, ${res.updated} updated${res.unmatched.length ? `, ${res.unmatched.length} columns not matched` : ''}`); };
     fr.readAsText(t.files[0]); return;
   }
-  if (t.dataset.capcell) { const cap = E().capabilities.find((x) => x.id === t.dataset.capcell); if (cap) { if (t.dataset.comp === '__client') cap.client = t.value; else { cap.scores = cap.scores || {}; cap.scores[t.dataset.comp] = t.value; } save(); render(); } return; }
+  if (t.dataset.capcell) { const cap = E().capabilities.find((x) => x.id === t.dataset.capcell); if (cap) { if (t.dataset.comp === '__client') cap.client = t.value; else { cap.scores = cap.scores || {}; cap.scores[t.dataset.comp] = t.value; } touch(cap); save(); render(); } return; }
   if (t.dataset.intakesel || t.dataset.intakemulti) { intakeWrite(t); return; }
   if (t.dataset.intake) { intakeWrite(t); return; }
   if (t.id === 'intakeFile' && t.files[0]) {
@@ -2941,7 +2987,7 @@ document.addEventListener('change', (ev) => {
   if (t.dataset.action && t.type === 'checkbox') { const fn = actions[t.dataset.action]; if (fn) fn(t, ev); return; }
   if (t.dataset.ui) { ui[t.dataset.ui] = t.type === 'checkbox' ? t.checked : t.value; saveUI(); render(); return; }
   if (t.dataset.bind) {
-    const v = t.type === 'checkbox' ? t.checked : t.value; setPath(E(), t.dataset.bind, v); save();
+    const v = t.type === 'checkbox' ? t.checked : t.value; setPath(E(), t.dataset.bind, v); touch(E()[t.dataset.bind.split('.')[0]]); save();
     if (ui.tab === 'report' || ui.tab === 'progress' || t.dataset.bind === 'meta.currency' || t.dataset.bind === 'client.name') render();
     return;
   }
@@ -2952,7 +2998,7 @@ document.addEventListener('change', (ev) => {
       if (!v || arr.some((x) => x.id === v)) { toast('ids must be unique and not empty'); t.value = id; return; }
       t.closest('tr').querySelectorAll('[data-id]').forEach((n) => { n.dataset.id = v; });
     }
-    row[field] = v;
+    row[field] = v; touch(row);
     if (coll === 'engagement.timeLog' && field === 'dayType') row.days = v === 'Full' ? 1 : 0.5;
     if (coll === 'engagement.timeLog' && field === 'date') row.phaseId = phaseForDate(E().engagement, v);
     if (coll === 'engagement.activities' && field === 'status') row.doneDate = v === 'Done' ? (row.doneDate || todayISO()) : '';
@@ -2963,7 +3009,7 @@ document.addEventListener('change', (ev) => {
 });
 document.addEventListener('input', (ev) => {
   const t = ev.target;
-  if (t.tagName === 'TEXTAREA' && t.dataset.bind) { setPath(E(), t.dataset.bind, t.value); save(); }
+  if (t.tagName === 'TEXTAREA' && t.dataset.bind) { setPath(E(), t.dataset.bind, t.value); touch(E()[t.dataset.bind.split('.')[0]]); save(); }
   if (t.dataset.intake || t.dataset.intakeother) { intakeWrite(t); return; }
   if (t.dataset.draft && ui.draft) { setPath(ui.draft, t.dataset.draft, t.type === 'number' ? t.value : t.value); saveDraft(ui.draft); }
 });
