@@ -18,6 +18,11 @@ Writes:
   app/apple-icon.png                 phone home-screen icon (red cog on ink)
   app/opengraph-image.png            the preview card shown when a page is
                                      shared (LinkedIn, WhatsApp, Slack…)
+  public/brand/email/*.png           the images the email signature uses
+                                     (brand/email-signature.html): the logo
+                                     on white, so it shows in dark-mode
+                                     inboxes, and red email and phone icons,
+                                     all at twice their display size
 
 Needs Pillow and Playwright (with the preinstalled Chromium) to draw the PNGs.
 """
@@ -89,6 +94,27 @@ p{position:absolute;left:80px;bottom:64px;margin:0;font:600 22px Inter,'DejaVu S
 <div class="rule"></div><p>thegrowthmachine.co</p><div class="cog">{COG}</div></body></html>'''
 
 
+# Email signature icons, 24 units square, in the brand red so they read on
+# light and dark backgrounds alike.
+MAIL_ICON = (
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">'
+    '<path fill="#c8221c" d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm1.6 2'
+    ' 7.4 5.6L19.4 7H4.6ZM20 8.4l-7.4 5.6a1 1 0 0 1-1.2 0L4 8.4V17h16V8.4Z"/></svg>'
+)
+PHONE_ICON = (
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">'
+    '<path fill="#c8221c" d="M6.6 2.9 9 2.3a1 1 0 0 1 1.2.6l1.4 3.6a1 1 0 0 1-.3 1.1L9.6 9a12 12 0 0 0 5.4'
+    ' 5.4l1.4-1.7a1 1 0 0 1 1.1-.3l3.6 1.4a1 1 0 0 1 .6 1.2l-.6 2.4a2 2 0 0 1-2 1.5A16 16 0 0 1 3.1 4.9a2'
+    ' 2 0 0 1 1.5-2Z"/></svg>'
+)
+
+WEB_ICON = (
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none" stroke="#c8221c" stroke-width="2">'
+    '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.7 3.8 5.7 3.8 9s-1.2 6.3-3.8 9c-2.6-2.7-3.8-5.7-3.8-9'
+    's1.2-6.3 3.8-9Z"/></g></svg>'
+)
+
+
 def write(path, text):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text)
@@ -115,6 +141,12 @@ def main():
         (tile, 1024, 1024, brand / 'tgm-icon.png'),
         (tile, 180, 180, ROOT / 'app/apple-icon.png'),
         (cog, 256, 256, None),  # source for favicon.ico
+        # Email signature: shown at 210 x 79 and 16 x 16.
+        (light.replace('<g fill', f'<rect x="{VIEWBOX.split()[0]}" y="{VIEWBOX.split()[1]}" width="100%" height="100%" fill="#fff"/><g fill', 1),
+         420, round(420 * vh / vw), brand / 'email/logo.png'),
+        (MAIL_ICON, 32, 32, brand / 'email/mail.png'),
+        (PHONE_ICON, 32, 32, brand / 'email/phone.png'),
+        (WEB_ICON, 32, 32, brand / 'email/web.png'),
     ]
     with sync_playwright() as p:
         browser = p.chromium.launch(executable_path='/opt/pw-browsers/chromium')
@@ -125,6 +157,7 @@ def main():
             page.set_content(f'<html><body style="margin:0;background:transparent">{sized}</body></html>')
             png = page.screenshot(omit_background=True, clip={'x': 0, 'y': 0, 'width': w, 'height': h})
             if out:
+                out.parent.mkdir(parents=True, exist_ok=True)
                 out.write_bytes(png)
                 print('wrote', out.relative_to(ROOT))
             else:
