@@ -364,7 +364,7 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="tip" hidden></div>
 <script>
-const STUDIO_BUILD = '2026-11-02 08:01 UTC';
+const STUDIO_BUILD = '2026-11-02 10:40 UTC';
 /* ---- model.js ---- */
 /* ============================================================
    The Growth Machine — data model, scenario engine, scoring, insights
@@ -792,7 +792,7 @@ const CRITERIA = [
 ];
 
 const DEPT_TYPES = [
-  ['leadership', 'Leadership / admin'], ['sales', 'Sales'], ['cs', 'Customer success / support'],
+  ['leadership', 'Leadership / admin'], ['revenue', 'Revenue leadership (CRO)'], ['sales', 'Sales'], ['cs', 'Customer success / support'],
   ['ops', 'Operations / data'], ['finance', 'Finance'], ['tech', 'Product / engineering'], ['marketing', 'Marketing']
 ];
 
@@ -930,6 +930,18 @@ const INTERVIEW_QUESTIONS = [
   { id: 's_training', level: 'staff', dept: 'all', crit: 'people', q: 'Do you have the training and tools you need to do the job well?' },
   { id: 's_hour', level: 'staff', dept: 'all', crit: 'pain', q: 'What one small change would save you an hour a week?' },
   // Department-specific
+  // Revenue leadership (CRO / head of revenue): owns sales, partners and client success outcomes
+  { id: 'd_rev_scope', level: 'all', dept: 'revenue', crit: 'people', q: 'Which teams and targets do you own as revenue leader, and who reports to you?' },
+  { id: 'd_rev_mix', level: 'all', dept: 'revenue', crit: 'revenue', q: 'Where is revenue growing, flat or declining (direct, partners/resellers, segments, markets)? What explains each?' },
+  { id: 'd_rev_partners', level: 'all', dept: 'revenue', crit: 'revenue', q: 'Which partner or reseller accounts are at risk, and what is being done about them?' },
+  { id: 'd_rev_churn', level: 'all', dept: 'revenue', crit: 'customers', q: 'Which clients or locations have we lost or downsized in the last six months, and why?' },
+  { id: 'd_rev_pipeline', level: 'all', dept: 'revenue', crit: 'revenue', q: 'What does the pipeline look like for the next two quarters, and how reliable is it?' },
+  { id: 'd_rev_renewals', level: 'all', dept: 'revenue', crit: 'data', q: 'Where are renewals, client health and upsell opportunities tracked, and who owns them?' },
+  { id: 'd_rev_handover', level: 'all', dept: 'revenue', crit: 'process', q: 'How does a client move from Sales to Customer Success to Operations? Where does information get lost or re-typed?' },
+  { id: 'd_rev_pricing', level: 'all', dept: 'revenue', crit: 'revenue', q: 'Who sets and approves pricing and discounts? Is revenue per location rising or falling?' },
+  { id: 'd_rev_cost_to_serve', level: 'all', dept: 'revenue', crit: 'cost', q: 'What does it cost to serve a client (success time, operations, tools)? Which clients are unprofitable to serve?' },
+  { id: 'd_rev_incentives', level: 'all', dept: 'revenue', crit: 'cost', q: 'How are commission and incentive plans structured, and do they reward the right outcomes?' },
+  { id: 'd_rev_quickwins', level: 'all', dept: 'revenue', crit: 'pain', q: 'What are the quickest revenue wins available in the next 90 days?' },
   { id: 'd_sales_pipeline', level: 'all', dept: 'sales', crit: 'process', q: 'How do leads come in and move to a signed deal? Where do deals stall?' },
   { id: 'd_sales_proposal', level: 'all', dept: 'sales', crit: 'process', q: 'How long does a proposal or quote take to produce? Who approves pricing?' },
   { id: 'd_sales_handover', level: 'all', dept: 'sales', crit: 'customers', q: 'What happens when a deal is signed? How is it handed over?' },
@@ -1178,6 +1190,7 @@ function deptType(d) {
   if (!d) return '';
   if (d.type) return d.type;
   const n = (d.name || '').toLowerCase();
+  if (/revenue|\bcro\b/.test(n)) return 'revenue';
   if (/sales|business dev|commercial/.test(n)) return 'sales';
   if (/success|support|account|client|customer|service/.test(n)) return 'cs';
   if (/oper|data|listing|delivery|fulfil/.test(n)) return 'ops';

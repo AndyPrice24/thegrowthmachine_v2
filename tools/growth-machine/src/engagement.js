@@ -185,6 +185,7 @@ function deptType(d) {
   if (!d) return '';
   if (d.type) return d.type;
   const n = (d.name || '').toLowerCase();
+  if (/revenue|\bcro\b/.test(n)) return 'revenue';
   if (/sales|business dev|commercial/.test(n)) return 'sales';
   if (/success|support|account|client|customer|service/.test(n)) return 'cs';
   if (/oper|data|listing|delivery|fulfil/.test(n)) return 'ops';
