@@ -12,6 +12,7 @@ The Growth Machine's internal diagnostic tool, built for use across every client
 
 - **Progress & time.** Enter the contract basics once: point of contact, start and end dates, day allowance, savings target. The Studio then creates the standard three-month plan, the client information requests (with due dates) and the first activities. From then on it tracks:
   - **⚑ Delays & changes log.** Its own section, flagged in red. Each entry records the date raised, phase, cause (client information, access, decisions, cooperation, new findings, scope, TGM side), days of impact, the date written notice was sent, status and resolution. Open delays show as a badge on every screen and in every status report. Logged slips appear on the timeline.
+  - **TGM-only activities.** An activity with `"private": true` shows a 🔒 TGM only chip and is never suggested into the client status report (use it for internal reminders such as proposals).
   - **Work diary (private).** One line per working day: half or full day, plus what happened. No hours, no durations. Things recorded in the Studio that day (interviews by role, founder sessions, documents received, activities done, delays) appear automatically. Export it as CSV only if someone asks to see it.
   - **Waiting on client.** Requests turn *Overdue* automatically. One click turns an overdue item into a delay entry.
   - **Done / in progress / next.** Marking an activity Done stamps the date.

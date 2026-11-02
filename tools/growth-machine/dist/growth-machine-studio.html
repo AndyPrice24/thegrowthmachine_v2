@@ -368,7 +368,7 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="tip" hidden></div>
 <script>
-const STUDIO_BUILD = '2026-11-02 13:36 UTC';
+const STUDIO_BUILD = '2026-11-02 15:19 UTC';
 /* ---- model.js ---- */
 /* ============================================================
    The Growth Machine — data model, scenario engine, scoring, insights
@@ -2140,7 +2140,7 @@ function viewProgress(e) {
     ${st.reqs.map((r) => `<tr class="${r._status === 'Overdue' ? 'row-flag' : ''}"><td>${reqChip(r._status)}${r._status === 'Overdue' ? `<div><button class="link small" data-action="delayFromRequest" data-id="${esc(r.id)}">⚑ Log as delay</button></div>` : ''}</td><td>${ecellArea('engagement.requests', r, 'item')}</td><td>${ecell('engagement.requests', r, 'owner')}</td><td>${ecell('engagement.requests', r, 'requestedDate', 'date')}</td><td>${ecell('engagement.requests', r, 'dueDate', 'date')}</td><td>${ecell('engagement.requests', r, 'receivedDate', 'date')}</td><td>${ecellSel('engagement.requests', r, 'status', ['Not needed', 'Not available'])}</td><td>${ecellArea('engagement.requests', r, 'notes')}</td><td>${delBtn('engagement.requests', r.id)}</td></tr>`).join('')}
     </tbody></table></div><div class="btn-row"><button class="btn sm" data-action="addRow" data-coll="engagement.requests">+ Add request</button></div>`, { sub: 'Requests become Overdue automatically after their due date. Log a delay when a late item holds up the work.' });
 
-  const actCol = (title, list, empty) => `<div class="act-col"><h4>${title} (${list.length})</h4>${list.length ? list.map((a) => `<div class="act ${a.status === 'Waiting on client' ? 'act-wait' : ''}"><div class="act-top">${ecellArea('engagement.activities', a, 'title', 1)}</div><div class="act-meta">${ecellSel('engagement.activities', a, 'phaseId', phaseOpts)} ${ecell('engagement.activities', a, a.status === 'Done' ? 'doneDate' : 'due', 'date')} ${ecellSel('engagement.activities', a, 'status', ACTIVITY_STATUSES, false)} ${delBtn('engagement.activities', a.id)}</div></div>`).join('') : `<p class="empty">${empty}</p>`}</div>`;
+  const actCol = (title, list, empty) => `<div class="act-col"><h4>${title} (${list.length})</h4>${list.length ? list.map((a) => `<div class="act ${a.status === 'Waiting on client' ? 'act-wait' : ''}"><div class="act-top">${a.private ? '<span class="chip st-removed" title="TGM only: never suggested into client reports">🔒 TGM only</span> ' : ''}${ecellArea('engagement.activities', a, 'title', 1)}</div><div class="act-meta">${ecellSel('engagement.activities', a, 'phaseId', phaseOpts)} ${ecell('engagement.activities', a, a.status === 'Done' ? 'doneDate' : 'due', 'date')} ${ecellSel('engagement.activities', a, 'status', ACTIVITY_STATUSES, false)} ${delBtn('engagement.activities', a.id)}</div></div>`).join('') : `<p class="empty">${empty}</p>`}</div>`;
   const acts = card('What\'s done, what\'s happening, what\'s next', `<div class="act-grid">${actCol('✓ Done', st.done, 'Nothing completed yet.')}${actCol('● In progress / waiting', st.doing, 'Nothing in progress.')}${actCol('→ Next', st.next, 'Nothing queued.')}</div><div class="btn-row"><button class="btn sm" data-action="addActivity">+ Add activity</button></div>`, { sub: 'Marking an activity Done stamps today\'s date automatically.' });
 
   const entryDates = new Set(g.timeLog.map((t) => t.date));
@@ -2262,7 +2262,7 @@ function interviewsByRole(e) {
 }
 function suggestDelivered(e) {
   const g = e.engagement; const since = statusPeriodStart(g); const out = [];
-  g.activities.filter((a) => a.status === 'Done' && (a.doneDate || '') >= since).forEach((a) => out.push(a.title));
+  g.activities.filter((a) => !a.private && a.status === 'Done' && (a.doneDate || '') >= since).forEach((a) => out.push(a.title));
   const rec = g.requests.filter((r) => r.receivedDate && r.receivedDate >= since).length;
   if (rec) out.push(`Information received: ${g.requests.filter((r) => r.receivedDate).length} of ${g.requests.length} requested items`);
   const iv = e.interviews.filter((x) => (x.date || '') >= since).length;
@@ -2270,7 +2270,7 @@ function suggestDelivered(e) {
   return out.join('\n');
 }
 function suggestNext(e) {
-  return e.engagement.activities.filter((a) => a.status !== 'Done').sort((a, b) => (a.due || '').localeCompare(b.due || '')).slice(0, 5).map((a) => a.title).join('\n');
+  return e.engagement.activities.filter((a) => !a.private && a.status !== 'Done').sort((a, b) => (a.due || '').localeCompare(b.due || '')).slice(0, 5).map((a) => a.title).join('\n');
 }
 function renderStatusReport(e) {
   const g = e.engagement; const st = engagementStatus(e); const sv = savingsTracker(e); const S = g.status || {};
