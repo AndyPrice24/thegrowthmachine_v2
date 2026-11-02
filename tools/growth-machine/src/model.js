@@ -13,7 +13,7 @@ const live = (arr) => (arr || []).filter((x) => !x._removed);
 const byId = (arr) => Object.fromEntries((arr || []).map((x) => [x.id, x]));
 const splitList = (v) => Array.isArray(v) ? v : String(v || '').split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
 
-const COLLECTIONS = ['intake', 'competitors', 'capabilities', 'intel', 'usps', 'opportunities', 'departments', 'people', 'tools', 'processes', 'segments', 'markets', 'topClients',
+const COLLECTIONS = ['intake', 'customQuestions', 'competitors', 'capabilities', 'intel', 'usps', 'opportunities', 'departments', 'people', 'tools', 'processes', 'segments', 'markets', 'topClients',
   'financePeriods', 'interviews', 'findings', 'recommendations', 'scenarios'];
 
 function blankEngagement(name) {
@@ -27,7 +27,7 @@ function blankEngagement(name) {
       lastExported: '', notes: '' },
     departments: [], people: [], tools: [], processes: [], segments: [], markets: [], topClients: [],
     financePeriods: [], interviews: [], findings: [], recommendations: [], scenarios: [],
-    intake: [], competitors: [], capabilities: [], intel: [], usps: [], opportunities: [], engagement: blankEngagementBlock(),
+    intake: [], customQuestions: [], competitors: [], capabilities: [], intel: [], usps: [], opportunities: [], engagement: blankEngagementBlock(),
     report: { title: '', preparedFor: '', summary: '', nextSteps: '', anonymise: true, scenarioId: '', processIds: [],
       sections: { snapshot: true, competition: true, findings: true, org: true, processes: true, recommendations: true, financials: true, nextSteps: true } }
   };

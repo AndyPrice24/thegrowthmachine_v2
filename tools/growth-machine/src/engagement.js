@@ -166,6 +166,8 @@ function savingsTracker(e) {
 
 /* ---------- Discovery coverage: how well each criterion is evidenced ---------- */
 const QINDEX = (() => { const m = {}; [...INTAKE_SECTIONS, ...STAFF_SECTIONS].forEach((s) => s.questions.forEach((q) => { m[q.id] = q; })); INTERVIEW_QUESTIONS.forEach((q) => { m[q.id] = q; }); return m; })();
+/** Question metadata: built-in bank first, then engagement-specific custom questions (kept in client data, not in code). */
+function qMeta(e, id) { return QINDEX[id] || ((e && e.customQuestions) || []).find((q) => q.id === id); }
 function coverage(e) {
   const cols = ['Founder questionnaire', 'Staff questionnaire', 'Founder interviews', 'Manager interviews', 'Staff interviews', 'Unexpected points'];
   const m = {}; CRITERIA.forEach((c) => { m[c.id] = cols.map(() => 0); });
@@ -174,7 +176,7 @@ function coverage(e) {
   e.staffSurvey.forEach((r) => Object.entries(r.answers || {}).forEach(([qid, v]) => { if (String(v || '').trim() && QINDEX[qid] && !/_name$|_role$/.test(qid)) hit(QINDEX[qid].crit, 1); }));
   e.interviews.forEach((iv) => {
     const col = iv.level === 'founder' ? 2 : iv.level === 'manager' ? 3 : 4;
-    Object.entries(iv.answers || {}).forEach(([qid, v]) => { if (String(v || '').trim() && QINDEX[qid]) hit(QINDEX[qid].crit, col); });
+    Object.entries(iv.answers || {}).forEach(([qid, v]) => { const m = qMeta(e, qid); if (String(v || '').trim() && m) hit(m.crit, col); });
     (iv.outliers || []).forEach((o) => { if (o.text && o.crit) hit(o.crit, 5); });
   });
   return { cols, rows: CRITERIA.map((c) => ({ c, counts: m[c.id], total: sum(m[c.id]) })) };

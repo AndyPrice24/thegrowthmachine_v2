@@ -171,3 +171,7 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 .capm select{font-size:12px;padding:2px 4px}
 .sharpen h4{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--red);margin:16px 0 6px}
 .sharpen .grid-edit textarea{min-width:200px}
+
+.custom-qs{border:1.5px solid var(--red);border-radius:12px;padding:10px 14px;margin-bottom:14px}
+.custom-qs h5{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:12px 0 6px}
+.std-qs summary{cursor:pointer;font-weight:650;margin:8px 0}

@@ -352,6 +352,10 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 .capm select{font-size:12px;padding:2px 4px}
 .sharpen h4{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--red);margin:16px 0 6px}
 .sharpen .grid-edit textarea{min-width:200px}
+
+.custom-qs{border:1.5px solid var(--red);border-radius:12px;padding:10px 14px;margin-bottom:14px}
+.custom-qs h5{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:12px 0 6px}
+.std-qs summary{cursor:pointer;font-weight:650;margin:8px 0}
 </style>
 </head>
 <body>
@@ -364,7 +368,7 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="tip" hidden></div>
 <script>
-const STUDIO_BUILD = '2026-11-02 10:40 UTC';
+const STUDIO_BUILD = '2026-11-02 11:22 UTC';
 /* ---- model.js ---- */
 /* ============================================================
    The Growth Machine — data model, scenario engine, scoring, insights
@@ -381,7 +385,7 @@ const live = (arr) => (arr || []).filter((x) => !x._removed);
 const byId = (arr) => Object.fromEntries((arr || []).map((x) => [x.id, x]));
 const splitList = (v) => Array.isArray(v) ? v : String(v || '').split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
 
-const COLLECTIONS = ['intake', 'competitors', 'capabilities', 'intel', 'usps', 'opportunities', 'departments', 'people', 'tools', 'processes', 'segments', 'markets', 'topClients',
+const COLLECTIONS = ['intake', 'customQuestions', 'competitors', 'capabilities', 'intel', 'usps', 'opportunities', 'departments', 'people', 'tools', 'processes', 'segments', 'markets', 'topClients',
   'financePeriods', 'interviews', 'findings', 'recommendations', 'scenarios'];
 
 function blankEngagement(name) {
@@ -395,7 +399,7 @@ function blankEngagement(name) {
       lastExported: '', notes: '' },
     departments: [], people: [], tools: [], processes: [], segments: [], markets: [], topClients: [],
     financePeriods: [], interviews: [], findings: [], recommendations: [], scenarios: [],
-    intake: [], competitors: [], capabilities: [], intel: [], usps: [], opportunities: [], engagement: blankEngagementBlock(),
+    intake: [], customQuestions: [], competitors: [], capabilities: [], intel: [], usps: [], opportunities: [], engagement: blankEngagementBlock(),
     report: { title: '', preparedFor: '', summary: '', nextSteps: '', anonymise: true, scenarioId: '', processIds: [],
       sections: { snapshot: true, competition: true, findings: true, org: true, processes: true, recommendations: true, financials: true, nextSteps: true } }
   };
@@ -1171,6 +1175,8 @@ function savingsTracker(e) {
 
 /* ---------- Discovery coverage: how well each criterion is evidenced ---------- */
 const QINDEX = (() => { const m = {}; [...INTAKE_SECTIONS, ...STAFF_SECTIONS].forEach((s) => s.questions.forEach((q) => { m[q.id] = q; })); INTERVIEW_QUESTIONS.forEach((q) => { m[q.id] = q; }); return m; })();
+/** Question metadata: built-in bank first, then engagement-specific custom questions (kept in client data, not in code). */
+function qMeta(e, id) { return QINDEX[id] || ((e && e.customQuestions) || []).find((q) => q.id === id); }
 function coverage(e) {
   const cols = ['Founder questionnaire', 'Staff questionnaire', 'Founder interviews', 'Manager interviews', 'Staff interviews', 'Unexpected points'];
   const m = {}; CRITERIA.forEach((c) => { m[c.id] = cols.map(() => 0); });
@@ -1179,7 +1185,7 @@ function coverage(e) {
   e.staffSurvey.forEach((r) => Object.entries(r.answers || {}).forEach(([qid, v]) => { if (String(v || '').trim() && QINDEX[qid] && !/_name$|_role$/.test(qid)) hit(QINDEX[qid].crit, 1); }));
   e.interviews.forEach((iv) => {
     const col = iv.level === 'founder' ? 2 : iv.level === 'manager' ? 3 : 4;
-    Object.entries(iv.answers || {}).forEach(([qid, v]) => { if (String(v || '').trim() && QINDEX[qid]) hit(QINDEX[qid].crit, col); });
+    Object.entries(iv.answers || {}).forEach(([qid, v]) => { const m = qMeta(e, qid); if (String(v || '').trim() && m) hit(m.crit, col); });
     (iv.outliers || []).forEach((o) => { if (o.text && o.crit) hit(o.crit, 5); });
   });
   return { cols, rows: CRITERIA.map((c) => ({ c, counts: m[c.id], total: sum(m[c.id]) })) };
@@ -1944,7 +1950,7 @@ function viewInterviews(e) {
     ${iv.ideas ? `<h5>Ideas</h5><p class="small">${esc(iv.ideas)}</p>` : ''}
     ${iv.quotes ? `<blockquote>${esc(iv.quotes)}</blockquote>` : ''}
     <div class="tags">${splitList(iv.themes).map((t) => `<span class="chip">${esc(t)}</span>`).join('')}</div>
-    ${Object.keys(iv.answers || {}).length || (iv.outliers || []).length ? `<details class="small"><summary>${Object.keys(iv.answers || {}).length} structured answers · ${(iv.outliers || []).length} unexpected points</summary>${CRITERIA.map((c) => { const qs = Object.entries(iv.answers || {}).filter(([q]) => QINDEX[q] && QINDEX[q].crit === c.id); const os = (iv.outliers || []).filter((o) => o.crit === c.id); return qs.length || os.length ? `<h5>${esc(c.label)}</h5><dl>${qs.map(([q, a]) => `<dt>${esc(QINDEX[q].q)}</dt><dd>${esc(a)}</dd>`).join('')}${os.map((o) => `<dt>Unexpected</dt><dd>${esc(o.text)}</dd>`).join('')}</dl>` : ''; }).join('')}</details>` : ''}
+    ${Object.keys(iv.answers || {}).length || (iv.outliers || []).length ? `<details class="small"><summary>${Object.keys(iv.answers || {}).length} structured answers · ${(iv.outliers || []).length} unexpected points</summary>${CRITERIA.map((c) => { const qs = Object.entries(iv.answers || {}).filter(([q]) => qMeta(e, q) && qMeta(e, q).crit === c.id); const os = (iv.outliers || []).filter((o) => o.crit === c.id); return qs.length || os.length ? `<h5>${esc(c.label)}</h5><dl>${qs.map(([q, a]) => `<dt>${esc(qMeta(e, q).q)}</dt><dd>${esc(a)}</dd>`).join('')}${os.map((o) => `<dt>Unexpected</dt><dd>${esc(o.text)}</dd>`).join('')}</dl>` : ''; }).join('')}</details>` : ''}
     <div class="btn-row"><button class="btn sm" data-action="editInterview" data-id="${esc(iv.id)}">Open in capture form</button></div></article>`; }).join('') || empty('No interviews yet. Paste notes into Claude and ask for interview JSON (see Data & Claude).')}</div>`;
 }
 
@@ -2181,7 +2187,7 @@ function viewCapture(e) {
   const critLabel = (id) => (CRITERIA.find((c) => c.id === id) || {}).label || id;
   const qBlock = (title, qs) => qs.length ? `<h4>${title}</h4>${qs.map((q) => `<div class="qa"><label><span>${esc(q.q)}</span><span class="chip">${esc(critLabel(q.crit))}</span></label><textarea data-draft="answers.${q.id}" rows="2">${esc(d.answers[q.id] || '')}</textarea></div>`).join('')}` : '';
   const filled = Object.values(d.answers).filter((v) => String(v).trim()).length;
-  const total = set.core.length + set.level.length + set.dept.length;
+  const total = set.core.length + set.level.length + set.dept.length + (e.customQuestions || []).filter((q) => q.personId && q.personId === d.personId).length;
   return `<div class="page-h"><div><span class="eyebrow">Capture interview${d.editingId ? ' (editing)' : ''}</span><h1>${esc(p ? p.name : (d.personLabel || 'New interview'))}</h1><p class="muted">${filled} of ${total} questions answered. Your draft saves as you type. Skip anything that doesn't fit, and use Unexpected points for whatever comes up.</p></div>
     <div class="btn-row"><button class="btn" data-action="saveCapture">Save interview</button><button class="btn ghost" data-action="cancelCapture">Close</button></div></div>
   <div class="capture">
@@ -2200,10 +2206,14 @@ function viewCapture(e) {
       <label class="fld"><span>Quote worth keeping</span><textarea data-draft="quotes" rows="2">${esc(d.quotes || '')}</textarea></label>
     </aside>
     <div class="card qcol">
+      ${(() => { const cq = (e.customQuestions || []).filter((q) => q.personId && q.personId === d.personId); if (!cq.length) return ''; let sec = '';
+        return `<div class="custom-qs"><h4>Questions for this interview <span class="faint small">(★ = priority; prepared from what we know so far)</span></h4>${cq.map((q) => { const head = q.section && q.section !== sec ? `<h5>${esc((sec = q.section))}</h5>` : ''; return head + `<div class="qa ${String(d.answers[q.id] || '').trim() ? 'qa-done' : ''}"><label><span>${q.p ? '<b class="star">★</b> ' : ''}${esc(q.q)}</span><span class="chip">${esc(critLabel(q.crit))}</span></label>${q.note ? `<div class="faint small">${esc(q.note)}</div>` : ''}<textarea data-draft="answers.${q.id}" rows="2">${esc(d.answers[q.id] || '')}</textarea></div>`; }).join('')}</div>`; })()}
+      ${(e.customQuestions || []).some((q) => q.personId && q.personId === d.personId) ? '<details class="std-qs"><summary>Standard question sets (optional)</summary>' : ''}
       ${(() => { const ss = e.staffSurvey.find((x) => x.personId === d.personId && d.personId); return ss ? `<div class="pre"><h4>Their questionnaire answers</h4><dl>${STAFF_SECTIONS.flatMap((sec) => sec.questions).filter((q) => ss.answers[q.id] && !/_name$/.test(q.id)).map((q) => `<dt>${esc(q.q)}</dt><dd>${esc(ss.answers[q.id])}</dd>`).join('')}</dl></div>` : ''; })()}
       ${qBlock('Core questions (everyone)', set.core)}
       ${qBlock(d.level === 'founder' ? 'Founder questions' : d.level === 'manager' ? 'Manager questions' : 'Team member questions', set.level)}
       ${qBlock(dtype ? `${(DEPT_TYPES.find((x) => x[0] === dtype) || ['', ''])[1]} questions` : '', set.dept)}
+      ${(e.customQuestions || []).some((q) => q.personId && q.personId === d.personId) ? '</details>' : ''}
       <h4>Unexpected points</h4><p class="faint small">Anything outside the script. Tag each one so it still lands against a criterion.</p>
       ${(d.outliers || []).map((o, i) => `<div class="qa outlier"><textarea data-draft="outliers.${i}.text" rows="2" placeholder="What came up?">${esc(o.text || '')}</textarea>${sel(CRITERIA.map((c) => [c.id, c.label]), o.crit, `data-draftsel="outliers.${i}.crit"`)}</div>`).join('')}
       <button class="btn sm" data-action="addOutlier">+ Add unexpected point</button>
@@ -2644,6 +2654,7 @@ const FIELD_DEFS = {
   financePeriods: [['id', 'text'], ['label', 'text'], ['months', 'num'], ['revenue', 'num'], ['cogs', 'num'], ['payroll', 'num'], ['tools', 'num'], ['marketing', 'num'], ['premises', 'num'], ['other', 'num']],
   interviews: [['id', 'text'], ['personId', 'person'], ['date', 'date'], ['interviewer', 'text'], ['summary', 'long'], ['themes', 'text'], ['painPoints', 'long'], ['ideas', 'long'], ['quotes', 'long']],
   findings: [['id', 'text'], ['title', 'text'], ['area', 'text'], ['severity', ['high', 'medium', 'low']], ['evidence', 'long']],
+  customQuestions: [['id', 'text'], ['personId', 'person'], ['section', 'text'], ['q', 'long'], ['note', 'text'], ['crit', CRITERIA.map((c) => c.id)], ['p', 'num']],
   competitors: [['id', 'text'], ['name', 'text'], ['type', ['Direct', 'Indirect', 'Substitute', 'Adjacent']], ['threat', ['High', 'Medium', 'Low']], ['website', 'text'], ['hq', 'text'], ['markets', 'text'], ['segments', 'text'], ['offering', 'long'], ['pricingModel', 'text'], ['pricePoint', 'num'], ['size', 'text'], ['ownership', 'text'], ['strengths', 'long'], ['weaknesses', 'long'], ['whereWeWin', 'long'], ['whereWeLose', 'long'], ['sources', 'long'], ['lastReviewed', 'date']],
   intel: [['id', 'text'], ['competitorId', 'comp'], ['topic', INTEL_TOPICS], ['note', 'long'], ['sourceType', SOURCE_TYPES], ['source', 'text'], ['date', 'date']],
   usps: [['id', 'text'], ['claim', 'text'], ['strength', ['Unique', 'Shared', 'Claimed only']], ['proof', 'long'], ['competitorsWithIt', 'text'], ['notes', 'text']],
@@ -2652,7 +2663,7 @@ const FIELD_DEFS = {
   recommendations: [['id', 'text'], ['title', 'text'], ['type', ['People', 'Process', 'Tool', 'Build', 'Structure', 'Commercial']], ['horizon', ['0-3 months', '3-6 months', '6-12 months', '12+ months']], ['description', 'long'], ['effort', 'num'], ['risk', 'num'], ['confidence', 'num'], ['oneOffCost', 'num'], ['otherAnnualSaving', 'num'], ['oneOffSaving', 'num'], ['revenueUplift', 'num'], ['status', REC_STAGES], ['ops', 'json']],
   scenarios: [['id', 'text'], ['name', 'text'], ['description', 'text'], ['recommendationIds', 'json']]
 };
-const COLL_LABELS = { competitors: 'Competitors', capabilities: 'Capabilities', intel: 'Competitor intelligence', usps: 'USPs', opportunities: 'Opportunities', intake: 'Founder answers', departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Top clients', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };
+const COLL_LABELS = { customQuestions: 'Custom interview questions', competitors: 'Competitors', capabilities: 'Capabilities', intel: 'Competitor intelligence', usps: 'USPs', opportunities: 'Opportunities', intake: 'Founder answers', departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Top clients', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };
 
 function cellInput(e, coll, row, [f, type]) {
   const v = row[f]; const base = `data-cell data-coll="${coll}" data-id="${esc(row.id)}" data-field="${f}"`;

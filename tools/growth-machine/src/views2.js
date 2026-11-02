@@ -149,7 +149,7 @@ function viewCapture(e) {
   const critLabel = (id) => (CRITERIA.find((c) => c.id === id) || {}).label || id;
   const qBlock = (title, qs) => qs.length ? `<h4>${title}</h4>${qs.map((q) => `<div class="qa"><label><span>${esc(q.q)}</span><span class="chip">${esc(critLabel(q.crit))}</span></label><textarea data-draft="answers.${q.id}" rows="2">${esc(d.answers[q.id] || '')}</textarea></div>`).join('')}` : '';
   const filled = Object.values(d.answers).filter((v) => String(v).trim()).length;
-  const total = set.core.length + set.level.length + set.dept.length;
+  const total = set.core.length + set.level.length + set.dept.length + (e.customQuestions || []).filter((q) => q.personId && q.personId === d.personId).length;
   return `<div class="page-h"><div><span class="eyebrow">Capture interview${d.editingId ? ' (editing)' : ''}</span><h1>${esc(p ? p.name : (d.personLabel || 'New interview'))}</h1><p class="muted">${filled} of ${total} questions answered. Your draft saves as you type. Skip anything that doesn't fit, and use Unexpected points for whatever comes up.</p></div>
     <div class="btn-row"><button class="btn" data-action="saveCapture">Save interview</button><button class="btn ghost" data-action="cancelCapture">Close</button></div></div>
   <div class="capture">
@@ -168,10 +168,14 @@ function viewCapture(e) {
       <label class="fld"><span>Quote worth keeping</span><textarea data-draft="quotes" rows="2">${esc(d.quotes || '')}</textarea></label>
     </aside>
     <div class="card qcol">
+      ${(() => { const cq = (e.customQuestions || []).filter((q) => q.personId && q.personId === d.personId); if (!cq.length) return ''; let sec = '';
+        return `<div class="custom-qs"><h4>Questions for this interview <span class="faint small">(★ = priority; prepared from what we know so far)</span></h4>${cq.map((q) => { const head = q.section && q.section !== sec ? `<h5>${esc((sec = q.section))}</h5>` : ''; return head + `<div class="qa ${String(d.answers[q.id] || '').trim() ? 'qa-done' : ''}"><label><span>${q.p ? '<b class="star">★</b> ' : ''}${esc(q.q)}</span><span class="chip">${esc(critLabel(q.crit))}</span></label>${q.note ? `<div class="faint small">${esc(q.note)}</div>` : ''}<textarea data-draft="answers.${q.id}" rows="2">${esc(d.answers[q.id] || '')}</textarea></div>`; }).join('')}</div>`; })()}
+      ${(e.customQuestions || []).some((q) => q.personId && q.personId === d.personId) ? '<details class="std-qs"><summary>Standard question sets (optional)</summary>' : ''}
       ${(() => { const ss = e.staffSurvey.find((x) => x.personId === d.personId && d.personId); return ss ? `<div class="pre"><h4>Their questionnaire answers</h4><dl>${STAFF_SECTIONS.flatMap((sec) => sec.questions).filter((q) => ss.answers[q.id] && !/_name$/.test(q.id)).map((q) => `<dt>${esc(q.q)}</dt><dd>${esc(ss.answers[q.id])}</dd>`).join('')}</dl></div>` : ''; })()}
       ${qBlock('Core questions (everyone)', set.core)}
       ${qBlock(d.level === 'founder' ? 'Founder questions' : d.level === 'manager' ? 'Manager questions' : 'Team member questions', set.level)}
       ${qBlock(dtype ? `${(DEPT_TYPES.find((x) => x[0] === dtype) || ['', ''])[1]} questions` : '', set.dept)}
+      ${(e.customQuestions || []).some((q) => q.personId && q.personId === d.personId) ? '</details>' : ''}
       <h4>Unexpected points</h4><p class="faint small">Anything outside the script. Tag each one so it still lands against a criterion.</p>
       ${(d.outliers || []).map((o, i) => `<div class="qa outlier"><textarea data-draft="outliers.${i}.text" rows="2" placeholder="What came up?">${esc(o.text || '')}</textarea>${sel(CRITERIA.map((c) => [c.id, c.label]), o.crit, `data-draftsel="outliers.${i}.crit"`)}</div>`).join('')}
       <button class="btn sm" data-action="addOutlier">+ Add unexpected point</button>
