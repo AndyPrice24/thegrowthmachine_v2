@@ -230,8 +230,8 @@ const actions = {
     if (!Object.keys(db.engagements).length) { const e = blankEngagement('New client'); db.engagements[e.id] = e; }
     db.activeId = Object.keys(db.engagements)[0]; ui.scenario = 'current'; save(); render();
   },
-  exportJSON: () => { const e = E(); e.meta.lastExported = new Date().toISOString(); save(); downloadFile(`${slugify(e.client.name)}-${new Date().toISOString().slice(0, 10)}.tgm.json`, JSON.stringify(stripMarks(e), null, 2)); render(); },
-  exportAll: () => downloadFile(`tgm-all-clients-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify({ schema: 'tgm.studio/1', engagements: Object.values(db.engagements).map(stripMarks) }, null, 2)),
+  exportJSON: () => { const e = E(); e.meta.lastExported = new Date().toISOString(); save(); downloadFile(`${slugify(e.client.name)}-${todayISO()}.tgm.json`, JSON.stringify(stripMarks(e), null, 2)); render(); },
+  exportAll: () => downloadFile(`tgm-all-clients-${todayISO()}.json`, JSON.stringify({ schema: 'tgm.studio/1', engagements: Object.values(db.engagements).map(stripMarks) }, null, 2)),
   mergePaste: () => {
     const raw = document.getElementById('pasteBox').value.trim(); if (!raw) return toast('Nothing to merge');
     let obj; try { obj = JSON.parse(raw.replace(/^```(json)?|```$/gm, '')); } catch (err) { return toast('That is not valid JSON: ' + err.message); }

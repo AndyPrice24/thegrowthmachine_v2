@@ -207,8 +207,8 @@ const DOCUMENT_REQUESTS = [
 
 /* Standard 3-month engagement plan (matches the TGM EIR Statement of Work structure) */
 function standardPlan(startISO) {
-  const d = (n) => { const x = new Date(startISO + 'T00:00:00'); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
-  const m = (k, n) => { const x = new Date(startISO + 'T00:00:00'); x.setMonth(x.getMonth() + k); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
+  const d = (n) => { const x = new Date(startISO + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+  const m = (k, n) => { const x = new Date(startISO + 'T00:00:00Z'); x.setUTCMonth(x.getUTCMonth() + k); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
   return [
     { id: 'ph0', name: 'Kick-off & alignment', month: 1, start: d(0), end: d(4), plannedDays: 1, status: 'In progress', deliverables: 'Agreed goals, point of contact, communication plan, information request issued' },
     { id: 'ph1', name: 'Foundations: information, systems & cost baseline', month: 1, start: d(0), end: d(11), plannedDays: 3, status: 'Not started', deliverables: 'Information received, systems & data map, draft cost baseline' },

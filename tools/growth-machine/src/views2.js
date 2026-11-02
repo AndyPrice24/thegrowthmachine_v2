@@ -18,7 +18,7 @@ function phaseGantt(e, { compact = false } = {}) {
   const x = (iso) => LW + (new Date(iso + 'T00:00:00').getTime() - s) / (en - s) * (W - LW - 10);
   const H = TOP + g.phases.length * RH + 8;
   let svg = `<svg viewBox="0 0 ${W} ${H}" class="gantt-svg" role="img" aria-label="Engagement timeline">`;
-  [0, 1, 2, 3].forEach((k) => { const d = new Date(g.start + 'T00:00:00'); d.setMonth(d.getMonth() + k); const iso = d.toISOString().slice(0, 10); if (iso > g.end) return; svg += `<line class="g-grid" x1="${x(iso)}" x2="${x(iso)}" y1="${TOP - 4}" y2="${H}"/><text class="g-lab" x="${x(iso) + 4}" y="12">Month ${k + 1} · ${fmtD(iso)}</text>`; });
+  [0, 1, 2, 3].forEach((k) => { const iso = addMonthsISO(g.start, k); if (iso > g.end) return; svg += `<line class="g-grid" x1="${x(iso)}" x2="${x(iso)}" y1="${TOP - 4}" y2="${H}"/><text class="g-lab" x="${x(iso) + 4}" y="12">Month ${k + 1} · ${fmtD(iso)}</text>`; });
   splitList(g.reviewDates).forEach((r) => { if (r >= g.start && r <= g.end) svg += `<line class="g-review" x1="${x(r)}" x2="${x(r)}" y1="${TOP - 4}" y2="${H}"><title>Fortnightly review ${fmtD(r)}</title></line>`; });
   g.phases.forEach((p, i) => {
     const y = TOP + i * RH; const slip = num(st.slipByPhase[p.id]);
@@ -78,7 +78,7 @@ function viewProgress(e) {
   const acts = card('What\'s done, what\'s happening, what\'s next', `<div class="act-grid">${actCol('✓ Done', st.done, 'Nothing completed yet.')}${actCol('● In progress / waiting', st.doing, 'Nothing in progress.')}${actCol('→ Next', st.next, 'Nothing queued.')}</div><div class="btn-row"><button class="btn sm" data-action="addActivity">+ Add activity</button></div>`, { sub: 'Marking an activity Done stamps today\'s date automatically.' });
 
   const entryDates = new Set(g.timeLog.map((t) => t.date));
-  const missing = []; if (g.start) { for (let d = g.start; d <= st.today && d <= g.end; d = addDaysISO(d, 1)) { if (!entryDates.has(d) && dayEvents(e, d).length) missing.push(d); } }
+  const missing = []; if (g.start) { for (let d = g.start, i = 0; d <= st.today && d <= g.end && i < 400; d = addDaysISO(d, 1), i++) { if (!entryDates.has(d) && dayEvents(e, d).length) missing.push(d); } }
   const diaryRows = g.timeLog.slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   const time = card(`Work diary · ${st.used % 1 ? st.used.toFixed(1) : st.used} of ${num(g.daysTotal)} days`, `<div class="grid-2">
       <div><h4>Days by contract month (allowance ${num(g.daysPerMonth)})</h4>${hbars([1, 2, 3].map((m) => ({ label: `Month ${m}`, value: num(st.byMonth[m] || 0), color: num(st.byMonth[m] || 0) > num(g.daysPerMonth) ? 'var(--crit)' : 'var(--s3)' })), { fmt: (v) => (v % 1 ? v.toFixed(1) : v) + ' d', max: Math.max(num(g.daysPerMonth), ...Object.values(st.byMonth)) })}</div>

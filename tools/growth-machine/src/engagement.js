@@ -9,8 +9,12 @@ const ACTIVITY_STATUSES = ['Next', 'In progress', 'Waiting on client', 'Done'];
 const REC_STAGES = ['Identified', 'Approved', 'In progress', 'Realised', 'Rejected'];
 const LEGACY_STATUS = { Proposed: 'Identified', Agreed: 'Approved', Done: 'Realised' };
 
-const todayISO = () => new Date().toISOString().slice(0, 10);
-const addDaysISO = (iso, n) => { const d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+/* Dates are calendar days (YYYY-MM-DD). All arithmetic is done in UTC so it is identical in every timezone
+   (local-time arithmetic + toISOString() shifts by a day east of UTC, e.g. South Africa). */
+const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+const addDaysISO = (iso, n) => { const d = new Date(iso + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+const addMonthsISO = (iso, k) => { const d = new Date(iso + 'T00:00:00Z'); d.setUTCMonth(d.getUTCMonth() + k); return d.toISOString().slice(0, 10); };
+const weekdayISO = (iso) => new Date(iso + 'T00:00:00Z').getUTCDay();
 const daysBetween = (a, b) => Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 864e5);
 const fmtD = (iso, o) => (iso ? new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', o || { day: 'numeric', month: 'short' }) : '—');
 
@@ -32,6 +36,18 @@ function normaliseEngagementBlock(e) {
     delete t.activity;
     if (!t.phaseId) t.phaseId = phaseForDate(e.engagement, t.date);
   });
+  // One-time repair: plans created east of UTC before 2 Nov 2026 were saved one day early (timezone bug).
+  const g0 = e.engagement;
+  if (!g0._tzFixed && g0.start && g0.phases.length && g0.phases[0].id === 'ph0' && g0.phases[0].start === addDaysISO(g0.start, -1)) {
+    const shift = (v) => (v ? addDaysISO(v, 1) : v);
+    g0.phases.forEach((p) => { p.start = shift(p.start); p.end = p.id === 'ph5' && p.end === addDaysISO(g0.end, -1) ? g0.end : shift(p.end); });
+    g0.requests.forEach((r) => { if (r.requestedDate === addDaysISO(g0.start, -1)) r.requestedDate = g0.start; if (!r.receivedDate) r.dueDate = shift(r.dueDate); });
+    g0.activities.forEach((a) => { if (a.status !== 'Done') a.due = shift(a.due); });
+    const rd = splitList(g0.reviewDates);
+    if (rd.length && rd.every((d) => weekdayISO(d) === 4)) g0.reviewDates = rd.map(shift).join(', ');
+    g0._tzFixed = true;
+  }
+  if (g0.start) g0._tzFixed = true;
   e.engagement.status = Object.assign({ headline: '', delivered: '', next: '', includeDiary: false }, e.engagement.status || {});
   if (!Array.isArray(e.intake)) e.intake = [];
   if (!Array.isArray(e.staffSurvey)) e.staffSurvey = [];
@@ -44,7 +60,7 @@ function normaliseEngagementBlock(e) {
 function seedStandardPlan(e) {
   const g = e.engagement; const start = g.start || todayISO();
   g.start = start;
-  if (!g.end) { const d = new Date(start + 'T00:00:00'); d.setMonth(d.getMonth() + 3); d.setDate(d.getDate() - 1); g.end = d.toISOString().slice(0, 10); }
+  if (!g.end) g.end = addDaysISO(addMonthsISO(start, 3), -1);
   g.phases = standardPlan(start).map((p, i) => Object.assign(p, { status: i === 0 ? 'In progress' : 'Not started' }));
   g.requests = DOCUMENT_REQUESTS.map((d) => ({ id: d.id, item: d.item, crit: d.crit, owner: g.contact || '', requestedDate: start, dueDate: addDaysISO(start, d.dueDays), receivedDate: '', status: '', notes: '' }));
   const A = (phaseId, title, due, status) => ({ id: uid('ac'), phaseId, title, due, status: status || 'Next', doneDate: '' });
@@ -61,10 +77,10 @@ function seedStandardPlan(e) {
     A('ph3', 'Month-1 readout to founders', g.phases[3].end)
   ];
   if (!g.reviewDates) {
-    const first = new Date(start + 'T00:00:00'); while (first.getDay() !== 5) first.setDate(first.getDate() + 1); first.setDate(first.getDate() + 7);
-    const out = []; const endT = new Date(g.end + 'T00:00:00');
+    let first = start; while (weekdayISO(first) !== 5) first = addDaysISO(first, 1); first = addDaysISO(first, 7);
+    const out = [];
     const holidays = ['12-16', '12-24', '12-25', '12-26', '12-31', '01-01']; // skip SA year-end public holidays
-    for (let d = new Date(first); d <= endT; d.setDate(d.getDate() + 14)) { const iso = d.toISOString().slice(0, 10); if (!holidays.includes(iso.slice(5))) out.push(iso); }
+    for (let d = first, i = 0; d <= g.end && i < 60; d = addDaysISO(d, 14), i++) { if (!holidays.includes(d.slice(5))) out.push(d); }
     g.reviewDates = out.join(', ');
   }
 }

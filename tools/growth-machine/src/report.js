@@ -96,5 +96,5 @@ body{margin:0;background:#f6f1e9;font-family:Inter,ui-sans-serif,-apple-system,B
 .rpt{max-width:1100px;margin:24px auto;}
 </style></head><body><main class="rpt">${isStatus ? renderStatusReport(e) : renderReport(e)}</main></body></html>`;
   const slug = (e.client.name + '-' + (isStatus ? 'status-report' : (e.report.title || 'report'))).toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  downloadFile(`${slug}-${new Date().toISOString().slice(0, 10)}.html`, html, 'text/html');
+  downloadFile(`${slug}-${todayISO()}.html`, html, 'text/html');
 }

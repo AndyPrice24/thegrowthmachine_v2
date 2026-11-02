@@ -364,7 +364,7 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="tip" hidden></div>
 <script>
-const STUDIO_BUILD = '2026-11-01 16:48 UTC';
+const STUDIO_BUILD = '2026-11-02 08:01 UTC';
 /* ---- model.js ---- */
 /* ============================================================
    The Growth Machine — data model, scenario engine, scoring, insights
@@ -385,7 +385,7 @@ const COLLECTIONS = ['intake', 'competitors', 'capabilities', 'intel', 'usps', '
   'financePeriods', 'interviews', 'findings', 'recommendations', 'scenarios'];
 
 function blankEngagement(name) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayISO();
   return {
     schema: SCHEMA,
     id: uid('eng'),
@@ -978,8 +978,8 @@ const DOCUMENT_REQUESTS = [
 
 /* Standard 3-month engagement plan (matches the TGM EIR Statement of Work structure) */
 function standardPlan(startISO) {
-  const d = (n) => { const x = new Date(startISO + 'T00:00:00'); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
-  const m = (k, n) => { const x = new Date(startISO + 'T00:00:00'); x.setMonth(x.getMonth() + k); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
+  const d = (n) => { const x = new Date(startISO + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+  const m = (k, n) => { const x = new Date(startISO + 'T00:00:00Z'); x.setUTCMonth(x.getUTCMonth() + k); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
   return [
     { id: 'ph0', name: 'Kick-off & alignment', month: 1, start: d(0), end: d(4), plannedDays: 1, status: 'In progress', deliverables: 'Agreed goals, point of contact, communication plan, information request issued' },
     { id: 'ph1', name: 'Foundations: information, systems & cost baseline', month: 1, start: d(0), end: d(11), plannedDays: 3, status: 'Not started', deliverables: 'Information received, systems & data map, draft cost baseline' },
@@ -1002,8 +1002,12 @@ const ACTIVITY_STATUSES = ['Next', 'In progress', 'Waiting on client', 'Done'];
 const REC_STAGES = ['Identified', 'Approved', 'In progress', 'Realised', 'Rejected'];
 const LEGACY_STATUS = { Proposed: 'Identified', Agreed: 'Approved', Done: 'Realised' };
 
-const todayISO = () => new Date().toISOString().slice(0, 10);
-const addDaysISO = (iso, n) => { const d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+/* Dates are calendar days (YYYY-MM-DD). All arithmetic is done in UTC so it is identical in every timezone
+   (local-time arithmetic + toISOString() shifts by a day east of UTC, e.g. South Africa). */
+const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+const addDaysISO = (iso, n) => { const d = new Date(iso + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+const addMonthsISO = (iso, k) => { const d = new Date(iso + 'T00:00:00Z'); d.setUTCMonth(d.getUTCMonth() + k); return d.toISOString().slice(0, 10); };
+const weekdayISO = (iso) => new Date(iso + 'T00:00:00Z').getUTCDay();
 const daysBetween = (a, b) => Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 864e5);
 const fmtD = (iso, o) => (iso ? new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', o || { day: 'numeric', month: 'short' }) : '—');
 
@@ -1025,6 +1029,18 @@ function normaliseEngagementBlock(e) {
     delete t.activity;
     if (!t.phaseId) t.phaseId = phaseForDate(e.engagement, t.date);
   });
+  // One-time repair: plans created east of UTC before 2 Nov 2026 were saved one day early (timezone bug).
+  const g0 = e.engagement;
+  if (!g0._tzFixed && g0.start && g0.phases.length && g0.phases[0].id === 'ph0' && g0.phases[0].start === addDaysISO(g0.start, -1)) {
+    const shift = (v) => (v ? addDaysISO(v, 1) : v);
+    g0.phases.forEach((p) => { p.start = shift(p.start); p.end = p.id === 'ph5' && p.end === addDaysISO(g0.end, -1) ? g0.end : shift(p.end); });
+    g0.requests.forEach((r) => { if (r.requestedDate === addDaysISO(g0.start, -1)) r.requestedDate = g0.start; if (!r.receivedDate) r.dueDate = shift(r.dueDate); });
+    g0.activities.forEach((a) => { if (a.status !== 'Done') a.due = shift(a.due); });
+    const rd = splitList(g0.reviewDates);
+    if (rd.length && rd.every((d) => weekdayISO(d) === 4)) g0.reviewDates = rd.map(shift).join(', ');
+    g0._tzFixed = true;
+  }
+  if (g0.start) g0._tzFixed = true;
   e.engagement.status = Object.assign({ headline: '', delivered: '', next: '', includeDiary: false }, e.engagement.status || {});
   if (!Array.isArray(e.intake)) e.intake = [];
   if (!Array.isArray(e.staffSurvey)) e.staffSurvey = [];
@@ -1037,7 +1053,7 @@ function normaliseEngagementBlock(e) {
 function seedStandardPlan(e) {
   const g = e.engagement; const start = g.start || todayISO();
   g.start = start;
-  if (!g.end) { const d = new Date(start + 'T00:00:00'); d.setMonth(d.getMonth() + 3); d.setDate(d.getDate() - 1); g.end = d.toISOString().slice(0, 10); }
+  if (!g.end) g.end = addDaysISO(addMonthsISO(start, 3), -1);
   g.phases = standardPlan(start).map((p, i) => Object.assign(p, { status: i === 0 ? 'In progress' : 'Not started' }));
   g.requests = DOCUMENT_REQUESTS.map((d) => ({ id: d.id, item: d.item, crit: d.crit, owner: g.contact || '', requestedDate: start, dueDate: addDaysISO(start, d.dueDays), receivedDate: '', status: '', notes: '' }));
   const A = (phaseId, title, due, status) => ({ id: uid('ac'), phaseId, title, due, status: status || 'Next', doneDate: '' });
@@ -1054,10 +1070,10 @@ function seedStandardPlan(e) {
     A('ph3', 'Month-1 readout to founders', g.phases[3].end)
   ];
   if (!g.reviewDates) {
-    const first = new Date(start + 'T00:00:00'); while (first.getDay() !== 5) first.setDate(first.getDate() + 1); first.setDate(first.getDate() + 7);
-    const out = []; const endT = new Date(g.end + 'T00:00:00');
+    let first = start; while (weekdayISO(first) !== 5) first = addDaysISO(first, 1); first = addDaysISO(first, 7);
+    const out = [];
     const holidays = ['12-16', '12-24', '12-25', '12-26', '12-31', '01-01']; // skip SA year-end public holidays
-    for (let d = new Date(first); d <= endT; d.setDate(d.getDate() + 14)) { const iso = d.toISOString().slice(0, 10); if (!holidays.includes(iso.slice(5))) out.push(iso); }
+    for (let d = first, i = 0; d <= g.end && i < 60; d = addDaysISO(d, 14), i++) { if (!holidays.includes(d.slice(5))) out.push(d); }
     g.reviewDates = out.join(', ');
   }
 }
@@ -2021,7 +2037,7 @@ function phaseGantt(e, { compact = false } = {}) {
   const x = (iso) => LW + (new Date(iso + 'T00:00:00').getTime() - s) / (en - s) * (W - LW - 10);
   const H = TOP + g.phases.length * RH + 8;
   let svg = `<svg viewBox="0 0 ${W} ${H}" class="gantt-svg" role="img" aria-label="Engagement timeline">`;
-  [0, 1, 2, 3].forEach((k) => { const d = new Date(g.start + 'T00:00:00'); d.setMonth(d.getMonth() + k); const iso = d.toISOString().slice(0, 10); if (iso > g.end) return; svg += `<line class="g-grid" x1="${x(iso)}" x2="${x(iso)}" y1="${TOP - 4}" y2="${H}"/><text class="g-lab" x="${x(iso) + 4}" y="12">Month ${k + 1} · ${fmtD(iso)}</text>`; });
+  [0, 1, 2, 3].forEach((k) => { const iso = addMonthsISO(g.start, k); if (iso > g.end) return; svg += `<line class="g-grid" x1="${x(iso)}" x2="${x(iso)}" y1="${TOP - 4}" y2="${H}"/><text class="g-lab" x="${x(iso) + 4}" y="12">Month ${k + 1} · ${fmtD(iso)}</text>`; });
   splitList(g.reviewDates).forEach((r) => { if (r >= g.start && r <= g.end) svg += `<line class="g-review" x1="${x(r)}" x2="${x(r)}" y1="${TOP - 4}" y2="${H}"><title>Fortnightly review ${fmtD(r)}</title></line>`; });
   g.phases.forEach((p, i) => {
     const y = TOP + i * RH; const slip = num(st.slipByPhase[p.id]);
@@ -2081,7 +2097,7 @@ function viewProgress(e) {
   const acts = card('What\'s done, what\'s happening, what\'s next', `<div class="act-grid">${actCol('✓ Done', st.done, 'Nothing completed yet.')}${actCol('● In progress / waiting', st.doing, 'Nothing in progress.')}${actCol('→ Next', st.next, 'Nothing queued.')}</div><div class="btn-row"><button class="btn sm" data-action="addActivity">+ Add activity</button></div>`, { sub: 'Marking an activity Done stamps today\'s date automatically.' });
 
   const entryDates = new Set(g.timeLog.map((t) => t.date));
-  const missing = []; if (g.start) { for (let d = g.start; d <= st.today && d <= g.end; d = addDaysISO(d, 1)) { if (!entryDates.has(d) && dayEvents(e, d).length) missing.push(d); } }
+  const missing = []; if (g.start) { for (let d = g.start, i = 0; d <= st.today && d <= g.end && i < 400; d = addDaysISO(d, 1), i++) { if (!entryDates.has(d) && dayEvents(e, d).length) missing.push(d); } }
   const diaryRows = g.timeLog.slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   const time = card(`Work diary · ${st.used % 1 ? st.used.toFixed(1) : st.used} of ${num(g.daysTotal)} days`, `<div class="grid-2">
       <div><h4>Days by contract month (allowance ${num(g.daysPerMonth)})</h4>${hbars([1, 2, 3].map((m) => ({ label: `Month ${m}`, value: num(st.byMonth[m] || 0), color: num(st.byMonth[m] || 0) > num(g.daysPerMonth) ? 'var(--crit)' : 'var(--s3)' })), { fmt: (v) => (v % 1 ? v.toFixed(1) : v) + ' d', max: Math.max(num(g.daysPerMonth), ...Object.values(st.byMonth)) })}</div>
@@ -2496,7 +2512,7 @@ body{margin:0;background:#f6f1e9;font-family:Inter,ui-sans-serif,-apple-system,B
 .rpt{max-width:1100px;margin:24px auto;}
 </style></head><body><main class="rpt">${isStatus ? renderStatusReport(e) : renderReport(e)}</main></body></html>`;
   const slug = (e.client.name + '-' + (isStatus ? 'status-report' : (e.report.title || 'report'))).toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  downloadFile(`${slug}-${new Date().toISOString().slice(0, 10)}.html`, html, 'text/html');
+  downloadFile(`${slug}-${todayISO()}.html`, html, 'text/html');
 }
 
 /* ---- app.js ---- */
@@ -2732,8 +2748,8 @@ const actions = {
     if (!Object.keys(db.engagements).length) { const e = blankEngagement('New client'); db.engagements[e.id] = e; }
     db.activeId = Object.keys(db.engagements)[0]; ui.scenario = 'current'; save(); render();
   },
-  exportJSON: () => { const e = E(); e.meta.lastExported = new Date().toISOString(); save(); downloadFile(`${slugify(e.client.name)}-${new Date().toISOString().slice(0, 10)}.tgm.json`, JSON.stringify(stripMarks(e), null, 2)); render(); },
-  exportAll: () => downloadFile(`tgm-all-clients-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify({ schema: 'tgm.studio/1', engagements: Object.values(db.engagements).map(stripMarks) }, null, 2)),
+  exportJSON: () => { const e = E(); e.meta.lastExported = new Date().toISOString(); save(); downloadFile(`${slugify(e.client.name)}-${todayISO()}.tgm.json`, JSON.stringify(stripMarks(e), null, 2)); render(); },
+  exportAll: () => downloadFile(`tgm-all-clients-${todayISO()}.json`, JSON.stringify({ schema: 'tgm.studio/1', engagements: Object.values(db.engagements).map(stripMarks) }, null, 2)),
   mergePaste: () => {
     const raw = document.getElementById('pasteBox').value.trim(); if (!raw) return toast('Nothing to merge');
     let obj; try { obj = JSON.parse(raw.replace(/^```(json)?|```$/gm, '')); } catch (err) { return toast('That is not valid JSON: ' + err.message); }

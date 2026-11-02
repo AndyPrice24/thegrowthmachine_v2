@@ -17,7 +17,7 @@ const COLLECTIONS = ['intake', 'competitors', 'capabilities', 'intel', 'usps', '
   'financePeriods', 'interviews', 'findings', 'recommendations', 'scenarios'];
 
 function blankEngagement(name) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayISO();
   return {
     schema: SCHEMA,
     id: uid('eng'),
