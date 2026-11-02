@@ -40,7 +40,7 @@ It loads with two clients:
 ## Where the data lives (read this)
 
 - The tool auto-saves into **this browser's local storage**. That is convenient, but it is **not a backup**. Clearing the browser, or switching computer or browser, loses it.
-- **Export JSON after every working session** (top bar → *Export JSON*). Keep the `.tgm.json` files in a **private** folder you control, e.g. a Google Drive folder per client.
+- **Back up after every working session** (top bar → *Back up*; it downloads everything saved for that client). Keep the `.tgm.json` files in a **private** folder you control, e.g. a Google Drive folder per client.
 - **Never commit client files to this repository.** This repo deploys the public website. `.gitignore` blocks `*.tgm.json` and `tools/growth-machine/clients/` as a safety net.
 - Client files contain salaries, names and possibly redundancy scenarios. Treat them as confidential HR data (POPIA applies to South African clients).
 
