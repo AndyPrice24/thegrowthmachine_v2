@@ -473,6 +473,7 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 .custom-qs{border:1.5px solid var(--red);border-radius:12px;padding:10px 14px;margin-bottom:14px}
 .custom-qs h5{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:12px 0 6px}
 .std-qs summary{cursor:pointer;font-weight:650;margin:8px 0}
+#mergeHist summary{cursor:pointer;padding:4px 0}
 </style>
 </head>
 <body>
@@ -485,7 +486,7 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="tip" hidden></div>
 <script>
-const STUDIO_BUILD = '2026-11-03 13:58 UTC';
+const STUDIO_BUILD = '2026-11-03 14:02 UTC';
 /* ---- model.js ---- */
 /* ============================================================
    The Growth Machine — data model, scenario engine, scoring, insights
@@ -3435,7 +3436,7 @@ function viewData(e) {
     <div class="scroll-x">${grid}</div>
     <div class="btn-row"><button class="btn" data-action="addRow" data-coll="${coll}">+ Add ${COLL_LABELS[coll].toLowerCase().replace(/s$/, '')}</button></div>
     <p class="faint small">Changes save as you leave each cell. Lists (process steps, recommendation ops, scenario recommendation ids) are edited as JSON. See the README for the format.</p>`)}
-  ${card(`Merge history (${(e.meta.mergeLog || []).length})`, (e.meta.mergeLog || []).length ? `<table class="tbl"><thead><tr><th>Merged</th><th>File</th><th>File date</th><th>What changed</th></tr></thead><tbody>${(e.meta.mergeLog || []).slice(0, 30).map((l) => `<tr><td class="nowrap small">${esc(new Date(l.mergedAt).toLocaleString('en-GB'))}</td><td class="small">${esc(l.label)}</td><td class="nowrap small">${l.generatedAt ? esc(new Date(l.generatedAt).toLocaleString('en-GB')) : '<span class="chip sev-medium">● no stamp</span>'}</td><td class="small">${esc(l.summary)}${l.skipped && l.skipped.length ? `<div class="faint">Skipped (newer data kept): ${esc(l.skipped.map((s) => s.coll + (s.id ? ':' + s.id : '')).join(', '))}</div>` : ''}</td></tr>`).join('')}</tbody></table>` : '<p class="empty">No merges recorded yet. Every merge from now on is listed here, and merging the same file twice asks you first.</p>', { sub: '+ added · ~ updated · ✕ skipped because the Studio already had newer data. Hand edits always count as newer than earlier files.' })}
+  ${card(`Merge history (${(e.meta.mergeLog || []).length})`, (e.meta.mergeLog || []).length ? `<details id="mergeHist" ${ui.mergeOpen ? 'open' : ''}><summary class="small"><b>${ui.mergeOpen ? 'Hide' : 'Show'} history</b> · latest: ${esc(e.meta.mergeLog[0].label)} (${esc(new Date(e.meta.mergeLog[0].mergedAt).toLocaleString('en-GB'))})</summary><table class="tbl" style="margin-top:8px"><thead><tr><th>Merged</th><th>File</th><th>File date</th><th>What changed</th></tr></thead><tbody>${(e.meta.mergeLog || []).slice(0, 30).map((l) => `<tr><td class="nowrap small">${esc(new Date(l.mergedAt).toLocaleString('en-GB'))}</td><td class="small">${esc(l.label)}</td><td class="nowrap small">${l.generatedAt ? esc(new Date(l.generatedAt).toLocaleString('en-GB')) : '<span class="chip sev-medium">● no stamp</span>'}</td><td class="small">${esc(l.summary)}${l.skipped && l.skipped.length ? `<div class="faint">Skipped (newer data kept): ${esc(l.skipped.map((s) => s.coll + (s.id ? ':' + s.id : '')).join(', '))}</div>` : ''}</td></tr>`).join('')}</tbody></table></details>` : '<p class="empty">No merges recorded yet. Every merge from now on is listed here, and merging the same file twice asks you first.</p>', { sub: '+ added · ~ updated · ✕ skipped because the Studio already had newer data. Hand edits always count as newer than earlier files.' })}
   ${card('Danger zone', `<div class="btn-row"><button class="btn ghost" data-action="duplicateEng">Duplicate this client</button><button class="btn danger" data-action="deleteEng">Delete ${esc(e.client.name)} from this browser</button></div>`)}`;
 }
 
@@ -3795,6 +3796,7 @@ document.addEventListener('mousedown', (ev) => {
 });
 document.addEventListener('mousemove', (ev) => { if (!panning) return; panning.wrap.scrollLeft = panning.l - (ev.clientX - panning.x); panning.wrap.scrollTop = panning.t - (ev.clientY - panning.y); });
 document.addEventListener('mouseup', () => { if (panning) { panning.wrap.classList.remove('panning'); panning = null; } });
+document.addEventListener('toggle', (ev) => { if (ev.target.id === 'mergeHist') { ui.mergeOpen = ev.target.open; const sm = ev.target.querySelector('summary b'); if (sm) sm.textContent = ev.target.open ? 'Hide history' : 'Show history'; } }, true);
 document.addEventListener('click', (ev) => {
   const a = ev.target.closest('[data-action]'); if (!a) return;
   if (a.type === 'checkbox') return; // handled on change
