@@ -271,6 +271,32 @@ ol.flags li:hover,ol.flags li.on{border-color:var(--ink)}
 .exec-bar .eb-i b{font-family:Georgia,serif;font-size:20px;font-weight:400;line-height:1.1}.exec-bar .eb-i span{font-size:11.5px;color:var(--muted)}
 .exec-bar .eb-i em{font-size:10.5px;color:var(--faint);font-style:normal}.exec-bar .eb-z b{color:var(--faint)}
 .stage-pick{display:inline-flex;align-items:center;gap:6px;margin-bottom:4px}.stage-pick select{font-size:12px;padding:3px 6px}
+/* processes page */
+:root{--s9:#0f8b8d}
+@media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])){--s9:#27b3b5}}
+:root[data-theme="dark"]{--s9:#27b3b5}
+.pv-top{display:grid;gap:12px}
+.pv-switch{display:inline-flex;border:1.5px solid var(--ink);border-radius:10px;overflow:hidden;width:max-content}
+.pv-switch .seg{background:var(--surface);border:0;padding:9px 18px;font:inherit;font-weight:700;cursor:pointer;color:var(--ink)}
+.pv-switch .seg+.seg{border-left:1.5px solid var(--ink)}.pv-switch .seg.on{background:var(--ink);color:var(--surface)}
+.pv-switch.sm .seg{padding:5px 12px;font-size:12.5px}
+.pv-sec h5{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 6px}
+.pv-group{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:6px}.pv-gl{font-size:11px;font-weight:700;color:var(--muted);min-width:110px}
+.jtick .pdots{display:inline-flex;gap:2px;margin-left:2px}.jtick .pdots .tdot{width:8px;height:8px;margin:0}
+.pv-main{display:grid;gap:8px}.pv-what{font-size:14px}
+.pv-opts{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2)}
+.pv-sp{flex:1}
+.pv-export{position:relative}.pv-export summary{list-style:none;cursor:pointer}.pv-export summary::-webkit-details-marker{display:none}
+.pv-exp-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:30;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px;display:grid;gap:6px;width:330px;box-shadow:0 10px 30px rgba(0,0,0,.15)}
+.pv-sum{display:grid;gap:12px;margin-top:12px}.pv-sum .pd{border-top:1px solid var(--line);padding:8px 0}.pv-sum .pd:first-child{border-top:0;padding-top:0}
+.pv-edit{margin-top:8px}.pv-edit summary{list-style:none;width:max-content}.pv-edit summary::-webkit-details-marker{display:none}.pv-edit-b{margin-top:8px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2)}
+.pv-top5{margin:0;padding-left:0;list-style:none;display:grid;gap:4px}.pv-top5 li{padding:6px 8px;border:1px solid var(--line);border-radius:8px}.pv-top5 li:hover{border-color:var(--ink)}
+.chain-h{margin:6px 0 4px;font-size:13px}.chain-gap{height:14px}
+.fnode .pstart{font-size:11px;font-weight:800;fill:var(--red)}
+.fnode.focus .nb{stroke-width:3;stroke:var(--ink)}
+.jl .jl-lane.prim{fill:var(--surface)}.jl .jl-div{stroke:var(--ink);stroke-dasharray:3 5;opacity:.35}
+.jl .jl-link.trig{stroke:var(--red);stroke-width:2.6}.jl .jl-trig{font-size:10.5px;font-weight:800;fill:var(--red)}
+.jl .jl-n.sel .nb{stroke:var(--red)!important;stroke-width:3.5}.jl .jl-link.hl{stroke:var(--red);stroke-width:3}
 </style>
 <style id="report-css">/* Founder report styles (also embedded in exported HTML reports) */
 .rpt{background:#fffdf9;color:#171715;border:1px solid #d7cfc3;border-radius:14px;padding:40px 46px;
@@ -494,7 +520,7 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="tip" hidden></div>
 <script>
-const STUDIO_BUILD = '2026-11-03 14:27 UTC';
+const STUDIO_BUILD = '2026-11-03 15:22 UTC';
 /* ---- model.js ---- */
 /* ============================================================
    The Growth Machine — data model, scenario engine, scoring, insights
@@ -1669,17 +1695,16 @@ function swimlane(proc, people, tools, { anonymise = false, exec = true } = {}) 
 }
 
 /* ---- flows.js ---- */
-/* Flow schematics: end-to-end client journey + a serpentine process flow with warning markers.
+/* Flow schematics: a serpentine process flow with warning markers, sense-check and exports.
    Data (all optional, backward compatible):
    process: stage, confidence ('heard'|'corroborated'|'measured'), sources, summary, talkingPoints, findingIds
    step:    team, actorLabel/actorId, toolId, automated, durationMins, painPoint, flags:[{type,text,by,date}] */
 
 const TEAMS = [
   ['client', 'Client', 'var(--s-other)'], ['marketing', 'Marketing', 'var(--s5)'], ['sales', 'Sales', 'var(--s1)'],
-  ['cs', 'Client Success', 'var(--s3)'], ['ops', 'Operations', 'var(--s2)'], ['product', 'Product & Dev', 'var(--s7)'],
+  ['cs', 'Client Success', 'var(--s3)'], ['ops_onb', 'Ops: Onboarding', 'var(--s2)'], ['ops_tech', 'Ops: Tech & maintenance', 'var(--s9)'], ['ops', 'Operations', 'var(--s2)'], ['product', 'Product & Dev', 'var(--s7)'],
   ['leadership', 'Leadership', 'var(--s4)'], ['finance', 'Finance', 'var(--s6)'], ['system', 'System', 'var(--faint)']
 ];
-const STAGES = [['attract', 'Attract'], ['sell', 'Sell'], ['onboard', 'Onboard'], ['deliver', 'Deliver & maintain'], ['grow', 'Grow & renew']];
 const CONFIDENCE = { heard: ['Heard', 'Based on what people told us; not yet checked', 'warn'], corroborated: ['Corroborated', 'Confirmed by more than one source', 's1'], measured: ['Measured', 'Checked against data or observed', 'good'] };
 const FLAG_TYPES = { issue: ['Issue', 'raised by the team or interviews'], unverified: ['Unverified', 'to confirm'], weakness: ['Weakness', 'flagged by the machine'] };
 /** Size of a flow schematic for n steps in c columns (keep in step with flowSchematic). */
@@ -1787,8 +1812,9 @@ function flowSchematic(proc, people, tools, departments, { cols = 3, selected = 
     const flagged = exec && flags.some((f) => f.stepId === s.id && f.type !== 'unverified');
     const rv = (s.review && s.review.status) || 'assumed';
     const hot = exec && isHotspot(s);
-    svg += `<g class="fnode ${flagged ? 'has-issue' : ''} ${s.collapsed ? 'collapsed' : ''} ${s.automated ? 'auto' : 'manual'} ${exec && s.kind === 'decision' ? 'decision' : ''} rvs-${rv} ${st} ${selected === s.id ? 'sel' : near && near.has(i) ? 'nbr' : near ? 'dim' : ''} ${interactive ? 'clk' : ''}" transform="translate(${x},${y})" ${interactive ? `data-action="flowStep" data-id="${esc(s.id)}"` : ''} data-tip="${esc([s.name, actor, t ? 'Tool: ' + t.name : 'No system', s.automated ? 'Automated' : 'Manual', stepTimeText(s, true), REVIEW_STATUS[rv][0] + (s.review && s.review.by ? ' by ' + s.review.by : '')].filter(Boolean).join(' · '))}">`;
+    svg += `<g class="fnode ${flagged ? 'has-issue' : ''} ${s._focus ? 'focus' : ''} ${s.collapsed ? 'collapsed' : ''} ${s.automated ? 'auto' : 'manual'} ${exec && s.kind === 'decision' ? 'decision' : ''} rvs-${rv} ${st} ${selected === s.id ? 'sel' : near && near.has(i) ? 'nbr' : near ? 'dim' : ''} ${interactive ? 'clk' : ''}" transform="translate(${x},${y})" ${interactive ? `data-action="flowStep" data-id="${esc(s.id)}"` : ''} data-tip="${esc([s.name, actor, t ? 'Tool: ' + t.name : 'No system', s.automated ? 'Automated' : 'Manual', stepTimeText(s, true), REVIEW_STATUS[rv][0] + (s.review && s.review.by ? ' by ' + s.review.by : '')].filter(Boolean).join(' · '))}">`;
     svg += `<rect class="nb" width="${NW}" height="${NH}" rx="12"/>`;
+    if (s._procStart) svg += `<text class="pstart" x="2" y="-9">▸ triggers: ${esc(trunc(s._procStart, 34))}</text>`;
     svg += `<rect class="band" width="${NW}" height="28" rx="12" style="fill:${tm[2]}"/><rect class="band" y="16" width="${NW}" height="12" style="fill:${tm[2]}"/>`;
     svg += `<circle class="num" cx="18" cy="14" r="10"/><text class="numt" x="18" y="18" text-anchor="middle" ${String(s.displayNum || '').length > 2 ? 'style="font-size:8px"' : ''}>${esc(s.displayNum || i + 1)}</text>`;
     svg += `<text class="team" x="36" y="18.5">${exec && s.kind === 'decision' ? '◇ DECISION · ' : ''}${esc(s.collapsed ? 'OTHER TEAMS' : tm[1].toUpperCase())}</text>`;
@@ -1816,18 +1842,6 @@ const flowLegend = (clientSafe = false) => `<div class="legend flow-legend">
   <span><span class="rv-dot rv-assumed"></span>Assumed</span><span><span class="rv-dot rv-confirmed"></span>Confirmed by the team</span><span><span class="rv-dot rv-unsure"></span>Unsure</span><span><span class="rv-dot rv-not-done"></span>Doesn't happen</span>
   <span class="faint">≈ time is an estimate · ◇ decision point</span></div>`;
 
-/** Client journey strip: stages left to right, the processes mapped in each, with warning counts. */
-function journeyStrip(procs, people, tools, departments, current, clientSafe = false) {
-  const counts = (p) => { const f = flowFlags(p, people, tools, departments, clientSafe); return ['issue', 'unverified', 'weakness'].map((t) => [t, f.filter((x) => x.type === t).length]); };
-  const pBtn = (p) => `<button class="jp ${p.id === current ? 'on' : ''}" data-action="proc" data-id="${esc(p.id)}"><strong>${esc(p.name)}</strong><span class="jc">${counts(p).filter(([, n]) => n).map(([t, n]) => `<span class="jcn jcn-${t}" title="${FLAG_TYPES[t][0]}">${flagIcon(t)}${n}</span>`).join('') || '<span class="faint small">No warnings</span>'}</span>${effConfidence(p) ? `<span class="conf conf-${CONFIDENCE[effConfidence(p)] ? CONFIDENCE[effConfidence(p)][2] : 'warn'}">${esc((CONFIDENCE[effConfidence(p)] || [effConfidence(p)])[0])}</span>` : ''}</button>`;
-  const stageCards = STAGES.map(([id, label], i) => {
-    const ps = procs.filter((p) => p.stage === id);
-    return `<div class="jstage ${ps.length ? '' : 'jempty'}"><div class="jh ${ps.length ? 'clk' : ''}" ${ps.length ? `data-action="proc" data-id="${esc(ps[0].id)}"` : ''}><span class="jn">${i + 1}</span>${esc(label)}</div>${ps.length ? ps.map(pBtn).join('') : '<p class="faint small">Not mapped yet</p>'}</div>`;
-  }).join('<div class="jarrow" aria-hidden="true">›</div>');
-  const other = procs.filter((p) => !STAGES.some(([id]) => id === p.stage));
-  return `<div class="journey">${stageCards}</div>${other.length ? `<div class="jother"><span class="small warn-t">Not placed on the journey yet: open one and choose its stage ↓</span> ${other.map(pBtn).join('')}</div>` : ''}`;
-}
-
 /** Confidence shown: measured if set; corroborated once the team has sense-checked it; otherwise what was set. */
 function effConfidence(p) {
   if (p.confidence === 'measured') return 'measured';
@@ -1845,80 +1859,6 @@ function flowTimeTotals(p) {
   const timed = st.filter((x) => num(x.durationMins) || num(x.elapsedDays)).length; const assumed = st.some((x) => (num(x.durationMins) || num(x.elapsedDays)) && stepTimeBasis(x) === 'assumed');
   return { mins, days, timed, total: st.length, assumed };
 }
-/** Plain-language brief above the schematic: summary, confidence, talking points, what is still to measure. */
-function processBrief(e, p) {
-  const conf = CONFIDENCE[effConfidence(p)]; const revs = reviewSummary(p); const tt = flowTimeTotals(p);
-  const steps = live(p.steps);
-  const toMeasure = [];
-  if (!num(p.runsPerMonth)) toMeasure.push('How often it runs (per month)');
-  const untimed = steps.filter((s) => !num(s.durationMins) && !num(s.elapsedDays)).length;
-  if (untimed) toMeasure.push(`Time per step (${untimed} of ${steps.length} steps have no time yet)`);
-  const unconfirmed = steps.filter((s) => !(s.review && ['confirmed', 'corrected'].includes(s.review.status))).length;
-  if (unconfirmed) toMeasure.push(`Sense-check with the team (${unconfirmed} of ${steps.length} steps not yet confirmed)`);
-  if (!p.ownerId) toMeasure.push('Owner');
-  const fIds = splitList(p.findingIds); const fs = fIds.map((id) => e.findings.find((f) => f.id === id)).filter(Boolean);
-  const tps = String(p.talkingPoints || '').split('\n').map((x) => x.trim()).filter(Boolean);
-  return `<div class="pbrief">
-    <div>${conf ? `<span class="conf conf-${conf[2]}" title="${esc(conf[1])}">${esc(conf[0])}</span> <span class="faint small">${esc(conf[1])}${p.sources ? ' · Source: ' + esc(p.sources) : ''}</span>` : '<span class="faint small">Confidence not set</span>'}
-      ${revs.length ? `<div class="small" style="margin-top:6px">✓ Sense-checked: ${revs.map(esc).join(' · ')}</div>` : ''}
-      ${p.summary ? `<p class="psum">${esc(p.summary)}</p>` : ''}
-      ${tt.timed ? `<p class="small" style="margin:8px 0 0"><b>Time:</b> ${tt.assumed ? '≈' : ''}${tt.mins >= 60 ? +(tt.mins / 60).toFixed(1) + ' h' : tt.mins + ' min'} hands-on per run${tt.days ? ` · ${tt.assumed ? '≈' : ''}${+tt.days.toFixed(1)} days end to end` : ''} <span class="faint">(${tt.timed} of ${tt.total} steps timed${tt.assumed ? '; ≈ includes estimates' : ''})</span></p>` : ''}
-      ${tps.length ? `<h5>Talking points</h5><ul class="tps">${tps.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}</div>
-    <div>${toMeasure.length ? `<h5>Still to measure</h5><ul class="tm">${toMeasure.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : '<h5>Measured</h5><p class="small muted">Volumes and times are in.</p>'}
-      ${fs.length ? `<h5>Linked findings</h5><ul class="lf">${fs.map((f) => `<li><span class="chip sev-${esc(f.severity || 'medium')}">${esc(f.severity || 'medium')}</span> ${esc(f.title)}</li>`).join('')}</ul>` : ''}</div>
-  </div>`;
-}
-
-/** Side panel: all warnings (nothing selected) or the selected step with where it comes from and goes to. */
-function flowSidePanel(e, p, people, tools, departments) {
-  const flags = flowFlags(p, people, tools, departments);
-  const steps = p.steps || []; const idx = Object.fromEntries(steps.map((s, i) => [s.id, i]));
-  const pById = byId(people), dById = byId(departments), tById = byId(tools);
-  const flagLi = (f) => `<li class="clk ${f.stepId === ui.stepId ? 'on' : ''}" data-action="flowStep" data-id="${esc(f.stepId)}" data-scroll="1">${flagIcon(f.type, f.n)}<div><div class="small"><b>${FLAG_TYPES[f.type][0]}</b> · ${f.on === 'link' ? 'into ' : ''}step ${idx[f.stepId] + 1}: ${esc(trunc((steps[idx[f.stepId]] || {}).name, 60))}</div><div>${esc(f.text)}</div><div class="faint small">${esc(f.by || '')}${f.date ? ' · ' + esc(f.date) : ''}</div></div></li>`;
-  const s = steps.find((x) => x.id === ui.stepId);
-  if (!s && ui.execView === false) return card('Executive view is off', '<p class="small muted" style="margin:0">Issues, weaknesses, decisions and hotspots are hidden. Click a step to see its detail, or switch Executive view on.</p>');
-  if (!s) return card(`Warnings along this flow (${flags.length})`, flags.length ? `<p class="faint small" style="margin-top:0">Click a warning or a step to see it in context.</p><ol class="flags">${flags.map(flagLi).join('')}</ol>` : '<p class="empty">No warnings on this flow.</p>');
-  const i = idx[s.id]; const prev = steps[i - 1], next = steps[i + 1];
-  const tm = (x) => teamInfo(stepTeam(x, pById, dById));
-  const who = (x) => { const pp = x.actorId && pById[x.actorId]; return pp ? (ui.anon ? pp.title : pp.name) : (x.actorLabel || '—'); };
-  const t = tById[s.toolId];
-  const nb = (x, dir) => {
-    if (!x) return `<div class="nbx nbx-end"><span class="faint small">${dir === 'from' ? 'Start' : 'End'}</span><div>${esc(dir === 'from' ? (p.inputs || 'Trigger') : (p.outputs || 'Outcome'))}</div></div>`;
-    const a = tm(x), here = tm(s); const ho = a[0] && here[0] && a[0] !== here[0];
-    return `<button class="nbx clk" data-action="flowStep" data-id="${esc(x.id)}" data-scroll="1"><span class="faint small">${dir === 'from' ? '‹ Comes from' : 'Goes to ›'} step ${idx[x.id] + 1}${ho ? ` · <b>hand-off ${dir === 'from' ? esc(a[1]) + ' → ' + esc(here[1]) : esc(here[1]) + ' → ' + esc(a[1])}</b>` : ''}</span><div><i class="tdot" style="background:${a[2]}"></i>${esc(x.name)}</div><span class="faint small">${esc(who(x))} · ${esc((tById[x.toolId] || {}).name || 'No system')}</span></button>`;
-  };
-  const mine = flags.filter((f) => f.stepId === s.id || (next && f.on === 'link' && f.stepId === next.id));
-  const own = (s.flags || []).map((f, k) => `<li>${flagIcon(FLAG_TYPES[f.type] ? f.type : 'issue')} <span>${esc(f.text)} <span class="faint small">${esc(f.by || '')}${f.date ? ' · ' + esc(f.date) : ''}</span></span> <button class="btn sm ghost" data-action="removeFlowFlag" data-id="${k}" title="Clear (e.g. once verified)">✕ Clear</button></li>`).join('');
-  const body = `<div class="btn-row" style="margin:0 0 8px"><button class="btn sm" data-action="flowClear">← All warnings</button>${prev ? `<button class="btn sm" data-action="flowStep" data-id="${esc(prev.id)}" data-scroll="1">‹ Previous</button>` : ''}${next ? `<button class="btn sm" data-action="flowStep" data-id="${esc(next.id)}" data-scroll="1">Next ›</button>` : ''}</div>
-    <h4 style="margin-top:0">Step ${i + 1} of ${steps.length}: ${esc(s.name)}</h4>
-    ${nb(prev, 'from')}
-    <dl class="sd"><dt>Team</dt><dd><i class="tdot" style="background:${tm(s)[2]}"></i>${esc(tm(s)[1])}</dd><dt>Who</dt><dd>${esc(who(s))}</dd>
-      <dt>System</dt><dd>${esc(t ? t.name : 'No system')}</dd><dt>Mode</dt><dd>${s.automated ? 'Automated' : 'Manual'}</dd><dt>Time</dt><dd>${num(s.durationMins) || num(s.elapsedDays) ? esc(stepTimeText(s, true)) : '<span class="warn-t">Not known yet</span>'}</dd>
-      <dt>Status</dt><dd><span class="rv-dot rv-${esc((s.review && s.review.status) || 'assumed')}"></span>${esc(REVIEW_STATUS[(s.review && s.review.status) || 'assumed'][0])}${s.review && s.review.by ? ' · ' + esc(s.review.by) + ' · ' + esc(s.review.date || '') : ''}</dd>
-      ${s.involves ? `<dt>Involves</dt><dd>${esc(s.involves)}</dd>` : ''}${s.kind === 'decision' ? `<dt>Decision</dt><dd>${esc(s.name)}${s.decisionNo ? `<br><span class="small">If no: ${esc(s.decisionNo)}</span>` : ''}</dd>` : ''}
-      ${s.input || s.output ? `<dt>In → out</dt><dd>${esc(s.input || '—')} → ${esc(s.output || '—')}</dd>` : ''}</dl>
-    ${nb(next, 'to')}
-    ${ui.execView === false ? '' : mine.length ? `<h5>Warnings here (${mine.length})</h5><ol class="flags">${mine.map(flagLi).join('')}</ol>` : '<p class="small muted">No warnings on this step.</p>'}
-    ${own ? `<h5>Flags you can clear</h5><ul class="ownf">${own}</ul>` : ''}
-    ${ui.editStep === s.id ? `<div class="step-edit"><h5>Edit this step (your assumptions)</h5>${stepFields(s, { people, tools, departments }, 'data-ed')}
-      <div class="btn-row"><button class="btn sm" data-action="stepMove" data-id="-1">↑ Earlier</button><button class="btn sm" data-action="stepMove" data-id="1">↓ Later</button><button class="btn sm" data-action="stepAdd">+ Step after</button><button class="btn sm danger" data-action="stepDelete">Delete step</button><button class="btn sm" data-action="stepEdit">Done</button></div></div>`
-      : `<div class="btn-row"><button class="btn sm" data-action="stepEdit">✎ Edit step</button><button class="btn sm" data-action="stepAdd">+ Step after</button></div>`}
-    <div class="btn-row"><button class="btn sm" data-action="addFlowFlag" data-id="issue">+ Flag issue</button><button class="btn sm" data-action="addFlowFlag" data-id="unverified">+ Flag unverified</button><button class="btn sm" data-action="addFlowFlag" data-id="weakness">+ Flag weakness</button></div>`;
-  return card('Step detail', body);
-}
-
-/** Zoom / layout toolbar for the flow. */
-function flowToolbar(cols) {
-  const z = ui.flowZoom;
-  return `<div class="flow-tools"><span class="faint small">View</span>
-    <button class="btn sm ${ui.flowWhole && z ? 'on' : ''}" data-action="flowZoom" data-id="fit" title="Whole flow on one screen">⤢ Whole flow</button>
-    <button class="btn sm" data-action="flowZoom" data-id="out" title="Zoom out">−</button><span class="small zl">${z ? Math.round(z * 100) + '%' : 'Fit width'}</span><button class="btn sm" data-action="flowZoom" data-id="in" title="Zoom in">+</button>
-    <button class="btn sm ${z === 1 ? 'on' : ''}" data-action="flowZoom" data-id="100" title="Full size">100%</button>
-    <span class="faint small" style="margin-left:8px">Steps per row</span>${[1, 2, 3, 4, 5].map((n) => `<button class="btn sm ${cols === n ? 'on' : ''}" data-action="flowCols" data-id="${n}">${n}</button>`).join('')}
-    <span class="faint small" style="margin-left:8px">Tip: Ctrl + scroll (or pinch) to zoom; drag to move around when zoomed in.</span>
-    ${ui.stepId ? '<button class="btn sm ghost" data-action="flowClear" style="margin-left:auto">Clear highlight</button>' : ''}</div>`;
-}
-
 /* ---------- Export: PNG, SVG, PDF/HTML page (internal or client-safe) ---------- */
 const LIGHT_TOKENS = { '--bg': '#f6f1e9', '--surface': '#fffdf9', '--surface-2': '#eee7dd', '--ink': '#171715', '--muted': '#665f57', '--faint': '#8a8074', '--line': '#d7cfc3', '--grid': '#e6dfd4', '--red': '#c8221c',
   '--s1': '#2a78d6', '--s2': '#eb6834', '--s3': '#1baf7a', '--s4': '#eda100', '--s5': '#e87ba4', '--s6': '#008300', '--s7': '#6250d6', '--s8': '#e34948', '--s-other': '#9a948b',
@@ -1934,21 +1874,31 @@ function svgStandalone(markup) {
   Object.entries(LIGHT_TOKENS).forEach(([k, v]) => holder.style.setProperty(k, v));
   holder.innerHTML = markup.replace(/ data-tip="[^"]*"/g, '');
   document.body.appendChild(holder);
-  const svg = holder.querySelector('svg');
-  const W = +svg.dataset.w, H = +svg.dataset.h;
-  svg.setAttribute('width', W); svg.setAttribute('height', H); svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg'); svg.removeAttribute('style');
   const props = ['fill', 'stroke', 'stroke-width', 'stroke-dasharray', 'opacity', 'font-size', 'font-weight', 'letter-spacing'];
-  const els = [...svg.querySelectorAll('*')];
-  const styles = els.map((el) => { const cs = getComputedStyle(el); const out = props.map((pr) => `${pr}:${cs.getPropertyValue(pr)}`); if (el.tagName === 'text' || el.tagName === 'tspan') out.push('font-family:Inter,Segoe UI,Helvetica,Arial,sans-serif'); return out.join(';'); });
-  els.forEach((el, i) => { el.setAttribute('style', styles[i]); el.removeAttribute('class'); });
-  const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-  bg.setAttribute('width', W); bg.setAttribute('height', H); bg.setAttribute('fill', '#fffdf9'); svg.insertBefore(bg, svg.firstChild);
-  const xml = new XMLSerializer().serializeToString(svg); holder.remove();
+  const parts = [...holder.querySelectorAll('svg.flow-svg')].map((svg) => {
+    const W = +svg.dataset.w, H = +svg.dataset.h;
+    const els = [...svg.querySelectorAll('*')];
+    const styles = els.map((el) => { const cs = getComputedStyle(el); const out = props.map((pr) => `${pr}:${cs.getPropertyValue(pr)}`); if (el.tagName === 'text' || el.tagName === 'tspan') out.push('font-family:Inter,Segoe UI,Helvetica,Arial,sans-serif'); return out.join(';'); });
+    els.forEach((el, i) => { el.setAttribute('style', styles[i]); el.removeAttribute('class'); });
+    const h = svg.closest('.flow-wrap') && svg.closest('.flow-wrap').previousElementSibling;
+    return { svg, W, H, label: h && h.classList.contains('chain-h') ? h.textContent.replace(/\s+/g, ' ').trim() : '' };
+  });
+  const NS = 'http://www.w3.org/2000/svg';
+  const W = Math.max(...parts.map((p) => p.W)); const LBL = parts.length > 1 ? 34 : 0;
+  const H = parts.reduce((a, p) => a + p.H + LBL, 0);
+  const out = document.createElementNS(NS, 'svg'); out.setAttribute('xmlns', NS); out.setAttribute('width', W); out.setAttribute('height', H); out.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const bg = document.createElementNS(NS, 'rect'); bg.setAttribute('width', W); bg.setAttribute('height', H); bg.setAttribute('fill', '#fffdf9'); out.appendChild(bg);
+  let y = 0;
+  parts.forEach((p) => {
+    if (LBL) { const t = document.createElementNS(NS, 'text'); t.setAttribute('x', 24); t.setAttribute('y', y + 24); t.setAttribute('style', 'font:700 15px Inter,Segoe UI,Arial,sans-serif;fill:#171715'); t.textContent = p.label; out.appendChild(t); y += LBL; }
+    p.svg.setAttribute('x', 0); p.svg.setAttribute('y', y); p.svg.setAttribute('width', p.W); p.svg.setAttribute('height', p.H); p.svg.removeAttribute('style'); out.appendChild(p.svg); y += p.H;
+  });
+  const xml = new XMLSerializer().serializeToString(out); holder.remove();
   return { xml, W, H };
 }
 
 /** A printable page for one or more flows. Internal adds sources, unverified points and what is still to measure. */
-function flowExportDoc(e, procs, st, { internal = false, journey = false } = {}) {
+function flowExportDoc(e, procs, st, { internal = false } = {}) {
   const css = (document.getElementById('viz-css') || {}).textContent || '';
   const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
   const part = (p) => {
@@ -1957,7 +1907,7 @@ function flowExportDoc(e, procs, st, { internal = false, journey = false } = {})
     const tps = String(p.talkingPoints || '').split('\n').map((x) => x.trim()).filter(Boolean);
     const conf = CONFIDENCE[effConfidence(p)];
     const untimed = live(steps).filter((x) => !num(x.durationMins) && !num(x.elapsedDays)).length;
-    return `<section class="fx-sec"><div class="eyebrow">${esc((STAGES.find((x) => x[0] === p.stage) || ['', 'Process'])[1])}</div><h2>${esc(p.name)}</h2>
+    return `<section class="fx-sec"><div class="eyebrow">${esc(procGroup(p))}</div><h2>${esc(p.name)}</h2>
       <p class="muted">${esc(p.inputs || 'Start')} → ${esc(p.outputs || 'End')}${internal && conf ? ` · <span class="conf conf-${conf[2]}">${esc(conf[0])}</span> ${p.sources ? 'Source: ' + esc(p.sources) : ''}` : ''}</p>
       <div class="fx-body"><div class="fx-fig">${flowLegend(!internal)}${flowSchematic(p, st.people, st.tools, st.departments, { cols: 3, interactive: false, clientSafe: !internal, anonymise: ui.anon })}</div><div class="fx-text">
       ${p.summary ? `<p>${esc(p.summary)}</p>` : ''}
@@ -1978,22 +1928,10 @@ h1{font-family:Georgia,serif;font-weight:400;font-size:28px;margin:4px 0}h2{font
 .fx-fig{break-inside:avoid;page-break-inside:avoid}
 @page{size:A4 landscape;margin:10mm}@media print{main{margin:0;max-width:none;padding:0}.fx-sec+.fx-sec{break-before:page}.fx-cover+.fx-sec{break-before:page}.journey{flex-wrap:nowrap}.jstage{min-width:0}.flow-svg{max-height:146mm;width:auto!important;max-width:100%!important}.fx-body{display:block}.fx-body .fx-fig{float:right;width:63%;margin:0 0 8px 16px}.fx-body::after{content:'';display:block;clear:both}.fx-text{font-size:10.5px}.fx-text h4{margin:8px 0 4px}.fx-sec h2{font-size:19px}.fx-fig .legend{font-size:10px}}
 </style></head><body><main>
-<div class="eyebrow">${esc(e.client.name)} · ${internal ? 'TGM internal' : 'Process flows'}</div><h1>${procs.length === 1 ? esc(procs[0].name) : 'How the work flows'}</h1><p class="muted">${date}${internal ? ' · Internal working view: includes unverified points and sources' : ''}</p>
-${journey ? `<div class="fx-cover"><h4>Client journey</h4>${journeyStrip(st.processes, st.people, st.tools, st.departments, '', !internal)}<p class="faint small">Each stage's flow follows on its own page. Markers: ● issue, ◆ weakness${internal ? ', ▲ unverified' : ''}; ⇄ hand-off between teams.</p></div>` : ''}
+<div class="eyebrow">${esc(e.client.name)} · ${internal ? 'TGM internal' : 'Process flows'}</div><h1>${procs.length === 1 ? esc(procs[0].name) : 'Processes and flows'}</h1><p class="muted">${date}${internal ? ' · Internal working view: includes unverified points and sources' : ''}</p>
 ${procs.map(part).join('')}
 <div class="foot">The Growth Machine · ${date} · ${internal ? 'Internal working document: not for client distribution.' : `Confidential. Prepared for ${esc(e.client.name)}.`}</div>
 </main></body></html>`;
-}
-
-/** Export toolbar row shown under the flow. */
-function flowExportBar() {
-  const a = ui.flowAudience === 'internal';
-  return `<div class="flow-tools flow-export"><span class="faint small">Export</span>
-    <select data-ui="flowAudience" title="Who is it for?"><option value="client" ${a ? '' : 'selected'}>Client-safe (issues and weaknesses only)</option><option value="internal" ${a ? 'selected' : ''}>TGM internal (adds unverified points and sources)</option></select>
-    <button class="btn sm" data-action="exportFlow" data-id="png">Image (PNG)</button><button class="btn sm" data-action="exportFlow" data-id="svg">Vector (SVG)</button>
-    <button class="btn sm" data-action="exportFlow" data-id="pdf">PDF page</button><button class="btn sm" data-action="exportFlow" data-id="html">HTML page</button>
-    <button class="btn sm ghost" data-action="exportFlow" data-id="all">All flows + journey (PDF)</button>
-    <button class="btn sm ghost" data-action="exportFlow" data-id="sheet" title="Assumed flow + a table per step to confirm or correct">Sense-check sheet (PDF)</button></div>`;
 }
 
 
@@ -2002,7 +1940,7 @@ function stepFields(s, st, attr) {
   const toolOpts = st.tools.filter((t) => !t._removed).map((t) => [t.id, t.name]);
   return `<label class="fld"><span>Step</span><input ${attr}="name" value="${esc(s.name || '')}"></label>
     <div class="rv-grid">
-      <label class="fld"><span>Team</span>${sel(TEAMS.map((t) => [t[0], t[1]]), s.team || stepTeam(s, byId(st.people), byId(st.departments)), `${attr}="team"`)}</label>
+      <label class="fld"><span>Department</span>${sel(TEAMS.map((t) => [t[0], t[1]]), s.team || stepTeam(s, byId(st.people), byId(st.departments)), `${attr}="team"`)}</label>
       <label class="fld"><span>Who does it</span><input ${attr}="actorLabel" value="${esc(s.actorLabel || '')}"></label>
       <label class="fld"><span>System used</span>${sel(toolOpts, s.toolId || '', `${attr}="toolId"`)}</label>
       <label class="fld"><span>Automated?</span>${sel([['no', 'Manual'], ['yes', 'Automated']], s.automated ? 'yes' : 'no', `${attr}="automated"`, false)}</label>
@@ -2059,7 +1997,7 @@ function senseCheckSheet(e, procs, st) {
   const pById = byId(st.people), dById = byId(st.departments), tById = byId(st.tools);
   const part = (p) => {
     const steps = live(p.steps); const flags = flowFlags(p, st.people, st.tools, st.departments, true);
-    return `<section class="fx-sec"><div class="eyebrow">${esc((STAGES.find((x) => x[0] === p.stage) || ['', 'Process'])[1])} · for checking</div><h2>${esc(p.name)}</h2>
+    return `<section class="fx-sec"><div class="eyebrow">${esc(procGroup(p))} · for checking</div><h2>${esc(p.name)}</h2>
       <p class="muted">${esc(p.inputs || 'Start')} → ${esc(p.outputs || 'End')}</p>
       <div class="fx-fig">${flowLegend(true)}${flowSchematic(p, st.people, st.tools, st.departments, { cols: 3, interactive: false, clientSafe: true, anonymise: ui.anon })}</div>
       <table class="sc"><thead><tr><th>#</th><th>Step</th><th>Who</th><th>System</th><th>Time</th><th>Concerns</th><th>Is this right?</th><th>Corrections / notes</th></tr></thead><tbody>
@@ -2087,142 +2025,6 @@ ${procs.map(part).join('')}
 }
 
 
-/* ---------- Across the journey: by team or by process, as lanes or one flow ---------- */
-function journeyProcs(st) { return STAGES.flatMap(([id]) => st.processes.filter((p) => p.stage === id && !p._removed)); }
-function journeyTeams(st) {
-  const pById = byId(st.people), dById = byId(st.departments); const used = new Set();
-  journeyProcs(st).forEach((p) => (p.steps || []).forEach((s) => { const t = stepTeam(s, pById, dById); if (t) used.add(t); }));
-  return TEAMS.filter((t) => used.has(t[0])).map((t) => t[0]);
-}
-/** The ordered steps to show, with their process, team and client-safe flags. */
-function journeySeq(st, J) {
-  const pById = byId(st.people), dById = byId(st.departments);
-  const procs = journeyProcs(st).filter((p) => J.by !== 'process' || J.procs.includes(p.id));
-  const seq = [];
-  procs.forEach((p) => { const fl = flowFlags(p, st.people, st.tools, st.departments, true); (p.steps || []).filter((x) => !x._removed).forEach((s) => seq.push({ s, p, team: stepTeam(s, pById, dById) || 'other', flags: fl.filter((f) => f.stepId === s.id) })); });
-  return { seq, procs };
-}
-function journeyState(st) {
-  const allTeams = journeyTeams(st), allProcs = journeyProcs(st).map((p) => p.id);
-  const J = ui.journey || {};
-  const teams = (J.teams || ['sales', 'cs', 'ops']).filter((t) => allTeams.includes(t));
-  const procs = (J.procs || allProcs).filter((id) => allProcs.includes(id));
-  return { by: J.by || 'team', layout: J.layout || 'lanes', teams: teams.length ? teams : allTeams.slice(0, 3), procs: procs.length ? procs : allProcs, allTeams, allProcs };
-}
-
-function journeyLanes(st, J, { exec = true, interactive = true, zoom = 0 } = {}) {
-  const { seq, procs } = journeySeq(st, J); if (!seq.length) return '<p class="empty">Nothing to show for this selection.</p>';
-  const tById = byId(st.tools);
-  const lanes = J.by === 'team' ? J.teams.slice() : TEAMS.map((t) => t[0]).filter((t) => seq.some((x) => x.team === t));
-  if (J.by === 'process' && seq.some((x) => x.team === 'other')) lanes.push('other');
-  const others = J.by === 'team' && seq.some((x) => !lanes.includes(x.team));
-  const LW = 200, CW = 172, NW = 150, NH = 104, LH = 148, TOP = 88, OTH = 64;
-  const W = LW + seq.length * CW + 24;
-  const laneTop = (t) => TOP + lanes.indexOf(t) * LH;
-  const toolsUsed = {}; seq.forEach(({ s, team }) => { if (s.toolId && lanes.includes(team)) (toolsUsed[s.toolId] = toolsUsed[s.toolId] || new Set()).add(team); });
-  const toolRows = Object.entries(toolsUsed).filter(([id]) => tById[id]).sort((a, b) => b[1].size - a[1].size);
-  const lanesBottom = TOP + lanes.length * LH + (others ? OTH : 0);
-  const TT = lanesBottom + 46; const H = TT + 24 + toolRows.length * 36 + 18;
-  const T = (x, y, t, cls, anchor) => `<text class="${cls}" x="${x}" y="${y}" ${anchor ? `text-anchor="${anchor}"` : ''}>${esc(t)}</text>`;
-  let g = `<svg class="flow-svg jl" viewBox="0 0 ${W} ${H}" ${zoom ? `width="${Math.round(W * zoom)}" height="${Math.round(H * zoom)}" style="max-width:none"` : `width="100%" style="max-width:${W}px"`} data-w="${W}" data-h="${H}" role="img" aria-label="Journey by team">`;
-  g += `<defs><marker id="jla" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="fa"/></marker><marker id="jlb" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="fb"/></marker></defs>`;
-  let c0 = 0; procs.forEach((p) => { const n = (p.steps || []).filter((x) => !x._removed).length; if (!n) return; const x1 = LW + c0 * CW + 4, x2 = LW + (c0 + n) * CW - 22;
-    g += `<g ${interactive ? `class="clk" data-action="proc" data-id="${esc(p.id)}"` : ''}><rect class="jl-stage" x="${x1}" y="18" width="${Math.max(40, x2 - x1)}" height="44" rx="8"/>${T(x1 + 12, 35, (STAGES.find((x) => x[0] === p.stage) || ['', ''])[1].toUpperCase(), 'jl-st')}${T(x1 + 12, 52, trunc(p.name, Math.max(8, Math.floor((x2 - x1) / 7.4))), 'jl-pn')}</g>`; c0 += n; });
-  lanes.forEach((t, i) => { const y = TOP + i * LH; const ti = teamInfo(t); g += `<rect class="jl-lane ${i % 2 ? 'alt' : ''}" x="0" y="${y}" width="${W}" height="${LH}"/><rect x="0" y="${y}" width="6" height="${LH}" style="fill:${t === 'other' ? 'var(--line)' : ti[2]}"/>${T(18, y + LH / 2 - 2, t === 'other' ? 'Unassigned' : ti[1], 'jl-ln')}${T(18, y + LH / 2 + 15, `${seq.filter((x) => x.team === t).length} steps`, 'jl-ls')}`; });
-  if (others) g += `<rect class="jl-lane other" x="0" y="${TOP + lanes.length * LH}" width="${W}" height="${OTH}"/>${T(18, TOP + lanes.length * LH + OTH / 2 - 2, 'Other teams', 'jl-ln')}${T(18, TOP + lanes.length * LH + OTH / 2 + 14, '(not ticked)', 'jl-ls')}`;
-  const pos = seq.map((x, i) => { const other = !lanes.includes(x.team); return { x: LW + i * CW, y: other ? TOP + lanes.length * LH + 12 : laneTop(x.team) + (LH - NH) / 2, w: NW, h: other ? 40 : NH, other }; });
-  seq.forEach((x, i) => { if (!i) return; const a = pos[i - 1], b = pos[i]; const cross = seq[i - 1].team !== x.team;
-    const x1 = a.x + a.w, y1 = a.y + a.h / 2, x2 = b.x - 2, y2 = b.y + b.h / 2, mx = (x1 + x2) / 2;
-    g += `<path class="jl-link ${cross ? 'ho' : ''}" d="M${x1},${y1} H${mx} V${y2} H${x2}" marker-end="url(#${cross ? 'jlb' : 'jla'})"/>`;
-    const wk = exec ? x.flags.filter((f) => f.on === 'link') : [];
-    if (wk.length) g += `<g data-tip="${esc(wk.map((f) => f.text).join(' · '))}">${flagShape('weakness', '', mx, (y1 + y2) / 2, 10)}</g>`; });
-  seq.forEach((x, i) => { const P = pos[i]; const t = tById[x.s.toolId]; const tm = teamInfo(x.team); const act = interactive ? `data-action="flowStep" data-id="${esc(x.s.id)}"` : '';
-    const tip = esc([`${i + 1}. ${x.s.name}`, tm[1], x.s.actorLabel, t ? t.name : 'No system', stepTimeText(x.s, true), exec ? x.flags.map((f) => f.text).join(' · ') : ''].filter(Boolean).join(' · '));
-    if (P.other) { g += `<g class="jl-o ${interactive ? 'clk' : ''}" ${act} data-tip="${tip}"><rect x="${P.x}" y="${P.y}" width="${P.w}" height="${P.h}" rx="20" style="stroke:${tm[2]}"/>${T(P.x + 12, P.y + 17, `${i + 1} · ${tm[1]}`, 'jl-ot')}${T(P.x + 12, P.y + 31, trunc(x.s.name, 24), 'jl-on')}</g>`; return; }
-    const hot = exec && isHotspot(x.s); const dec = exec && x.s.kind === 'decision';
-    const rv = (x.s.review && x.s.review.status) || 'assumed';
-    g += `<g class="jl-n ${exec && x.flags.length ? 'has-issue' : ''} ${x.s.automated ? 'auto' : ''} ${dec ? 'decision' : ''} rvs-${rv} ${interactive ? 'clk' : ''}" ${act} data-tip="${tip}">`;
-    g += `<rect class="nb" x="${P.x}" y="${P.y}" width="${P.w}" height="${P.h}" rx="10"/><rect x="${P.x}" y="${P.y}" width="5" height="${P.h}" rx="2" style="fill:${tm[2]}"/>`;
-    g += `<circle class="num" cx="${P.x + 18}" cy="${P.y + 16}" r="9"/>${T(P.x + 18, P.y + 20, i + 1, 'numt', 'middle')}`;
-    if (dec) g += T(P.x + 32, P.y + 20, '◇ DECISION', 'jl-dec');
-    wrapText(x.s.name, 21, 3).forEach((ln, k) => { g += T(P.x + 12, P.y + 42 + k * 14, ln, 'jl-nm'); });
-    if (exec && x.s.involves) g += T(P.x + 12, P.y + P.h - 22, trunc('With: ' + x.s.involves, 24), 'jl-inv');
-    g += T(P.x + 12, P.y + P.h - 8, (x.s.automated ? '⚙ ' : '') + trunc(t ? t.name.replace(/ \(.*/, '') : 'No system', 16), `jl-tool ${t ? '' : 'none'}`);
-    if (num(x.s.durationMins) || num(x.s.elapsedDays)) g += T(P.x + P.w - 8, P.y + P.h - 8, (hot ? '⏱ ' : '') + stepTimeText(x.s), `jl-time ${hot ? 'hot' : ''}`, 'end');
-    const nf = exec ? x.flags.filter((f) => f.on === 'node') : [];
-    if (nf.length) g += flagShape('issue', nf.length > 1 ? nf.length : '!', P.x + P.w - 6, P.y + 4, 10);
-    g += '</g>'; });
-  g += `<line class="jl-sep" x1="0" x2="${W}" y1="${lanesBottom + 22}" y2="${lanesBottom + 22}"/>${T(18, TT + 2, 'TOOLS ALONG THE JOURNEY', 'jl-th')}${T(LW, TT + 2, '● = a step that uses this tool, coloured by team', 'jl-ls')}`;
-  toolRows.forEach(([tid, set], k) => { const y = TT + 30 + k * 36; const t = tById[tid];
-    g += `<line class="jl-tl" x1="${LW - 10}" x2="${W - 20}" y1="${y - 4}" y2="${y - 4}"/>${T(18, y - 2, trunc(t.name.replace(/ \(.*/, ''), 24), 'jl-tn')}${T(18, y + 13, set.size > 1 ? 'SHARED: ' + [...set].map((l) => teamInfo(l)[1]).join(' + ') : teamInfo([...set][0])[1] + ' only', set.size > 1 ? 'jl-sh' : 'jl-ls')}`;
-    seq.forEach((x, i) => { if (x.s.toolId === tid && lanes.includes(x.team)) g += `<circle cx="${LW + i * CW + NW / 2}" cy="${y - 4}" r="7" class="jl-dot" style="fill:${teamInfo(x.team)[2]}"/>${T(LW + i * CW + NW / 2, y + 14, i + 1, 'jl-dn', 'middle')}`; }); });
-  g += '</svg>';
-  return `<div class="flow-wrap${zoom ? ' zoomed' : ''}">${g}</div>`;
-}
-
-/** The same selection as one snaking flow; steps by unticked teams collapse into grey "other teams" cards. */
-function journeyFlow(st, J, { exec = true, cols = 4, interactive = true, zoom = 0 } = {}) {
-  const { seq } = journeySeq(st, J); if (!seq.length) return '<p class="empty">Nothing to show for this selection.</p>';
-  const steps = [];
-  seq.forEach((x, k) => {
-    if (J.by === 'team' && !J.teams.includes(x.team)) {
-      const last = steps[steps.length - 1];
-      if (last && last.collapsed) { last._n++; last._teams.add(teamInfo(x.team)[1]); last.name = `${[...last._teams].join(', ')}: ${last._n} steps`; last.displayNum = `${last._from}–${k + 1}`; return; }
-      steps.push({ id: x.s.id, collapsed: true, _n: 1, _from: k + 1, displayNum: k + 1, _teams: new Set([teamInfo(x.team)[1]]), name: `${teamInfo(x.team)[1]}: ${x.s.name}`, team: '', automated: false, toolId: '', actorLabel: '' }); return;
-    }
-    steps.push(Object.assign({}, x.s, { team: x.team === 'other' ? '' : x.team, painPoint: x.s.painPoint, flags: [], displayNum: k + 1 }));
-  });
-  const first = seq[0].p, last = seq[seq.length - 1].p;
-  const merged = { id: 'journey', name: 'Across the journey', inputs: first.inputs, outputs: last.outputs, steps };
-  return flowSchematic(merged, st.people, st.tools, st.departments, { cols, interactive, zoom, clientSafe: true, exec, anonymise: ui.anon }).replace('class="flow-wrap"', `class="flow-wrap${zoom ? ' zoomed' : ''}"`);
-}
-
-function journeyControls(st, J) {
-  const tick = (kind, id, label, on) => `<label class="jtick ${on ? 'on' : ''}"><input type="checkbox" data-action="journeyTick" data-kind="${kind}" data-id="${esc(id)}" ${on ? 'checked' : ''}>${label}</label>`;
-  return `<div class="jctl">
-    <div class="jrow"><span class="faint small">Show</span><button class="btn sm ${J.by === 'team' ? 'on' : ''}" data-action="journeySet" data-k="by" data-id="team">By team</button><button class="btn sm ${J.by === 'process' ? 'on' : ''}" data-action="journeySet" data-k="by" data-id="process">By process</button>
-      <span class="faint small" style="margin-left:10px">Layout</span><button class="btn sm ${J.layout === 'lanes' ? 'on' : ''}" data-action="journeySet" data-k="layout" data-id="lanes">Lanes</button><button class="btn sm ${J.layout === 'flow' ? 'on' : ''}" data-action="journeySet" data-k="layout" data-id="flow">Flow</button>
-      <label class="tog small" style="margin-left:10px"><input type="checkbox" data-ui="execView" ${ui.execView !== false ? 'checked' : ''}> <b>Executive view</b> <span class="faint">(issues, decisions, management, hotspots)</span></label></div>
-    <div class="jrow">${J.by === 'team'
-      ? J.allTeams.map((t) => { const ti = teamInfo(t); return tick('team', t, `<i class="tdot" style="background:${ti[2]}"></i>${esc(ti[1])}`, J.teams.includes(t)); }).join('') + '<span class="faint small">Product is not mapped yet.</span>'
-      : J.allProcs.map((id) => { const p = st.processes.find((x) => x.id === id); return tick('proc', id, `<span class="faint small">${esc((STAGES.find((x) => x[0] === p.stage) || ['', ''])[1])}</span> ${esc(p.name)}`, J.procs.includes(id)); }).join('')}</div></div>`;
-}
-
-function journeyView(e, st) {
-  const J = journeyState(st); const exec = ui.execView !== false;
-  const mainW = (document.getElementById('main') || {}).clientWidth || 1100;
-  const cols = ui.flowCols || ui.flowColsAuto || (mainW < 640 ? 1 : mainW < 1000 ? 2 : 4);
-  const nSteps = journeySeq(st, J).seq.length; const laneW = 200 + nSteps * 172 + 24;
-  const laneZoom = ui.flowZoom || Math.min(1, Math.max((mainW - 60) / laneW, 0.8));
-  const diagram = J.layout === 'lanes' ? journeyLanes(st, J, { exec, zoom: laneZoom }) : journeyFlow(st, J, { exec, cols, zoom: ui.flowZoom });
-  const { seq } = journeySeq(st, J);
-  const shown = seq.filter((x) => J.by === 'process' || J.teams.includes(x.team));
-  const issues = exec ? shown.flatMap((x) => x.flags.map((f) => ({ f, x }))) : [];
-  const idx = Object.fromEntries(seq.map((x, i) => [x.s.id, i + 1]));
-  const hand = shown.filter((x, i) => { const k = seq.indexOf(x); return k > 0 && seq[k - 1].team !== x.team; }).length;
-  return `<section class="card pflow"><header class="card-h"><div><span class="eyebrow">Across the journey</span><h3 class="ptitle">${J.by === 'team' ? esc(J.teams.map((t) => teamInfo(t)[1]).join(' + ')) : esc(J.procs.length + ' processes joined end to end')}</h3>
-      <p class="sub">${shown.length} steps · ${hand} hand-offs between teams${exec ? ` · ${issues.length} issues and weaknesses` : ''}. Click a step to open its process.</p></div>
-      <div class="btn-row"><button class="btn sm ghost" data-action="journeyClose">← Back to single process</button></div></header>
-    ${journeyControls(st, J)}
-    ${J.layout === 'flow' ? flowToolbar(cols) : `<div class="flow-tools"><span class="faint small">View</span><button class="btn sm ${ui.flowWhole && ui.flowZoom ? 'on' : ''}" data-action="flowZoom" data-id="fit">⤢ Whole journey</button><button class="btn sm" data-action="flowZoom" data-id="out">−</button><span class="small zl">${Math.round(laneZoom * 100)}%</span><button class="btn sm" data-action="flowZoom" data-id="in">+</button><button class="btn sm ${laneZoom === 1 ? 'on' : ''}" data-action="flowZoom" data-id="100">100%</button><span class="faint small" style="margin-left:8px">Scroll sideways or drag to move along the journey; Ctrl + scroll to zoom.</span></div>`}
-    <div class="flow-tools flow-export"><span class="faint small">Export</span><button class="btn sm" data-action="exportJourney" data-id="png">Image (PNG)</button><button class="btn sm" data-action="exportJourney" data-id="svg">Vector (SVG)</button><button class="btn sm" data-action="exportJourney" data-id="pdf">PDF page</button><span class="faint small">Client-safe: no internal notes.</span></div>
-    ${exec ? execBar(shown.map((x) => x.s), issues.map(({ f }) => f)) + flowLegend(true) : '<div class="legend flow-legend"><span class="faint">Executive view is off: steps, people, systems and hand-offs only.</span></div>'}
-    ${diagram}
-    ${exec && issues.length ? `<details class="jiss" open><summary><b>Issues and weaknesses along this view (${issues.length})</b></summary><ol class="flags">${issues.map(({ f, x }) => `<li class="clk" data-action="flowStep" data-id="${esc(x.s.id)}">${flagIcon(f.type)}<div><div class="small"><b>${FLAG_TYPES[f.type][0]}</b> · step ${idx[x.s.id]} (${esc(teamInfo(x.team)[1])}): ${esc(trunc(x.s.name, 60))}</div><div>${esc(f.text)}</div></div></li>`).join('')}</ol></details>` : ''}
-  </section>`;
-}
-
-function journeyExportDoc(e, st, markup, J) {
-  const css = (document.getElementById('viz-css') || {}).textContent || '';
-  const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-  return `<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8"><title>${esc('Across the journey · ' + e.client.name)}</title><style>${css}
-body{margin:0;background:#fff;font-family:Inter,ui-sans-serif,-apple-system,"Segoe UI",sans-serif;color:#171715;font-size:12.5px}main{margin:16px}.eyebrow{text-transform:uppercase;letter-spacing:.16em;font-size:10.5px;font-weight:750;color:#c8221c}
-h1{font-family:Georgia,serif;font-weight:400;font-size:24px;margin:4px 0}.flow-wrap{border:0;padding:0}.flow-svg{max-width:100%!important;width:100%!important;height:auto!important}.muted{color:#665f57}
-@page{size:A3 landscape;margin:8mm}</style></head><body><main><div class="eyebrow">${esc(e.client.name)} · The Growth Machine</div>
-<h1>${J.by === 'team' ? esc(J.teams.map((t) => teamInfo(t)[1]).join(' + ')) + ' across the journey' : 'Selected processes, end to end'}</h1><p class="muted">${date}${ui.execView !== false ? ' · Executive view: issues, weaknesses, decisions, management involvement and time hotspots shown' : ''}</p>
-${ui.execView !== false ? flowLegend(true) : ''}${markup}<p class="muted" style="font-size:10.5px">The Growth Machine · ${date} · Confidential. Prepared for ${esc(e.client.name)}.</p></main></body></html>`;
-}
-
 /** Executive summary strip: what the executive view is surfacing for the steps shown. */
 function execBar(steps, flags) {
   const live2 = steps.filter((x) => !x._removed && !x.collapsed);
@@ -2231,6 +2033,312 @@ function execBar(steps, flags) {
   const timed = live2.filter((x) => num(x.durationMins) || num(x.elapsedDays)).length;
   const item = (v, label, hint) => `<div class="eb-i ${v ? '' : 'eb-z'}"><b>${v}</b><span>${label}</span>${!v && hint ? `<em>${hint}</em>` : ''}</div>`;
   return `<div class="exec-bar"><span class="eb-t">Executive view</span>${item(n('issue'), 'issues')}${item(n('weakness'), 'weaknesses')}${item(live2.filter((x) => flags.some((f) => f.stepId === x.id && f.type !== 'unverified')).length, 'steps affected')}${item(dec, 'decision points', 'none mapped yet')}${item(mg, 'management touchpoints', 'none mapped yet')}${item(hot, 'time hotspots', timed ? '' : 'add times to steps')}</div>`;
+}
+
+/* ---- processes.js ---- */
+/* Business processes and flows page.
+   Department view: one primary department -> the processes it is involved in.
+   Process view: one or more processes -> the departments involved (unticked departments collapse to grey).
+   Processes have an optional group label and can trigger other processes (leadsTo); there are no fixed stages. */
+
+const procGroup = (p) => p.group || (p.stage ? 'Client lifecycle' : 'Ungrouped');
+const procDepts = (p, pById, dById) => { const s = new Set(); (p.steps || []).filter((x) => !x._removed).forEach((x) => { const t = stepTeam(x, pById, dById); if (t) s.add(t); }); return s; };
+
+/** Current selection, with sensible defaults so the page is never empty. */
+function pvState(st) {
+  const pById = byId(st.people), dById = byId(st.departments);
+  const procs = st.processes.filter((p) => !p._removed && (p.steps || []).length);
+  const deptsOf = Object.fromEntries(procs.map((p) => [p.id, procDepts(p, pById, dById)]));
+  const counts = {}; procs.forEach((p) => (p.steps || []).forEach((s) => { const t = stepTeam(s, pById, dById); if (t) counts[t] = (counts[t] || 0) + 1; }));
+  const allDepts = TEAMS.map((t) => t[0]).filter((t) => counts[t] && t !== 'client' && t !== 'system');
+  const V = ui.pv || {};
+  const mode = V.mode === 'proc' ? 'proc' : 'dept';
+  const busiest = allDepts.slice().sort((a, b) => counts[b] - counts[a])[0] || '';
+  const dept = allDepts.includes(V.dept) ? V.dept : busiest;
+  const deptProcs = procs.filter((p) => deptsOf[p.id].has(dept)).map((p) => p.id);
+  const dSel = (V.dprocs || []).filter((id) => deptProcs.includes(id));
+  const pSel = (V.procs || []).filter((id) => procs.some((p) => p.id === id));
+  const procIds = mode === 'dept' ? (dSel.length ? dSel : deptProcs) : (pSel.length ? pSel : procs.map((p) => p.id));
+  const availDepts = TEAMS.map((t) => t[0]).filter((t) => procIds.some((id) => deptsOf[id].has(t)));
+  const dTick = (V.depts || []).filter((t) => availDepts.includes(t));
+  const shownDepts = mode === 'dept' ? availDepts : (dTick.length ? dTick : availDepts);
+  return { mode, dept, deptProcs, procIds, availDepts, shownDepts, allDepts, counts, procs, deptsOf, layout: V.layout === 'lanes' ? 'lanes' : 'flow' };
+}
+
+/** Order the selected processes into chains following "triggers" links; unlinked processes stand alone. */
+function procChains(procs, ids) {
+  const sel = ids.map((id) => procs.find((p) => p.id === id)).filter(Boolean);
+  const inSel = new Set(sel.map((p) => p.id));
+  const next = (p) => splitList(p.leadsTo).filter((id) => inSel.has(id));
+  const hasIn = new Set(sel.flatMap((p) => next(p)));
+  const used = new Set(); const chains = [];
+  const walk = (p, chain) => { if (!p || used.has(p.id)) return; used.add(p.id); chain.push(p); next(p).forEach((id, k) => { if (k === 0) walk(sel.find((x) => x.id === id), chain); }); };
+  sel.filter((p) => !hasIn.has(p.id)).forEach((p) => { const c = []; walk(p, c); if (c.length) chains.push(c); });
+  sel.filter((p) => !used.has(p.id)).forEach((p) => { const c = []; walk(p, c); if (c.length) chains.push(c); });
+  return chains;
+}
+
+/** Steps to draw, numbered across the whole visual. Unticked departments (process view) collapse into grey cards. */
+function pvSeq(st, P) {
+  const pById = byId(st.people), dById = byId(st.departments);
+  const chains = procChains(P.procs, P.procIds); let n = 0;
+  return chains.map((chain) => {
+    const items = [];
+    chain.forEach((p, pi) => (p.steps || []).filter((x) => !x._removed).forEach((s, si) => {
+      n++; const dept = stepTeam(s, pById, dById) || 'other';
+      items.push({ s, p, dept, num: n, procStart: si === 0 && pi > 0, shown: P.mode === 'dept' || P.shownDepts.includes(dept) || dept === 'client' || dept === 'system' || dept === 'other' });
+    }));
+    return { chain, items };
+  });
+}
+
+/** One merged pseudo-process per chain, for the serpentine flow. */
+function chainAsProcess(c, P) {
+  const steps = [];
+  c.items.forEach((it) => {
+    if (!it.shown) {
+      const last = steps[steps.length - 1];
+      if (last && last.collapsed) { last._n++; last._d.add(teamInfo(it.dept)[1]); last.name = `${[...last._d].join(', ')}: ${last._n} steps`; last.displayNum = `${last._from}–${it.num}`; return; }
+      steps.push({ id: it.s.id, collapsed: true, _n: 1, _from: it.num, displayNum: it.num, _d: new Set([teamInfo(it.dept)[1]]), name: `${teamInfo(it.dept)[1]}: ${it.s.name}`, team: '', automated: false, toolId: '', actorLabel: '' }); return;
+    }
+    steps.push(Object.assign({}, it.s, { team: it.dept === 'other' ? '' : it.dept, displayNum: it.num, _procStart: it.procStart ? it.p.name : '', _focus: P.mode === 'dept' && it.dept === P.dept }));
+  });
+  const first = c.chain[0], last = c.chain[c.chain.length - 1];
+  return { id: 'chain_' + first.id, name: c.chain.map((p) => p.name).join(' → '), inputs: first.inputs, outputs: last.outputs, steps, sources: c.chain.map((p) => p.sources).filter(Boolean).join('; ') };
+}
+
+/** Swimlanes across all chains: one row per department, steps in sequence, hand-offs crossing rows. */
+function pvLanes(st, P, seqChains, { exec = true, interactive = true, zoom = 0, selected = '', clientSafe = true } = {}) {
+  const tById = byId(st.tools);
+  const all = seqChains.flatMap((c) => c.items);
+  if (!all.length) return '<p class="empty">Nothing to show for this selection.</p>';
+  let lanes = TEAMS.map((t) => t[0]).filter((t) => all.some((x) => x.shown && x.dept === t));
+  if (P.mode === 'dept' && lanes.includes(P.dept)) lanes = [P.dept, ...lanes.filter((t) => t !== P.dept)];
+  if (all.some((x) => x.shown && x.dept === 'other')) lanes.push('other');
+  const hasHidden = all.some((x) => !x.shown);
+  const flagsFor = {}; seqChains.forEach((c) => c.chain.forEach((p) => flowFlags(p, st.people, st.tools, st.departments, clientSafe).forEach((f) => (flagsFor[f.stepId] = flagsFor[f.stepId] || []).push(f))));
+  const LW = 210, CW = 172, NW = 150, NH = 104, LH = 148, TOP = 92, OTH = 64, GAP = 60;
+  const cols = []; let x = LW; seqChains.forEach((c, ci) => { if (ci) x += GAP; c.items.forEach((it) => { cols.push({ it, x }); x += CW; }); });
+  const W = x + 24; const lanesBottom = TOP + lanes.length * LH + (hasHidden ? OTH : 0);
+  const toolsUsed = {}; all.forEach((it) => { if (it.shown && it.s.toolId && tById[it.s.toolId]) (toolsUsed[it.s.toolId] = toolsUsed[it.s.toolId] || new Set()).add(it.dept); });
+  const toolRows = Object.entries(toolsUsed).sort((a, b) => b[1].size - a[1].size);
+  const TT = lanesBottom + 46, H = TT + 24 + toolRows.length * 36 + 18;
+  const T = (x2, y, t, cls, anchor) => `<text class="${cls}" x="${x2}" y="${y}" ${anchor ? `text-anchor="${anchor}"` : ''}>${esc(t)}</text>`;
+  let g = `<svg class="flow-svg jl" viewBox="0 0 ${W} ${H}" ${zoom ? `width="${Math.round(W * zoom)}" height="${Math.round(H * zoom)}" style="max-width:none"` : `width="100%" style="max-width:${W}px"`} data-w="${W}" data-h="${H}" role="img" aria-label="Swimlane">`;
+  g += '<defs><marker id="jla" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="fa"/></marker><marker id="jlb" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="fb"/></marker></defs>';
+  // process brackets
+  seqChains.forEach((c) => c.chain.forEach((p) => { const cs = cols.filter((k) => k.it.p.id === p.id); if (!cs.length) return; const x1 = cs[0].x + 4, x2 = cs[cs.length - 1].x + NW;
+    g += `<rect class="jl-stage" x="${x1}" y="18" width="${Math.max(40, x2 - x1)}" height="44" rx="8"/>${T(x1 + 12, 35, procGroup(p).toUpperCase(), 'jl-st')}${T(x1 + 12, 52, trunc(p.name, Math.max(8, Math.floor((x2 - x1) / 7.4))), 'jl-pn')}`; }));
+  lanes.forEach((t, i) => { const y = TOP + i * LH; const ti = teamInfo(t); const prim = P.mode === 'dept' && t === P.dept;
+    g += `<rect class="jl-lane ${i % 2 ? 'alt' : ''} ${prim ? 'prim' : ''}" x="0" y="${y}" width="${W}" height="${LH}"/><rect x="0" y="${y}" width="${prim ? 10 : 6}" height="${LH}" style="fill:${t === 'other' ? 'var(--line)' : ti[2]}"/>${T(20, y + LH / 2 - 2, t === 'other' ? 'Unassigned' : ti[1], 'jl-ln')}${T(20, y + LH / 2 + 15, prim ? 'primary department' : `${all.filter((k) => k.shown && k.dept === t).length} steps`, 'jl-ls')}`; });
+  if (hasHidden) g += `<rect class="jl-lane other" x="0" y="${TOP + lanes.length * LH}" width="${W}" height="${OTH}"/>${T(20, TOP + lanes.length * LH + OTH / 2 - 2, 'Other departments', 'jl-ln')}${T(20, TOP + lanes.length * LH + OTH / 2 + 14, '(not ticked)', 'jl-ls')}`;
+  seqChains.forEach((c, ci) => { if (!ci) return; const xc = cols.find((k) => k.it === c.items[0]).x - GAP / 2 - 6; g += `<line class="jl-div" x1="${xc}" x2="${xc}" y1="${TOP - 6}" y2="${lanesBottom}"/>`; });
+  const pos = new Map(cols.map(({ it, x: cx }) => [it, { x: cx, y: it.shown ? TOP + lanes.indexOf(it.dept) * LH + (LH - NH) / 2 : TOP + lanes.length * LH + 12, w: NW, h: it.shown ? NH : 40 }]));
+  seqChains.forEach((c) => c.items.forEach((it, i) => { if (!i) return; const prev = c.items[i - 1]; const a = pos.get(prev), b = pos.get(it);
+    const cross = prev.dept !== it.dept; const x1 = a.x + a.w, y1 = a.y + a.h / 2, x2 = b.x - 2, y2 = b.y + b.h / 2, mx = (x1 + x2) / 2;
+    const hl = selected && (it.s.id === selected || prev.s.id === selected) ? ' hl' : '';
+    g += `<path class="jl-link ${cross ? 'ho' : ''}${it.procStart ? ' trig' : ''}${hl}" d="M${x1},${y1} H${mx} V${y2} H${x2}" marker-end="url(#${cross ? 'jlb' : 'jla'})"/>`;
+    if (it.procStart) g += T(mx + 4, Math.min(y1, y2) - 6, 'triggers', 'jl-trig');
+    const wk = exec ? (flagsFor[it.s.id] || []).filter((f) => f.on === 'link') : [];
+    if (wk.length) g += `<g data-tip="${esc(wk.map((f) => f.text).join(' · '))}">${flagShape('weakness', '', mx, (y1 + y2) / 2, 10)}</g>`; }));
+  all.forEach((it) => { const P2 = pos.get(it); const t = tById[it.s.toolId]; const tm = teamInfo(it.dept); const act = interactive ? `data-action="flowStep" data-id="${esc(it.s.id)}"` : '';
+    const fl = exec ? (flagsFor[it.s.id] || []) : [];
+    const tip = esc([`${it.num}. ${it.s.name}`, tm[1], it.s.actorLabel, t ? t.name : 'No system', stepTimeText(it.s, true), fl.map((f) => f.text).join(' · ')].filter(Boolean).join(' · '));
+    if (!it.shown) { g += `<g class="jl-o ${interactive ? 'clk' : ''}" ${act} data-tip="${tip}"><rect x="${P2.x}" y="${P2.y}" width="${P2.w}" height="${P2.h}" rx="20" style="stroke:${tm[2]}"/>${T(P2.x + 12, P2.y + 17, `${it.num} · ${tm[1]}`, 'jl-ot')}${T(P2.x + 12, P2.y + 31, trunc(it.s.name, 24), 'jl-on')}</g>`; return; }
+    const hot = exec && isHotspot(it.s), dec = exec && it.s.kind === 'decision', rv = (it.s.review && it.s.review.status) || 'assumed';
+    const issue = fl.some((f) => f.type !== 'unverified');
+    g += `<g class="jl-n ${issue ? 'has-issue' : ''} ${it.s.automated ? 'auto' : ''} ${dec ? 'decision' : ''} rvs-${rv} ${selected === it.s.id ? 'sel' : ''} ${interactive ? 'clk' : ''}" ${act} data-tip="${tip}">`;
+    g += `<rect class="nb" x="${P2.x}" y="${P2.y}" width="${P2.w}" height="${P2.h}" rx="10"/><rect x="${P2.x}" y="${P2.y}" width="5" height="${P2.h}" rx="2" style="fill:${tm[2]}"/>`;
+    g += `<circle class="num" cx="${P2.x + 18}" cy="${P2.y + 16}" r="9"/>${T(P2.x + 18, P2.y + 20, it.num, 'numt', 'middle')}`;
+    if (dec) g += T(P2.x + 32, P2.y + 20, '◇ DECISION', 'jl-dec');
+    wrapText(it.s.name, 21, 3).forEach((ln, k) => { g += T(P2.x + 12, P2.y + 42 + k * 14, ln, 'jl-nm'); });
+    if (exec && it.s.involves) g += T(P2.x + 12, P2.y + P2.h - 22, trunc('With: ' + it.s.involves, 24), 'jl-inv');
+    g += T(P2.x + 12, P2.y + P2.h - 8, (it.s.automated ? '⚙ ' : '') + trunc(t ? t.name.replace(/ \(.*/, '') : 'No system', 16), `jl-tool ${t ? '' : 'none'}`);
+    if (num(it.s.durationMins) || num(it.s.elapsedDays)) g += T(P2.x + P2.w - 8, P2.y + P2.h - 8, (hot ? '⏱ ' : '') + stepTimeText(it.s), `jl-time ${hot ? 'hot' : ''}`, 'end');
+    const nf = fl.filter((f) => f.on === 'node' && f.type !== 'unverified'); const uv = fl.filter((f) => f.type === 'unverified');
+    if (nf.length) g += flagShape('issue', nf.length > 1 ? nf.length : '!', P2.x + P2.w - 6, P2.y + 4, 10);
+    if (uv.length) g += flagShape('unverified', uv.length > 1 ? uv.length : '?', P2.x + P2.w - (nf.length ? 32 : 6), P2.y + 6, 9);
+    g += '</g>'; });
+  g += `<line class="jl-sep" x1="0" x2="${W}" y1="${lanesBottom + 22}" y2="${lanesBottom + 22}"/>${T(20, TT + 2, 'TOOLS AND SYSTEMS', 'jl-th')}${T(LW, TT + 2, '● = a step that uses this tool, coloured by department', 'jl-ls')}`;
+  toolRows.forEach(([tid, set], k) => { const y = TT + 30 + k * 36; const t = tById[tid];
+    g += `<line class="jl-tl" x1="${LW - 10}" x2="${W - 20}" y1="${y - 4}" y2="${y - 4}"/>${T(20, y - 2, trunc(t.name.replace(/ \(.*/, ''), 24), 'jl-tn')}${T(20, y + 13, set.size > 1 ? 'SHARED: ' + [...set].map((l) => teamInfo(l)[1]).join(' + ') : teamInfo([...set][0])[1] + ' only', set.size > 1 ? 'jl-sh' : 'jl-ls')}`;
+    cols.forEach(({ it, x: cx }) => { if (it.shown && it.s.toolId === tid) g += `<circle cx="${cx + NW / 2}" cy="${y - 4}" r="7" class="jl-dot" style="fill:${teamInfo(it.dept)[2]}"/>${T(cx + NW / 2, y + 14, it.num, 'jl-dn', 'middle')}`; }); });
+  g += '</svg>';
+  return `<div class="flow-wrap${zoom ? ' zoomed' : ''}">${g}</div>`;
+}
+
+/** The visual for the current selection (flow: one serpentine per chain; swimlane: all chains in one). */
+function pvVisual(st, P, seqChains, { exec, interactive = true, zoom = 0, cols = 3, selected = '', clientSafe = false } = {}) {
+  if (P.layout === 'lanes') return pvLanes(st, P, seqChains, { exec, interactive, zoom, selected, clientSafe: true });
+  return seqChains.map((c) => {
+    const mp = chainAsProcess(c, P);
+    const head = c.chain.length > 1 ? `<div class="chain-h"><span class="faint small">Linked processes:</span> ${c.chain.map((p) => `<b>${esc(p.name)}</b>`).join(' <span class="faint">→ triggers →</span> ')}</div>` : (seqChains.length > 1 ? `<div class="chain-h"><b>${esc(c.chain[0].name)}</b> <span class="faint small">${esc(procGroup(c.chain[0]))}</span></div>` : '');
+    return head + flowSchematic(mp, st.people, st.tools, st.departments, { cols, selected, interactive, zoom, clientSafe, exec, anonymise: ui.anon });
+  }).join('<div class="chain-gap"></div>');
+}
+
+/* ---------- Page ---------- */
+function processPage(e) {
+  const st = stateFor(e, ui.scenario); const cur = stateFor(e, 'current');
+  if (ui.review) { const rp = cur.processes.find((x) => x.id === ui.review.procId); const mainW0 = (document.getElementById('main') || {}).clientWidth || 1100; if (rp) return reviewView(e, rp, cur, mainW0 < 1000 ? 2 : 3); }
+  const head = `<div class="page-h"><div><span class="eyebrow">Processes</span><h1>Business processes and flows</h1><p class="muted">How work moves through the business: who does each step, with which systems, where it changes hands, and where it breaks.</p></div><div class="btn-row"><button class="btn sm" data-action="procNew">+ New process</button></div></div>`;
+  const P = pvState(st);
+  if (!P.procs.length) return head + empty('No processes mapped yet. Click + New process, or merge process maps from Claude in Data & Claude.');
+  const exec = ui.execView !== false;
+  const pById = byId(st.people), dById = byId(st.departments);
+  const seqChains = pvSeq(st, P); const all = seqChains.flatMap((c) => c.items);
+  const single = P.procIds.length === 1 ? st.processes.find((p) => p.id === P.procIds[0]) : null;
+  ui.processId = single ? single.id : '';
+  if (ui.stepId && !all.some((it) => it.s.id === ui.stepId)) ui.stepId = '';
+
+  // 3. switch
+  const sw = `<div class="pv-switch"><button class="seg ${P.mode === 'dept' ? 'on' : ''}" data-action="pvSet" data-k="mode" data-id="dept">Department view</button><button class="seg ${P.mode === 'proc' ? 'on' : ''}" data-action="pvSet" data-k="mode" data-id="proc">Process view</button></div>`;
+  // 4. refine
+  const order = procChains(P.procs, P.procs.map((p) => p.id)).flat().map((p) => p.id);
+  const groups = (ids) => { const out = {}; ids.slice().sort((a, b) => order.indexOf(a) - order.indexOf(b)).forEach((id) => { const p = P.procs.find((x) => x.id === id); (out[procGroup(p)] = out[procGroup(p)] || []).push(p); }); return out; };
+  const procTick = (p, kind, on) => { const ds = [...P.deptsOf[p.id]].filter((t) => t !== 'client' && t !== 'system'); return `<label class="jtick ${on ? 'on' : ''}"><input type="checkbox" data-action="pvTick" data-kind="${kind}" data-id="${esc(p.id)}" ${on ? 'checked' : ''}><span>${esc(p.name)}</span><span class="pdots">${ds.map((t) => `<i class="tdot" title="${esc(teamInfo(t)[1])}" style="background:${teamInfo(t)[2]}"></i>`).join('')}</span></label>`; };
+  const groupBlock = (ids, kind, isOn) => Object.entries(groups(ids)).map(([gname, ps]) => `<div class="pv-group"><span class="pv-gl">${esc(gname)}</span>${ps.map((p) => procTick(p, kind, isOn(p.id))).join('')}</div>`).join('');
+  const deptChip = (t, kind, on, extra = '') => `<label class="jtick ${on ? 'on' : ''}"><input type="${kind === 'dept1' ? 'radio' : 'checkbox'}" name="${kind}" data-action="pvTick" data-kind="${kind}" data-id="${esc(t)}" ${on ? 'checked' : ''}><i class="tdot" style="background:${teamInfo(t)[2]}"></i>${esc(teamInfo(t)[1])}${extra}</label>`;
+  const refine = P.mode === 'dept'
+    ? `<div class="pv-sec"><h5>1 · Primary department</h5><div class="jrow">${P.allDepts.map((t) => deptChip(t, 'dept1', t === P.dept, ` <span class="faint small">${P.procs.filter((p) => P.deptsOf[p.id].has(t)).length}</span>`)).join('')}</div></div>
+       <div class="pv-sec"><h5>2 · Processes ${esc(teamInfo(P.dept)[1])} is involved in</h5>${groupBlock(P.deptProcs, 'dproc', (id) => P.procIds.includes(id))}</div>`
+    : `<div class="pv-sec"><h5>1 · Processes</h5>${groupBlock(P.procs.map((p) => p.id), 'proc', (id) => P.procIds.includes(id))}</div>
+       <div class="pv-sec"><h5>2 · Departments involved</h5><div class="jrow">${P.availDepts.filter((t) => t !== 'client' && t !== 'system').map((t) => deptChip(t, 'dept', P.shownDepts.includes(t))).join('')}<span class="faint small">Unticked departments shrink to grey markers.</span></div></div>`;
+  // 5. view options
+  const opts = `<div class="pv-opts"><div class="pv-switch sm"><button class="seg ${P.layout === 'flow' ? 'on' : ''}" data-action="pvSet" data-k="layout" data-id="flow">Flow</button><button class="seg ${P.layout === 'lanes' ? 'on' : ''}" data-action="pvSet" data-k="layout" data-id="lanes">Swimlane</button></div>
+    <label class="tog"><input type="checkbox" data-ui="execView" ${exec ? 'checked' : ''}> <b>Executive view</b></label><label class="tog"><input type="checkbox" data-ui="anon" ${ui.anon ? 'checked' : ''}> Anonymise</label>
+    <span class="pv-sp"></span>${single ? `<button class="btn sm" data-action="reviewSetup" title="Walk this process live with someone and record what they confirm or correct">▶ Sense-check</button>` : '<span class="faint small" title="Select a single process to sense-check it">▶ Sense-check: select one process</span>'}</div>`;
+  // 6. fine controls + export
+  const mainW = (document.getElementById('main') || {}).clientWidth || 1100;
+  const visW = mainW > 1100 ? mainW - 390 : mainW;
+  const colsN = ui.flowCols || ui.flowColsAuto || (visW < 560 ? 1 : visW < 900 ? 2 : 3);
+  const laneW = 210 + all.length * 172 + (seqChains.length - 1) * 60 + 24;
+  const laneZoom = ui.flowZoom || Math.min(1, Math.max((visW - 30) / laneW, 0.8));
+  const z = P.layout === 'lanes' ? laneZoom : ui.flowZoom;
+  const fine = `<div class="flow-tools"><span class="faint small">Size</span><button class="btn sm ${ui.flowWhole && ui.flowZoom ? 'on' : ''}" data-action="flowZoom" data-id="fit">⤢ Whole view</button><button class="btn sm" data-action="flowZoom" data-id="out">−</button><span class="small zl">${z ? Math.round(z * 100) + '%' : 'Fit width'}</span><button class="btn sm" data-action="flowZoom" data-id="in">+</button><button class="btn sm ${z === 1 ? 'on' : ''}" data-action="flowZoom" data-id="100">100%</button>
+    ${P.layout === 'flow' ? `<span class="faint small" style="margin-left:6px">Steps per row</span>${[1, 2, 3, 4, 5].map((n) => `<button class="btn sm ${colsN === n ? 'on' : ''}" data-action="flowCols" data-id="${n}">${n}</button>`).join('')}` : ''}
+    <span class="pv-sp"></span><details class="pv-export"><summary class="btn sm">Export ▾</summary><div class="pv-exp-menu">
+      <label class="fld"><span>For</span><select data-ui="flowAudience"><option value="client" ${ui.flowAudience === 'internal' ? '' : 'selected'}>Client-safe (issues and weaknesses only)</option><option value="internal" ${ui.flowAudience === 'internal' ? 'selected' : ''}>TGM internal (adds unverified points and sources)</option></select></label>
+      <button class="btn sm" data-action="pvExport" data-id="png">Image (PNG)</button><button class="btn sm" data-action="pvExport" data-id="svg">Vector (SVG)</button><button class="btn sm" data-action="pvExport" data-id="pdf">PDF page</button><button class="btn sm" data-action="pvExport" data-id="html">HTML page</button>
+      <button class="btn sm ghost" data-action="pvExport" data-id="all">Each selected process, one page each (PDF)</button>${single ? '<button class="btn sm ghost" data-action="exportFlow" data-id="sheet">Sense-check sheet (PDF)</button>' : ''}</div></details></div>`;
+  // flags for the visual (internal: includes unverified)
+  const flags = []; seqChains.forEach((c) => c.chain.forEach((p) => flowFlags(p, st.people, st.tools, st.departments).forEach((f) => flags.push(f))));
+  const shownIds = new Set(all.filter((it) => it.shown).map((it) => it.s.id));
+  const shownFlags = flags.filter((f) => shownIds.has(f.stepId));
+  // 7. visual
+  const visual = pvVisual(st, P, seqChains, { exec, zoom: P.layout === 'lanes' ? laneZoom : ui.flowZoom, cols: colsN, selected: ui.stepId });
+  // 8. side panel
+  const side = pvSide(e, st, P, seqChains, shownFlags, exec);
+  // 9. summaries
+  const summaries = pvSummaries(e, st, P, seqChains, shownFlags);
+  const legend = exec ? execBar(all.filter((it) => it.shown).map((it) => it.s), shownFlags) + flowLegend() : '<div class="legend flow-legend"><span class="faint">Executive view is off: steps, people, systems and hand-offs only.</span></div>';
+  const what = P.mode === 'dept' ? `${teamInfo(P.dept)[1]} · ${P.procIds.length} process${P.procIds.length === 1 ? '' : 'es'}` : (() => { const nd = P.shownDepts.filter((t) => t !== 'client' && t !== 'system').length; return `${P.procIds.length} process${P.procIds.length === 1 ? '' : 'es'} · ${nd} department${nd === 1 ? '' : 's'}`; })();
+  return `${scenarioBanner(e)}${head}
+  <section class="card pv-top">${sw}${refine}</section>
+  ${ui.reviewSetup && single ? reviewChooser(e, single) : ''}
+  <section class="card pv-main"><div class="pv-what"><b>${esc(what)}</b> <span class="faint small">· ${all.filter((it) => it.shown).length} steps · ${all.filter((it, i) => it.shown && i && all[i - 1].dept !== it.dept).length} hand-offs between departments</span></div>
+    ${opts}${fine}${legend}
+    <div class="flow-split"><div class="pv-visual">${visual}</div><aside class="flow-side">${side}</aside></div></section>
+  ${summaries}`;
+}
+
+/** Right-hand panel: takeaways for the selection, or the clicked step in context. */
+function pvSide(e, st, P, seqChains, flags, exec) {
+  const all = seqChains.flatMap((c) => c.items); const pById = byId(st.people), tById = byId(st.tools);
+  const it = all.find((x) => x.s.id === ui.stepId);
+  if (!it) {
+    const iss = flags.filter((f) => f.type !== 'unverified'); const uv = flags.filter((f) => f.type === 'unverified');
+    const byStep = {}; iss.forEach((f) => { byStep[f.stepId] = (byStep[f.stepId] || 0) + 1; });
+    const top = Object.entries(byStep).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([id, n]) => { const x = all.find((k) => k.s.id === id); return x ? `<li class="clk" data-action="flowStep" data-id="${esc(id)}" data-scroll="1"><b>${x.num}.</b> ${esc(trunc(x.s.name, 60))} <span class="chip sev-high">${n}</span></li>` : ''; }).join('');
+    const tps = [...new Set(seqChains.flatMap((c) => c.chain.flatMap((p) => String(p.talkingPoints || '').split('\n').map((t) => t.trim()).filter(Boolean))))].slice(0, 8);
+    return card('Key takeaways', `${exec && top ? `<h5 style="margin-top:0">Where it breaks most</h5><ol class="pv-top5">${top}</ol>` : ''}
+      ${tps.length ? `<h5>Talking points</h5><ul class="tps">${tps.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : '<p class="small muted">No talking points yet for these processes.</p>'}
+      ${exec && uv.length ? `<p class="small warn-t">${uv.length} point${uv.length === 1 ? '' : 's'} still to confirm (▲).</p>` : ''}
+      <p class="faint small">Click any step to see its detail, where it comes from and goes to, and to edit or flag it.</p>`);
+  }
+  const chain = seqChains.find((c) => c.items.includes(it)); const i = chain.items.indexOf(it); const prev = chain.items[i - 1], next = chain.items[i + 1];
+  const s = it.s; const t = tById[s.toolId]; const tm = teamInfo(it.dept);
+  const who = (x) => { const pp = x.actorId && pById[x.actorId]; return pp ? (ui.anon ? pp.title : pp.name) : (x.actorLabel || '—'); };
+  const nb = (x, dir) => {
+    if (!x) return `<div class="nbx nbx-end"><span class="faint small">${dir === 'from' ? 'Start' : 'End'}</span><div>${esc(dir === 'from' ? (chain.chain[0].inputs || 'Trigger') : (chain.chain[chain.chain.length - 1].outputs || 'Outcome'))}</div></div>`;
+    const a = teamInfo(x.dept); const ho = x.dept !== it.dept; const trig = dir === 'from' ? it.procStart : x.procStart;
+    return `<button class="nbx clk" data-action="flowStep" data-id="${esc(x.s.id)}" data-scroll="1"><span class="faint small">${dir === 'from' ? '‹ Comes from' : 'Goes to ›'} step ${x.num}${ho ? ` · <b>hand-off ${dir === 'from' ? esc(a[1]) + ' → ' + esc(tm[1]) : esc(tm[1]) + ' → ' + esc(a[1])}</b>` : ''}${trig ? ` · <b>triggers ${esc(dir === 'from' ? it.p.name : x.p.name)}</b>` : ''}</span><div><i class="tdot" style="background:${a[2]}"></i>${esc(x.s.name)}</div><span class="faint small">${esc(who(x.s))} · ${esc((tById[x.s.toolId] || {}).name || 'No system')}</span></button>`;
+  };
+  const mine = exec ? flags.filter((f) => f.stepId === s.id || (next && f.on === 'link' && f.stepId === next.s.id)) : [];
+  const own = (s.flags || []).map((f, k) => `<li>${flagIcon(FLAG_TYPES[f.type] ? f.type : 'issue')} <span>${esc(f.text)} <span class="faint small">${esc(f.by || '')}${f.date ? ' · ' + esc(f.date) : ''}</span></span> <button class="btn sm ghost" data-action="removeFlowFlag" data-id="${k}" title="Clear (e.g. once verified)">✕ Clear</button></li>`).join('');
+  const rv = (s.review && s.review.status) || 'assumed';
+  return card('Step detail', `<div class="btn-row" style="margin:0 0 8px"><button class="btn sm" data-action="flowClear">← Takeaways</button>${prev ? `<button class="btn sm" data-action="flowStep" data-id="${esc(prev.s.id)}" data-scroll="1">‹ Previous</button>` : ''}${next ? `<button class="btn sm" data-action="flowStep" data-id="${esc(next.s.id)}" data-scroll="1">Next ›</button>` : ''}</div>
+    <div class="faint small">${esc(it.p.name)}</div><h4 style="margin-top:2px">Step ${it.num}: ${esc(s.name)}</h4>
+    ${nb(prev, 'from')}
+    <dl class="sd"><dt>Department</dt><dd><i class="tdot" style="background:${tm[2]}"></i>${esc(tm[1])}</dd><dt>Who</dt><dd>${esc(who(s))}</dd><dt>System</dt><dd>${esc(t ? t.name : 'No system')}</dd><dt>Mode</dt><dd>${s.automated ? 'Automated' : 'Manual'}</dd>
+      <dt>Time</dt><dd>${num(s.durationMins) || num(s.elapsedDays) ? esc(stepTimeText(s, true)) : '<span class="warn-t">Not known yet</span>'}</dd>
+      <dt>Status</dt><dd><span class="rv-dot rv-${esc(rv)}"></span>${esc(REVIEW_STATUS[rv][0])}${s.review && s.review.by ? ' · ' + esc(s.review.by) : ''}</dd>
+      ${exec && s.involves ? `<dt>Involves</dt><dd>${esc(s.involves)}</dd>` : ''}${exec && s.kind === 'decision' ? `<dt>Decision</dt><dd>${s.decisionNo ? 'If no: ' + esc(s.decisionNo) : 'Yes'}</dd>` : ''}</dl>
+    ${nb(next, 'to')}
+    ${exec ? (mine.length ? `<h5>Warnings here (${mine.length})</h5><ol class="flags">${mine.map((f) => `<li>${flagIcon(f.type)}<div><div class="small"><b>${FLAG_TYPES[f.type][0]}</b>${f.on === 'link' ? ' · on the hand-off' : ''}</div><div>${esc(f.text)}</div><div class="faint small">${esc(f.by || '')}</div></div></li>`).join('')}</ol>` : '<p class="small muted">No warnings on this step.</p>') : ''}
+    ${own ? `<h5>Flags you can clear</h5><ul class="ownf">${own}</ul>` : ''}
+    ${ui.editStep === s.id ? `<div class="step-edit"><h5>Edit this step</h5>${stepFields(s, st, 'data-ed')}<div class="btn-row"><button class="btn sm" data-action="stepMove" data-id="-1">↑ Earlier</button><button class="btn sm" data-action="stepMove" data-id="1">↓ Later</button><button class="btn sm" data-action="stepAdd">+ Step after</button><button class="btn sm danger" data-action="stepDelete">Delete</button><button class="btn sm" data-action="stepEdit">Done</button></div></div>`
+      : `<div class="btn-row"><button class="btn sm" data-action="stepEdit">✎ Edit step</button><button class="btn sm" data-action="stepAdd">+ Step after</button></div>`}
+    <div class="btn-row"><button class="btn sm" data-action="addFlowFlag" data-id="issue">+ Flag issue</button><button class="btn sm" data-action="addFlowFlag" data-id="unverified">+ Flag unverified</button><button class="btn sm" data-action="addFlowFlag" data-id="weakness">+ Flag weakness</button></div>`);
+}
+
+/** Bottom summaries for the selection. */
+function pvSummaries(e, st, P, seqChains, flags) {
+  const all = seqChains.flatMap((c) => c.items).filter((it) => it.shown); const steps = all.map((it) => it.s); const tById = byId(st.tools);
+  const procs = seqChains.flatMap((c) => c.chain);
+  const n = (t) => flags.filter((f) => f.type === t).length;
+  const hand = all.filter((it, i) => i && all[i - 1].dept !== it.dept).length;
+  const mins = sum(steps, (x) => x.durationMins), days = sum(steps, (x) => x.elapsedDays), timed = steps.filter((x) => num(x.durationMins) || num(x.elapsedDays)).length;
+  const conf = steps.filter((x) => x.review && ['confirmed', 'corrected'].includes(x.review.status)).length;
+  const glance = `<div class="kpis">${kpi('Steps', steps.length, `<div class="k-delta">${steps.filter((x) => x.automated).length} automated</div>`)}${kpi('Hand-offs', hand, '<div class="k-delta">between departments</div>')}${kpi('Issues', n('issue'), `<div class="k-delta">${n('weakness')} weaknesses · ${n('unverified')} to confirm</div>`)}${kpi('Confirmed', `${conf}/${steps.length}`, '<div class="k-delta">steps sense-checked</div>')}${kpi('Time', timed ? `${mins >= 60 ? +(mins / 60).toFixed(1) + ' h' : mins + ' min'}` : 'Not known', timed ? `<div class="k-delta">hands-on per run${days ? ` · ${+days.toFixed(1)} days elapsed` : ''} · ${timed}/${steps.length} timed</div>` : '<div class="k-delta">add times to steps</div>')}${kpi('Decisions', steps.filter((x) => x.kind === 'decision').length, `<div class="k-delta">${steps.filter((x) => x.involves).length} management touchpoints</div>`)}</div>`;
+  const toolMap = {}; all.forEach((it) => { if (it.s.toolId && tById[it.s.toolId]) { const r = toolMap[it.s.toolId] = toolMap[it.s.toolId] || { d: new Set(), n: [] }; r.d.add(it.dept); r.n.push(it.num); } });
+  const noSys = all.filter((it) => !it.s.toolId && it.dept !== 'client').length;
+  const tools = Object.entries(toolMap).sort((a, b) => b[1].d.size - a[1].d.size).map(([id, r]) => `<tr><td><b>${esc(tById[id].name)}</b></td><td>${[...r.d].map((d) => `<i class="tdot" style="background:${teamInfo(d)[2]}"></i>${esc(teamInfo(d)[1])}`).join(' · ')}</td><td class="small">${r.n.join(', ')}</td><td>${r.d.size > 1 ? '<span class="chip sev-medium">Shared</span>' : ''}</td></tr>`).join('');
+  const fIds = [...new Set(procs.flatMap((p) => splitList(p.findingIds)))]; const fs = fIds.map((id) => e.findings.find((f) => f.id === id)).filter(Boolean);
+  const toMeasure = []; procs.forEach((p) => { const live2 = (p.steps || []).filter((x) => !x._removed); const unt = live2.filter((x) => !num(x.durationMins) && !num(x.elapsedDays)).length; const unc = live2.filter((x) => !(x.review && ['confirmed', 'corrected'].includes(x.review.status))).length; const bits = [!num(p.runsPerMonth) ? 'how often it runs' : '', unt ? `time for ${unt} of ${live2.length} steps` : '', unc ? `sense-check ${unc} steps` : ''].filter(Boolean); if (bits.length) toMeasure.push(`<li><b>${esc(p.name)}:</b> ${bits.join('; ')}</li>`); });
+  const single = procs.length === 1 ? e.processes.find((x) => x.id === procs[0].id) : null;
+  const groupsList = [...new Set(e.processes.map((p) => p.group).filter(Boolean))];
+  const details = procs.map((p) => { const c = CONFIDENCE[effConfidence(p)]; const trg = splitList(p.leadsTo).map((id) => (e.processes.find((x) => x.id === id) || {}).name).filter(Boolean);
+    return `<div class="pd"><div><b>${esc(p.name)}</b> <span class="faint small">${esc(procGroup(p))}</span> ${c ? `<span class="conf conf-${c[2]}">${esc(c[0])}</span>` : ''}</div>
+      <div class="small muted">${esc(p.inputs || 'Start')} → ${esc(p.outputs || 'End')}${trg.length ? ` · triggers: ${trg.map(esc).join(', ')}` : ''}${p.sources ? ` · Source: ${esc(p.sources)}` : ''}</div>${reviewSummary(p).length ? `<div class="small">✓ ${reviewSummary(p).map(esc).join(' · ')}</div>` : ''}${p.summary ? `<p class="small" style="margin:4px 0 0">${esc(p.summary)}</p>` : ''}</div>`; }).join('');
+  const editor = single ? `<details class="pv-edit"><summary class="btn sm">✎ Edit process details</summary><div class="pv-edit-b">
+      <label class="fld"><span>Name</span><input data-pe="name" value="${esc(single.name || '')}"></label>
+      <div class="rv-grid"><label class="fld"><span>Group (optional, e.g. Client lifecycle, Product, Finance)</span><input data-pe="group" list="pgroups" value="${esc(single.group || '')}"><datalist id="pgroups">${groupsList.map((g) => `<option value="${esc(g)}">`).join('')}</datalist></label>
+      <label class="fld"><span>Starts with (trigger)</span><input data-pe="inputs" value="${esc(single.inputs || '')}"></label></div>
+      <label class="fld"><span>Ends with (outcome)</span><input data-pe="outputs" value="${esc(single.outputs || '')}"></label>
+      <div class="fld"><span>When it finishes, it triggers…</span><div class="jrow">${e.processes.filter((x) => x.id !== single.id).map((x) => `<label class="jtick ${splitList(single.leadsTo).includes(x.id) ? 'on' : ''}"><input type="checkbox" data-action="pvLink" data-id="${esc(x.id)}" ${splitList(single.leadsTo).includes(x.id) ? 'checked' : ''}>${esc(x.name)}</label>`).join('') || '<span class="faint small">No other processes yet.</span>'}</div></div>
+      <label class="fld"><span>Summary</span><textarea data-pe="summary" rows="2">${esc(single.summary || '')}</textarea></label>
+      <label class="fld"><span>Talking points (one per line)</span><textarea data-pe="talkingPoints" rows="3">${esc(single.talkingPoints || '')}</textarea></label>
+      <div class="btn-row"><button class="btn sm danger" data-action="procDelete">Delete process</button></div></div></details>` : '<p class="faint small">Select a single process to edit its details, links and talking points.</p>';
+  const hoursCard = processes_hours_card(procs, st);
+  return `<section class="pv-sum">
+    ${card('At a glance', glance)}
+    <div class="grid-2">
+      ${card(`Tools and systems (${Object.keys(toolMap).length})`, tools ? `<table class="tbl"><thead><tr><th>Tool</th><th>Used by</th><th>Steps</th><th></th></tr></thead><tbody>${tools}</tbody></table>` : '<p class="empty">No tools recorded on these steps.</p>', { sub: noSys ? `${noSys} step${noSys === 1 ? '' : 's'} use no system at all.` : '' })}
+      ${card('Still to measure', toMeasure.length ? `<ul class="tm">${toMeasure.join('')}</ul>` : '<p class="small muted">Everything here is timed and sense-checked.</p>')}
+    </div>
+    ${fs.length ? card(`Linked findings (${fs.length})`, `<ul class="lf">${fs.map((f) => `<li><span class="chip sev-${esc(f.severity || 'medium')}">${esc(f.severity || 'medium')}</span> ${esc(f.title)}</li>`).join('')}</ul>`) : ''}
+    ${card(`Process details (${procs.length})`, details + editor)}
+    ${hoursCard}
+  </section>`;
+}
+
+/** Printable page of the current selection. */
+function pvExportDoc(e, st, P, markup, flags, internal) {
+  const css = (document.getElementById('viz-css') || {}).textContent || '';
+  const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  const title = P.mode === 'dept' ? `${teamInfo(P.dept)[1]}: processes and flows` : 'Processes and flows';
+  const list = flags.filter((f) => internal || f.type !== 'unverified');
+  const nums = {}; pvSeq(st, P).forEach((c) => c.items.forEach((it) => { nums[it.s.id] = it.num; }));
+  return `<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8"><title>${esc(title + ' · ' + e.client.name)}</title><style>${css}
+body{margin:0;background:#fff;font-family:Inter,ui-sans-serif,-apple-system,"Segoe UI",sans-serif;color:#171715;font-size:12.5px}main{margin:16px}.eyebrow{text-transform:uppercase;letter-spacing:.16em;font-size:10.5px;font-weight:750;color:#c8221c}
+h1{font-family:Georgia,serif;font-weight:400;font-size:24px;margin:4px 0}.flow-wrap{border:0;padding:0}.flow-svg{max-width:100%!important;width:100%!important;height:auto!important}.muted{color:#665f57}.faint{color:#8a8074}
+.chain-h{margin:10px 0 4px}.chain-gap{height:14px}ol.fx{columns:2;font-size:11px;padding-left:18px}@page{size:A3 landscape;margin:8mm}</style></head><body><main>
+<div class="eyebrow">${esc(e.client.name)} · The Growth Machine${internal ? ' · TGM internal' : ''}</div><h1>${esc(title)}</h1>
+<p class="muted">${esc(P.procIds.map((id) => (P.procs.find((p) => p.id === id) || {}).name).filter(Boolean).join(' · '))} · ${date}</p>
+${ui.execView !== false ? flowLegend(!internal) : ''}${markup}
+${ui.execView !== false && list.length ? `<h4>Issues and weaknesses${internal ? ' (and points to confirm)' : ''}</h4><ol class="fx">${list.map((f) => `<li><b>${FLAG_TYPES[f.type][0]}</b> · step ${nums[f.stepId] || '?'}: ${esc(f.text)}${internal && f.by ? ` <span class="faint">(${esc(f.by)})</span>` : ''}</li>`).join('')}</ol>` : ''}
+<p class="faint" style="font-size:10.5px">The Growth Machine · ${date} · ${internal ? 'Internal working document: not for client distribution.' : `Confidential. Prepared for ${esc(e.client.name)}.`}</p></main></body></html>`;
 }
 
 /* ---- demo.js ---- */
@@ -2629,44 +2737,8 @@ function viewTools(e) {
 }
 
 /* ---------------- Processes ---------------- */
-function viewProcesses(e) {
-  const st = stateFor(e, ui.scenario); const cur = stateFor(e, 'current');
-  const procs = st.processes;
-  if (!procs.length) return `<div class="page-h"><div><span class="eyebrow">Processes</span><h1>Process maps</h1></div></div>${empty('No processes yet. Add them in Data & Claude. Each process has steps, and each step has a team, an actor, a tool, a duration and an optional pain point.')}`;
-  if (!procs.find((p) => p.id === ui.processId)) ui.processId = procs[0].id;
-  const p = procs.find((x) => x.id === ui.processId); const pc = cur.processes.find((x) => x.id === p.id);
-  if (ui.stepId && !(p.steps || []).some((x) => x.id === ui.stepId)) ui.stepId = '';
-  const h = processHours(p), mh = processManualHours(p);
-  const measured = h > 0;
-  const flags = flowFlags(p, st.people, st.tools, st.departments);
-  const fc = (t) => flags.filter((f) => f.type === t).length;
-  const stats = `<div class="kpis">
-    ${kpi('Steps', live(p.steps).length, `<div class="k-delta">${live(p.steps).filter((x) => !x.automated).length} manual · ${live(p.steps).filter((x) => x.automated).length} automated</div>`)}
-    ${kpi('Warnings', flags.length, `<div class="k-delta">${fc('issue')} issues · ${fc('unverified')} unverified · ${fc('weakness')} weaknesses</div>`)}
-    ${kpi('Hours / month', measured ? hrs(h) : 'Not measured', measured && pc && ui.scenario !== 'current' ? deltaHTML(processHours(pc), h, hrs) : '')}
-    ${kpi('Manual share', measured ? pct(mh / h * 100) : '—')}
-    ${kpi('Staff cost / yr', measured ? fmtMoney(processCostMonthly(p, st) * 12) : 'Not measured', measured && pc && ui.scenario !== 'current' ? deltaHTML(processCostMonthly(pc, cur) * 12, processCostMonthly(p, st) * 12, fmtMoney) : '')}
-  </div>`;
-  const mainW = (document.getElementById('main') || {}).clientWidth || 1100;
-  const flowW = mainW > 1000 ? mainW - 380 : mainW;
-  const cols = ui.flowCols || ui.flowColsAuto || (flowW < 560 ? 1 : flowW < 900 ? 2 : 3);
-  if (ui.review && ui.review.procId === p.id && pc) return reviewView(e, pc, cur, cols);
-  const sch = (proc, s2, selected) => flowSchematic(proc, s2.people, s2.tools, s2.departments, { cols, selected, anonymise: ui.anon, zoom: ui.flowZoom, exec: ui.execView !== false }).replace('class="flow-wrap"', `class="flow-wrap${ui.flowZoom ? ' zoomed' : ''}"`);
-  const view = ui.procView === 'lanes'
-    ? `<div class="legend"><span><span class="chip">▭ Manual step</span></span><span><span class="chip" style="border-style:dashed;border-color:var(--s1)">▭ Automated</span></span>${ui.execView !== false ? '<span><span class="chip sev-high">! Issue (pain point)</span></span>' : '<span class="faint">Executive view is off: issues hidden.</span>'}</div>${ui.scenario !== 'current' && pc ? `<h4>Before (current)</h4><div class="lane-wrap">${swimlane(pc, cur.people, cur.tools, { anonymise: ui.anon, exec: ui.execView !== false })}</div><h4>After: ${esc(scenarioName(e, ui.scenario))}</h4>` : ''}<div class="lane-wrap">${swimlane(p, st.people, st.tools, { anonymise: ui.anon, exec: ui.execView !== false })}</div>`
-    : `${flowToolbar(cols)}${flowExportBar()}${ui.execView !== false ? execBar(p.steps || [], flags) + flowLegend() : '<div class="legend flow-legend"><span class="faint">Executive view is off: steps, people, systems and hand-offs only.</span></div>'}<div class="flow-split"><div>${ui.scenario !== 'current' && pc ? `<h4>Before (current)</h4>${sch(pc, cur, '')}<h4>After: ${esc(scenarioName(e, ui.scenario))}</h4>` : ''}${sch(p, st, ui.stepId)}</div><aside class="flow-side">${flowSidePanel(e, p, st.people, st.tools, st.departments)}</aside></div>`;
-  return `${scenarioBanner(e)}<div class="page-h"><div><span class="eyebrow">Processes</span><h1>How the work flows</h1><p class="muted">Click a stage's process to open its flow. Click any step for detail. Warnings mark issues, unverified points and weaknesses along the path.</p></div></div>
-  ${card('Client journey, end to end', journeyStrip(procs, st.people, st.tools, st.departments, ui.jView === 'journey' ? '' : p.id), { sub: 'Stages from first contact to renewal. Dashed stages are not mapped yet.', actions: `<button class="btn sm ${ui.jView === 'journey' ? 'on' : ''}" data-action="journeyOpen">◫ View across the journey</button>` })}
-  ${ui.jView === 'journey' ? journeyView(e, st) + processes_hours_card(procs, st) : `
-  <section class="card pflow"><header class="card-h"><div><label class="stage-pick small"><span class="faint">Journey stage</span> ${sel([...STAGES, ['', 'Not on the journey (internal)']], p.stage || '', 'data-proc-stage', false)}</label><h3 class="ptitle">${esc(p.name)}</h3><p class="sub">${esc(p.inputs || 'Start')} → ${esc(p.outputs || 'End')}</p></div>
-    <div class="btn-row"><button class="btn sm" data-action="reviewSetup" title="Walk this flow live with someone and record what they confirm or correct">▶ Sense-check</button><button class="btn sm ${ui.procView !== 'lanes' ? 'on' : ''}" data-action="procView" data-id="flow">Flow</button><button class="btn sm ${ui.procView === 'lanes' ? 'on' : ''}" data-action="procView" data-id="lanes">Swimlane</button><label class="tog small"><input type="checkbox" data-ui="execView" ${ui.execView !== false ? 'checked' : ''}> <b>Executive view</b></label><label class="tog small"><input type="checkbox" data-ui="anon" ${ui.anon ? 'checked' : ''}> Anonymise</label></div></header>
-    ${ui.reviewSetup === p.id ? reviewChooser(e, p) : ''}
-    ${processBrief(e, p)}
-    <div style="margin-top:14px">${stats}</div>
-    <div style="margin-top:12px">${view}</div>
-  </section>
-  ${processes_hours_card(procs, st)}`}`;
-}
+function viewProcesses(e) { return processPage(e); }
+
 function processes_hours_card(procs, st) {
   const any = live(procs).some((x) => processHours(x) > 0);
   return any ? card('All processes by monthly hours', hbars(live(procs).map((x) => ({ label: x.name, value: processHours(x), tip: `${pct(processManualHours(x) / Math.max(1, processHours(x)) * 100)} manual · ${fmtMoney(processCostMonthly(x, st) * 12)}/yr` })).sort((a, b) => b.value - a.value), { fmt: hrs, color: 'var(--s1)' })) : '';
@@ -3278,7 +3350,7 @@ body{margin:0;background:#f6f1e9;font-family:Inter,ui-sans-serif,-apple-system,B
    App shell — storage, routing, actions, data editor, Claude bridge
    ============================================================ */
 const STORE_KEY = 'tgm.studio.v1';
-const ui = { tab: 'overview', scenario: 'current', processId: '', stepId: '', editStep: '', jView: '', journey: null, execView: true, review: null, reviewSetup: '', procView: 'flow', flowCols: 0, flowZoom: 0, flowWhole: false, anon: false, ghosts: true, showCost: true, compare: true, zoom: 1, area: 'All', recType: 'All', coll: 'people', theme: '', reportType: 'status', capture: false, draft: null, session: false, sessionId: '', prioOnly: true };
+const ui = { tab: 'overview', scenario: 'current', processId: '', stepId: '', editStep: '', pv: null, execView: true, review: null, reviewSetup: '', procView: 'flow', flowCols: 0, flowZoom: 0, flowWhole: false, anon: false, ghosts: true, showCost: true, compare: true, zoom: 1, area: 'All', recType: 'All', coll: 'people', theme: '', reportType: 'status', capture: false, draft: null, session: false, sessionId: '', prioOnly: true };
 let db = { activeId: '', engagements: {} };
 
 /* ---------- storage (localStorage, wrapped; the JSON file export is the real backup) ---------- */
@@ -3306,8 +3378,9 @@ function save() {
 function flushSave() { if (!saveTimer) return; clearTimeout(saveTimer); saveTimer = null; try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); } catch (err) { /* ignore */ } }
 window.addEventListener('pagehide', flushSave);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
-function saveUI() { try { localStorage.setItem(STORE_KEY + '.ui', JSON.stringify({ tab: ui.tab, anon: ui.anon, showCost: ui.showCost, ghosts: ui.ghosts, compare: ui.compare, coll: ui.coll, theme: ui.theme })); } catch (err) { /* ignore */ } }
+function saveUI() { try { localStorage.setItem(STORE_KEY + '.ui', JSON.stringify({ tab: ui.tab, pv: ui.pv, execView: ui.execView, anon: ui.anon, showCost: ui.showCost, ghosts: ui.ghosts, compare: ui.compare, coll: ui.coll, theme: ui.theme })); } catch (err) { /* ignore */ } }
 const E = () => db.engagements[db.activeId];
+function procOfStep(id) { return E().processes.find((p) => (p.steps || []).some((x) => x.id === id)); }
 function reviewCtx() {
   if (!ui.review) return {}; const proc = E().processes.find((x) => x.id === ui.review.procId); if (!proc) return {};
   const rev = (proc.reviews || []).find((r) => r.id === ui.review.revId); return { proc, rev, step: rev ? (proc.steps || [])[ui.review.idx] : null };
@@ -3404,7 +3477,7 @@ const FIELD_DEFS = {
   departments: [['id', 'text'], ['name', 'text'], ['type', DEPT_TYPES.map((d) => d[0])], ['headId', 'person'], ['notes', 'text']],
   people: [['id', 'text'], ['name', 'text'], ['title', 'text'], ['departmentId', 'dept'], ['managerId', 'person'], ['employmentType', ['Full-time', 'Part-time', 'Contractor', 'Outsourced', 'Vacant']], ['fte', 'num'], ['annualCost', 'num'], ['location', 'text'], ['startDate', 'date'], ['notes', 'text']],
   tools: [['id', 'text'], ['name', 'text'], ['category', 'text'], ['vendor', 'text'], ['monthlyCost', 'num'], ['seats', 'num'], ['activeUsers', 'num'], ['departmentIds', 'text'], ['ownerId', 'person'], ['purpose', 'text'], ['notes', 'text']],
-  processes: [['id', 'text'], ['name', 'text'], ['stage', STAGES.map((x) => x[0])], ['departmentId', 'dept'], ['ownerId', 'person'], ['confidence', Object.keys(CONFIDENCE)], ['sources', 'text'], ['summary', 'long'], ['talkingPoints', 'long'], ['findingIds', 'text'], ['frequency', 'text'], ['runsPerMonth', 'num'], ['hoursPerMonth', 'num'], ['inputs', 'text'], ['outputs', 'text'], ['steps', 'json']],
+  processes: [['id', 'text'], ['name', 'text'], ['group', 'text'], ['leadsTo', 'text'], ['departmentId', 'dept'], ['ownerId', 'person'], ['confidence', Object.keys(CONFIDENCE)], ['sources', 'text'], ['summary', 'long'], ['talkingPoints', 'long'], ['findingIds', 'text'], ['frequency', 'text'], ['runsPerMonth', 'num'], ['hoursPerMonth', 'num'], ['inputs', 'text'], ['outputs', 'text'], ['steps', 'json']],
   segments: [['id', 'text'], ['name', 'text'], ['customers', 'num'], ['annualRevenue', 'num'], ['churnPct', 'num'], ['acquisitionChannel', 'text'], ['notes', 'text']],
   markets: [['id', 'text'], ['name', 'text'], ['region', 'text'], ['revenueShare', 'num'], ['notes', 'text']],
   topClients: [['id', 'text'], ['name', 'text'], ['segmentId', 'text'], ['annualRevenue', 'num'], ['notes', 'text']],
@@ -3517,10 +3590,8 @@ function stripMarks(o) { return JSON.parse(JSON.stringify(o, (k, v) => (k.starts
 const actions = {
   tab: (el) => { ui.tab = el.dataset.id; saveUI(); render(); window.scrollTo(0, 0); },
   setScenario: (el) => { ui.scenario = el.dataset.id; render(); },
-  proc: (el) => { ui.processId = el.dataset.id; ui.stepId = ''; ui.jView = ''; ui.review = null; ui.reviewSetup = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; render(); },
-  procView: (el) => { ui.procView = el.dataset.id; render(); },
+  proc: (el) => { ui.pv = Object.assign({}, ui.pv, { mode: 'proc', procs: [el.dataset.id] }); ui.stepId = ''; ui.review = null; ui.reviewSetup = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; saveUI(); render(); },
   flowStep: (el) => {
-    if (ui.jView === 'journey') { const st = stateFor(E(), ui.scenario); const p = st.processes.find((x) => (x.steps || []).some((y) => y.id === el.dataset.id)); if (!p) return; ui.jView = ''; ui.processId = p.id; ui.stepId = el.dataset.id; ui.flowZoom = 0; ui.flowColsAuto = 0; render(); const n = document.querySelector(`.flow-svg g.fnode[data-id="${CSS.escape(ui.stepId)}"]`); if (n) n.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
     if (ui.review) { const { proc } = reviewCtx(); const i = proc ? (proc.steps || []).findIndex((x) => x.id === el.dataset.id) : -1; if (i >= 0) { ui.review.idx = i; render(); } return; }
     ui.stepId = el.dataset.id; render();
     const n = document.querySelector(`.flow-svg g.fnode[data-id="${CSS.escape(ui.stepId)}"]`);
@@ -3528,21 +3599,45 @@ const actions = {
     const side = document.querySelector('.flow-side'); if (side && getComputedStyle(side).position !== 'sticky' && el.closest('.flow-svg')) side.scrollIntoView({ behavior: 'smooth', block: 'start' });
   },
   flowClear: () => { ui.stepId = ''; render(); },
-  journeyOpen: () => { ui.jView = 'journey'; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; ui.review = null; render(); },
-  journeyClose: () => { ui.jView = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; render(); },
-  journeySet: (el) => { const st = stateFor(E(), ui.scenario); const J = journeyState(st); J[el.dataset.k] = el.dataset.id; ui.journey = { by: J.by, layout: J.layout, teams: J.teams, procs: J.procs }; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; render(); },
-  journeyTick: (el) => {
-    const st = stateFor(E(), ui.scenario); const J = journeyState(st); const key = el.dataset.kind === 'team' ? 'teams' : 'procs';
-    let list = J[key].filter((x) => x !== el.dataset.id); if (el.checked) list.push(el.dataset.id);
-    if (!list.length) { toast('Keep at least one ticked'); render(); return; }
-    const order = el.dataset.kind === 'team' ? J.allTeams : J.allProcs; list = order.filter((x) => list.includes(x));
-    ui.journey = { by: J.by, layout: J.layout, teams: key === 'teams' ? list : J.teams, procs: key === 'procs' ? list : J.procs }; ui.flowZoom = 0; ui.flowColsAuto = 0; render();
+  pvSet: (el) => { ui.pv = Object.assign({}, ui.pv, { [el.dataset.k]: el.dataset.id }); ui.stepId = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; ui.reviewSetup = ''; saveUI(); render(); },
+  pvTick: (el) => {
+    const P = pvState(stateFor(E(), ui.scenario)); const k = el.dataset.kind, id = el.dataset.id; const V = Object.assign({}, ui.pv);
+    const toggle = (list, all) => { let l = list.filter((x) => x !== id); if (el.checked) l.push(id); if (!l.length) { toast('Keep at least one ticked'); return null; } return all.filter((x) => l.includes(x)); };
+    if (k === 'dept1') { V.dept = id; V.dprocs = []; }
+    if (k === 'dproc') { const l = toggle(P.procIds, P.deptProcs); if (!l) return render(); V.dprocs = l; }
+    if (k === 'proc') { const l = toggle(P.procIds, P.procs.map((p) => p.id)); if (!l) return render(); V.procs = l; V.depts = []; }
+    if (k === 'dept') { const l = toggle(P.shownDepts, P.availDepts); if (!l) return render(); V.depts = l; }
+    ui.pv = V; ui.stepId = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; ui.reviewSetup = ''; saveUI(); render();
   },
-  exportJourney: (el) => {
-    const e = E(); const st = stateFor(e, ui.scenario); const J = journeyState(st); const exec = ui.execView !== false; const k = el.dataset.id;
-    const markup = J.layout === 'lanes' ? journeyLanes(st, J, { exec, interactive: false }) : journeyFlow(st, J, { exec, interactive: false, cols: ui.flowCols || ui.flowColsAuto || 4 });
+  pvLink: (el) => {
+    const proc = E().processes.find((x) => x.id === ui.processId); if (!proc) return;
+    const l = splitList(proc.leadsTo).filter((x) => x !== el.dataset.id); if (el.checked) l.push(el.dataset.id); proc.leadsTo = l.join(','); touch(proc); save(); render();
+  },
+  procNew: () => {
+    const n = prompt('Name of the new process (e.g. "Monthly client reporting")'); if (!n || !n.trim()) return;
+    const P = pvState(stateFor(E(), ui.scenario)); const team = P.mode === 'dept' ? P.dept : '';
+    const p = { id: uid('pr'), name: n.trim(), group: '', leadsTo: '', inputs: '', outputs: '', confidence: 'heard', steps: [{ id: uid('s'), name: 'First step', team, actorLabel: '', toolId: '', automated: false, durationMins: '', elapsedDays: '', painPoint: '', flags: [] }] };
+    E().processes.push(p); touch(p); save();
+    ui.pv = Object.assign({}, ui.pv, { mode: 'proc', procs: [p.id], depts: [] }); ui.stepId = p.steps[0].id; ui.editStep = p.steps[0].id; saveUI(); render(); toast('Process created. Rename the first step and add the rest with + Step after.');
+  },
+  procDelete: () => {
+    const e = E(); const i = e.processes.findIndex((x) => x.id === ui.processId); if (i < 0 || !confirm(`Delete the process "${e.processes[i].name}" and all its steps?`)) return;
+    const id = e.processes[i].id; e.processes.splice(i, 1); e.meta.deleted = Object.assign({}, e.meta.deleted, { ['processes:' + id]: nowISO() });
+    e.processes.forEach((p) => { if (splitList(p.leadsTo).includes(id)) { p.leadsTo = splitList(p.leadsTo).filter((x) => x !== id).join(','); touch(p); } });
+    ui.pv = Object.assign({}, ui.pv, { procs: [], dprocs: [] }); ui.stepId = ''; save(); saveUI(); render();
+  },
+  pvExport: (el) => {
+    const e = E(); const st = stateFor(e, ui.scenario); const P = pvState(st); const internal = ui.flowAudience === 'internal'; const k = el.dataset.id; const exec = ui.execView !== false;
     const slug = (s2) => String(s2).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    const base = `${slug(e.client.name)}-journey-${J.by === 'team' ? J.teams.join('-') : 'processes'}-${J.layout}-${todayISO()}`;
+    const base = `${slug(e.client.name)}-${P.mode === 'dept' ? slug(teamInfo(P.dept)[1]) : 'processes'}-${P.layout === 'lanes' ? 'swimlane' : 'flow'}${internal ? '-INTERNAL' : ''}-${todayISO()}`;
+    const seqChains = pvSeq(st, P);
+    if (k === 'all') {
+      const procs = seqChains.flatMap((c) => c.chain); const html2 = flowExportDoc(e, procs, st, { internal });
+      const w2 = window.open('', '_blank'); if (!w2) { downloadFile(base + '.html', html2, 'text/html'); return toast('Pop-up blocked: downloaded as an HTML page instead'); }
+      w2.document.open(); w2.document.write(html2); w2.document.close(); setTimeout(() => { w2.focus(); w2.print(); }, 400); return toast('Choose "Save as PDF" in the print window');
+    }
+    const cols = ui.flowCols || ui.flowColsAuto || 3;
+    const markup = pvVisual(st, P, seqChains, { exec, interactive: false, cols, clientSafe: !internal });
     if (k === 'svg' || k === 'png') {
       const { xml, W, H } = svgStandalone(markup);
       if (k === 'svg') return downloadFile(base + '.svg', xml, 'image/svg+xml');
@@ -3551,24 +3646,26 @@ const actions = {
         c.toBlob((b) => { const a2 = document.createElement('a'); a2.href = URL.createObjectURL(b); a2.download = base + '.png'; document.body.appendChild(a2); a2.click(); setTimeout(() => { URL.revokeObjectURL(a2.href); a2.remove(); }, 500); }, 'image/png'); };
       img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml); return;
     }
-    const html = journeyExportDoc(e, st, markup.replace(/ data-tip="[^"]*"/g, ''), J);
+    const flags = []; seqChains.forEach((c) => c.chain.forEach((p) => flowFlags(p, st.people, st.tools, st.departments, !internal).forEach((f) => flags.push(f))));
+    const html = pvExportDoc(e, st, P, internal ? markup : markup.replace(/ data-tip="[^"]*"/g, ''), flags, internal);
+    if (k === 'html') return downloadFile(base + '.html', html, 'text/html');
     const w = window.open('', '_blank'); if (!w) { downloadFile(base + '.html', html, 'text/html'); return toast('Pop-up blocked: downloaded as an HTML page instead'); }
     w.document.open(); w.document.write(html); w.document.close(); setTimeout(() => { w.focus(); w.print(); }, 400); toast('Choose "Save as PDF" in the print window');
   },
   stepEdit: () => { ui.editStep = ui.editStep === ui.stepId ? '' : ui.stepId; render(); },
   stepAdd: () => {
-    const proc = E().processes.find((x) => x.id === ui.processId); if (!proc) return; const i = (proc.steps || []).findIndex((x) => x.id === ui.stepId);
+    const proc = procOfStep(ui.stepId); if (!proc) return; const i = (proc.steps || []).findIndex((x) => x.id === ui.stepId);
     const n = prompt('Name of the new step'); if (!n || !n.trim()) return;
     const cur = proc.steps[i] || {}; const ns = { id: uid('s'), name: n.trim(), team: cur.team || '', actorLabel: '', toolId: '', automated: false, durationMins: '', elapsedDays: '', painPoint: '', flags: [] };
     proc.steps.splice(i + 1, 0, ns); ui.stepId = ns.id; ui.editStep = ns.id; touch(proc); save(); render();
   },
   stepDelete: () => {
-    const proc = E().processes.find((x) => x.id === ui.processId); if (!proc) return; const i = (proc.steps || []).findIndex((x) => x.id === ui.stepId);
+    const proc = procOfStep(ui.stepId); if (!proc) return; const i = (proc.steps || []).findIndex((x) => x.id === ui.stepId);
     if (i < 0 || !confirm(`Delete step ${i + 1}: "${proc.steps[i].name}"?`)) return;
     proc.steps.splice(i, 1); ui.stepId = ''; ui.editStep = ''; touch(proc); save(); render();
   },
   stepMove: (el) => {
-    const proc = E().processes.find((x) => x.id === ui.processId); if (!proc) return; const i = proc.steps.findIndex((x) => x.id === ui.stepId); const j = i + num(el.dataset.id);
+    const proc = procOfStep(ui.stepId); if (!proc) return; const i = proc.steps.findIndex((x) => x.id === ui.stepId); const j = i + num(el.dataset.id);
     if (i < 0 || j < 0 || j >= proc.steps.length) return; const [x] = proc.steps.splice(i, 1); proc.steps.splice(j, 0, x); touch(proc); save(); render();
   },
   reviewSetup: () => { ui.reviewSetup = ui.processId; render(); },
@@ -3631,8 +3728,8 @@ const actions = {
       const w2 = window.open('', '_blank'); if (!w2) { downloadFile(`${slug(e.client.name)}-${slug(p.name)}-sense-check-${todayISO()}.html`, html2, 'text/html'); return toast('Pop-up blocked: downloaded as an HTML page instead'); }
       w2.document.open(); w2.document.write(html2); w2.document.close(); setTimeout(() => { w2.focus(); w2.print(); }, 400); return toast('Choose "Save as PDF" in the print window');
     }
-    const all = k === 'all'; const procs = all ? STAGES.flatMap(([id]) => st.processes.filter((x) => x.stage === id)).concat(st.processes.filter((x) => !STAGES.some(([id]) => id === x.stage))).filter((x) => !x._removed) : [p];
-    const html = flowExportDoc(e, procs, st, { internal, journey: all });
+    const all = k === 'all'; const procs = all ? st.processes.filter((x) => !x._removed) : [p];
+    const html = flowExportDoc(e, procs, st, { internal });
     if (k === 'html') return downloadFile((all ? `${slug(e.client.name)}-process-flows${internal ? '-INTERNAL' : ''}-${todayISO()}` : base) + '.html', html, 'text/html');
     const w = window.open('', '_blank'); if (!w) return toast('Allow pop-ups for this file to print, or use HTML page.');
     w.document.open(); w.document.write(html); w.document.close(); setTimeout(() => { w.focus(); w.print(); }, 400);
@@ -3643,12 +3740,12 @@ const actions = {
     const svg = document.querySelector('.flow-svg'); const wrap = document.querySelector('.flow-wrap'); if (!svg || !wrap) return;
     const W = +svg.dataset.w, H = +svg.dataset.h; const cur = ui.flowZoom || svg.getBoundingClientRect().width / W; const k = el.dataset.id;
     if (k === 'fit') {
-      const availW = wrap.clientWidth - 26, availH = window.innerHeight - 150;
-      if (ui.jView === 'journey' && (ui.journey || {}).layout !== 'flow') { ui.flowZoom = Math.max(0.15, +Math.min(1.2, availW / W, availH / H).toFixed(3)); ui.flowWhole = true; render(); document.querySelector('.flow-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
-      const proc = ui.jView === 'journey' ? { steps: [...document.querySelectorAll('.flow-svg g.fnode')] } : stateFor(E(), ui.scenario).processes.find((x) => x.id === ui.processId); const n = proc ? (proc.steps || []).length : 1;
-      const fitFor = (c) => { const [w, h] = flowDims(n, c); return Math.min(availW / w, availH / h); };
-      if (!ui.flowCols) { let best = 1; for (let c = 1; c <= Math.min(6, n); c++) if (fitFor(c) > fitFor(best) + 0.001) best = c; ui.flowColsAuto = best; }
-      ui.flowZoom = Math.max(0.2, +Math.min(1.2, fitFor(ui.flowCols || ui.flowColsAuto)).toFixed(3)); ui.flowWhole = true; render();
+      const availW = wrap.clientWidth - 26, availH = window.innerHeight - 170;
+      if ((ui.pv || {}).layout === 'lanes') { ui.flowZoom = Math.max(0.15, +Math.min(1.2, availW / W, availH / H).toFixed(3)); ui.flowWhole = true; render(); document.querySelector('.flow-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+      const ns = [...document.querySelectorAll('.pv-visual .flow-svg')].map((x) => x.querySelectorAll('g.fnode').length).filter(Boolean); if (!ns.length) return;
+      const fitFor = (c) => { const w = Math.max(...ns.map((n) => flowDims(n, c)[0])); const h = sum(ns.map((n) => flowDims(n, c)[1])) + (ns.length - 1) * 40; return Math.min(availW / w, availH / h); };
+      if (!ui.flowCols) { let best = 1; for (let c = 1; c <= Math.min(6, Math.max(...ns)); c++) if (fitFor(c) > fitFor(best) + 0.001) best = c; ui.flowColsAuto = best; }
+      ui.flowZoom = Math.max(0.15, +Math.min(1.2, fitFor(ui.flowCols || ui.flowColsAuto)).toFixed(3)); ui.flowWhole = true; render();
       document.querySelector('.flow-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' }); return;
     }
     ui.flowWhole = false;
@@ -3656,7 +3753,7 @@ const actions = {
     render();
   },
   addFlowFlag: (el) => {
-    const proc = E().processes.find((x) => x.id === ui.processId); const st = proc && (proc.steps || []).find((x) => x.id === ui.stepId);
+    const proc = procOfStep(ui.stepId); const st = proc && (proc.steps || []).find((x) => x.id === ui.stepId);
     if (!st) return toast('This step only exists in the scenario. Flag it in the current state.');
     const label = { issue: 'Describe the issue', unverified: 'What needs to be confirmed?', weakness: 'Describe the weakness' }[el.dataset.id];
     const text = prompt(label); if (!text || !text.trim()) return;
@@ -3664,7 +3761,7 @@ const actions = {
     touch(proc); save(); render(); toast('Flag added to the flow');
   },
   removeFlowFlag: (el) => {
-    const proc = E().processes.find((x) => x.id === ui.processId); const st = proc && (proc.steps || []).find((x) => x.id === ui.stepId);
+    const proc = procOfStep(ui.stepId); const st = proc && (proc.steps || []).find((x) => x.id === ui.stepId);
     if (!st || !st.flags) return; st.flags.splice(+el.dataset.id, 1); touch(proc); save(); render();
   },
   area: (el) => { ui.area = el.dataset.id; render(); },
@@ -3861,9 +3958,9 @@ document.addEventListener('change', (ev) => {
   if (t.dataset.draftsel) { setPath(ui.draft, t.dataset.draftsel, t.value); if (t.dataset.draftsel === 'personId') { const p = E().people.find((x) => x.id === t.value); ui.draft.level = guessLevel(E(), p); ui.draft.deptType = ''; } saveDraft(ui.draft); render(); return; }
   if (t.dataset.draftchk) { ui.draft[t.dataset.draftchk] = t.checked; saveDraft(ui.draft); return; }
   if (t.dataset.action && t.type === 'checkbox') { const fn = actions[t.dataset.action]; if (fn) fn(t, ev); return; }
-  if (t.hasAttribute('data-proc-stage')) { const proc = E().processes.find((x) => x.id === ui.processId); if (!proc) return; proc.stage = t.value; touch(proc); save(); render(); toast(t.value ? 'Placed on the journey' : 'Removed from the journey'); return; }
+  if (t.dataset.pe) { const proc = E().processes.find((x) => x.id === ui.processId); if (!proc) return; proc[t.dataset.pe] = t.value; touch(proc); save(); render(); return; }
   if (t.dataset.ed) {
-    const proc = E().processes.find((x) => x.id === ui.processId); const step = proc && (proc.steps || []).find((x) => x.id === ui.editStep); if (!step) return;
+    const proc = procOfStep(ui.editStep); const step = proc && (proc.steps || []).find((x) => x.id === ui.editStep); if (!step) return;
     const f = t.dataset.ed; let v = t.value;
     if (f === 'durationMins' || f === 'elapsedDays') { v = v === '' ? '' : num(v); if (!(step.review && ['confirmed', 'corrected'].includes(step.review.status))) step.timeBasis = 'assumed'; }
     if (f === 'automated') v = v === 'yes';

@@ -166,44 +166,8 @@ function viewTools(e) {
 }
 
 /* ---------------- Processes ---------------- */
-function viewProcesses(e) {
-  const st = stateFor(e, ui.scenario); const cur = stateFor(e, 'current');
-  const procs = st.processes;
-  if (!procs.length) return `<div class="page-h"><div><span class="eyebrow">Processes</span><h1>Process maps</h1></div></div>${empty('No processes yet. Add them in Data & Claude. Each process has steps, and each step has a team, an actor, a tool, a duration and an optional pain point.')}`;
-  if (!procs.find((p) => p.id === ui.processId)) ui.processId = procs[0].id;
-  const p = procs.find((x) => x.id === ui.processId); const pc = cur.processes.find((x) => x.id === p.id);
-  if (ui.stepId && !(p.steps || []).some((x) => x.id === ui.stepId)) ui.stepId = '';
-  const h = processHours(p), mh = processManualHours(p);
-  const measured = h > 0;
-  const flags = flowFlags(p, st.people, st.tools, st.departments);
-  const fc = (t) => flags.filter((f) => f.type === t).length;
-  const stats = `<div class="kpis">
-    ${kpi('Steps', live(p.steps).length, `<div class="k-delta">${live(p.steps).filter((x) => !x.automated).length} manual · ${live(p.steps).filter((x) => x.automated).length} automated</div>`)}
-    ${kpi('Warnings', flags.length, `<div class="k-delta">${fc('issue')} issues · ${fc('unverified')} unverified · ${fc('weakness')} weaknesses</div>`)}
-    ${kpi('Hours / month', measured ? hrs(h) : 'Not measured', measured && pc && ui.scenario !== 'current' ? deltaHTML(processHours(pc), h, hrs) : '')}
-    ${kpi('Manual share', measured ? pct(mh / h * 100) : '—')}
-    ${kpi('Staff cost / yr', measured ? fmtMoney(processCostMonthly(p, st) * 12) : 'Not measured', measured && pc && ui.scenario !== 'current' ? deltaHTML(processCostMonthly(pc, cur) * 12, processCostMonthly(p, st) * 12, fmtMoney) : '')}
-  </div>`;
-  const mainW = (document.getElementById('main') || {}).clientWidth || 1100;
-  const flowW = mainW > 1000 ? mainW - 380 : mainW;
-  const cols = ui.flowCols || ui.flowColsAuto || (flowW < 560 ? 1 : flowW < 900 ? 2 : 3);
-  if (ui.review && ui.review.procId === p.id && pc) return reviewView(e, pc, cur, cols);
-  const sch = (proc, s2, selected) => flowSchematic(proc, s2.people, s2.tools, s2.departments, { cols, selected, anonymise: ui.anon, zoom: ui.flowZoom, exec: ui.execView !== false }).replace('class="flow-wrap"', `class="flow-wrap${ui.flowZoom ? ' zoomed' : ''}"`);
-  const view = ui.procView === 'lanes'
-    ? `<div class="legend"><span><span class="chip">▭ Manual step</span></span><span><span class="chip" style="border-style:dashed;border-color:var(--s1)">▭ Automated</span></span>${ui.execView !== false ? '<span><span class="chip sev-high">! Issue (pain point)</span></span>' : '<span class="faint">Executive view is off: issues hidden.</span>'}</div>${ui.scenario !== 'current' && pc ? `<h4>Before (current)</h4><div class="lane-wrap">${swimlane(pc, cur.people, cur.tools, { anonymise: ui.anon, exec: ui.execView !== false })}</div><h4>After: ${esc(scenarioName(e, ui.scenario))}</h4>` : ''}<div class="lane-wrap">${swimlane(p, st.people, st.tools, { anonymise: ui.anon, exec: ui.execView !== false })}</div>`
-    : `${flowToolbar(cols)}${flowExportBar()}${ui.execView !== false ? execBar(p.steps || [], flags) + flowLegend() : '<div class="legend flow-legend"><span class="faint">Executive view is off: steps, people, systems and hand-offs only.</span></div>'}<div class="flow-split"><div>${ui.scenario !== 'current' && pc ? `<h4>Before (current)</h4>${sch(pc, cur, '')}<h4>After: ${esc(scenarioName(e, ui.scenario))}</h4>` : ''}${sch(p, st, ui.stepId)}</div><aside class="flow-side">${flowSidePanel(e, p, st.people, st.tools, st.departments)}</aside></div>`;
-  return `${scenarioBanner(e)}<div class="page-h"><div><span class="eyebrow">Processes</span><h1>How the work flows</h1><p class="muted">Click a stage's process to open its flow. Click any step for detail. Warnings mark issues, unverified points and weaknesses along the path.</p></div></div>
-  ${card('Client journey, end to end', journeyStrip(procs, st.people, st.tools, st.departments, ui.jView === 'journey' ? '' : p.id), { sub: 'Stages from first contact to renewal. Dashed stages are not mapped yet.', actions: `<button class="btn sm ${ui.jView === 'journey' ? 'on' : ''}" data-action="journeyOpen">◫ View across the journey</button>` })}
-  ${ui.jView === 'journey' ? journeyView(e, st) + processes_hours_card(procs, st) : `
-  <section class="card pflow"><header class="card-h"><div><label class="stage-pick small"><span class="faint">Journey stage</span> ${sel([...STAGES, ['', 'Not on the journey (internal)']], p.stage || '', 'data-proc-stage', false)}</label><h3 class="ptitle">${esc(p.name)}</h3><p class="sub">${esc(p.inputs || 'Start')} → ${esc(p.outputs || 'End')}</p></div>
-    <div class="btn-row"><button class="btn sm" data-action="reviewSetup" title="Walk this flow live with someone and record what they confirm or correct">▶ Sense-check</button><button class="btn sm ${ui.procView !== 'lanes' ? 'on' : ''}" data-action="procView" data-id="flow">Flow</button><button class="btn sm ${ui.procView === 'lanes' ? 'on' : ''}" data-action="procView" data-id="lanes">Swimlane</button><label class="tog small"><input type="checkbox" data-ui="execView" ${ui.execView !== false ? 'checked' : ''}> <b>Executive view</b></label><label class="tog small"><input type="checkbox" data-ui="anon" ${ui.anon ? 'checked' : ''}> Anonymise</label></div></header>
-    ${ui.reviewSetup === p.id ? reviewChooser(e, p) : ''}
-    ${processBrief(e, p)}
-    <div style="margin-top:14px">${stats}</div>
-    <div style="margin-top:12px">${view}</div>
-  </section>
-  ${processes_hours_card(procs, st)}`}`;
-}
+function viewProcesses(e) { return processPage(e); }
+
 function processes_hours_card(procs, st) {
   const any = live(procs).some((x) => processHours(x) > 0);
   return any ? card('All processes by monthly hours', hbars(live(procs).map((x) => ({ label: x.name, value: processHours(x), tip: `${pct(processManualHours(x) / Math.max(1, processHours(x)) * 100)} manual · ${fmtMoney(processCostMonthly(x, st) * 12)}/yr` })).sort((a, b) => b.value - a.value), { fmt: hrs, color: 'var(--s1)' })) : '';

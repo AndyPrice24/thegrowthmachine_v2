@@ -2,7 +2,7 @@
    App shell — storage, routing, actions, data editor, Claude bridge
    ============================================================ */
 const STORE_KEY = 'tgm.studio.v1';
-const ui = { tab: 'overview', scenario: 'current', processId: '', stepId: '', editStep: '', jView: '', journey: null, execView: true, review: null, reviewSetup: '', procView: 'flow', flowCols: 0, flowZoom: 0, flowWhole: false, anon: false, ghosts: true, showCost: true, compare: true, zoom: 1, area: 'All', recType: 'All', coll: 'people', theme: '', reportType: 'status', capture: false, draft: null, session: false, sessionId: '', prioOnly: true };
+const ui = { tab: 'overview', scenario: 'current', processId: '', stepId: '', editStep: '', pv: null, execView: true, review: null, reviewSetup: '', procView: 'flow', flowCols: 0, flowZoom: 0, flowWhole: false, anon: false, ghosts: true, showCost: true, compare: true, zoom: 1, area: 'All', recType: 'All', coll: 'people', theme: '', reportType: 'status', capture: false, draft: null, session: false, sessionId: '', prioOnly: true };
 let db = { activeId: '', engagements: {} };
 
 /* ---------- storage (localStorage, wrapped; the JSON file export is the real backup) ---------- */
@@ -30,8 +30,9 @@ function save() {
 function flushSave() { if (!saveTimer) return; clearTimeout(saveTimer); saveTimer = null; try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); } catch (err) { /* ignore */ } }
 window.addEventListener('pagehide', flushSave);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
-function saveUI() { try { localStorage.setItem(STORE_KEY + '.ui', JSON.stringify({ tab: ui.tab, anon: ui.anon, showCost: ui.showCost, ghosts: ui.ghosts, compare: ui.compare, coll: ui.coll, theme: ui.theme })); } catch (err) { /* ignore */ } }
+function saveUI() { try { localStorage.setItem(STORE_KEY + '.ui', JSON.stringify({ tab: ui.tab, pv: ui.pv, execView: ui.execView, anon: ui.anon, showCost: ui.showCost, ghosts: ui.ghosts, compare: ui.compare, coll: ui.coll, theme: ui.theme })); } catch (err) { /* ignore */ } }
 const E = () => db.engagements[db.activeId];
+function procOfStep(id) { return E().processes.find((p) => (p.steps || []).some((x) => x.id === id)); }
 function reviewCtx() {
   if (!ui.review) return {}; const proc = E().processes.find((x) => x.id === ui.review.procId); if (!proc) return {};
   const rev = (proc.reviews || []).find((r) => r.id === ui.review.revId); return { proc, rev, step: rev ? (proc.steps || [])[ui.review.idx] : null };
@@ -128,7 +129,7 @@ const FIELD_DEFS = {
   departments: [['id', 'text'], ['name', 'text'], ['type', DEPT_TYPES.map((d) => d[0])], ['headId', 'person'], ['notes', 'text']],
   people: [['id', 'text'], ['name', 'text'], ['title', 'text'], ['departmentId', 'dept'], ['managerId', 'person'], ['employmentType', ['Full-time', 'Part-time', 'Contractor', 'Outsourced', 'Vacant']], ['fte', 'num'], ['annualCost', 'num'], ['location', 'text'], ['startDate', 'date'], ['notes', 'text']],
   tools: [['id', 'text'], ['name', 'text'], ['category', 'text'], ['vendor', 'text'], ['monthlyCost', 'num'], ['seats', 'num'], ['activeUsers', 'num'], ['departmentIds', 'text'], ['ownerId', 'person'], ['purpose', 'text'], ['notes', 'text']],
-  processes: [['id', 'text'], ['name', 'text'], ['stage', STAGES.map((x) => x[0])], ['departmentId', 'dept'], ['ownerId', 'person'], ['confidence', Object.keys(CONFIDENCE)], ['sources', 'text'], ['summary', 'long'], ['talkingPoints', 'long'], ['findingIds', 'text'], ['frequency', 'text'], ['runsPerMonth', 'num'], ['hoursPerMonth', 'num'], ['inputs', 'text'], ['outputs', 'text'], ['steps', 'json']],
+  processes: [['id', 'text'], ['name', 'text'], ['group', 'text'], ['leadsTo', 'text'], ['departmentId', 'dept'], ['ownerId', 'person'], ['confidence', Object.keys(CONFIDENCE)], ['sources', 'text'], ['summary', 'long'], ['talkingPoints', 'long'], ['findingIds', 'text'], ['frequency', 'text'], ['runsPerMonth', 'num'], ['hoursPerMonth', 'num'], ['inputs', 'text'], ['outputs', 'text'], ['steps', 'json']],
   segments: [['id', 'text'], ['name', 'text'], ['customers', 'num'], ['annualRevenue', 'num'], ['churnPct', 'num'], ['acquisitionChannel', 'text'], ['notes', 'text']],
   markets: [['id', 'text'], ['name', 'text'], ['region', 'text'], ['revenueShare', 'num'], ['notes', 'text']],
   topClients: [['id', 'text'], ['name', 'text'], ['segmentId', 'text'], ['annualRevenue', 'num'], ['notes', 'text']],
@@ -241,10 +242,8 @@ function stripMarks(o) { return JSON.parse(JSON.stringify(o, (k, v) => (k.starts
 const actions = {
   tab: (el) => { ui.tab = el.dataset.id; saveUI(); render(); window.scrollTo(0, 0); },
   setScenario: (el) => { ui.scenario = el.dataset.id; render(); },
-  proc: (el) => { ui.processId = el.dataset.id; ui.stepId = ''; ui.jView = ''; ui.review = null; ui.reviewSetup = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; render(); },
-  procView: (el) => { ui.procView = el.dataset.id; render(); },
+  proc: (el) => { ui.pv = Object.assign({}, ui.pv, { mode: 'proc', procs: [el.dataset.id] }); ui.stepId = ''; ui.review = null; ui.reviewSetup = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; saveUI(); render(); },
   flowStep: (el) => {
-    if (ui.jView === 'journey') { const st = stateFor(E(), ui.scenario); const p = st.processes.find((x) => (x.steps || []).some((y) => y.id === el.dataset.id)); if (!p) return; ui.jView = ''; ui.processId = p.id; ui.stepId = el.dataset.id; ui.flowZoom = 0; ui.flowColsAuto = 0; render(); const n = document.querySelector(`.flow-svg g.fnode[data-id="${CSS.escape(ui.stepId)}"]`); if (n) n.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
     if (ui.review) { const { proc } = reviewCtx(); const i = proc ? (proc.steps || []).findIndex((x) => x.id === el.dataset.id) : -1; if (i >= 0) { ui.review.idx = i; render(); } return; }
     ui.stepId = el.dataset.id; render();
     const n = document.querySelector(`.flow-svg g.fnode[data-id="${CSS.escape(ui.stepId)}"]`);
@@ -252,21 +251,45 @@ const actions = {
     const side = document.querySelector('.flow-side'); if (side && getComputedStyle(side).position !== 'sticky' && el.closest('.flow-svg')) side.scrollIntoView({ behavior: 'smooth', block: 'start' });
   },
   flowClear: () => { ui.stepId = ''; render(); },
-  journeyOpen: () => { ui.jView = 'journey'; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; ui.review = null; render(); },
-  journeyClose: () => { ui.jView = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; render(); },
-  journeySet: (el) => { const st = stateFor(E(), ui.scenario); const J = journeyState(st); J[el.dataset.k] = el.dataset.id; ui.journey = { by: J.by, layout: J.layout, teams: J.teams, procs: J.procs }; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; render(); },
-  journeyTick: (el) => {
-    const st = stateFor(E(), ui.scenario); const J = journeyState(st); const key = el.dataset.kind === 'team' ? 'teams' : 'procs';
-    let list = J[key].filter((x) => x !== el.dataset.id); if (el.checked) list.push(el.dataset.id);
-    if (!list.length) { toast('Keep at least one ticked'); render(); return; }
-    const order = el.dataset.kind === 'team' ? J.allTeams : J.allProcs; list = order.filter((x) => list.includes(x));
-    ui.journey = { by: J.by, layout: J.layout, teams: key === 'teams' ? list : J.teams, procs: key === 'procs' ? list : J.procs }; ui.flowZoom = 0; ui.flowColsAuto = 0; render();
+  pvSet: (el) => { ui.pv = Object.assign({}, ui.pv, { [el.dataset.k]: el.dataset.id }); ui.stepId = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; ui.reviewSetup = ''; saveUI(); render(); },
+  pvTick: (el) => {
+    const P = pvState(stateFor(E(), ui.scenario)); const k = el.dataset.kind, id = el.dataset.id; const V = Object.assign({}, ui.pv);
+    const toggle = (list, all) => { let l = list.filter((x) => x !== id); if (el.checked) l.push(id); if (!l.length) { toast('Keep at least one ticked'); return null; } return all.filter((x) => l.includes(x)); };
+    if (k === 'dept1') { V.dept = id; V.dprocs = []; }
+    if (k === 'dproc') { const l = toggle(P.procIds, P.deptProcs); if (!l) return render(); V.dprocs = l; }
+    if (k === 'proc') { const l = toggle(P.procIds, P.procs.map((p) => p.id)); if (!l) return render(); V.procs = l; V.depts = []; }
+    if (k === 'dept') { const l = toggle(P.shownDepts, P.availDepts); if (!l) return render(); V.depts = l; }
+    ui.pv = V; ui.stepId = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; ui.reviewSetup = ''; saveUI(); render();
   },
-  exportJourney: (el) => {
-    const e = E(); const st = stateFor(e, ui.scenario); const J = journeyState(st); const exec = ui.execView !== false; const k = el.dataset.id;
-    const markup = J.layout === 'lanes' ? journeyLanes(st, J, { exec, interactive: false }) : journeyFlow(st, J, { exec, interactive: false, cols: ui.flowCols || ui.flowColsAuto || 4 });
+  pvLink: (el) => {
+    const proc = E().processes.find((x) => x.id === ui.processId); if (!proc) return;
+    const l = splitList(proc.leadsTo).filter((x) => x !== el.dataset.id); if (el.checked) l.push(el.dataset.id); proc.leadsTo = l.join(','); touch(proc); save(); render();
+  },
+  procNew: () => {
+    const n = prompt('Name of the new process (e.g. "Monthly client reporting")'); if (!n || !n.trim()) return;
+    const P = pvState(stateFor(E(), ui.scenario)); const team = P.mode === 'dept' ? P.dept : '';
+    const p = { id: uid('pr'), name: n.trim(), group: '', leadsTo: '', inputs: '', outputs: '', confidence: 'heard', steps: [{ id: uid('s'), name: 'First step', team, actorLabel: '', toolId: '', automated: false, durationMins: '', elapsedDays: '', painPoint: '', flags: [] }] };
+    E().processes.push(p); touch(p); save();
+    ui.pv = Object.assign({}, ui.pv, { mode: 'proc', procs: [p.id], depts: [] }); ui.stepId = p.steps[0].id; ui.editStep = p.steps[0].id; saveUI(); render(); toast('Process created. Rename the first step and add the rest with + Step after.');
+  },
+  procDelete: () => {
+    const e = E(); const i = e.processes.findIndex((x) => x.id === ui.processId); if (i < 0 || !confirm(`Delete the process "${e.processes[i].name}" and all its steps?`)) return;
+    const id = e.processes[i].id; e.processes.splice(i, 1); e.meta.deleted = Object.assign({}, e.meta.deleted, { ['processes:' + id]: nowISO() });
+    e.processes.forEach((p) => { if (splitList(p.leadsTo).includes(id)) { p.leadsTo = splitList(p.leadsTo).filter((x) => x !== id).join(','); touch(p); } });
+    ui.pv = Object.assign({}, ui.pv, { procs: [], dprocs: [] }); ui.stepId = ''; save(); saveUI(); render();
+  },
+  pvExport: (el) => {
+    const e = E(); const st = stateFor(e, ui.scenario); const P = pvState(st); const internal = ui.flowAudience === 'internal'; const k = el.dataset.id; const exec = ui.execView !== false;
     const slug = (s2) => String(s2).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    const base = `${slug(e.client.name)}-journey-${J.by === 'team' ? J.teams.join('-') : 'processes'}-${J.layout}-${todayISO()}`;
+    const base = `${slug(e.client.name)}-${P.mode === 'dept' ? slug(teamInfo(P.dept)[1]) : 'processes'}-${P.layout === 'lanes' ? 'swimlane' : 'flow'}${internal ? '-INTERNAL' : ''}-${todayISO()}`;
+    const seqChains = pvSeq(st, P);
+    if (k === 'all') {
+      const procs = seqChains.flatMap((c) => c.chain); const html2 = flowExportDoc(e, procs, st, { internal });
+      const w2 = window.open('', '_blank'); if (!w2) { downloadFile(base + '.html', html2, 'text/html'); return toast('Pop-up blocked: downloaded as an HTML page instead'); }
+      w2.document.open(); w2.document.write(html2); w2.document.close(); setTimeout(() => { w2.focus(); w2.print(); }, 400); return toast('Choose "Save as PDF" in the print window');
+    }
+    const cols = ui.flowCols || ui.flowColsAuto || 3;
+    const markup = pvVisual(st, P, seqChains, { exec, interactive: false, cols, clientSafe: !internal });
     if (k === 'svg' || k === 'png') {
       const { xml, W, H } = svgStandalone(markup);
       if (k === 'svg') return downloadFile(base + '.svg', xml, 'image/svg+xml');
@@ -275,24 +298,26 @@ const actions = {
         c.toBlob((b) => { const a2 = document.createElement('a'); a2.href = URL.createObjectURL(b); a2.download = base + '.png'; document.body.appendChild(a2); a2.click(); setTimeout(() => { URL.revokeObjectURL(a2.href); a2.remove(); }, 500); }, 'image/png'); };
       img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml); return;
     }
-    const html = journeyExportDoc(e, st, markup.replace(/ data-tip="[^"]*"/g, ''), J);
+    const flags = []; seqChains.forEach((c) => c.chain.forEach((p) => flowFlags(p, st.people, st.tools, st.departments, !internal).forEach((f) => flags.push(f))));
+    const html = pvExportDoc(e, st, P, internal ? markup : markup.replace(/ data-tip="[^"]*"/g, ''), flags, internal);
+    if (k === 'html') return downloadFile(base + '.html', html, 'text/html');
     const w = window.open('', '_blank'); if (!w) { downloadFile(base + '.html', html, 'text/html'); return toast('Pop-up blocked: downloaded as an HTML page instead'); }
     w.document.open(); w.document.write(html); w.document.close(); setTimeout(() => { w.focus(); w.print(); }, 400); toast('Choose "Save as PDF" in the print window');
   },
   stepEdit: () => { ui.editStep = ui.editStep === ui.stepId ? '' : ui.stepId; render(); },
   stepAdd: () => {
-    const proc = E().processes.find((x) => x.id === ui.processId); if (!proc) return; const i = (proc.steps || []).findIndex((x) => x.id === ui.stepId);
+    const proc = procOfStep(ui.stepId); if (!proc) return; const i = (proc.steps || []).findIndex((x) => x.id === ui.stepId);
     const n = prompt('Name of the new step'); if (!n || !n.trim()) return;
     const cur = proc.steps[i] || {}; const ns = { id: uid('s'), name: n.trim(), team: cur.team || '', actorLabel: '', toolId: '', automated: false, durationMins: '', elapsedDays: '', painPoint: '', flags: [] };
     proc.steps.splice(i + 1, 0, ns); ui.stepId = ns.id; ui.editStep = ns.id; touch(proc); save(); render();
   },
   stepDelete: () => {
-    const proc = E().processes.find((x) => x.id === ui.processId); if (!proc) return; const i = (proc.steps || []).findIndex((x) => x.id === ui.stepId);
+    const proc = procOfStep(ui.stepId); if (!proc) return; const i = (proc.steps || []).findIndex((x) => x.id === ui.stepId);
     if (i < 0 || !confirm(`Delete step ${i + 1}: "${proc.steps[i].name}"?`)) return;
     proc.steps.splice(i, 1); ui.stepId = ''; ui.editStep = ''; touch(proc); save(); render();
   },
   stepMove: (el) => {
-    const proc = E().processes.find((x) => x.id === ui.processId); if (!proc) return; const i = proc.steps.findIndex((x) => x.id === ui.stepId); const j = i + num(el.dataset.id);
+    const proc = procOfStep(ui.stepId); if (!proc) return; const i = proc.steps.findIndex((x) => x.id === ui.stepId); const j = i + num(el.dataset.id);
     if (i < 0 || j < 0 || j >= proc.steps.length) return; const [x] = proc.steps.splice(i, 1); proc.steps.splice(j, 0, x); touch(proc); save(); render();
   },
   reviewSetup: () => { ui.reviewSetup = ui.processId; render(); },
@@ -355,8 +380,8 @@ const actions = {
       const w2 = window.open('', '_blank'); if (!w2) { downloadFile(`${slug(e.client.name)}-${slug(p.name)}-sense-check-${todayISO()}.html`, html2, 'text/html'); return toast('Pop-up blocked: downloaded as an HTML page instead'); }
       w2.document.open(); w2.document.write(html2); w2.document.close(); setTimeout(() => { w2.focus(); w2.print(); }, 400); return toast('Choose "Save as PDF" in the print window');
     }
-    const all = k === 'all'; const procs = all ? STAGES.flatMap(([id]) => st.processes.filter((x) => x.stage === id)).concat(st.processes.filter((x) => !STAGES.some(([id]) => id === x.stage))).filter((x) => !x._removed) : [p];
-    const html = flowExportDoc(e, procs, st, { internal, journey: all });
+    const all = k === 'all'; const procs = all ? st.processes.filter((x) => !x._removed) : [p];
+    const html = flowExportDoc(e, procs, st, { internal });
     if (k === 'html') return downloadFile((all ? `${slug(e.client.name)}-process-flows${internal ? '-INTERNAL' : ''}-${todayISO()}` : base) + '.html', html, 'text/html');
     const w = window.open('', '_blank'); if (!w) return toast('Allow pop-ups for this file to print, or use HTML page.');
     w.document.open(); w.document.write(html); w.document.close(); setTimeout(() => { w.focus(); w.print(); }, 400);
@@ -367,12 +392,12 @@ const actions = {
     const svg = document.querySelector('.flow-svg'); const wrap = document.querySelector('.flow-wrap'); if (!svg || !wrap) return;
     const W = +svg.dataset.w, H = +svg.dataset.h; const cur = ui.flowZoom || svg.getBoundingClientRect().width / W; const k = el.dataset.id;
     if (k === 'fit') {
-      const availW = wrap.clientWidth - 26, availH = window.innerHeight - 150;
-      if (ui.jView === 'journey' && (ui.journey || {}).layout !== 'flow') { ui.flowZoom = Math.max(0.15, +Math.min(1.2, availW / W, availH / H).toFixed(3)); ui.flowWhole = true; render(); document.querySelector('.flow-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
-      const proc = ui.jView === 'journey' ? { steps: [...document.querySelectorAll('.flow-svg g.fnode')] } : stateFor(E(), ui.scenario).processes.find((x) => x.id === ui.processId); const n = proc ? (proc.steps || []).length : 1;
-      const fitFor = (c) => { const [w, h] = flowDims(n, c); return Math.min(availW / w, availH / h); };
-      if (!ui.flowCols) { let best = 1; for (let c = 1; c <= Math.min(6, n); c++) if (fitFor(c) > fitFor(best) + 0.001) best = c; ui.flowColsAuto = best; }
-      ui.flowZoom = Math.max(0.2, +Math.min(1.2, fitFor(ui.flowCols || ui.flowColsAuto)).toFixed(3)); ui.flowWhole = true; render();
+      const availW = wrap.clientWidth - 26, availH = window.innerHeight - 170;
+      if ((ui.pv || {}).layout === 'lanes') { ui.flowZoom = Math.max(0.15, +Math.min(1.2, availW / W, availH / H).toFixed(3)); ui.flowWhole = true; render(); document.querySelector('.flow-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+      const ns = [...document.querySelectorAll('.pv-visual .flow-svg')].map((x) => x.querySelectorAll('g.fnode').length).filter(Boolean); if (!ns.length) return;
+      const fitFor = (c) => { const w = Math.max(...ns.map((n) => flowDims(n, c)[0])); const h = sum(ns.map((n) => flowDims(n, c)[1])) + (ns.length - 1) * 40; return Math.min(availW / w, availH / h); };
+      if (!ui.flowCols) { let best = 1; for (let c = 1; c <= Math.min(6, Math.max(...ns)); c++) if (fitFor(c) > fitFor(best) + 0.001) best = c; ui.flowColsAuto = best; }
+      ui.flowZoom = Math.max(0.15, +Math.min(1.2, fitFor(ui.flowCols || ui.flowColsAuto)).toFixed(3)); ui.flowWhole = true; render();
       document.querySelector('.flow-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' }); return;
     }
     ui.flowWhole = false;
@@ -380,7 +405,7 @@ const actions = {
     render();
   },
   addFlowFlag: (el) => {
-    const proc = E().processes.find((x) => x.id === ui.processId); const st = proc && (proc.steps || []).find((x) => x.id === ui.stepId);
+    const proc = procOfStep(ui.stepId); const st = proc && (proc.steps || []).find((x) => x.id === ui.stepId);
     if (!st) return toast('This step only exists in the scenario. Flag it in the current state.');
     const label = { issue: 'Describe the issue', unverified: 'What needs to be confirmed?', weakness: 'Describe the weakness' }[el.dataset.id];
     const text = prompt(label); if (!text || !text.trim()) return;
@@ -388,7 +413,7 @@ const actions = {
     touch(proc); save(); render(); toast('Flag added to the flow');
   },
   removeFlowFlag: (el) => {
-    const proc = E().processes.find((x) => x.id === ui.processId); const st = proc && (proc.steps || []).find((x) => x.id === ui.stepId);
+    const proc = procOfStep(ui.stepId); const st = proc && (proc.steps || []).find((x) => x.id === ui.stepId);
     if (!st || !st.flags) return; st.flags.splice(+el.dataset.id, 1); touch(proc); save(); render();
   },
   area: (el) => { ui.area = el.dataset.id; render(); },
@@ -585,9 +610,9 @@ document.addEventListener('change', (ev) => {
   if (t.dataset.draftsel) { setPath(ui.draft, t.dataset.draftsel, t.value); if (t.dataset.draftsel === 'personId') { const p = E().people.find((x) => x.id === t.value); ui.draft.level = guessLevel(E(), p); ui.draft.deptType = ''; } saveDraft(ui.draft); render(); return; }
   if (t.dataset.draftchk) { ui.draft[t.dataset.draftchk] = t.checked; saveDraft(ui.draft); return; }
   if (t.dataset.action && t.type === 'checkbox') { const fn = actions[t.dataset.action]; if (fn) fn(t, ev); return; }
-  if (t.hasAttribute('data-proc-stage')) { const proc = E().processes.find((x) => x.id === ui.processId); if (!proc) return; proc.stage = t.value; touch(proc); save(); render(); toast(t.value ? 'Placed on the journey' : 'Removed from the journey'); return; }
+  if (t.dataset.pe) { const proc = E().processes.find((x) => x.id === ui.processId); if (!proc) return; proc[t.dataset.pe] = t.value; touch(proc); save(); render(); return; }
   if (t.dataset.ed) {
-    const proc = E().processes.find((x) => x.id === ui.processId); const step = proc && (proc.steps || []).find((x) => x.id === ui.editStep); if (!step) return;
+    const proc = procOfStep(ui.editStep); const step = proc && (proc.steps || []).find((x) => x.id === ui.editStep); if (!step) return;
     const f = t.dataset.ed; let v = t.value;
     if (f === 'durationMins' || f === 'elapsedDays') { v = v === '' ? '' : num(v); if (!(step.review && ['confirmed', 'corrected'].includes(step.review.status))) step.timeBasis = 'assumed'; }
     if (f === 'automated') v = v === 'yes';
