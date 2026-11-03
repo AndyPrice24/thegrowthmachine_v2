@@ -2,7 +2,7 @@
    App shell — storage, routing, actions, data editor, Claude bridge
    ============================================================ */
 const STORE_KEY = 'tgm.studio.v1';
-const ui = { tab: 'overview', scenario: 'current', processId: '', stepId: '', procView: 'flow', flowCols: 0, anon: false, ghosts: true, showCost: true, compare: true, zoom: 1, area: 'All', recType: 'All', coll: 'people', theme: '', reportType: 'status', capture: false, draft: null, session: false, sessionId: '', prioOnly: true };
+const ui = { tab: 'overview', scenario: 'current', processId: '', stepId: '', procView: 'flow', flowCols: 0, flowZoom: 0, flowWhole: false, anon: false, ghosts: true, showCost: true, compare: true, zoom: 1, area: 'All', recType: 'All', coll: 'people', theme: '', reportType: 'status', capture: false, draft: null, session: false, sessionId: '', prioOnly: true };
 let db = { activeId: '', engagements: {} };
 
 /* ---------- storage (localStorage, wrapped; the JSON file export is the real backup) ---------- */
@@ -237,9 +237,31 @@ function stripMarks(o) { return JSON.parse(JSON.stringify(o, (k, v) => (k.starts
 const actions = {
   tab: (el) => { ui.tab = el.dataset.id; saveUI(); render(); window.scrollTo(0, 0); },
   setScenario: (el) => { ui.scenario = el.dataset.id; render(); },
-  proc: (el) => { ui.processId = el.dataset.id; ui.stepId = ''; render(); },
+  proc: (el) => { ui.processId = el.dataset.id; ui.stepId = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; render(); },
   procView: (el) => { ui.procView = el.dataset.id; render(); },
-  flowStep: (el) => { ui.stepId = el.dataset.id; render(); const d = document.querySelector('.flow-panels'); if (d && d.getBoundingClientRect().top > window.innerHeight) d.scrollIntoView({ behavior: 'smooth', block: 'start' }); },
+  flowStep: (el) => {
+    ui.stepId = el.dataset.id; render();
+    const n = document.querySelector(`.flow-svg g.fnode[data-id="${CSS.escape(ui.stepId)}"]`);
+    if (n && el.dataset.scroll) n.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+    const side = document.querySelector('.flow-side'); if (side && getComputedStyle(side).position !== 'sticky' && el.closest('.flow-svg')) side.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  },
+  flowClear: () => { ui.stepId = ''; render(); },
+  flowCols: (el) => { ui.flowCols = +el.dataset.id; ui.flowZoom = 0; ui.flowWhole = false; render(); },
+  flowZoom: (el) => {
+    const svg = document.querySelector('.flow-svg'); const wrap = document.querySelector('.flow-wrap'); if (!svg || !wrap) return;
+    const W = +svg.dataset.w, H = +svg.dataset.h; const cur = ui.flowZoom || svg.getBoundingClientRect().width / W; const k = el.dataset.id;
+    if (k === 'fit') {
+      const availW = wrap.clientWidth - 26, availH = window.innerHeight - 150;
+      const proc = stateFor(E(), ui.scenario).processes.find((x) => x.id === ui.processId); const n = proc ? (proc.steps || []).length : 1;
+      const fitFor = (c) => { const [w, h] = flowDims(n, c); return Math.min(availW / w, availH / h); };
+      if (!ui.flowCols) { let best = 1; for (let c = 1; c <= Math.min(6, n); c++) if (fitFor(c) > fitFor(best) + 0.001) best = c; ui.flowColsAuto = best; }
+      ui.flowZoom = Math.max(0.2, +Math.min(1.2, fitFor(ui.flowCols || ui.flowColsAuto)).toFixed(3)); ui.flowWhole = true; render();
+      document.querySelector('.flow-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' }); return;
+    }
+    ui.flowWhole = false;
+    ui.flowZoom = k === '100' ? 1 : Math.max(0.2, Math.min(2.5, +(cur * (k === 'in' ? 1.25 : 0.8)).toFixed(3)));
+    render();
+  },
   addFlowFlag: (el) => {
     const proc = E().processes.find((x) => x.id === ui.processId); const st = proc && (proc.steps || []).find((x) => x.id === ui.stepId);
     if (!st) return toast('This step only exists in the scenario. Flag it in the current state.');
@@ -386,6 +408,20 @@ function openModal(title, text, onSave) {
 }
 
 /* ---------- events ---------- */
+document.addEventListener('wheel', (ev) => {
+  const wrap = ev.target.closest && ev.target.closest('.flow-wrap'); if (!wrap || !ev.ctrlKey) return;
+  ev.preventDefault(); const svg = wrap.querySelector('.flow-svg'); if (!svg) return;
+  const cur = ui.flowZoom || svg.getBoundingClientRect().width / +svg.dataset.w;
+  ui.flowZoom = Math.max(0.2, Math.min(2.5, +(cur * (ev.deltaY < 0 ? 1.08 : 0.926)).toFixed(3))); ui.flowWhole = false;
+  const sl = wrap.scrollLeft, st = wrap.scrollTop; render(); const w2 = document.querySelector('.flow-wrap'); if (w2) { w2.scrollLeft = sl; w2.scrollTop = st; }
+}, { passive: false });
+let panning = null;
+document.addEventListener('mousedown', (ev) => {
+  const wrap = ev.target.closest && ev.target.closest('.flow-wrap.zoomed'); if (!wrap || ev.target.closest('.clk') || ev.button) return;
+  panning = { wrap, x: ev.clientX, y: ev.clientY, l: wrap.scrollLeft, t: wrap.scrollTop }; wrap.classList.add('panning'); ev.preventDefault();
+});
+document.addEventListener('mousemove', (ev) => { if (!panning) return; panning.wrap.scrollLeft = panning.l - (ev.clientX - panning.x); panning.wrap.scrollTop = panning.t - (ev.clientY - panning.y); });
+document.addEventListener('mouseup', () => { if (panning) { panning.wrap.classList.remove('panning'); panning = null; } });
 document.addEventListener('click', (ev) => {
   const a = ev.target.closest('[data-action]'); if (!a) return;
   if (a.type === 'checkbox') return; // handled on change

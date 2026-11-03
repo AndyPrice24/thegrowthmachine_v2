@@ -11,6 +11,8 @@ const TEAMS = [
 const STAGES = [['attract', 'Attract'], ['sell', 'Sell'], ['onboard', 'Onboard'], ['deliver', 'Deliver & maintain'], ['grow', 'Grow & renew']];
 const CONFIDENCE = { heard: ['Heard', 'Based on what people told us; not yet checked', 'warn'], corroborated: ['Corroborated', 'Confirmed by more than one source', 's1'], measured: ['Measured', 'Checked against data or observed', 'good'] };
 const FLAG_TYPES = { issue: ['Issue', 'raised by the team or interviews'], unverified: ['Unverified', 'to confirm'], weakness: ['Weakness', 'flagged by the machine'] };
+/** Size of a flow schematic for n steps in c columns (keep in step with flowSchematic). */
+const flowDims = (n, c) => { c = Math.max(1, Math.min(c, n)); const rows = Math.ceil(n / c); return [34 * 2 + c * 262 + (c - 1) * 78, 74 + rows * (136 + 96) - 96 + 92]; };
 const teamInfo = (id) => TEAMS.find((t) => t[0] === id) || ['', 'Unassigned', 'var(--line)'];
 
 function stepTeam(s, pById, dById) {
@@ -53,7 +55,7 @@ function flagShape(type, n, x, y, r = 11) {
 const flagIcon = (type, n = '') => `<svg class="fl-ico" width="24" height="24" viewBox="-12 -12 24 24" aria-hidden="true">${flagShape(type, n, 0, type === 'unverified' ? 2 : 0, 10)}</svg>`;
 
 /** Serpentine flow: Start → numbered step nodes (team-coloured) → End, with warning markers on nodes and links. */
-function flowSchematic(proc, people, tools, departments, { cols = 3, selected = '', anonymise = false, interactive = true } = {}) {
+function flowSchematic(proc, people, tools, departments, { cols = 3, selected = '', anonymise = false, interactive = true, zoom = 0 } = {}) {
   const steps = proc.steps || [];
   if (!steps.length) return '<p class="empty">This process has no steps yet.</p>';
   const pById = byId(people), tById = byId(tools), dById = byId(departments);
@@ -64,7 +66,9 @@ function flowSchematic(proc, people, tools, departments, { cols = 3, selected = 
   const W = PX * 2 + cols * NW + (cols - 1) * GX, H = TOP + rows * (NH + GY) - GY + 92;
   const pos = steps.map((s, i) => { const r = Math.floor(i / cols); let c = i % cols; if (r % 2) c = cols - 1 - c; return { x: PX + c * (NW + GX), y: TOP + r * (NH + GY), r }; });
   const mid = `fa-${esc(proc.id)}`;
-  let svg = `<svg class="flow-svg" viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px" role="img" aria-label="Flow: ${esc(proc.name)}">`;
+  const si = selected ? steps.findIndex((x) => x.id === selected) : -1;
+  const near = si < 0 ? null : new Set([si - 1, si, si + 1]);
+  let svg = `<svg class="flow-svg" viewBox="0 0 ${W} ${H}" ${zoom ? `width="${Math.round(W * zoom)}" height="${Math.round(H * zoom)}" style="max-width:none"` : `width="100%" style="max-width:${W}px"`} role="img" aria-label="Flow: ${esc(proc.name)}" data-w="${W}" data-h="${H}">`;
   svg += `<defs><marker id="${mid}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fa"/></marker></defs>`;
   // start / end pills
   const pill = (x, y, label, text) => `<g class="pill"><rect x="${x}" y="${y}" width="${NW}" height="34" rx="17"/><text x="${x + 16}" y="${y + 22}"><tspan class="pl">${label}</tspan> ${esc(trunc(text, 34))}</text></g>`;
@@ -82,7 +86,8 @@ function flowSchematic(proc, people, tools, departments, { cols = 3, selected = 
     else { const x = a.x + NW / 2; d = `M${x},${a.y + NH} V${b.y - 3}`; mx = x; my = (a.y + NH + b.y) / 2; }
     const ta = teamInfo(stepTeam(steps[i - 1], pById, dById)), tb = teamInfo(stepTeam(s, pById, dById));
     const handoff = ta[0] && tb[0] && ta[0] !== tb[0];
-    svg += `<path class="link${handoff ? ' handoff' : ''}${ghost}" d="${d}" marker-end="url(#${mid})"/>`;
+    const hl = near && (i === si || i - 1 === si) ? ' hl' : near ? ' dim' : '';
+    svg += `<path class="link${handoff ? ' handoff' : ''}${ghost}${hl}" d="${d}" marker-end="url(#${mid})"/>`;
     const lf = flags.filter((f) => f.on === 'link' && f.stepId === s.id);
     if (lf.length) svg += lf.map((f, k) => `<g data-tip="${esc(`${f.n}. ${f.text}`)}" ${interactive ? `data-action="flowStep" data-id="${esc(s.id)}"` : ''} class="clk">${flagShape('weakness', f.n, mx + k * 26, my)}</g>`).join('');
     else if (handoff) svg += `<g class="ho" transform="translate(${mx},${my})" data-tip="${esc(`Hand-off: ${ta[1]} → ${tb[1]}`)}"><circle r="9"/><text y="4" text-anchor="middle">⇄</text></g>`;
@@ -96,7 +101,7 @@ function flowSchematic(proc, people, tools, departments, { cols = 3, selected = 
     const t = tById[s.toolId];
     const lines = wrapText(s.name || 'Step', 31, 3);
     const nf = flags.filter((f) => f.on === 'node' && f.stepId === s.id);
-    svg += `<g class="fnode ${s.automated ? 'auto' : 'manual'} ${st} ${selected === s.id ? 'sel' : ''} ${interactive ? 'clk' : ''}" transform="translate(${x},${y})" ${interactive ? `data-action="flowStep" data-id="${esc(s.id)}"` : ''} data-tip="${esc([s.name, actor, t ? 'Tool: ' + t.name : 'No system', s.automated ? 'Automated' : 'Manual', num(s.durationMins) ? num(s.durationMins) + ' min' : 'Time not measured'].filter(Boolean).join(' · '))}">`;
+    svg += `<g class="fnode ${s.automated ? 'auto' : 'manual'} ${st} ${selected === s.id ? 'sel' : near && near.has(i) ? 'nbr' : near ? 'dim' : ''} ${interactive ? 'clk' : ''}" transform="translate(${x},${y})" ${interactive ? `data-action="flowStep" data-id="${esc(s.id)}"` : ''} data-tip="${esc([s.name, actor, t ? 'Tool: ' + t.name : 'No system', s.automated ? 'Automated' : 'Manual', num(s.durationMins) ? num(s.durationMins) + ' min' : 'Time not measured'].filter(Boolean).join(' · '))}">`;
     svg += `<rect class="nb" width="${NW}" height="${NH}" rx="12"/>`;
     svg += `<rect class="band" width="${NW}" height="28" rx="12" style="fill:${tm[2]}"/><rect class="band" y="16" width="${NW}" height="12" style="fill:${tm[2]}"/>`;
     svg += `<circle class="num" cx="18" cy="14" r="10"/><text class="numt" x="18" y="18" text-anchor="middle">${i + 1}</text>`;
@@ -127,7 +132,7 @@ function journeyStrip(procs, people, tools, departments, current) {
   const pBtn = (p) => `<button class="jp ${p.id === current ? 'on' : ''}" data-action="proc" data-id="${esc(p.id)}"><strong>${esc(p.name)}</strong><span class="jc">${counts(p).filter(([, n]) => n).map(([t, n]) => `<span class="jcn jcn-${t}" title="${FLAG_TYPES[t][0]}">${flagIcon(t)}${n}</span>`).join('') || '<span class="faint small">No warnings</span>'}</span>${p.confidence ? `<span class="conf conf-${CONFIDENCE[p.confidence] ? CONFIDENCE[p.confidence][2] : 'warn'}">${esc((CONFIDENCE[p.confidence] || [p.confidence])[0])}</span>` : ''}</button>`;
   const stageCards = STAGES.map(([id, label], i) => {
     const ps = procs.filter((p) => p.stage === id);
-    return `<div class="jstage ${ps.length ? '' : 'jempty'}"><div class="jh"><span class="jn">${i + 1}</span>${esc(label)}</div>${ps.length ? ps.map(pBtn).join('') : '<p class="faint small">Not mapped yet</p>'}</div>`;
+    return `<div class="jstage ${ps.length ? '' : 'jempty'}"><div class="jh ${ps.length ? 'clk' : ''}" ${ps.length ? `data-action="proc" data-id="${esc(ps[0].id)}"` : ''}><span class="jn">${i + 1}</span>${esc(label)}</div>${ps.length ? ps.map(pBtn).join('') : '<p class="faint small">Not mapped yet</p>'}</div>`;
   }).join('<div class="jarrow" aria-hidden="true">›</div>');
   const other = procs.filter((p) => !STAGES.some(([id]) => id === p.stage));
   return `<div class="journey">${stageCards}</div>${other.length ? `<div class="jother"><span class="faint small">Other processes:</span> ${other.map(pBtn).join('')}</div>` : ''}`;
@@ -153,24 +158,46 @@ function processBrief(e, p) {
   </div>`;
 }
 
-/** Numbered warnings list + selected step detail. */
-function flowSidePanels(e, p, people, tools, departments) {
+/** Side panel: all warnings (nothing selected) or the selected step with where it comes from and goes to. */
+function flowSidePanel(e, p, people, tools, departments) {
   const flags = flowFlags(p, people, tools, departments);
   const steps = p.steps || []; const idx = Object.fromEntries(steps.map((s, i) => [s.id, i]));
-  const list = flags.length ? `<ol class="flags">${flags.map((f) => `<li class="clk ${f.stepId === ui.stepId ? 'on' : ''}" data-action="flowStep" data-id="${esc(f.stepId)}">${flagIcon(f.type, f.n)}<div><div class="small"><b>${FLAG_TYPES[f.type][0]}</b> · ${f.on === 'link' ? 'into ' : ''}step ${idx[f.stepId] + 1}: ${esc(trunc((steps[idx[f.stepId]] || {}).name, 60))}</div><div>${esc(f.text)}</div><div class="faint small">${esc(f.by || '')}${f.date ? ' · ' + esc(f.date) : ''}</div></div></li>`).join('')}</ol>` : '<p class="empty">No warnings on this flow.</p>';
+  const pById = byId(people), dById = byId(departments), tById = byId(tools);
+  const flagLi = (f) => `<li class="clk ${f.stepId === ui.stepId ? 'on' : ''}" data-action="flowStep" data-id="${esc(f.stepId)}" data-scroll="1">${flagIcon(f.type, f.n)}<div><div class="small"><b>${FLAG_TYPES[f.type][0]}</b> · ${f.on === 'link' ? 'into ' : ''}step ${idx[f.stepId] + 1}: ${esc(trunc((steps[idx[f.stepId]] || {}).name, 60))}</div><div>${esc(f.text)}</div><div class="faint small">${esc(f.by || '')}${f.date ? ' · ' + esc(f.date) : ''}</div></div></li>`;
   const s = steps.find((x) => x.id === ui.stepId);
-  let detail = '<p class="empty">Click a step in the flow to see its detail, and to flag an issue or something unverified.</p>';
-  if (s) {
-    const pById = byId(people), dById = byId(departments), t = byId(tools)[s.toolId]; const pp = s.actorId && pById[s.actorId];
-    const tm = teamInfo(stepTeam(s, pById, dById));
-    const own = (s.flags || []).map((f, k) => `<li>${flagIcon(FLAG_TYPES[f.type] ? f.type : 'issue')} <span>${esc(f.text)} <span class="faint small">${esc(f.by || '')}${f.date ? ' · ' + esc(f.date) : ''}</span></span> <button class="btn sm ghost" data-action="removeFlowFlag" data-id="${k}" title="Remove (e.g. once verified)">✕</button></li>`).join('');
-    detail = `<h4 style="margin-top:0">Step ${idx[s.id] + 1}: ${esc(s.name)}</h4>
-      <dl class="sd"><dt>Team</dt><dd><i class="tdot" style="background:${tm[2]}"></i>${esc(tm[1])}</dd><dt>Who</dt><dd>${esc(pp ? (ui.anon ? pp.title : pp.name) : (s.actorLabel || '—'))}</dd>
+  if (!s) return card(`Warnings along this flow (${flags.length})`, flags.length ? `<p class="faint small" style="margin-top:0">Click a warning or a step to see it in context.</p><ol class="flags">${flags.map(flagLi).join('')}</ol>` : '<p class="empty">No warnings on this flow.</p>');
+  const i = idx[s.id]; const prev = steps[i - 1], next = steps[i + 1];
+  const tm = (x) => teamInfo(stepTeam(x, pById, dById));
+  const who = (x) => { const pp = x.actorId && pById[x.actorId]; return pp ? (ui.anon ? pp.title : pp.name) : (x.actorLabel || '—'); };
+  const t = tById[s.toolId];
+  const nb = (x, dir) => {
+    if (!x) return `<div class="nbx nbx-end"><span class="faint small">${dir === 'from' ? 'Start' : 'End'}</span><div>${esc(dir === 'from' ? (p.inputs || 'Trigger') : (p.outputs || 'Outcome'))}</div></div>`;
+    const a = tm(x), here = tm(s); const ho = a[0] && here[0] && a[0] !== here[0];
+    return `<button class="nbx clk" data-action="flowStep" data-id="${esc(x.id)}" data-scroll="1"><span class="faint small">${dir === 'from' ? '‹ Comes from' : 'Goes to ›'} step ${idx[x.id] + 1}${ho ? ` · <b>hand-off ${dir === 'from' ? esc(a[1]) + ' → ' + esc(here[1]) : esc(here[1]) + ' → ' + esc(a[1])}</b>` : ''}</span><div><i class="tdot" style="background:${a[2]}"></i>${esc(x.name)}</div><span class="faint small">${esc(who(x))} · ${esc((tById[x.toolId] || {}).name || 'No system')}</span></button>`;
+  };
+  const mine = flags.filter((f) => f.stepId === s.id || (next && f.on === 'link' && f.stepId === next.id));
+  const own = (s.flags || []).map((f, k) => `<li>${flagIcon(FLAG_TYPES[f.type] ? f.type : 'issue')} <span>${esc(f.text)} <span class="faint small">${esc(f.by || '')}${f.date ? ' · ' + esc(f.date) : ''}</span></span> <button class="btn sm ghost" data-action="removeFlowFlag" data-id="${k}" title="Clear (e.g. once verified)">✕ Clear</button></li>`).join('');
+  const body = `<div class="btn-row" style="margin:0 0 8px"><button class="btn sm" data-action="flowClear">← All warnings</button>${prev ? `<button class="btn sm" data-action="flowStep" data-id="${esc(prev.id)}" data-scroll="1">‹ Previous</button>` : ''}${next ? `<button class="btn sm" data-action="flowStep" data-id="${esc(next.id)}" data-scroll="1">Next ›</button>` : ''}</div>
+    <h4 style="margin-top:0">Step ${i + 1} of ${steps.length}: ${esc(s.name)}</h4>
+    ${nb(prev, 'from')}
+    <dl class="sd"><dt>Team</dt><dd><i class="tdot" style="background:${tm(s)[2]}"></i>${esc(tm(s)[1])}</dd><dt>Who</dt><dd>${esc(who(s))}</dd>
       <dt>System</dt><dd>${esc(t ? t.name : 'No system')}</dd><dt>Mode</dt><dd>${s.automated ? 'Automated' : 'Manual'}</dd><dt>Time</dt><dd>${num(s.durationMins) ? num(s.durationMins) + ' min per run' : '<span class="warn-t">Not measured</span>'}</dd>
-      ${s.input || s.output ? `<dt>In → out</dt><dd>${esc(s.input || '—')} → ${esc(s.output || '—')}</dd>` : ''}
-      ${s.painPoint ? `<dt>Pain point</dt><dd>${esc(s.painPoint)}</dd>` : ''}</dl>
-      ${own ? `<h5>Flags added</h5><ul class="ownf">${own}</ul>` : ''}
-      <div class="btn-row"><button class="btn sm" data-action="addFlowFlag" data-id="issue">+ Flag issue</button><button class="btn sm" data-action="addFlowFlag" data-id="unverified">+ Flag unverified</button><button class="btn sm" data-action="addFlowFlag" data-id="weakness">+ Flag weakness</button></div>`;
-  }
-  return `<div class="flow-panels">${card(`Warnings along this flow (${flags.length})`, list)}${card('Step detail', detail)}</div>`;
+      ${s.input || s.output ? `<dt>In → out</dt><dd>${esc(s.input || '—')} → ${esc(s.output || '—')}</dd>` : ''}</dl>
+    ${nb(next, 'to')}
+    ${mine.length ? `<h5>Warnings here (${mine.length})</h5><ol class="flags">${mine.map(flagLi).join('')}</ol>` : '<p class="small muted">No warnings on this step.</p>'}
+    ${own ? `<h5>Flags you can clear</h5><ul class="ownf">${own}</ul>` : ''}
+    <div class="btn-row"><button class="btn sm" data-action="addFlowFlag" data-id="issue">+ Flag issue</button><button class="btn sm" data-action="addFlowFlag" data-id="unverified">+ Flag unverified</button><button class="btn sm" data-action="addFlowFlag" data-id="weakness">+ Flag weakness</button></div>`;
+  return card('Step detail', body);
+}
+
+/** Zoom / layout toolbar for the flow. */
+function flowToolbar(cols) {
+  const z = ui.flowZoom;
+  return `<div class="flow-tools"><span class="faint small">View</span>
+    <button class="btn sm ${ui.flowWhole && z ? 'on' : ''}" data-action="flowZoom" data-id="fit" title="Whole flow on one screen">⤢ Whole flow</button>
+    <button class="btn sm" data-action="flowZoom" data-id="out" title="Zoom out">−</button><span class="small zl">${z ? Math.round(z * 100) + '%' : 'Fit width'}</span><button class="btn sm" data-action="flowZoom" data-id="in" title="Zoom in">+</button>
+    <button class="btn sm ${z === 1 ? 'on' : ''}" data-action="flowZoom" data-id="100" title="Full size">100%</button>
+    <span class="faint small" style="margin-left:8px">Steps per row</span>${[1, 2, 3, 4, 5].map((n) => `<button class="btn sm ${cols === n ? 'on' : ''}" data-action="flowCols" data-id="${n}">${n}</button>`).join('')}
+    <span class="faint small" style="margin-left:8px">Tip: Ctrl + scroll (or pinch) to zoom; drag to move around when zoomed in.</span>
+    ${ui.stepId ? '<button class="btn sm ghost" data-action="flowClear" style="margin-left:auto">Clear highlight</button>' : ''}</div>`;
 }
