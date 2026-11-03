@@ -234,3 +234,25 @@ ol.flags li:hover,ol.flags li.on{border-color:var(--ink)}
 @media (max-width:640px){.rv-grid,.rv-setup{grid-template-columns:1fr}}
 .step-edit{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin:8px 0;background:var(--surface-2)}
 .fnode.sel .nb{stroke:var(--red)!important;stroke-width:3.5}
+/* journey view (lanes) */
+.jl .jl-stage{fill:var(--surface-2)}.jl .jl-st{font-size:10.5px;font-weight:800;letter-spacing:.1em;fill:var(--muted)}.jl .jl-pn{font-size:12.5px;font-weight:700;fill:var(--ink)}
+.jl .jl-lane{fill:var(--surface)}.jl .jl-lane.alt{fill:var(--surface-2)}.jl .jl-lane.other{fill:var(--surface-2);opacity:.6}
+.jl .jl-ln{font-size:14px;font-weight:800;fill:var(--ink)}.jl .jl-ls{font-size:11.5px;fill:var(--muted)}
+.jl .jl-link{fill:none;stroke:var(--faint);stroke-width:1.8}.jl .jl-link.ho{stroke:var(--ink);stroke-width:2.2;stroke-dasharray:6 4}.jl .fb{fill:var(--ink)}
+.jl .jl-n .nb{fill:var(--surface);stroke:var(--faint);stroke-width:1.5}.jl .jl-n.auto .nb{stroke:var(--s1);stroke-dasharray:5 3}.jl .jl-n.decision .nb{stroke:var(--s4);stroke-width:2.5}
+.jl .jl-n.rvs-confirmed .nb,.jl .jl-n.rvs-corrected .nb{stroke:var(--good)}.jl .jl-n.rvs-not-done .nb{stroke:var(--crit);stroke-dasharray:4 4}
+.jl .jl-n .num{fill:var(--surface);stroke:var(--ink);stroke-width:1.4}.jl .jl-n.rvs-confirmed .num,.jl .jl-n.rvs-corrected .num{fill:var(--good);stroke:var(--good)}.jl .jl-n.rvs-unsure .num{fill:var(--warn);stroke:var(--warn)}.jl .jl-n.rvs-not-done .num{fill:var(--crit);stroke:var(--crit)}
+.jl .numt{font-size:10px;font-weight:800;fill:var(--ink)}.jl .jl-n.rvs-confirmed .numt,.jl .jl-n.rvs-corrected .numt,.jl .jl-n.rvs-not-done .numt{fill:#fff}
+.jl .jl-nm{font-size:11.5px;font-weight:700;fill:var(--ink)}.jl .jl-dec{font-size:9.5px;font-weight:800;fill:var(--warn-ink);letter-spacing:.06em}.jl .jl-inv{font-size:10.5px;font-style:italic;fill:var(--ink)}
+.jl .jl-tool{font-size:10.5px;font-weight:600;fill:var(--muted)}.jl .jl-tool.none{fill:var(--warn-ink)}.jl .jl-time{font-size:10.5px;font-weight:700;fill:var(--warn-ink)}.jl .jl-time.hot{fill:var(--crit-ink)}
+.jl .jl-o rect{fill:var(--surface);stroke-dasharray:4 3;stroke-width:1.4}.jl .jl-ot{font-size:10.5px;font-weight:800;fill:var(--muted)}.jl .jl-on{font-size:10.5px;fill:var(--muted)}
+.jl .jl-sep,.jl .jl-tl{stroke:var(--line)}.jl .jl-tl{stroke-dasharray:2 4}.jl .jl-th{font-size:11px;font-weight:800;letter-spacing:.1em;fill:var(--muted)}
+.jl .jl-tn{font-size:12.5px;font-weight:700;fill:var(--ink)}.jl .jl-sh{font-size:10.5px;font-weight:800;fill:var(--warn-ink)}.jl .jl-dot{stroke:var(--surface);stroke-width:2}.jl .jl-dn{font-size:9.5px;fill:var(--muted)}
+.jl text{font-family:inherit}.jl .jl-n.clk:hover .nb{stroke:var(--ink)}
+.fnode.collapsed .nb{stroke-dasharray:4 3;fill:var(--surface-2)}.fnode.collapsed .band{fill:var(--line)!important}.fnode.collapsed .nm{fill:var(--muted);font-weight:600}
+.fnode .mode.m-hot{fill:var(--crit-ink);font-weight:800}
+.jctl{display:grid;gap:8px;margin:4px 0 10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2)}
+.jrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.jtick{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:4px 10px;background:var(--surface);cursor:pointer;font-size:12.5px}
+.jtick.on{border-color:var(--ink);font-weight:650}.jtick input{margin:0}
+.jiss{margin-top:10px}.jiss summary{cursor:pointer;margin-bottom:6px}

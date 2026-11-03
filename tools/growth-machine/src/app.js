@@ -2,7 +2,7 @@
    App shell — storage, routing, actions, data editor, Claude bridge
    ============================================================ */
 const STORE_KEY = 'tgm.studio.v1';
-const ui = { tab: 'overview', scenario: 'current', processId: '', stepId: '', editStep: '', review: null, reviewSetup: '', procView: 'flow', flowCols: 0, flowZoom: 0, flowWhole: false, anon: false, ghosts: true, showCost: true, compare: true, zoom: 1, area: 'All', recType: 'All', coll: 'people', theme: '', reportType: 'status', capture: false, draft: null, session: false, sessionId: '', prioOnly: true };
+const ui = { tab: 'overview', scenario: 'current', processId: '', stepId: '', editStep: '', jView: '', journey: null, execView: true, review: null, reviewSetup: '', procView: 'flow', flowCols: 0, flowZoom: 0, flowWhole: false, anon: false, ghosts: true, showCost: true, compare: true, zoom: 1, area: 'All', recType: 'All', coll: 'people', theme: '', reportType: 'status', capture: false, draft: null, session: false, sessionId: '', prioOnly: true };
 let db = { activeId: '', engagements: {} };
 
 /* ---------- storage (localStorage, wrapped; the JSON file export is the real backup) ---------- */
@@ -241,9 +241,10 @@ function stripMarks(o) { return JSON.parse(JSON.stringify(o, (k, v) => (k.starts
 const actions = {
   tab: (el) => { ui.tab = el.dataset.id; saveUI(); render(); window.scrollTo(0, 0); },
   setScenario: (el) => { ui.scenario = el.dataset.id; render(); },
-  proc: (el) => { ui.processId = el.dataset.id; ui.stepId = ''; ui.review = null; ui.reviewSetup = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; render(); },
+  proc: (el) => { ui.processId = el.dataset.id; ui.stepId = ''; ui.jView = ''; ui.review = null; ui.reviewSetup = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; render(); },
   procView: (el) => { ui.procView = el.dataset.id; render(); },
   flowStep: (el) => {
+    if (ui.jView === 'journey') { const st = stateFor(E(), ui.scenario); const p = st.processes.find((x) => (x.steps || []).some((y) => y.id === el.dataset.id)); if (!p) return; ui.jView = ''; ui.processId = p.id; ui.stepId = el.dataset.id; ui.flowZoom = 0; ui.flowColsAuto = 0; render(); const n = document.querySelector(`.flow-svg g.fnode[data-id="${CSS.escape(ui.stepId)}"]`); if (n) n.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
     if (ui.review) { const { proc } = reviewCtx(); const i = proc ? (proc.steps || []).findIndex((x) => x.id === el.dataset.id) : -1; if (i >= 0) { ui.review.idx = i; render(); } return; }
     ui.stepId = el.dataset.id; render();
     const n = document.querySelector(`.flow-svg g.fnode[data-id="${CSS.escape(ui.stepId)}"]`);
@@ -251,6 +252,33 @@ const actions = {
     const side = document.querySelector('.flow-side'); if (side && getComputedStyle(side).position !== 'sticky' && el.closest('.flow-svg')) side.scrollIntoView({ behavior: 'smooth', block: 'start' });
   },
   flowClear: () => { ui.stepId = ''; render(); },
+  journeyOpen: () => { ui.jView = 'journey'; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; ui.review = null; render(); },
+  journeyClose: () => { ui.jView = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; render(); },
+  journeySet: (el) => { const st = stateFor(E(), ui.scenario); const J = journeyState(st); J[el.dataset.k] = el.dataset.id; ui.journey = { by: J.by, layout: J.layout, teams: J.teams, procs: J.procs }; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; render(); },
+  journeyTick: (el) => {
+    const st = stateFor(E(), ui.scenario); const J = journeyState(st); const key = el.dataset.kind === 'team' ? 'teams' : 'procs';
+    let list = J[key].filter((x) => x !== el.dataset.id); if (el.checked) list.push(el.dataset.id);
+    if (!list.length) { toast('Keep at least one ticked'); render(); return; }
+    const order = el.dataset.kind === 'team' ? J.allTeams : J.allProcs; list = order.filter((x) => list.includes(x));
+    ui.journey = { by: J.by, layout: J.layout, teams: key === 'teams' ? list : J.teams, procs: key === 'procs' ? list : J.procs }; ui.flowZoom = 0; ui.flowColsAuto = 0; render();
+  },
+  exportJourney: (el) => {
+    const e = E(); const st = stateFor(e, ui.scenario); const J = journeyState(st); const exec = ui.execView !== false; const k = el.dataset.id;
+    const markup = J.layout === 'lanes' ? journeyLanes(st, J, { exec, interactive: false }) : journeyFlow(st, J, { exec, interactive: false, cols: ui.flowCols || ui.flowColsAuto || 4 });
+    const slug = (s2) => String(s2).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const base = `${slug(e.client.name)}-journey-${J.by === 'team' ? J.teams.join('-') : 'processes'}-${J.layout}-${todayISO()}`;
+    if (k === 'svg' || k === 'png') {
+      const { xml, W, H } = svgStandalone(markup);
+      if (k === 'svg') return downloadFile(base + '.svg', xml, 'image/svg+xml');
+      const img = new Image(); const scale = 2;
+      img.onload = () => { const c = document.createElement('canvas'); c.width = W * scale; c.height = H * scale; const g = c.getContext('2d'); g.scale(scale, scale); g.drawImage(img, 0, 0);
+        c.toBlob((b) => { const a2 = document.createElement('a'); a2.href = URL.createObjectURL(b); a2.download = base + '.png'; document.body.appendChild(a2); a2.click(); setTimeout(() => { URL.revokeObjectURL(a2.href); a2.remove(); }, 500); }, 'image/png'); };
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml); return;
+    }
+    const html = journeyExportDoc(e, st, markup.replace(/ data-tip="[^"]*"/g, ''), J);
+    const w = window.open('', '_blank'); if (!w) { downloadFile(base + '.html', html, 'text/html'); return toast('Pop-up blocked: downloaded as an HTML page instead'); }
+    w.document.open(); w.document.write(html); w.document.close(); setTimeout(() => { w.focus(); w.print(); }, 400); toast('Choose "Save as PDF" in the print window');
+  },
   stepEdit: () => { ui.editStep = ui.editStep === ui.stepId ? '' : ui.stepId; render(); },
   stepAdd: () => {
     const proc = E().processes.find((x) => x.id === ui.processId); if (!proc) return; const i = (proc.steps || []).findIndex((x) => x.id === ui.stepId);
@@ -340,7 +368,8 @@ const actions = {
     const W = +svg.dataset.w, H = +svg.dataset.h; const cur = ui.flowZoom || svg.getBoundingClientRect().width / W; const k = el.dataset.id;
     if (k === 'fit') {
       const availW = wrap.clientWidth - 26, availH = window.innerHeight - 150;
-      const proc = stateFor(E(), ui.scenario).processes.find((x) => x.id === ui.processId); const n = proc ? (proc.steps || []).length : 1;
+      if (ui.jView === 'journey' && (ui.journey || {}).layout !== 'flow') { ui.flowZoom = Math.max(0.15, +Math.min(1.2, availW / W, availH / H).toFixed(3)); ui.flowWhole = true; render(); document.querySelector('.flow-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+      const proc = ui.jView === 'journey' ? { steps: [...document.querySelectorAll('.flow-svg g.fnode')] } : stateFor(E(), ui.scenario).processes.find((x) => x.id === ui.processId); const n = proc ? (proc.steps || []).length : 1;
       const fitFor = (c) => { const [w, h] = flowDims(n, c); return Math.min(availW / w, availH / h); };
       if (!ui.flowCols) { let best = 1; for (let c = 1; c <= Math.min(6, n); c++) if (fitFor(c) > fitFor(best) + 0.001) best = c; ui.flowColsAuto = best; }
       ui.flowZoom = Math.max(0.2, +Math.min(1.2, fitFor(ui.flowCols || ui.flowColsAuto)).toFixed(3)); ui.flowWhole = true; render();
