@@ -297,6 +297,17 @@ ol.flags li:hover,ol.flags li.on{border-color:var(--ink)}
 .jl .jl-lane.prim{fill:var(--surface)}.jl .jl-div{stroke:var(--ink);stroke-dasharray:3 5;opacity:.35}
 .jl .jl-link.trig{stroke:var(--red);stroke-width:2.6}.jl .jl-trig{font-size:10.5px;font-weight:800;fill:var(--red)}
 .jl .jl-n.sel .nb{stroke:var(--red)!important;stroke-width:3.5}.jl .jl-link.hl{stroke:var(--red);stroke-width:3}
+/* client health */
+.ch-grid{width:100%;border-collapse:separate;border-spacing:4px;table-layout:fixed}
+.ch-grid th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;text-align:left;padding:4px}
+.ch-grid td{vertical-align:top;border:1px solid var(--line);border-radius:10px;padding:8px;background:var(--surface)}
+.ch-grid td b{font-family:Georgia,serif;font-size:22px;font-weight:400}.ch-grid td .ch-names{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.35}
+.ch-grid td.ch-risk{background:var(--red-soft);border-color:var(--crit)}.ch-grid td.ch-cost{background:color-mix(in srgb,var(--warn) 14%,var(--surface));border-color:var(--warn)}.ch-grid td.ch-good{background:color-mix(in srgb,var(--good) 10%,var(--surface));border-color:var(--good)}
+.ch-key{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-1px;border:1px solid var(--line)}.ch-key.risk{background:var(--red-soft);border-color:var(--crit)}.ch-key.cost{background:color-mix(in srgb,var(--warn) 30%,var(--surface));border-color:var(--warn)}.ch-key.good{background:color-mix(in srgb,var(--good) 20%,var(--surface));border-color:var(--good)}
+.ch-bar{display:grid;grid-template-columns:150px 1fr 56px;gap:8px;align-items:center;font-size:12px;margin:4px 0}.ch-bar em{font-style:normal;color:var(--muted);font-size:11px}
+.ch-stack{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--grid)}.ch-stack i{display:block;height:100%}
+.ch-stack i.s-low.a{background:var(--crit)}.ch-stack i.s-medium{background:var(--warn)}.ch-stack i.s-high.a{background:var(--good)}
+.ch-stack i.s-low.t{background:var(--good)}.ch-stack i.s-high.t{background:var(--crit)}
 </style>
 <style id="report-css">/* Founder report styles (also embedded in exported HTML reports) */
 .rpt{background:#fffdf9;color:#171715;border:1px solid #d7cfc3;border-radius:14px;padding:40px 46px;
@@ -520,7 +531,7 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="tip" hidden></div>
 <script>
-const STUDIO_BUILD = '2026-11-03 15:22 UTC';
+const STUDIO_BUILD = '2026-11-03 15:45 UTC';
 /* ---- model.js ---- */
 /* ============================================================
    The Growth Machine — data model, scenario engine, scoring, insights
@@ -2640,7 +2651,7 @@ function field(path, label, value, { type = 'text', area = false, ph = '' } = {}
 function viewBusiness(e) {
   const c = e.client; const rev = annualRevenue(e);
   const segs = e.segments.slice().sort((a, b) => num(b.annualRevenue) - num(a.annualRevenue));
-  const tc = e.topClients.slice().sort((a, b) => num(b.annualRevenue) - num(a.annualRevenue));
+  const tc = e.topClients.filter((x) => num(x.annualRevenue) > 0).sort((a, b) => num(b.annualRevenue) - num(a.annualRevenue));
   return `<div class="page-h"><div><span class="eyebrow">Business & market</span><h1>Profile, customers, markets</h1></div></div>
   ${card('Business profile', `<div class="form-grid">
     ${field('client.name', 'Client name', c.name)}${field('client.sector', 'Sector', c.sector)}${field('client.subSector', 'Sub-sector', c.subSector)}
@@ -2660,7 +2671,8 @@ function viewBusiness(e) {
   <div class="grid-2">
     ${card('Segment economics', segs.length ? `<table class="tbl"><thead><tr><th>Segment</th><th class="r">Customers</th><th class="r">Revenue</th><th class="r">Avg / customer</th><th class="r">Churn</th><th>Acquisition</th></tr></thead><tbody>${segs.map((s) => `<tr><td>${esc(s.name)}</td><td class="r">${num(s.customers)}</td><td class="r">${fmtMoney(num(s.annualRevenue))}</td><td class="r">${fmtMoney(num(s.annualRevenue) / Math.max(1, num(s.customers)))}</td><td class="r">${num(s.churnPct)}%</td><td>${esc(s.acquisitionChannel || '')}</td></tr>`).join('')}</tbody></table>` : empty('Add segments in Data & Claude.'))}
     ${card('Customer concentration', tc.length ? hbars(tc.slice(0, 10).map((c) => ({ label: c.name, value: rev ? num(c.annualRevenue) / rev * 100 : 0, tip: fmtMoney(num(c.annualRevenue)) })), { fmt: (v) => v.toFixed(1) + '%', color: 'var(--s7)' }) : empty('Add top clients to see concentration risk.'), { sub: 'Share of run-rate revenue per client.' })}
-  </div>`;
+  </div>
+  ${clientHealthCard(e)}`;
 }
 
 /* ---------------- Finance ---------------- */
@@ -2839,6 +2851,26 @@ function viewReport(e) {
     </aside>
     <div class="report-preview"><div id="report-doc" class="rpt">${renderReport(e)}</div></div>
   </div>`;
+}
+
+/* ---------- Client health: effort to serve × adoption (from the client's own Client Success tool) ---------- */
+const CH_CRIT = [['contacts', 'Points of contact', 't'], ['emails', 'Email frequency', 't'], ['meetings', 'Meetings', 't'], ['calls', 'Calls / WhatsApp', 't'], ['training', 'Training', 't'], ['responsive', 'Client responsiveness', 't'], ['queries', 'Query complexity', 't'], ['tickets', 'Support tickets / changes', 't'],
+  ['locdata', 'Location data', 'a'], ['users', 'Dashboard users logging in', 'a'], ['usage', 'Features used', 'a'], ['reporting', 'Reporting', 'a'], ['notif', 'Review notifications', 'a'], ['integr', 'Integrations', 'a']];
+function clientHealthCard(e) {
+  const cl = e.topClients.filter((c) => c.touchpoint || c.adoption);
+  if (!cl.length) return '';
+  const lvl = (v) => (/high/i.test(v) && !/low|med/i.test(v) ? 'High' : /medium/i.test(v) ? 'Medium' : /low/i.test(v) ? 'Low' : '');
+  const rows = ['High', 'Medium', 'Low'], cols = ['Low', 'Medium', 'High'];
+  const cell = (tp, ad) => cl.filter((c) => lvl(c.touchpoint) === tp && lvl(c.adoption) === ad);
+  const tone = (tp, ad) => (ad === 'Low' ? 'risk' : tp === 'High' && ad !== 'High' ? 'cost' : ad === 'High' && tp !== 'High' ? 'good' : '');
+  const grid = `<table class="ch-grid"><thead><tr><th></th>${cols.map((c) => `<th>Adoption: ${c}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr><th>Effort to serve: ${r}</th>${cols.map((c) => { const xs = cell(r, c); return `<td class="ch-${tone(r, c)}"><b>${xs.length}</b>${xs.length ? `<div class="ch-names">${xs.map((x) => esc(x.name)).join(' · ')}</div>` : ''}</td>`; }).join('')}</tr>`).join('')}</tbody></table>`;
+  const bars = (kind) => CH_CRIT.filter((k) => k[2] === kind).map(([key, label]) => { const xs = cl.filter((c) => c.csScores && c.csScores[key]); const n = (v) => xs.filter((c) => c.csScores[key] === v).length; const T = xs.length || 1;
+    return `<div class="ch-bar"><span>${esc(label)}</span><div class="ch-stack">${['Low', 'Medium', 'High'].map((v) => `<i class="s-${v.toLowerCase()} ${kind}" style="width:${(n(v) / T * 100).toFixed(1)}%" title="${v}: ${n(v)}"></i>`).join('')}</div><em>${Math.round(n('Low') / T * 100)}% low</em></div>`; }).join('');
+  const incomplete = cl.filter((c) => c.csComplete === false);
+  return card(`Client health (${cl.length} clients)`, `<p class="small muted" style="margin-top:0">From Location Bank's own Client Success tool (TouchPoint & Adoption calculator). Ratings are the CSMs' judgement, not system data.${incomplete.length ? ` ${incomplete.length} client${incomplete.length === 1 ? '' : 's'} not fully scored: ${incomplete.map((c) => esc(c.name)).join(', ')}.` : ''}</p>
+    ${grid}<div class="legend small" style="margin:6px 0 12px"><span><i class="ch-key risk"></i>Low adoption: churn risk</span><span><i class="ch-key cost"></i>High effort, not high adoption: costly to serve</span><span><i class="ch-key good"></i>High adoption, manageable effort</span></div>
+    <div class="grid-2"><div><h5>Adoption: how clients use the platform</h5>${bars('a')}</div><div><h5>Effort: what clients need from Client Success</h5>${bars('t')}</div></div>
+    <p class="faint small">Bars: Low · Medium · High share of scored clients. For adoption, low is bad; for effort, high is costly.</p>`, { sub: 'Effort to serve × adoption. Add revenue per client to see who costs more than they pay.' });
 }
 
 /* ---- views2.js ---- */
@@ -3480,7 +3512,7 @@ const FIELD_DEFS = {
   processes: [['id', 'text'], ['name', 'text'], ['group', 'text'], ['leadsTo', 'text'], ['departmentId', 'dept'], ['ownerId', 'person'], ['confidence', Object.keys(CONFIDENCE)], ['sources', 'text'], ['summary', 'long'], ['talkingPoints', 'long'], ['findingIds', 'text'], ['frequency', 'text'], ['runsPerMonth', 'num'], ['hoursPerMonth', 'num'], ['inputs', 'text'], ['outputs', 'text'], ['steps', 'json']],
   segments: [['id', 'text'], ['name', 'text'], ['customers', 'num'], ['annualRevenue', 'num'], ['churnPct', 'num'], ['acquisitionChannel', 'text'], ['notes', 'text']],
   markets: [['id', 'text'], ['name', 'text'], ['region', 'text'], ['revenueShare', 'num'], ['notes', 'text']],
-  topClients: [['id', 'text'], ['name', 'text'], ['segmentId', 'text'], ['annualRevenue', 'num'], ['notes', 'text']],
+  topClients: [['id', 'text'], ['name', 'text'], ['segmentId', 'text'], ['annualRevenue', 'num'], ['touchpoint', ['Low', 'Low-Medium', 'Medium', 'Medium-High', 'High']], ['adoption', ['Low', 'Medium', 'High']], ['csScores', 'json'], ['notes', 'text']],
   financePeriods: [['id', 'text'], ['label', 'text'], ['months', 'num'], ['revenue', 'num'], ['cogs', 'num'], ['payroll', 'num'], ['tools', 'num'], ['marketing', 'num'], ['premises', 'num'], ['other', 'num']],
   interviews: [['id', 'text'], ['personId', 'person'], ['date', 'date'], ['interviewer', 'text'], ['summary', 'long'], ['themes', 'text'], ['painPoints', 'long'], ['ideas', 'long'], ['quotes', 'long']],
   findings: [['id', 'text'], ['title', 'text'], ['area', 'text'], ['severity', ['high', 'medium', 'low']], ['evidence', 'long']],
@@ -3493,7 +3525,7 @@ const FIELD_DEFS = {
   recommendations: [['id', 'text'], ['title', 'text'], ['type', ['People', 'Process', 'Tool', 'Build', 'Structure', 'Commercial']], ['horizon', ['0-3 months', '3-6 months', '6-12 months', '12+ months']], ['description', 'long'], ['effort', 'num'], ['risk', 'num'], ['confidence', 'num'], ['oneOffCost', 'num'], ['otherAnnualSaving', 'num'], ['oneOffSaving', 'num'], ['revenueUplift', 'num'], ['status', REC_STAGES], ['ops', 'json']],
   scenarios: [['id', 'text'], ['name', 'text'], ['description', 'text'], ['recommendationIds', 'json']]
 };
-const COLL_LABELS = { customQuestions: 'Custom interview questions', competitors: 'Competitors', capabilities: 'Capabilities', intel: 'Competitor intelligence', usps: 'USPs', opportunities: 'Opportunities', intake: 'Founder answers', departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Top clients', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };
+const COLL_LABELS = { customQuestions: 'Custom interview questions', competitors: 'Competitors', capabilities: 'Capabilities', intel: 'Competitor intelligence', usps: 'USPs', opportunities: 'Opportunities', intake: 'Founder answers', departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Clients', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };
 
 function cellInput(e, coll, row, [f, type]) {
   const v = row[f]; const base = `data-cell data-coll="${coll}" data-id="${esc(row.id)}" data-field="${f}"`;

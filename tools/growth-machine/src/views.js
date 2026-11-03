@@ -69,7 +69,7 @@ function field(path, label, value, { type = 'text', area = false, ph = '' } = {}
 function viewBusiness(e) {
   const c = e.client; const rev = annualRevenue(e);
   const segs = e.segments.slice().sort((a, b) => num(b.annualRevenue) - num(a.annualRevenue));
-  const tc = e.topClients.slice().sort((a, b) => num(b.annualRevenue) - num(a.annualRevenue));
+  const tc = e.topClients.filter((x) => num(x.annualRevenue) > 0).sort((a, b) => num(b.annualRevenue) - num(a.annualRevenue));
   return `<div class="page-h"><div><span class="eyebrow">Business & market</span><h1>Profile, customers, markets</h1></div></div>
   ${card('Business profile', `<div class="form-grid">
     ${field('client.name', 'Client name', c.name)}${field('client.sector', 'Sector', c.sector)}${field('client.subSector', 'Sub-sector', c.subSector)}
@@ -89,7 +89,8 @@ function viewBusiness(e) {
   <div class="grid-2">
     ${card('Segment economics', segs.length ? `<table class="tbl"><thead><tr><th>Segment</th><th class="r">Customers</th><th class="r">Revenue</th><th class="r">Avg / customer</th><th class="r">Churn</th><th>Acquisition</th></tr></thead><tbody>${segs.map((s) => `<tr><td>${esc(s.name)}</td><td class="r">${num(s.customers)}</td><td class="r">${fmtMoney(num(s.annualRevenue))}</td><td class="r">${fmtMoney(num(s.annualRevenue) / Math.max(1, num(s.customers)))}</td><td class="r">${num(s.churnPct)}%</td><td>${esc(s.acquisitionChannel || '')}</td></tr>`).join('')}</tbody></table>` : empty('Add segments in Data & Claude.'))}
     ${card('Customer concentration', tc.length ? hbars(tc.slice(0, 10).map((c) => ({ label: c.name, value: rev ? num(c.annualRevenue) / rev * 100 : 0, tip: fmtMoney(num(c.annualRevenue)) })), { fmt: (v) => v.toFixed(1) + '%', color: 'var(--s7)' }) : empty('Add top clients to see concentration risk.'), { sub: 'Share of run-rate revenue per client.' })}
-  </div>`;
+  </div>
+  ${clientHealthCard(e)}`;
 }
 
 /* ---------------- Finance ---------------- */
@@ -268,4 +269,24 @@ function viewReport(e) {
     </aside>
     <div class="report-preview"><div id="report-doc" class="rpt">${renderReport(e)}</div></div>
   </div>`;
+}
+
+/* ---------- Client health: effort to serve × adoption (from the client's own Client Success tool) ---------- */
+const CH_CRIT = [['contacts', 'Points of contact', 't'], ['emails', 'Email frequency', 't'], ['meetings', 'Meetings', 't'], ['calls', 'Calls / WhatsApp', 't'], ['training', 'Training', 't'], ['responsive', 'Client responsiveness', 't'], ['queries', 'Query complexity', 't'], ['tickets', 'Support tickets / changes', 't'],
+  ['locdata', 'Location data', 'a'], ['users', 'Dashboard users logging in', 'a'], ['usage', 'Features used', 'a'], ['reporting', 'Reporting', 'a'], ['notif', 'Review notifications', 'a'], ['integr', 'Integrations', 'a']];
+function clientHealthCard(e) {
+  const cl = e.topClients.filter((c) => c.touchpoint || c.adoption);
+  if (!cl.length) return '';
+  const lvl = (v) => (/high/i.test(v) && !/low|med/i.test(v) ? 'High' : /medium/i.test(v) ? 'Medium' : /low/i.test(v) ? 'Low' : '');
+  const rows = ['High', 'Medium', 'Low'], cols = ['Low', 'Medium', 'High'];
+  const cell = (tp, ad) => cl.filter((c) => lvl(c.touchpoint) === tp && lvl(c.adoption) === ad);
+  const tone = (tp, ad) => (ad === 'Low' ? 'risk' : tp === 'High' && ad !== 'High' ? 'cost' : ad === 'High' && tp !== 'High' ? 'good' : '');
+  const grid = `<table class="ch-grid"><thead><tr><th></th>${cols.map((c) => `<th>Adoption: ${c}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr><th>Effort to serve: ${r}</th>${cols.map((c) => { const xs = cell(r, c); return `<td class="ch-${tone(r, c)}"><b>${xs.length}</b>${xs.length ? `<div class="ch-names">${xs.map((x) => esc(x.name)).join(' · ')}</div>` : ''}</td>`; }).join('')}</tr>`).join('')}</tbody></table>`;
+  const bars = (kind) => CH_CRIT.filter((k) => k[2] === kind).map(([key, label]) => { const xs = cl.filter((c) => c.csScores && c.csScores[key]); const n = (v) => xs.filter((c) => c.csScores[key] === v).length; const T = xs.length || 1;
+    return `<div class="ch-bar"><span>${esc(label)}</span><div class="ch-stack">${['Low', 'Medium', 'High'].map((v) => `<i class="s-${v.toLowerCase()} ${kind}" style="width:${(n(v) / T * 100).toFixed(1)}%" title="${v}: ${n(v)}"></i>`).join('')}</div><em>${Math.round(n('Low') / T * 100)}% low</em></div>`; }).join('');
+  const incomplete = cl.filter((c) => c.csComplete === false);
+  return card(`Client health (${cl.length} clients)`, `<p class="small muted" style="margin-top:0">From Location Bank's own Client Success tool (TouchPoint & Adoption calculator). Ratings are the CSMs' judgement, not system data.${incomplete.length ? ` ${incomplete.length} client${incomplete.length === 1 ? '' : 's'} not fully scored: ${incomplete.map((c) => esc(c.name)).join(', ')}.` : ''}</p>
+    ${grid}<div class="legend small" style="margin:6px 0 12px"><span><i class="ch-key risk"></i>Low adoption: churn risk</span><span><i class="ch-key cost"></i>High effort, not high adoption: costly to serve</span><span><i class="ch-key good"></i>High adoption, manageable effort</span></div>
+    <div class="grid-2"><div><h5>Adoption: how clients use the platform</h5>${bars('a')}</div><div><h5>Effort: what clients need from Client Success</h5>${bars('t')}</div></div>
+    <p class="faint small">Bars: Low · Medium · High share of scored clients. For adoption, low is bad; for effort, high is costly.</p>`, { sub: 'Effort to serve × adoption. Add revenue per client to see who costs more than they pay.' });
 }
