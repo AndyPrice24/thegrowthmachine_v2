@@ -12,7 +12,17 @@ const STAGES = [['attract', 'Attract'], ['sell', 'Sell'], ['onboard', 'Onboard']
 const CONFIDENCE = { heard: ['Heard', 'Based on what people told us; not yet checked', 'warn'], corroborated: ['Corroborated', 'Confirmed by more than one source', 's1'], measured: ['Measured', 'Checked against data or observed', 'good'] };
 const FLAG_TYPES = { issue: ['Issue', 'raised by the team or interviews'], unverified: ['Unverified', 'to confirm'], weakness: ['Weakness', 'flagged by the machine'] };
 /** Size of a flow schematic for n steps in c columns (keep in step with flowSchematic). */
-const flowDims = (n, c) => { c = Math.max(1, Math.min(c, n)); const rows = Math.ceil(n / c); return [34 * 2 + c * 262 + (c - 1) * 78, 74 + rows * (136 + 96) - 96 + 92]; };
+const flowDims = (n, c) => { c = Math.max(1, Math.min(c, n)); const rows = Math.ceil(n / c); return [34 * 2 + c * 262 + (c - 1) * 78, 74 + rows * (150 + 96) - 96 + 92]; };
+const REVIEW_STATUS = { assumed: ['Assumed', 'Not yet checked with the team'], confirmed: ['Confirmed', 'Checked: this is how it works'], corrected: ['Corrected', 'Checked and corrected'], unsure: ['Unsure', 'Reviewer was not sure'], 'not-done': ['Does not happen', 'Reviewer says this step does not happen'] };
+const stepTimeBasis = (s) => s.timeBasis || ((s.review && (s.review.status === 'confirmed' || s.review.status === 'corrected')) && (num(s.durationMins) || num(s.elapsedDays)) ? 'confirmed' : 'assumed');
+/** "≈15 min · 2 d wait" — ≈ marks an assumed time. */
+function stepTimeText(s, long = false) {
+  const m = num(s.durationMins), d = num(s.elapsedDays); if (!m && !d) return long ? 'Time not known' : 'time ?';
+  const pre = stepTimeBasis(s) === 'assumed' ? '≈' : '';
+  const mt = m ? (m >= 60 ? `${+(m / 60).toFixed(1)} h` : `${m} min`) : '';
+  const dt = d ? `${d} d${long ? ' elapsed' : ''}` : '';
+  return pre + [mt, dt].filter(Boolean).join(' · ') + (long ? ` (${stepTimeBasis(s)})` : '');
+}
 const teamInfo = (id) => TEAMS.find((t) => t[0] === id) || ['', 'Unassigned', 'var(--line)'];
 
 function stepTeam(s, pById, dById) {
@@ -61,7 +71,7 @@ function flowSchematic(proc, people, tools, departments, { cols = 3, selected = 
   const pById = byId(people), tById = byId(tools), dById = byId(departments);
   const flags = flowFlags(proc, people, tools, departments, clientSafe);
   cols = Math.max(1, Math.min(cols, steps.length));
-  const NW = 262, NH = 136, GX = 78, GY = 96, PX = 34, TOP = 74;
+  const NW = 262, NH = 150, GX = 78, GY = 96, PX = 34, TOP = 74;
   const rows = Math.ceil(steps.length / cols);
   const W = PX * 2 + cols * NW + (cols - 1) * GX, H = TOP + rows * (NH + GY) - GY + 92;
   const pos = steps.map((s, i) => { const r = Math.floor(i / cols); let c = i % cols; if (r % 2) c = cols - 1 - c; return { x: PX + c * (NW + GX), y: TOP + r * (NH + GY), r }; });
@@ -101,18 +111,21 @@ function flowSchematic(proc, people, tools, departments, { cols = 3, selected = 
     const t = tById[s.toolId];
     const lines = wrapText(s.name || 'Step', 31, 3);
     const nf = flags.filter((f) => f.on === 'node' && f.stepId === s.id);
-    svg += `<g class="fnode ${s.automated ? 'auto' : 'manual'} ${st} ${selected === s.id ? 'sel' : near && near.has(i) ? 'nbr' : near ? 'dim' : ''} ${interactive ? 'clk' : ''}" transform="translate(${x},${y})" ${interactive ? `data-action="flowStep" data-id="${esc(s.id)}"` : ''} data-tip="${esc([s.name, actor, t ? 'Tool: ' + t.name : 'No system', s.automated ? 'Automated' : 'Manual', num(s.durationMins) ? num(s.durationMins) + ' min' : 'Time not measured'].filter(Boolean).join(' · '))}">`;
+    const rv = (s.review && s.review.status) || 'assumed';
+    svg += `<g class="fnode ${s.automated ? 'auto' : 'manual'} ${s.kind === 'decision' ? 'decision' : ''} rvs-${rv} ${st} ${selected === s.id ? 'sel' : near && near.has(i) ? 'nbr' : near ? 'dim' : ''} ${interactive ? 'clk' : ''}" transform="translate(${x},${y})" ${interactive ? `data-action="flowStep" data-id="${esc(s.id)}"` : ''} data-tip="${esc([s.name, actor, t ? 'Tool: ' + t.name : 'No system', s.automated ? 'Automated' : 'Manual', stepTimeText(s, true), REVIEW_STATUS[rv][0] + (s.review && s.review.by ? ' by ' + s.review.by : '')].filter(Boolean).join(' · '))}">`;
     svg += `<rect class="nb" width="${NW}" height="${NH}" rx="12"/>`;
     svg += `<rect class="band" width="${NW}" height="28" rx="12" style="fill:${tm[2]}"/><rect class="band" y="16" width="${NW}" height="12" style="fill:${tm[2]}"/>`;
     svg += `<circle class="num" cx="18" cy="14" r="10"/><text class="numt" x="18" y="18" text-anchor="middle">${i + 1}</text>`;
-    svg += `<text class="team" x="36" y="18.5">${esc(tm[1].toUpperCase())}</text>`;
+    svg += `<text class="team" x="36" y="18.5">${s.kind === 'decision' ? '◇ DECISION · ' : ''}${esc(tm[1].toUpperCase())}</text>`;
     svg += lines.map((ln, k) => `<text class="nm" x="14" y="${50 + k * 16}">${esc(ln)}</text>`).join('');
-    if (actor) svg += `<text class="act" x="14" y="${NH - 30}">${esc(trunc(actor, 40))}</text>`;
-    svg += `<line class="sep" x1="14" x2="${NW - 14}" y1="${NH - 22}" y2="${NH - 22}"/>`;
-    svg += `<text class="tool" x="14" y="${NH - 8}">${esc(trunc(t ? t.name : 'No system', 26))}${t && t._removed ? ' (removed)' : ''}</text>`;
-    svg += `<text class="mode ${s.automated ? 'm-auto' : ''}" x="${NW - 14}" y="${NH - 8}" text-anchor="end">${s.automated ? '⚙ Automated' : 'Manual'}${num(s.durationMins) ? ' · ' + num(s.durationMins) + 'm' : ''}</text>`;
+    if (actor) svg += `<text class="act" x="14" y="${NH - 48}">${esc(trunc(actor, 40))}</text>`;
+    const extra = s.kind === 'decision' && s.decisionNo ? `If no: ${s.decisionNo}` : s.involves ? `With: ${s.involves}` : '';
+    if (extra) svg += `<text class="inv ${s.kind === 'decision' ? 'inv-d' : ''}" x="14" y="${NH - 33}">${esc(trunc(extra, 40))}</text>`;
+    svg += `<line class="sep" x1="14" x2="${NW - 14}" y1="${NH - 24}" y2="${NH - 24}"/>`;
+    svg += `<text class="tool" x="14" y="${NH - 9}">${s.automated ? '⚙ ' : ''}${esc(trunc(t ? t.name : 'No system', 22))}${t && t._removed ? ' (removed)' : ''}</text>`;
+    svg += `<text class="mode ${stepTimeBasis(s) === 'assumed' ? 'm-assumed' : 'm-confirmed'}" x="${NW - 14}" y="${NH - 9}" text-anchor="end">${esc(stepTimeText(s))}</text>`;
     nf.forEach((f, k) => { svg += `<g data-tip="${esc(`${f.n}. ${FLAG_TYPES[f.type][0]}: ${f.text}`)}">${flagShape(f.type, f.n, NW - 14 - k * 27, 0)}</g>`; });
-    if (st) svg += `<text class="stt stt-${st}" x="${NW - 14}" y="${NH - 30}" text-anchor="end">${st === 'removed' ? '✕ REMOVED' : st === 'added' ? '+ NEW' : '~ CHANGED'}</text>`;
+    if (st) svg += `<text class="stt stt-${st}" x="${NW - 14}" y="${NH - 48}" text-anchor="end">${st === 'removed' ? '✕ REMOVED' : st === 'added' ? '+ NEW' : '~ CHANGED'}</text>`;
     svg += '</g>';
   });
   svg += '</svg>';
@@ -124,12 +137,14 @@ const flowLegend = (clientSafe = false) => `<div class="legend flow-legend">
   ${clientSafe ? '' : `<span>${flagIcon('unverified')} Unverified <span class="faint">(to confirm)</span></span>`}
   <span>${flagIcon('weakness')} Weakness <span class="faint">(flagged by the machine)</span></span>
   <span><span class="ho-ico">⇄</span> Hand-off between teams</span>
-  <span><span class="chip" style="border-style:dashed">⚙ Automated</span></span></div>`;
+  <span><span class="chip" style="border-style:dashed">⚙ Automated</span></span>
+  <span><span class="rv-dot rv-assumed"></span>Assumed</span><span><span class="rv-dot rv-confirmed"></span>Confirmed by the team</span><span><span class="rv-dot rv-unsure"></span>Unsure</span><span><span class="rv-dot rv-not-done"></span>Doesn't happen</span>
+  <span class="faint">≈ time is an estimate · ◇ decision point</span></div>`;
 
 /** Client journey strip: stages left to right, the processes mapped in each, with warning counts. */
 function journeyStrip(procs, people, tools, departments, current, clientSafe = false) {
   const counts = (p) => { const f = flowFlags(p, people, tools, departments, clientSafe); return ['issue', 'unverified', 'weakness'].map((t) => [t, f.filter((x) => x.type === t).length]); };
-  const pBtn = (p) => `<button class="jp ${p.id === current ? 'on' : ''}" data-action="proc" data-id="${esc(p.id)}"><strong>${esc(p.name)}</strong><span class="jc">${counts(p).filter(([, n]) => n).map(([t, n]) => `<span class="jcn jcn-${t}" title="${FLAG_TYPES[t][0]}">${flagIcon(t)}${n}</span>`).join('') || '<span class="faint small">No warnings</span>'}</span>${p.confidence ? `<span class="conf conf-${CONFIDENCE[p.confidence] ? CONFIDENCE[p.confidence][2] : 'warn'}">${esc((CONFIDENCE[p.confidence] || [p.confidence])[0])}</span>` : ''}</button>`;
+  const pBtn = (p) => `<button class="jp ${p.id === current ? 'on' : ''}" data-action="proc" data-id="${esc(p.id)}"><strong>${esc(p.name)}</strong><span class="jc">${counts(p).filter(([, n]) => n).map(([t, n]) => `<span class="jcn jcn-${t}" title="${FLAG_TYPES[t][0]}">${flagIcon(t)}${n}</span>`).join('') || '<span class="faint small">No warnings</span>'}</span>${effConfidence(p) ? `<span class="conf conf-${CONFIDENCE[effConfidence(p)] ? CONFIDENCE[effConfidence(p)][2] : 'warn'}">${esc((CONFIDENCE[effConfidence(p)] || [effConfidence(p)])[0])}</span>` : ''}</button>`;
   const stageCards = STAGES.map(([id, label], i) => {
     const ps = procs.filter((p) => p.stage === id);
     return `<div class="jstage ${ps.length ? '' : 'jempty'}"><div class="jh ${ps.length ? 'clk' : ''}" ${ps.length ? `data-action="proc" data-id="${esc(ps[0].id)}"` : ''}><span class="jn">${i + 1}</span>${esc(label)}</div>${ps.length ? ps.map(pBtn).join('') : '<p class="faint small">Not mapped yet</p>'}</div>`;
@@ -138,20 +153,41 @@ function journeyStrip(procs, people, tools, departments, current, clientSafe = f
   return `<div class="journey">${stageCards}</div>${other.length ? `<div class="jother"><span class="faint small">Other processes:</span> ${other.map(pBtn).join('')}</div>` : ''}`;
 }
 
+/** Confidence shown: measured if set; corroborated once the team has sense-checked it; otherwise what was set. */
+function effConfidence(p) {
+  if (p.confidence === 'measured') return 'measured';
+  const done = (p.reviews || []).some((r) => Object.keys(r.verdicts || {}).length);
+  return done ? 'corroborated' : (p.confidence || '');
+}
+function reviewSummary(p) {
+  return (p.reviews || []).filter((r) => Object.keys(r.verdicts || {}).length).map((r) => {
+    const v = Object.values(r.verdicts); const c = (k) => v.filter((x) => x === k).length;
+    return `${r.label || 'Reviewer'} (${r.date}): ${[c('confirmed') && c('confirmed') + ' confirmed', c('corrected') && c('corrected') + ' corrected', c('not-done') && c('not-done') + ' not done', c('unsure') && c('unsure') + ' unsure', (r.added || []).length && (r.added || []).length + ' added'].filter(Boolean).join(', ')}`;
+  });
+}
+function flowTimeTotals(p) {
+  const st = live(p.steps); const mins = sum(st, (x) => x.durationMins), days = sum(st, (x) => x.elapsedDays);
+  const timed = st.filter((x) => num(x.durationMins) || num(x.elapsedDays)).length; const assumed = st.some((x) => (num(x.durationMins) || num(x.elapsedDays)) && stepTimeBasis(x) === 'assumed');
+  return { mins, days, timed, total: st.length, assumed };
+}
 /** Plain-language brief above the schematic: summary, confidence, talking points, what is still to measure. */
 function processBrief(e, p) {
-  const conf = CONFIDENCE[p.confidence];
+  const conf = CONFIDENCE[effConfidence(p)]; const revs = reviewSummary(p); const tt = flowTimeTotals(p);
   const steps = live(p.steps);
   const toMeasure = [];
   if (!num(p.runsPerMonth)) toMeasure.push('How often it runs (per month)');
-  const untimed = steps.filter((s) => !num(s.durationMins)).length;
-  if (untimed) toMeasure.push(`Time per step (${untimed} of ${steps.length} steps not measured)`);
+  const untimed = steps.filter((s) => !num(s.durationMins) && !num(s.elapsedDays)).length;
+  if (untimed) toMeasure.push(`Time per step (${untimed} of ${steps.length} steps have no time yet)`);
+  const unconfirmed = steps.filter((s) => !(s.review && ['confirmed', 'corrected'].includes(s.review.status))).length;
+  if (unconfirmed) toMeasure.push(`Sense-check with the team (${unconfirmed} of ${steps.length} steps not yet confirmed)`);
   if (!p.ownerId) toMeasure.push('Owner');
   const fIds = splitList(p.findingIds); const fs = fIds.map((id) => e.findings.find((f) => f.id === id)).filter(Boolean);
   const tps = String(p.talkingPoints || '').split('\n').map((x) => x.trim()).filter(Boolean);
   return `<div class="pbrief">
     <div>${conf ? `<span class="conf conf-${conf[2]}" title="${esc(conf[1])}">${esc(conf[0])}</span> <span class="faint small">${esc(conf[1])}${p.sources ? ' · Source: ' + esc(p.sources) : ''}</span>` : '<span class="faint small">Confidence not set</span>'}
+      ${revs.length ? `<div class="small" style="margin-top:6px">✓ Sense-checked: ${revs.map(esc).join(' · ')}</div>` : ''}
       ${p.summary ? `<p class="psum">${esc(p.summary)}</p>` : ''}
+      ${tt.timed ? `<p class="small" style="margin:8px 0 0"><b>Time:</b> ${tt.assumed ? '≈' : ''}${tt.mins >= 60 ? +(tt.mins / 60).toFixed(1) + ' h' : tt.mins + ' min'} hands-on per run${tt.days ? ` · ${tt.assumed ? '≈' : ''}${+tt.days.toFixed(1)} days end to end` : ''} <span class="faint">(${tt.timed} of ${tt.total} steps timed${tt.assumed ? '; ≈ includes estimates' : ''})</span></p>` : ''}
       ${tps.length ? `<h5>Talking points</h5><ul class="tps">${tps.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}</div>
     <div>${toMeasure.length ? `<h5>Still to measure</h5><ul class="tm">${toMeasure.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : '<h5>Measured</h5><p class="small muted">Volumes and times are in.</p>'}
       ${fs.length ? `<h5>Linked findings</h5><ul class="lf">${fs.map((f) => `<li><span class="chip sev-${esc(f.severity || 'medium')}">${esc(f.severity || 'medium')}</span> ${esc(f.title)}</li>`).join('')}</ul>` : ''}</div>
@@ -181,11 +217,16 @@ function flowSidePanel(e, p, people, tools, departments) {
     <h4 style="margin-top:0">Step ${i + 1} of ${steps.length}: ${esc(s.name)}</h4>
     ${nb(prev, 'from')}
     <dl class="sd"><dt>Team</dt><dd><i class="tdot" style="background:${tm(s)[2]}"></i>${esc(tm(s)[1])}</dd><dt>Who</dt><dd>${esc(who(s))}</dd>
-      <dt>System</dt><dd>${esc(t ? t.name : 'No system')}</dd><dt>Mode</dt><dd>${s.automated ? 'Automated' : 'Manual'}</dd><dt>Time</dt><dd>${num(s.durationMins) ? num(s.durationMins) + ' min per run' : '<span class="warn-t">Not measured</span>'}</dd>
+      <dt>System</dt><dd>${esc(t ? t.name : 'No system')}</dd><dt>Mode</dt><dd>${s.automated ? 'Automated' : 'Manual'}</dd><dt>Time</dt><dd>${num(s.durationMins) || num(s.elapsedDays) ? esc(stepTimeText(s, true)) : '<span class="warn-t">Not known yet</span>'}</dd>
+      <dt>Status</dt><dd><span class="rv-dot rv-${esc((s.review && s.review.status) || 'assumed')}"></span>${esc(REVIEW_STATUS[(s.review && s.review.status) || 'assumed'][0])}${s.review && s.review.by ? ' · ' + esc(s.review.by) + ' · ' + esc(s.review.date || '') : ''}</dd>
+      ${s.involves ? `<dt>Involves</dt><dd>${esc(s.involves)}</dd>` : ''}${s.kind === 'decision' ? `<dt>Decision</dt><dd>${esc(s.name)}${s.decisionNo ? `<br><span class="small">If no: ${esc(s.decisionNo)}</span>` : ''}</dd>` : ''}
       ${s.input || s.output ? `<dt>In → out</dt><dd>${esc(s.input || '—')} → ${esc(s.output || '—')}</dd>` : ''}</dl>
     ${nb(next, 'to')}
     ${mine.length ? `<h5>Warnings here (${mine.length})</h5><ol class="flags">${mine.map(flagLi).join('')}</ol>` : '<p class="small muted">No warnings on this step.</p>'}
     ${own ? `<h5>Flags you can clear</h5><ul class="ownf">${own}</ul>` : ''}
+    ${ui.editStep === s.id ? `<div class="step-edit"><h5>Edit this step (your assumptions)</h5>${stepFields(s, { people, tools, departments }, 'data-ed')}
+      <div class="btn-row"><button class="btn sm" data-action="stepMove" data-id="-1">↑ Earlier</button><button class="btn sm" data-action="stepMove" data-id="1">↓ Later</button><button class="btn sm" data-action="stepAdd">+ Step after</button><button class="btn sm danger" data-action="stepDelete">Delete step</button><button class="btn sm" data-action="stepEdit">Done</button></div></div>`
+      : `<div class="btn-row"><button class="btn sm" data-action="stepEdit">✎ Edit step</button><button class="btn sm" data-action="stepAdd">+ Step after</button></div>`}
     <div class="btn-row"><button class="btn sm" data-action="addFlowFlag" data-id="issue">+ Flag issue</button><button class="btn sm" data-action="addFlowFlag" data-id="unverified">+ Flag unverified</button><button class="btn sm" data-action="addFlowFlag" data-id="weakness">+ Flag weakness</button></div>`;
   return card('Step detail', body);
 }
@@ -235,8 +276,8 @@ function flowExportDoc(e, procs, st, { internal = false, journey = false } = {})
     const flags = flowFlags(p, st.people, st.tools, st.departments, !internal);
     const steps = p.steps || []; const idx = Object.fromEntries(steps.map((x, i) => [x.id, i]));
     const tps = String(p.talkingPoints || '').split('\n').map((x) => x.trim()).filter(Boolean);
-    const conf = CONFIDENCE[p.confidence];
-    const untimed = live(steps).filter((x) => !num(x.durationMins)).length;
+    const conf = CONFIDENCE[effConfidence(p)];
+    const untimed = live(steps).filter((x) => !num(x.durationMins) && !num(x.elapsedDays)).length;
     return `<section class="fx-sec"><div class="eyebrow">${esc((STAGES.find((x) => x[0] === p.stage) || ['', 'Process'])[1])}</div><h2>${esc(p.name)}</h2>
       <p class="muted">${esc(p.inputs || 'Start')} → ${esc(p.outputs || 'End')}${internal && conf ? ` · <span class="conf conf-${conf[2]}">${esc(conf[0])}</span> ${p.sources ? 'Source: ' + esc(p.sources) : ''}` : ''}</p>
       <div class="fx-body"><div class="fx-fig">${flowLegend(!internal)}${flowSchematic(p, st.people, st.tools, st.departments, { cols: 3, interactive: false, clientSafe: !internal, anonymise: ui.anon })}</div><div class="fx-text">
@@ -272,5 +313,96 @@ function flowExportBar() {
     <select data-ui="flowAudience" title="Who is it for?"><option value="client" ${a ? '' : 'selected'}>Client-safe (issues and weaknesses only)</option><option value="internal" ${a ? 'selected' : ''}>TGM internal (adds unverified points and sources)</option></select>
     <button class="btn sm" data-action="exportFlow" data-id="png">Image (PNG)</button><button class="btn sm" data-action="exportFlow" data-id="svg">Vector (SVG)</button>
     <button class="btn sm" data-action="exportFlow" data-id="pdf">PDF page</button><button class="btn sm" data-action="exportFlow" data-id="html">HTML page</button>
-    <button class="btn sm ghost" data-action="exportFlow" data-id="all">All flows + journey (PDF)</button></div>`;
+    <button class="btn sm ghost" data-action="exportFlow" data-id="all">All flows + journey (PDF)</button>
+    <button class="btn sm ghost" data-action="exportFlow" data-id="sheet" title="Assumed flow + a table per step to confirm or correct">Sense-check sheet (PDF)</button></div>`;
+}
+
+
+/** Editable fields for one step (used by the step editor and the live sense-check). */
+function stepFields(s, st, attr) {
+  const toolOpts = st.tools.filter((t) => !t._removed).map((t) => [t.id, t.name]);
+  return `<label class="fld"><span>Step</span><input ${attr}="name" value="${esc(s.name || '')}"></label>
+    <div class="rv-grid">
+      <label class="fld"><span>Team</span>${sel(TEAMS.map((t) => [t[0], t[1]]), s.team || stepTeam(s, byId(st.people), byId(st.departments)), `${attr}="team"`)}</label>
+      <label class="fld"><span>Who does it</span><input ${attr}="actorLabel" value="${esc(s.actorLabel || '')}"></label>
+      <label class="fld"><span>System used</span>${sel(toolOpts, s.toolId || '', `${attr}="toolId"`)}</label>
+      <label class="fld"><span>Automated?</span>${sel([['no', 'Manual'], ['yes', 'Automated']], s.automated ? 'yes' : 'no', `${attr}="automated"`, false)}</label>
+      <label class="fld"><span>Hands-on time (minutes)</span><input type="number" min="0" ${attr}="durationMins" value="${esc(s.durationMins || '')}"></label>
+      <label class="fld"><span>Waiting / elapsed (days)</span><input type="number" min="0" step="0.5" ${attr}="elapsedDays" value="${esc(s.elapsedDays || '')}"></label>
+    </div>
+    <label class="fld"><span>Who else gets involved (management approval, escalation, other team)?</span><input ${attr}="involves" value="${esc(s.involves || '')}" placeholder="e.g. CRO approves Tier 1"></label>
+    <div class="rv-grid"><label class="fld"><span>Decision point?</span>${sel([['', 'No'], ['decision', 'Yes, a decision']], s.kind || '', `${attr}="kind"`, false)}</label>
+      ${s.kind === 'decision' ? `<label class="fld"><span>If no, what happens?</span><input ${attr}="decisionNo" value="${esc(s.decisionNo || '')}" placeholder="e.g. back to Sales to re-scope"></label>` : '<span></span>'}</div>`;
+}
+
+/* ---------- Sense-check: walk an assumed flow live with a decision maker and record what they confirm or correct ---------- */
+function reviewChooser(e, p) {
+  const opts = e.people.filter((x) => !x._removed).map((x) => [x.id, `${x.name}${x.title ? ' · ' + x.title : ''}`]);
+  return card(`Sense-check "${p.name}"`, `<p class="small muted" style="margin-top:0">Walk the flow with someone who knows it. For each step they confirm, correct, flag as unsure, or say it doesn't happen; you can fix the step, add the time it takes, decisions and who else gets involved, and add missing steps. Everything saves as you go.</p>
+    <div class="rv-setup"><label class="fld"><span>Who are you checking it with?</span>${sel(opts, '', 'id="rvPerson"')}</label><label class="fld"><span>…or role, if not on the org chart</span><input id="rvLabel" placeholder="e.g. Operations team lead"></label></div>
+    <div class="btn-row"><button class="btn" data-action="reviewStart">▶ Start sense-check</button><button class="btn ghost" data-action="reviewCancel">Cancel</button></div>`);
+}
+
+function reviewCard(e, p, st) {
+  const R = ui.review; const steps = p.steps || []; const s = steps[R.idx]; if (!s) return '';
+  const rev = (p.reviews || []).find((r) => r.id === R.revId) || { verdicts: {}, notes: {} };
+  const v = rev.verdicts[s.id] || '';
+  const flags = flowFlags(p, st.people, st.tools, st.departments);
+  const concerns = flags.filter((f) => f.stepId === s.id && f.type !== 'unverified');
+  const asks = (s.flags || []).map((f, k) => [f, k]).filter(([f]) => f.type === 'unverified');
+  const vb = (k, label) => `<button class="btn sm rvb rvb-${k} ${v === k ? 'on' : ''}" data-action="reviewVerdict" data-id="${k}">${label}</button>`;
+  return card(`Step ${R.idx + 1} of ${steps.length}`, `
+    <p class="small muted" style="margin:0 0 6px">Is this how it works?</p>
+    <div class="btn-row rv-verdicts">${vb('confirmed', '✓ Yes')}${vb('corrected', '✎ Mostly (correct it)')}${vb('unsure', '? Not sure')}${vb('not-done', '✕ Doesn\'t happen')}</div>
+    ${stepFields(s, st, 'data-rv')}
+    ${concerns.length ? `<h5>Concerns on this step</h5><ol class="flags">${concerns.map((f) => `<li>${flagIcon(f.type, f.n)}<div>${esc(f.text)}</div></li>`).join('')}</ol>` : ''}
+    <div class="btn-row"><button class="btn sm" data-action="reviewConcern">+ Concern they raise</button><button class="btn sm" data-action="reviewAddStep">+ Missing step after this</button></div>
+    <label class="fld" style="margin-top:8px"><span>Notes from this conversation</span><textarea data-rvnote rows="3">${esc(rev.notes[s.id] || '')}</textarea></label>
+    ${asks.length ? `<details class="rv-mine" ${R.mine ? 'open' : ''}><summary data-action="reviewMine">My questions to confirm (${asks.length}) <span class="faint small">hide when screen-sharing</span></summary><ul class="ownf">${asks.map(([f, k]) => `<li>${flagIcon('unverified')}<span>${esc(f.text)}</span><button class="btn sm" data-action="reviewAnswer" data-id="${k}">Answered</button></li>`).join('')}</ul></details>` : ''}
+    <div class="btn-row rv-nav">${R.idx ? '<button class="btn sm" data-action="reviewNav" data-id="-1">‹ Back</button>' : ''}${R.idx < steps.length - 1 ? '<button class="btn" data-action="reviewNav" data-id="1">Next step ›</button>' : '<button class="btn" data-action="reviewFinish">Finish sense-check</button>'}</div>`);
+}
+
+function reviewView(e, p, st, cols) {
+  const R = ui.review; const steps = p.steps || [];
+  const rev = (p.reviews || []).find((r) => r.id === R.revId) || { verdicts: {} };
+  const vals = Object.values(rev.verdicts); const c = (k) => vals.filter((x) => x === k).length;
+  const sel2 = (steps[R.idx] || {}).id || '';
+  return `<div class="page-h"><div><span class="eyebrow">Sense-check · live</span><h1>${esc(p.name)}</h1><p class="muted">With ${esc(rev.label || 'reviewer')} · ${vals.length} of ${steps.length} steps checked · ${c('confirmed')} confirmed · ${c('corrected')} corrected · ${c('unsure')} unsure · ${c('not-done')} don't happen</p></div>
+    <div class="btn-row"><button class="btn" data-action="reviewFinish">Finish</button></div></div>
+    ${flowLegend(true)}
+    <div class="flow-split"><div>${flowSchematic(p, st.people, st.tools, st.departments, { cols, selected: sel2, anonymise: ui.anon, clientSafe: true })}</div><aside class="flow-side">${reviewCard(e, p, st)}</aside></div>`;
+}
+
+/** Printable sense-check sheet: our assumed flow + a table per step to confirm or correct. Concerns shown, internal notes left out. */
+function senseCheckSheet(e, procs, st) {
+  const css = (document.getElementById('viz-css') || {}).textContent || '';
+  const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  const pById = byId(st.people), dById = byId(st.departments), tById = byId(st.tools);
+  const part = (p) => {
+    const steps = live(p.steps); const flags = flowFlags(p, st.people, st.tools, st.departments, true);
+    return `<section class="fx-sec"><div class="eyebrow">${esc((STAGES.find((x) => x[0] === p.stage) || ['', 'Process'])[1])} · for checking</div><h2>${esc(p.name)}</h2>
+      <p class="muted">${esc(p.inputs || 'Start')} → ${esc(p.outputs || 'End')}</p>
+      <div class="fx-fig">${flowLegend(true)}${flowSchematic(p, st.people, st.tools, st.departments, { cols: 3, interactive: false, clientSafe: true, anonymise: ui.anon })}</div>
+      <table class="sc"><thead><tr><th>#</th><th>Step</th><th>Who</th><th>System</th><th>Time</th><th>Concerns</th><th>Is this right?</th><th>Corrections / notes</th></tr></thead><tbody>
+      ${steps.map((s) => { const i = (p.steps || []).indexOf(s) + 1; const tm = teamInfo(stepTeam(s, pById, dById)); const fs = flags.filter((f) => f.stepId === s.id);
+        return `<tr><td>${i}</td><td><b>${esc(s.name)}</b>${s.kind === 'decision' ? `<div class="small">◇ Decision${s.decisionNo ? ' · if no: ' + esc(s.decisionNo) : ''}</div>` : ''}${s.involves ? `<div class="small">With: ${esc(s.involves)}</div>` : ''}</td><td>${esc(tm[1])}${s.actorLabel ? '<div class="small">' + esc(s.actorLabel) + '</div>' : ''}</td><td>${esc((tById[s.toolId] || {}).name || 'No system')}</td><td>${num(s.durationMins) || num(s.elapsedDays) ? esc(stepTimeText(s)) : '<span class="faint">?</span>'}</td><td class="small">${fs.map((f) => `${f.n}. ${esc(f.text)}`).join('<br>')}</td><td class="ck">☐ Yes<br>☐ Partly<br>☐ No</td><td class="nt"></td></tr>`; }).join('')}
+      </tbody></table>
+      <p class="small">Anything missing between steps? Who else gets involved? Where does work wait?</p><div class="lines"></div>
+    </section>`;
+  };
+  return `<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc('Sense-check · ' + (procs.length === 1 ? procs[0].name : 'process flows') + ' · ' + e.client.name)}</title><style>${css}
+body{margin:0;background:#fff;font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#171715;font-size:12.5px;line-height:1.4}
+main{max-width:1180px;margin:24px auto;padding:0 20px}.eyebrow{text-transform:uppercase;letter-spacing:.16em;font-size:10.5px;font-weight:750;color:#c8221c}
+h1{font-family:Georgia,serif;font-weight:400;font-size:26px;margin:4px 0}h2{font-family:Georgia,serif;font-weight:400;font-size:21px;margin:2px 0 4px}
+.muted{color:#665f57}.faint{color:#8a8074}.small{font-size:11px}.flow-wrap{border:0;padding:0}.flow-svg{max-width:100%!important}
+table.sc{width:100%;border-collapse:collapse;margin-top:10px}table.sc th{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#665f57;text-align:left;border-bottom:1.5px solid #171715;padding:5px}
+table.sc td{border-bottom:1px solid #d7cfc3;padding:6px 5px;vertical-align:top}td.ck{white-space:nowrap;font-size:11px;line-height:1.7}td.nt{min-width:200px}
+.lines{height:70px;background:repeating-linear-gradient(#fff 0 22px,#d7cfc3 22px 23px)}.intro{border-left:3px solid #c8221c;padding:6px 12px;background:#faf6f0}
+@page{size:A4 landscape;margin:10mm}@media print{main{margin:0;max-width:none;padding:0}.fx-sec+.fx-sec{break-before:page}.fx-fig{break-after:page}.flow-svg{max-height:160mm;width:auto!important;max-width:100%!important}tr{break-inside:avoid}}
+</style></head><body><main>
+<div class="eyebrow">${esc(e.client.name)} · The Growth Machine</div><h1>How we understand the work flows today</h1>
+<p class="intro">This is our current understanding, built from conversations so far. <b>Please correct anything that is wrong.</b> For each step, tick whether it is right, and note who does it, how long it takes, and anything we have missed. Times marked ≈ are our estimates. ${date}.</p>
+${procs.map(part).join('')}
+<p class="faint small" style="margin-top:20px">The Growth Machine · ${date} · Confidential. Prepared for ${esc(e.client.name)}.</p></main></body></html>`;
 }

@@ -187,6 +187,7 @@ function viewProcesses(e) {
   const mainW = (document.getElementById('main') || {}).clientWidth || 1100;
   const flowW = mainW > 1000 ? mainW - 380 : mainW;
   const cols = ui.flowCols || ui.flowColsAuto || (flowW < 560 ? 1 : flowW < 900 ? 2 : 3);
+  if (ui.review && ui.review.procId === p.id && pc) return reviewView(e, pc, cur, cols);
   const sch = (proc, s2, selected) => flowSchematic(proc, s2.people, s2.tools, s2.departments, { cols, selected, anonymise: ui.anon, zoom: ui.flowZoom }).replace('class="flow-wrap"', `class="flow-wrap${ui.flowZoom ? ' zoomed' : ''}"`);
   const view = ui.procView === 'lanes'
     ? `<div class="legend"><span><span class="chip">▭ Manual step</span></span><span><span class="chip" style="border-style:dashed;border-color:var(--s1)">▭ Automated</span></span><span><span class="chip sev-high">! Pain point</span></span></div>${ui.scenario !== 'current' && pc ? `<h4>Before (current)</h4><div class="lane-wrap">${swimlane(pc, cur.people, cur.tools, { anonymise: ui.anon })}</div><h4>After: ${esc(scenarioName(e, ui.scenario))}</h4>` : ''}<div class="lane-wrap">${swimlane(p, st.people, st.tools, { anonymise: ui.anon })}</div>`
@@ -194,7 +195,8 @@ function viewProcesses(e) {
   return `${scenarioBanner(e)}<div class="page-h"><div><span class="eyebrow">Processes</span><h1>How the work flows</h1><p class="muted">Click a stage's process to open its flow. Click any step for detail. Warnings mark issues, unverified points and weaknesses along the path.</p></div></div>
   ${card('Client journey, end to end', journeyStrip(procs, st.people, st.tools, st.departments, p.id), { sub: 'Stages from first contact to renewal. Dashed stages are not mapped yet.' })}
   <section class="card pflow"><header class="card-h"><div><span class="eyebrow">${esc((STAGES.find((x) => x[0] === p.stage) || ['', 'Process'])[1])}</span><h3 class="ptitle">${esc(p.name)}</h3><p class="sub">${esc(p.inputs || 'Start')} → ${esc(p.outputs || 'End')}</p></div>
-    <div class="btn-row"><button class="btn sm ${ui.procView !== 'lanes' ? 'on' : ''}" data-action="procView" data-id="flow">Flow</button><button class="btn sm ${ui.procView === 'lanes' ? 'on' : ''}" data-action="procView" data-id="lanes">Swimlane</button><label class="tog small"><input type="checkbox" data-ui="anon" ${ui.anon ? 'checked' : ''}> Anonymise</label></div></header>
+    <div class="btn-row"><button class="btn sm" data-action="reviewSetup" title="Walk this flow live with someone and record what they confirm or correct">▶ Sense-check</button><button class="btn sm ${ui.procView !== 'lanes' ? 'on' : ''}" data-action="procView" data-id="flow">Flow</button><button class="btn sm ${ui.procView === 'lanes' ? 'on' : ''}" data-action="procView" data-id="lanes">Swimlane</button><label class="tog small"><input type="checkbox" data-ui="anon" ${ui.anon ? 'checked' : ''}> Anonymise</label></div></header>
+    ${ui.reviewSetup === p.id ? reviewChooser(e, p) : ''}
     ${processBrief(e, p)}
     <div style="margin-top:14px">${stats}</div>
     <div style="margin-top:12px">${view}</div>

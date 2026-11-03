@@ -2,7 +2,7 @@
    App shell — storage, routing, actions, data editor, Claude bridge
    ============================================================ */
 const STORE_KEY = 'tgm.studio.v1';
-const ui = { tab: 'overview', scenario: 'current', processId: '', stepId: '', procView: 'flow', flowCols: 0, flowZoom: 0, flowWhole: false, anon: false, ghosts: true, showCost: true, compare: true, zoom: 1, area: 'All', recType: 'All', coll: 'people', theme: '', reportType: 'status', capture: false, draft: null, session: false, sessionId: '', prioOnly: true };
+const ui = { tab: 'overview', scenario: 'current', processId: '', stepId: '', editStep: '', review: null, reviewSetup: '', procView: 'flow', flowCols: 0, flowZoom: 0, flowWhole: false, anon: false, ghosts: true, showCost: true, compare: true, zoom: 1, area: 'All', recType: 'All', coll: 'people', theme: '', reportType: 'status', capture: false, draft: null, session: false, sessionId: '', prioOnly: true };
 let db = { activeId: '', engagements: {} };
 
 /* ---------- storage (localStorage, wrapped; the JSON file export is the real backup) ---------- */
@@ -32,6 +32,10 @@ window.addEventListener('pagehide', flushSave);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
 function saveUI() { try { localStorage.setItem(STORE_KEY + '.ui', JSON.stringify({ tab: ui.tab, anon: ui.anon, showCost: ui.showCost, ghosts: ui.ghosts, compare: ui.compare, coll: ui.coll, theme: ui.theme })); } catch (err) { /* ignore */ } }
 const E = () => db.engagements[db.activeId];
+function reviewCtx() {
+  if (!ui.review) return {}; const proc = E().processes.find((x) => x.id === ui.review.procId); if (!proc) return {};
+  const rev = (proc.reviews || []).find((r) => r.id === ui.review.revId); return { proc, rev, step: rev ? (proc.steps || [])[ui.review.idx] : null };
+}
 const nowISO = () => new Date().toISOString();
 const touch = (o) => { if (o && typeof o === 'object') o.updatedAt = nowISO(); };
 function hashStr(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
@@ -237,15 +241,73 @@ function stripMarks(o) { return JSON.parse(JSON.stringify(o, (k, v) => (k.starts
 const actions = {
   tab: (el) => { ui.tab = el.dataset.id; saveUI(); render(); window.scrollTo(0, 0); },
   setScenario: (el) => { ui.scenario = el.dataset.id; render(); },
-  proc: (el) => { ui.processId = el.dataset.id; ui.stepId = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; render(); },
+  proc: (el) => { ui.processId = el.dataset.id; ui.stepId = ''; ui.review = null; ui.reviewSetup = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; render(); },
   procView: (el) => { ui.procView = el.dataset.id; render(); },
   flowStep: (el) => {
+    if (ui.review) { const { proc } = reviewCtx(); const i = proc ? (proc.steps || []).findIndex((x) => x.id === el.dataset.id) : -1; if (i >= 0) { ui.review.idx = i; render(); } return; }
     ui.stepId = el.dataset.id; render();
     const n = document.querySelector(`.flow-svg g.fnode[data-id="${CSS.escape(ui.stepId)}"]`);
     if (n && el.dataset.scroll) n.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
     const side = document.querySelector('.flow-side'); if (side && getComputedStyle(side).position !== 'sticky' && el.closest('.flow-svg')) side.scrollIntoView({ behavior: 'smooth', block: 'start' });
   },
   flowClear: () => { ui.stepId = ''; render(); },
+  stepEdit: () => { ui.editStep = ui.editStep === ui.stepId ? '' : ui.stepId; render(); },
+  stepAdd: () => {
+    const proc = E().processes.find((x) => x.id === ui.processId); if (!proc) return; const i = (proc.steps || []).findIndex((x) => x.id === ui.stepId);
+    const n = prompt('Name of the new step'); if (!n || !n.trim()) return;
+    const cur = proc.steps[i] || {}; const ns = { id: uid('s'), name: n.trim(), team: cur.team || '', actorLabel: '', toolId: '', automated: false, durationMins: '', elapsedDays: '', painPoint: '', flags: [] };
+    proc.steps.splice(i + 1, 0, ns); ui.stepId = ns.id; ui.editStep = ns.id; touch(proc); save(); render();
+  },
+  stepDelete: () => {
+    const proc = E().processes.find((x) => x.id === ui.processId); if (!proc) return; const i = (proc.steps || []).findIndex((x) => x.id === ui.stepId);
+    if (i < 0 || !confirm(`Delete step ${i + 1}: "${proc.steps[i].name}"?`)) return;
+    proc.steps.splice(i, 1); ui.stepId = ''; ui.editStep = ''; touch(proc); save(); render();
+  },
+  stepMove: (el) => {
+    const proc = E().processes.find((x) => x.id === ui.processId); if (!proc) return; const i = proc.steps.findIndex((x) => x.id === ui.stepId); const j = i + num(el.dataset.id);
+    if (i < 0 || j < 0 || j >= proc.steps.length) return; const [x] = proc.steps.splice(i, 1); proc.steps.splice(j, 0, x); touch(proc); save(); render();
+  },
+  reviewSetup: () => { ui.reviewSetup = ui.processId; render(); },
+  reviewCancel: () => { ui.reviewSetup = ''; render(); },
+  reviewStart: () => {
+    const e = E(); const proc = e.processes.find((x) => x.id === ui.processId); if (!proc) return;
+    const pid = document.getElementById('rvPerson').value; const person = e.people.find((x) => x.id === pid);
+    const label = (document.getElementById('rvLabel').value || (person ? (person.title || person.name) : '')).trim();
+    if (!label) return toast('Choose a person or type their role');
+    const r = { id: uid('rv'), personId: person ? person.id : '', label, date: todayISO(), verdicts: {}, notes: {}, answers: [], added: [] };
+    proc.reviews = [...(proc.reviews || []), r]; touch(proc); save();
+    ui.reviewSetup = ''; ui.scenario = 'current'; ui.review = { procId: proc.id, revId: r.id, idx: 0, mine: false }; render(); window.scrollTo(0, 0);
+  },
+  reviewVerdict: (el) => {
+    const { proc, step, rev } = reviewCtx(); if (!step) return;
+    rev.verdicts[step.id] = el.dataset.id; step.review = { status: el.dataset.id, by: rev.label, date: rev.date };
+    touch(proc); save(); render();
+  },
+  reviewNav: (el) => { const { proc } = reviewCtx(); if (!proc) return; ui.review.idx = Math.max(0, Math.min((proc.steps || []).length - 1, ui.review.idx + num(el.dataset.id))); render(); const n = document.querySelector('.flow-svg g.fnode.sel'); if (n) n.scrollIntoView({ behavior: 'smooth', block: 'center' }); },
+  reviewMine: () => { ui.review.mine = !ui.review.mine; render(); },
+  reviewConcern: () => {
+    const { proc, step, rev } = reviewCtx(); if (!step) return;
+    const t = prompt('What concern did they raise about this step?'); if (!t || !t.trim()) return;
+    step.flags = [...(step.flags || []), { type: 'issue', text: t.trim(), by: rev.label, date: rev.date }]; touch(proc); save(); render();
+  },
+  reviewAddStep: () => {
+    const { proc, step, rev } = reviewCtx(); if (!step) return;
+    const n = prompt('What is the missing step?'); if (!n || !n.trim()) return;
+    const ns = { id: uid('s'), name: n.trim(), team: step.team || '', actorLabel: '', toolId: '', automated: false, durationMins: '', elapsedDays: '', painPoint: '', flags: [], review: { status: 'corrected', by: rev.label, date: rev.date } };
+    proc.steps.splice(ui.review.idx + 1, 0, ns); rev.added.push(ns.id); rev.verdicts[ns.id] = 'corrected'; ui.review.idx++;
+    touch(proc); save(); render(); toast('Step added. Fill in who, system and time.');
+  },
+  reviewAnswer: (el) => {
+    const { proc, step, rev } = reviewCtx(); if (!step) return; const f = (step.flags || [])[+el.dataset.id]; if (!f) return;
+    const a = prompt(`Answer: ${f.text}`); if (a == null) return;
+    rev.answers.push({ stepId: step.id, q: f.text, a: a.trim(), date: rev.date }); step.flags.splice(+el.dataset.id, 1);
+    if (a.trim()) rev.notes[step.id] = [rev.notes[step.id], `${f.text} → ${a.trim()}`].filter(Boolean).join('\n');
+    touch(proc); save(); render();
+  },
+  reviewFinish: () => {
+    const { proc, rev } = reviewCtx(); ui.review = null; render();
+    if (rev) { const n = Object.keys(rev.verdicts).length; toast(`Sense-check saved: ${n} step${n === 1 ? '' : 's'} checked with ${rev.label}`); }
+  },
   exportFlow: (el) => {
     const e = E(); const st = stateFor(e, ui.scenario); const p = st.processes.find((x) => x.id === ui.processId); if (!p) return;
     const internal = ui.flowAudience === 'internal'; const k = el.dataset.id;
@@ -259,6 +321,11 @@ const actions = {
         c.toBlob((b) => { const a2 = document.createElement('a'); a2.href = URL.createObjectURL(b); a2.download = base + '.png'; document.body.appendChild(a2); a2.click(); setTimeout(() => { URL.revokeObjectURL(a2.href); a2.remove(); }, 500); }, 'image/png'); };
       img.onerror = () => toast('Could not draw the image. Try SVG instead.');
       img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml); return;
+    }
+    if (k === 'sheet') {
+      const html2 = senseCheckSheet(e, [p], stateFor(e, 'current'));
+      const w2 = window.open('', '_blank'); if (!w2) { downloadFile(`${slug(e.client.name)}-${slug(p.name)}-sense-check-${todayISO()}.html`, html2, 'text/html'); return toast('Pop-up blocked: downloaded as an HTML page instead'); }
+      w2.document.open(); w2.document.write(html2); w2.document.close(); setTimeout(() => { w2.focus(); w2.print(); }, 400); return toast('Choose "Save as PDF" in the print window');
     }
     const all = k === 'all'; const procs = all ? STAGES.flatMap(([id]) => st.processes.filter((x) => x.stage === id)).concat(st.processes.filter((x) => !STAGES.some(([id]) => id === x.stage))).filter((x) => !x._removed) : [p];
     const html = flowExportDoc(e, procs, st, { internal, journey: all });
@@ -488,6 +555,24 @@ document.addEventListener('change', (ev) => {
   if (t.dataset.draftsel) { setPath(ui.draft, t.dataset.draftsel, t.value); if (t.dataset.draftsel === 'personId') { const p = E().people.find((x) => x.id === t.value); ui.draft.level = guessLevel(E(), p); ui.draft.deptType = ''; } saveDraft(ui.draft); render(); return; }
   if (t.dataset.draftchk) { ui.draft[t.dataset.draftchk] = t.checked; saveDraft(ui.draft); return; }
   if (t.dataset.action && t.type === 'checkbox') { const fn = actions[t.dataset.action]; if (fn) fn(t, ev); return; }
+  if (t.dataset.ed) {
+    const proc = E().processes.find((x) => x.id === ui.processId); const step = proc && (proc.steps || []).find((x) => x.id === ui.editStep); if (!step) return;
+    const f = t.dataset.ed; let v = t.value;
+    if (f === 'durationMins' || f === 'elapsedDays') { v = v === '' ? '' : num(v); if (!(step.review && ['confirmed', 'corrected'].includes(step.review.status))) step.timeBasis = 'assumed'; }
+    if (f === 'automated') v = v === 'yes';
+    step[f] = v; if (f === 'actorLabel') step.actorId = '';
+    touch(proc); save(); render(); return;
+  }
+  if (t.dataset.rv || t.hasAttribute('data-rvnote')) {
+    const { proc, step, rev } = reviewCtx(); if (!step) return;
+    if (t.hasAttribute('data-rvnote')) { rev.notes[step.id] = t.value; touch(proc); save(); return; }
+    const f = t.dataset.rv; let v = t.value;
+    if (f === 'durationMins' || f === 'elapsedDays') { v = v === '' ? '' : num(v); step.timeBasis = 'confirmed'; }
+    if (f === 'automated') v = v === 'yes';
+    step[f] = v; if (f === 'actorLabel') step.actorId = '';
+    if (!rev.verdicts[step.id] || rev.verdicts[step.id] === 'confirmed') { rev.verdicts[step.id] = 'corrected'; step.review = { status: 'corrected', by: rev.label, date: rev.date }; }
+    touch(proc); save(); render(); return;
+  }
   if (t.dataset.ui) { ui[t.dataset.ui] = t.type === 'checkbox' ? t.checked : t.value; saveUI(); render(); return; }
   if (t.dataset.bind) {
     const v = t.type === 'checkbox' ? t.checked : t.value; setPath(E(), t.dataset.bind, v); touch(E()[t.dataset.bind.split('.')[0]]); save();
