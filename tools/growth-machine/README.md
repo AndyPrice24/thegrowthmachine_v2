@@ -2,7 +2,8 @@
 
 The Growth Machine's internal diagnostic tool, built for use across every client. You put a client's business into it (profile, finances, people and org, tools, processes, customers and markets, interviews) and it shows:
 
-- **Visuals of the current state.** Org chart, process swimlanes, tool stack and overlap, finance trends, customer concentration.
+- **Visuals of the current state.** Org chart, process flows, tool stack and overlap, finance trends, customer concentration.
+- **Process flows.** A client-journey strip (Attract → Sell → Onboard → Deliver & maintain → Grow & renew) shows which processes are mapped and how many warnings each carries. Click a process for its flow schematic: numbered, team-coloured steps from start to end, hand-offs between teams marked on the path, and three kinds of warning: ● issue (from interviews or the team), ▲ unverified (to confirm), ◆ weakness (flagged by the machine, e.g. a hand-off with no system to receive it). Click any step for its detail and to add or clear flags. Each process carries a confidence level (heard / corroborated / measured), a summary and talking points. The swimlane view is still available.
 - **Crossover signals.** It crosses the data sets, e.g. payroll against revenue, people against processes (who carries what, single points of failure, overload), tools against pain points, interview themes against departments.
 - **Ranked recommendations.** Each one is scored on value, effort, risk and confidence.
 - **Scenarios.** A scenario is a set of recommendations applied to the current state. Every view can switch between "current" and any scenario, with changes flagged as New / Changed / Removed.
@@ -115,6 +116,7 @@ node tools/growth-machine/build.mjs
 |---|---|
 | `src/model.js` | schema, scenario engine, metrics, scoring, crossover rules |
 | `src/charts.js` | bars, lines, stacked columns, heatmap, org chart, swimlane |
+| `src/flows.js` | client journey strip, flow schematic, warnings (issue / unverified / weakness), process brief |
 | `src/views.js` | each tab |
 | `src/report.js` | founder report + HTML export |
 | `src/app.js` | storage, navigation, data editor, Claude bridge |

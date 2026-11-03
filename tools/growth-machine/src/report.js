@@ -55,8 +55,9 @@ function renderReport(e) {
       const p = cur.processes.find((x) => x.id === pid); if (!p) return;
       const pn = next ? next.processes.find((x) => x.id === pid) : null;
       h += `<h3>${esc(p.name)}</h3><p class="muted small">${hrs(processHours(p))}/month · ${pct(processManualHours(p) / Math.max(1, processHours(p)) * 100)} manual · about ${fmtMoney(processCostMonthly(p, cur) * 12)}/yr staff time${pn ? ` → after: ${hrs(processHours(pn))}/month, about ${fmtMoney(processCostMonthly(pn, next) * 12)}/yr` : ''}</p>
-        <div class="rpt-fig">${swimlane(p, cur.people, cur.tools, { anonymise: anon })}</div>
-        ${pn ? `<div class="rpt-fig">${swimlane(pn, next.people, next.tools, { anonymise: anon })}</div>` : ''}`;
+        ${p.summary ? `<p>${esc(p.summary)}</p>` : ''}
+        <div class="rpt-fig">${flowSchematic(p, cur.people, cur.tools, cur.departments, { cols: 2, anonymise: anon, interactive: false })}</div>
+        ${pn ? `<h4>After</h4><div class="rpt-fig">${flowSchematic(pn, next.people, next.tools, next.departments, { cols: 2, anonymise: anon, interactive: false })}</div>` : ''}`;
     });
     h += '</section>';
   }

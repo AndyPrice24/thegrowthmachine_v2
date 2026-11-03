@@ -2,7 +2,7 @@
    App shell — storage, routing, actions, data editor, Claude bridge
    ============================================================ */
 const STORE_KEY = 'tgm.studio.v1';
-const ui = { tab: 'overview', scenario: 'current', processId: '', anon: false, ghosts: true, showCost: true, compare: true, zoom: 1, area: 'All', recType: 'All', coll: 'people', theme: '', reportType: 'status', capture: false, draft: null, session: false, sessionId: '', prioOnly: true };
+const ui = { tab: 'overview', scenario: 'current', processId: '', stepId: '', procView: 'flow', flowCols: 0, anon: false, ghosts: true, showCost: true, compare: true, zoom: 1, area: 'All', recType: 'All', coll: 'people', theme: '', reportType: 'status', capture: false, draft: null, session: false, sessionId: '', prioOnly: true };
 let db = { activeId: '', engagements: {} };
 
 /* ---------- storage (localStorage, wrapped; the JSON file export is the real backup) ---------- */
@@ -124,7 +124,7 @@ const FIELD_DEFS = {
   departments: [['id', 'text'], ['name', 'text'], ['type', DEPT_TYPES.map((d) => d[0])], ['headId', 'person'], ['notes', 'text']],
   people: [['id', 'text'], ['name', 'text'], ['title', 'text'], ['departmentId', 'dept'], ['managerId', 'person'], ['employmentType', ['Full-time', 'Part-time', 'Contractor', 'Outsourced', 'Vacant']], ['fte', 'num'], ['annualCost', 'num'], ['location', 'text'], ['startDate', 'date'], ['notes', 'text']],
   tools: [['id', 'text'], ['name', 'text'], ['category', 'text'], ['vendor', 'text'], ['monthlyCost', 'num'], ['seats', 'num'], ['activeUsers', 'num'], ['departmentIds', 'text'], ['ownerId', 'person'], ['purpose', 'text'], ['notes', 'text']],
-  processes: [['id', 'text'], ['name', 'text'], ['departmentId', 'dept'], ['ownerId', 'person'], ['frequency', 'text'], ['runsPerMonth', 'num'], ['hoursPerMonth', 'num'], ['inputs', 'text'], ['outputs', 'text'], ['steps', 'json']],
+  processes: [['id', 'text'], ['name', 'text'], ['stage', STAGES.map((x) => x[0])], ['departmentId', 'dept'], ['ownerId', 'person'], ['confidence', Object.keys(CONFIDENCE)], ['sources', 'text'], ['summary', 'long'], ['talkingPoints', 'long'], ['findingIds', 'text'], ['frequency', 'text'], ['runsPerMonth', 'num'], ['hoursPerMonth', 'num'], ['inputs', 'text'], ['outputs', 'text'], ['steps', 'json']],
   segments: [['id', 'text'], ['name', 'text'], ['customers', 'num'], ['annualRevenue', 'num'], ['churnPct', 'num'], ['acquisitionChannel', 'text'], ['notes', 'text']],
   markets: [['id', 'text'], ['name', 'text'], ['region', 'text'], ['revenueShare', 'num'], ['notes', 'text']],
   topClients: [['id', 'text'], ['name', 'text'], ['segmentId', 'text'], ['annualRevenue', 'num'], ['notes', 'text']],
@@ -188,8 +188,9 @@ Schema "tgm.engagement/1". Include only the collections you have data for. Every
   "departments": [{ "id","name","headId" }],
   "people": [{ "id","name","title","departmentId","managerId","employmentType":"Full-time|Part-time|Contractor|Outsourced|Vacant","fte":1,"annualCost":0,"location","notes" }],
   "tools": [{ "id","name","category","vendor","monthlyCost":0,"seats":0,"activeUsers":0,"departmentIds":"d_a,d_b","purpose" }],
-  "processes": [{ "id","name","departmentId","ownerId","frequency","runsPerMonth":0,"inputs","outputs",
-     "steps": [{ "id","name","actorId":"<person id or empty>","actorLabel":"<role if no person>","toolId","durationMins":0,"automated":false,"input","output","painPoint" }] }],
+  "processes": [{ "id","name","stage":"attract|sell|onboard|deliver|grow (blank = internal)","departmentId","ownerId","confidence":"heard|corroborated|measured","sources","summary","talkingPoints":"one per line","findingIds":"f_a,f_b","frequency","runsPerMonth":0,"inputs","outputs",
+     "steps": [{ "id","name","team":"client|marketing|sales|cs|ops|product|leadership|finance|system","actorId":"<person id or empty>","actorLabel":"<role if no person>","toolId","durationMins":0,"automated":false,"input","output","painPoint",
+        "flags":[{ "type":"issue|unverified|weakness","text","by","date" }] }] }],
   "segments": [{ "id","name","customers":0,"annualRevenue":0,"churnPct":0,"acquisitionChannel" }],
   "markets": [{ "id","name","region","revenueShare":0 }],
   "topClients": [{ "id","name","segmentId","annualRevenue":0 }],
@@ -236,7 +237,21 @@ function stripMarks(o) { return JSON.parse(JSON.stringify(o, (k, v) => (k.starts
 const actions = {
   tab: (el) => { ui.tab = el.dataset.id; saveUI(); render(); window.scrollTo(0, 0); },
   setScenario: (el) => { ui.scenario = el.dataset.id; render(); },
-  proc: (el) => { ui.processId = el.dataset.id; render(); },
+  proc: (el) => { ui.processId = el.dataset.id; ui.stepId = ''; render(); },
+  procView: (el) => { ui.procView = el.dataset.id; render(); },
+  flowStep: (el) => { ui.stepId = el.dataset.id; render(); const d = document.querySelector('.flow-panels'); if (d && d.getBoundingClientRect().top > window.innerHeight) d.scrollIntoView({ behavior: 'smooth', block: 'start' }); },
+  addFlowFlag: (el) => {
+    const proc = E().processes.find((x) => x.id === ui.processId); const st = proc && (proc.steps || []).find((x) => x.id === ui.stepId);
+    if (!st) return toast('This step only exists in the scenario. Flag it in the current state.');
+    const label = { issue: 'Describe the issue', unverified: 'What needs to be confirmed?', weakness: 'Describe the weakness' }[el.dataset.id];
+    const text = prompt(label); if (!text || !text.trim()) return;
+    st.flags = [...(st.flags || []), { type: el.dataset.id, text: text.trim(), by: E().meta.consultant && E().meta.consultant !== 'The Growth Machine' ? E().meta.consultant : 'TGM', date: todayISO() }];
+    touch(proc); save(); render(); toast('Flag added to the flow');
+  },
+  removeFlowFlag: (el) => {
+    const proc = E().processes.find((x) => x.id === ui.processId); const st = proc && (proc.steps || []).find((x) => x.id === ui.stepId);
+    if (!st || !st.flags) return; st.flags.splice(+el.dataset.id, 1); touch(proc); save(); render();
+  },
   area: (el) => { ui.area = el.dataset.id; render(); },
   recType: (el) => { ui.recType = el.dataset.id; render(); },
   coll: (el) => { ui.coll = el.dataset.id; saveUI(); render(); },

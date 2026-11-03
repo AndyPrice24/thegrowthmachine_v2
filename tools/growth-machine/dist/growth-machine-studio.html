@@ -146,6 +146,69 @@ tr.row-flag td{background:rgba(208,59,59,.06)}
 .cap{font-size:11.5px;white-space:nowrap}.cap-s{color:var(--ink);font-weight:650}.cap-p{color:var(--muted)}.cap-n{color:var(--faint)}
 
 .pos-map{max-width:760px}
+
+/* ---- Flow schematic (serpentine process flow + client journey) ---- */
+.flow-wrap{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:12px;overflow:auto}
+.flow-svg{display:block;margin:0 auto;font-family:inherit}
+.flow-svg .link{fill:none;stroke:var(--faint);stroke-width:2}
+.flow-svg .link.handoff{stroke:var(--ink);stroke-width:2.5;stroke-dasharray:7 4}
+.flow-svg .link.ghost{opacity:.35}
+.flow-svg .fa{fill:var(--faint)}
+.flow-svg .pill rect{fill:var(--ink)}
+.flow-svg .pill text{fill:var(--surface);font-size:12.5px;font-weight:600}
+.flow-svg .pill .pl{font-weight:800;letter-spacing:.1em}
+.fnode .nb{fill:var(--surface);stroke:var(--line);stroke-width:1.5}
+.fnode.manual .nb{stroke:var(--faint)}
+.fnode.auto .nb{stroke:var(--s1);stroke-width:2;stroke-dasharray:6 3}
+.fnode .band{opacity:.24}
+.fnode .num{fill:var(--ink)}
+.fnode .numt{fill:var(--surface);font-size:11px;font-weight:800}
+.fnode .team{font-size:10.5px;font-weight:800;letter-spacing:.09em;fill:var(--ink)}
+.fnode .nm{font-size:13.5px;font-weight:700;fill:var(--ink)}
+.fnode .act{font-size:11.5px;fill:var(--muted)}
+.fnode .sep{stroke:var(--grid);stroke-width:1}
+.fnode .tool{font-size:11px;fill:var(--muted);font-weight:600}
+.fnode .mode{font-size:11px;fill:var(--faint)}
+.fnode .mode.m-auto{fill:var(--s1);font-weight:700}
+.fnode.clk:hover .nb{stroke:var(--ink)}
+.fnode.sel .nb{stroke:var(--ink);stroke-width:3}
+.fnode.removed{opacity:.45}.fnode.removed .nb{stroke:var(--crit);stroke-dasharray:6 4}
+.fnode.added .nb{stroke:var(--good);stroke-width:2.5}.fnode.changed .nb{stroke:var(--warn);stroke-width:2.5}
+.fnode .stt{font-size:10px;font-weight:800}.stt-removed{fill:var(--crit-ink)}.stt-added{fill:var(--good-ink)}.stt-changed{fill:var(--warn-ink)}
+.fl circle,.fl path{stroke:var(--surface);stroke-width:2}
+.fl-issue circle{fill:var(--crit)}.fl-unverified path{fill:var(--warn)}.fl-weakness path{fill:var(--s7)}
+.fl text{font-size:10.5px;font-weight:800;fill:#fff;font-family:inherit}.fl-unverified text{fill:#1a1300}
+.ho circle{fill:var(--surface);stroke:var(--ink);stroke-width:1.5}.ho text{font-size:11px;font-weight:800;fill:var(--ink)}
+.clk{cursor:pointer}
+.fl-ico{vertical-align:middle;flex:none;overflow:visible}
+.flow-legend{margin:8px 0}.flow-legend>span{display:inline-flex;align-items:center;gap:4px}
+.ho-ico{display:inline-grid;place-items:center;width:18px;height:18px;border:1.5px solid var(--ink);border-radius:50%;font-size:11px;font-weight:800}
+.journey{display:flex;align-items:stretch;gap:6px;overflow-x:auto;padding-bottom:4px}
+.jstage{flex:1 1 0;min-width:170px;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--surface);display:flex;flex-direction:column;gap:6px}
+.jstage.jempty{border-style:dashed;background:transparent}
+.jh{font-size:11px;text-transform:uppercase;letter-spacing:.1em;font-weight:800;color:var(--muted);display:flex;align-items:center;gap:6px}
+.jn{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--ink);color:var(--surface);font-size:11px;letter-spacing:0}
+.jarrow{align-self:center;font-size:26px;color:var(--faint);flex:none}
+.jp{text-align:left;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);padding:8px;cursor:pointer;display:grid;gap:5px;font:inherit;color:var(--ink)}
+.jp:hover{border-color:var(--ink)}.jp.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.jp strong{font-size:12.5px;line-height:1.25}
+.jc{display:flex;gap:8px;flex-wrap:wrap}.jcn{display:inline-flex;align-items:center;gap:1px;font-size:12px;font-weight:700}.jcn .fl-ico{width:17px;height:17px}
+.jother{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}.jother .jp{max-width:300px}
+.conf{display:inline-block;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;border-radius:999px;padding:2px 8px;border:1.5px solid;width:max-content}
+.conf-warn{border-color:var(--warn);color:var(--warn-ink)}.conf-s1{border-color:var(--s1);color:var(--s1)}.conf-good{border-color:var(--good);color:var(--good-ink)}
+.pbrief{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:20px}
+.pbrief h5{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:12px 0 4px}
+.pbrief .psum{font-size:14.5px;margin:10px 0 0}
+.pbrief ul{margin:0;padding-left:18px;display:grid;gap:4px}
+.flow-panels{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:12px;margin-top:12px}
+ol.flags{list-style:none;padding:0;margin:0;display:grid;gap:6px;max-height:560px;overflow:auto}
+ol.flags li{display:flex;gap:8px;align-items:flex-start;padding:8px;border:1px solid var(--line);border-radius:10px}
+ol.flags li:hover,ol.flags li.on{border-color:var(--ink)}
+.sd{display:grid;grid-template-columns:96px minmax(0,1fr);gap:5px 10px;margin:8px 0}.sd dt{font-weight:600;color:var(--muted);font-size:12px}.sd dd{margin:0}
+.tdot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.warn-t{color:var(--warn-ink);font-weight:600}
+.ownf{list-style:none;padding:0;margin:4px 0;display:grid;gap:6px}.ownf li{display:flex;gap:8px;align-items:center}
+@media (max-width:820px){.pbrief,.flow-panels{grid-template-columns:1fr}}
 </style>
 <style id="report-css">/* Founder report styles (also embedded in exported HTML reports) */
 .rpt{background:#fffdf9;color:#171715;border:1px solid #d7cfc3;border-radius:14px;padding:40px 46px;
@@ -368,7 +431,7 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="tip" hidden></div>
 <script>
-const STUDIO_BUILD = '2026-11-02 15:19 UTC';
+const STUDIO_BUILD = '2026-11-03 10:41 UTC';
 /* ---- model.js ---- */
 /* ============================================================
    The Growth Machine — data model, scenario engine, scoring, insights
@@ -1542,6 +1605,184 @@ function swimlane(proc, people, tools, { anonymise = false } = {}) {
   return `<div class="lane">${svg}</div>`;
 }
 
+/* ---- flows.js ---- */
+/* Flow schematics: end-to-end client journey + a serpentine process flow with warning markers.
+   Data (all optional, backward compatible):
+   process: stage, confidence ('heard'|'corroborated'|'measured'), sources, summary, talkingPoints, findingIds
+   step:    team, actorLabel/actorId, toolId, automated, durationMins, painPoint, flags:[{type,text,by,date}] */
+
+const TEAMS = [
+  ['client', 'Client', 'var(--s-other)'], ['marketing', 'Marketing', 'var(--s5)'], ['sales', 'Sales', 'var(--s1)'],
+  ['cs', 'Client Success', 'var(--s3)'], ['ops', 'Operations', 'var(--s2)'], ['product', 'Product & Dev', 'var(--s7)'],
+  ['leadership', 'Leadership', 'var(--s4)'], ['finance', 'Finance', 'var(--s6)'], ['system', 'System', 'var(--faint)']
+];
+const STAGES = [['attract', 'Attract'], ['sell', 'Sell'], ['onboard', 'Onboard'], ['deliver', 'Deliver & maintain'], ['grow', 'Grow & renew']];
+const CONFIDENCE = { heard: ['Heard', 'Based on what people told us; not yet checked', 'warn'], corroborated: ['Corroborated', 'Confirmed by more than one source', 's1'], measured: ['Measured', 'Checked against data or observed', 'good'] };
+const FLAG_TYPES = { issue: ['Issue', 'raised by the team or interviews'], unverified: ['Unverified', 'to confirm'], weakness: ['Weakness', 'flagged by the machine'] };
+const teamInfo = (id) => TEAMS.find((t) => t[0] === id) || ['', 'Unassigned', 'var(--line)'];
+
+function stepTeam(s, pById, dById) {
+  if (s.team) return s.team;
+  const p = s.actorId && pById[s.actorId]; const d = p && dById[p.departmentId];
+  const map = { revenue: 'sales', tech: 'product' };
+  if (d && d.type) return map[d.type] || d.type;
+  return s.automated ? 'system' : '';
+}
+
+/** Every warning along a process, numbered in path order. Hand-off weaknesses sit on the connector into a step. */
+function flowFlags(proc, people, tools, departments) {
+  const steps = proc.steps || []; const pById = byId(people), tById = byId(tools), dById = byId(departments);
+  const list = []; const add = (f) => { f.n = list.length + 1; list.push(f); };
+  steps.forEach((s, i) => {
+    if (i && !s._removed) {
+      let j = i - 1; while (j >= 0 && steps[j]._removed) j--;
+      const prev = steps[j];
+      if (prev) {
+        const a = stepTeam(prev, pById, dById), b = stepTeam(s, pById, dById);
+        if (a && b && a !== b && a !== 'client' && b !== 'client') {
+          const ta = tById[prev.toolId], tb = tById[s.toolId];
+          if (!tb) add({ type: 'weakness', on: 'link', stepId: s.id, text: `Hand-off from ${teamInfo(a)[1]} to ${teamInfo(b)[1]} with no system to receive it: relies on email, chat or memory`, by: 'Machine' });
+          else if (ta && tb && ta.id !== tb.id) add({ type: 'weakness', on: 'link', stepId: s.id, text: `Hand-off from ${teamInfo(a)[1]} to ${teamInfo(b)[1]} switches tool (${ta.name} → ${tb.name}): information re-entered?`, by: 'Machine' });
+        }
+      }
+    }
+    if (s.painPoint) add({ type: 'issue', on: 'node', stepId: s.id, text: s.painPoint, by: proc.sources || 'Interviews' });
+    (s.flags || []).forEach((f, k) => add({ type: FLAG_TYPES[f.type] ? f.type : 'issue', on: 'node', stepId: s.id, text: f.text, by: f.by || 'Team', date: f.date, idx: k }));
+  });
+  return list;
+}
+
+function flagShape(type, n, x, y, r = 11) {
+  const t = esc(String(n));
+  if (type === 'unverified') return `<g class="fl fl-unverified" transform="translate(${x},${y})"><path d="M0,${-r - 1} L${r + 2},${r - 2} L${-r - 2},${r - 2} Z"/><text y="${r - 5}" text-anchor="middle">${t}</text></g>`;
+  if (type === 'weakness') return `<g class="fl fl-weakness" transform="translate(${x},${y})"><path d="M0,${-r - 1} L${r + 1},0 L0,${r + 1} L${-r - 1},0 Z"/><text y="4" text-anchor="middle">${t}</text></g>`;
+  return `<g class="fl fl-issue" transform="translate(${x},${y})"><circle r="${r}"/><text y="4" text-anchor="middle">${t}</text></g>`;
+}
+const flagIcon = (type, n = '') => `<svg class="fl-ico" width="24" height="24" viewBox="-12 -12 24 24" aria-hidden="true">${flagShape(type, n, 0, type === 'unverified' ? 2 : 0, 10)}</svg>`;
+
+/** Serpentine flow: Start → numbered step nodes (team-coloured) → End, with warning markers on nodes and links. */
+function flowSchematic(proc, people, tools, departments, { cols = 3, selected = '', anonymise = false, interactive = true } = {}) {
+  const steps = proc.steps || [];
+  if (!steps.length) return '<p class="empty">This process has no steps yet.</p>';
+  const pById = byId(people), tById = byId(tools), dById = byId(departments);
+  const flags = flowFlags(proc, people, tools, departments);
+  cols = Math.max(1, Math.min(cols, steps.length));
+  const NW = 262, NH = 136, GX = 78, GY = 96, PX = 34, TOP = 74;
+  const rows = Math.ceil(steps.length / cols);
+  const W = PX * 2 + cols * NW + (cols - 1) * GX, H = TOP + rows * (NH + GY) - GY + 92;
+  const pos = steps.map((s, i) => { const r = Math.floor(i / cols); let c = i % cols; if (r % 2) c = cols - 1 - c; return { x: PX + c * (NW + GX), y: TOP + r * (NH + GY), r }; });
+  const mid = `fa-${esc(proc.id)}`;
+  let svg = `<svg class="flow-svg" viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px" role="img" aria-label="Flow: ${esc(proc.name)}">`;
+  svg += `<defs><marker id="${mid}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fa"/></marker></defs>`;
+  // start / end pills
+  const pill = (x, y, label, text) => `<g class="pill"><rect x="${x}" y="${y}" width="${NW}" height="34" rx="17"/><text x="${x + 16}" y="${y + 22}"><tspan class="pl">${label}</tspan> ${esc(trunc(text, 34))}</text></g>`;
+  const p0 = pos[0], pl = pos[pos.length - 1];
+  svg += `<path class="link" d="M${p0.x + NW / 2},${p0.y - 40 + 34} V${p0.y - 3}" marker-end="url(#${mid})"/>`;
+  svg += pill(p0.x, p0.y - 40 - 6, 'START', proc.inputs || 'Trigger');
+  svg += `<path class="link" d="M${pl.x + NW / 2},${pl.y + NH} V${pl.y + NH + 40}" marker-end="url(#${mid})"/>`;
+  svg += pill(pl.x, pl.y + NH + 44, 'END', proc.outputs || 'Outcome');
+  // links with hand-off and weakness markers
+  steps.forEach((s, i) => {
+    if (!i) return; const a = pos[i - 1], b = pos[i];
+    const ghost = s._removed || steps[i - 1]._removed ? ' ghost' : '';
+    let d, mx, my;
+    if (a.r === b.r) { const ltr = b.x > a.x; const x1 = ltr ? a.x + NW : a.x, x2 = ltr ? b.x - 3 : b.x + NW + 3, y = a.y + NH / 2; d = `M${x1},${y} H${x2}`; mx = (x1 + x2) / 2; my = y; }
+    else { const x = a.x + NW / 2; d = `M${x},${a.y + NH} V${b.y - 3}`; mx = x; my = (a.y + NH + b.y) / 2; }
+    const ta = teamInfo(stepTeam(steps[i - 1], pById, dById)), tb = teamInfo(stepTeam(s, pById, dById));
+    const handoff = ta[0] && tb[0] && ta[0] !== tb[0];
+    svg += `<path class="link${handoff ? ' handoff' : ''}${ghost}" d="${d}" marker-end="url(#${mid})"/>`;
+    const lf = flags.filter((f) => f.on === 'link' && f.stepId === s.id);
+    if (lf.length) svg += lf.map((f, k) => `<g data-tip="${esc(`${f.n}. ${f.text}`)}" ${interactive ? `data-action="flowStep" data-id="${esc(s.id)}"` : ''} class="clk">${flagShape('weakness', f.n, mx + k * 26, my)}</g>`).join('');
+    else if (handoff) svg += `<g class="ho" transform="translate(${mx},${my})" data-tip="${esc(`Hand-off: ${ta[1]} → ${tb[1]}`)}"><circle r="9"/><text y="4" text-anchor="middle">⇄</text></g>`;
+  });
+  // nodes
+  steps.forEach((s, i) => {
+    const { x, y } = pos[i]; const tm = teamInfo(stepTeam(s, pById, dById));
+    const st = s._removed ? 'removed' : s._added ? 'added' : (s._changed && s._changed.length) ? 'changed' : '';
+    const p = s.actorId && pById[s.actorId];
+    const actor = p ? (anonymise ? (p.title || 'Team member') : p.name) : (s.actorLabel || '');
+    const t = tById[s.toolId];
+    const lines = wrapText(s.name || 'Step', 31, 3);
+    const nf = flags.filter((f) => f.on === 'node' && f.stepId === s.id);
+    svg += `<g class="fnode ${s.automated ? 'auto' : 'manual'} ${st} ${selected === s.id ? 'sel' : ''} ${interactive ? 'clk' : ''}" transform="translate(${x},${y})" ${interactive ? `data-action="flowStep" data-id="${esc(s.id)}"` : ''} data-tip="${esc([s.name, actor, t ? 'Tool: ' + t.name : 'No system', s.automated ? 'Automated' : 'Manual', num(s.durationMins) ? num(s.durationMins) + ' min' : 'Time not measured'].filter(Boolean).join(' · '))}">`;
+    svg += `<rect class="nb" width="${NW}" height="${NH}" rx="12"/>`;
+    svg += `<rect class="band" width="${NW}" height="28" rx="12" style="fill:${tm[2]}"/><rect class="band" y="16" width="${NW}" height="12" style="fill:${tm[2]}"/>`;
+    svg += `<circle class="num" cx="18" cy="14" r="10"/><text class="numt" x="18" y="18" text-anchor="middle">${i + 1}</text>`;
+    svg += `<text class="team" x="36" y="18.5">${esc(tm[1].toUpperCase())}</text>`;
+    svg += lines.map((ln, k) => `<text class="nm" x="14" y="${50 + k * 16}">${esc(ln)}</text>`).join('');
+    if (actor) svg += `<text class="act" x="14" y="${NH - 30}">${esc(trunc(actor, 40))}</text>`;
+    svg += `<line class="sep" x1="14" x2="${NW - 14}" y1="${NH - 22}" y2="${NH - 22}"/>`;
+    svg += `<text class="tool" x="14" y="${NH - 8}">${esc(trunc(t ? t.name : 'No system', 26))}${t && t._removed ? ' (removed)' : ''}</text>`;
+    svg += `<text class="mode ${s.automated ? 'm-auto' : ''}" x="${NW - 14}" y="${NH - 8}" text-anchor="end">${s.automated ? '⚙ Automated' : 'Manual'}${num(s.durationMins) ? ' · ' + num(s.durationMins) + 'm' : ''}</text>`;
+    nf.forEach((f, k) => { svg += `<g data-tip="${esc(`${f.n}. ${FLAG_TYPES[f.type][0]}: ${f.text}`)}">${flagShape(f.type, f.n, NW - 14 - k * 27, 0)}</g>`; });
+    if (st) svg += `<text class="stt stt-${st}" x="${NW - 14}" y="${NH - 30}" text-anchor="end">${st === 'removed' ? '✕ REMOVED' : st === 'added' ? '+ NEW' : '~ CHANGED'}</text>`;
+    svg += '</g>';
+  });
+  svg += '</svg>';
+  return `<div class="flow-wrap">${svg}</div>`;
+}
+
+const flowLegend = () => `<div class="legend flow-legend">
+  <span>${flagIcon('issue')} Issue <span class="faint">(team / interviews)</span></span>
+  <span>${flagIcon('unverified')} Unverified <span class="faint">(to confirm)</span></span>
+  <span>${flagIcon('weakness')} Weakness <span class="faint">(flagged by the machine)</span></span>
+  <span><span class="ho-ico">⇄</span> Hand-off between teams</span>
+  <span><span class="chip" style="border-style:dashed">⚙ Automated</span></span></div>`;
+
+/** Client journey strip: stages left to right, the processes mapped in each, with warning counts. */
+function journeyStrip(procs, people, tools, departments, current) {
+  const counts = (p) => { const f = flowFlags(p, people, tools, departments); return ['issue', 'unverified', 'weakness'].map((t) => [t, f.filter((x) => x.type === t).length]); };
+  const pBtn = (p) => `<button class="jp ${p.id === current ? 'on' : ''}" data-action="proc" data-id="${esc(p.id)}"><strong>${esc(p.name)}</strong><span class="jc">${counts(p).filter(([, n]) => n).map(([t, n]) => `<span class="jcn jcn-${t}" title="${FLAG_TYPES[t][0]}">${flagIcon(t)}${n}</span>`).join('') || '<span class="faint small">No warnings</span>'}</span>${p.confidence ? `<span class="conf conf-${CONFIDENCE[p.confidence] ? CONFIDENCE[p.confidence][2] : 'warn'}">${esc((CONFIDENCE[p.confidence] || [p.confidence])[0])}</span>` : ''}</button>`;
+  const stageCards = STAGES.map(([id, label], i) => {
+    const ps = procs.filter((p) => p.stage === id);
+    return `<div class="jstage ${ps.length ? '' : 'jempty'}"><div class="jh"><span class="jn">${i + 1}</span>${esc(label)}</div>${ps.length ? ps.map(pBtn).join('') : '<p class="faint small">Not mapped yet</p>'}</div>`;
+  }).join('<div class="jarrow" aria-hidden="true">›</div>');
+  const other = procs.filter((p) => !STAGES.some(([id]) => id === p.stage));
+  return `<div class="journey">${stageCards}</div>${other.length ? `<div class="jother"><span class="faint small">Other processes:</span> ${other.map(pBtn).join('')}</div>` : ''}`;
+}
+
+/** Plain-language brief above the schematic: summary, confidence, talking points, what is still to measure. */
+function processBrief(e, p) {
+  const conf = CONFIDENCE[p.confidence];
+  const steps = live(p.steps);
+  const toMeasure = [];
+  if (!num(p.runsPerMonth)) toMeasure.push('How often it runs (per month)');
+  const untimed = steps.filter((s) => !num(s.durationMins)).length;
+  if (untimed) toMeasure.push(`Time per step (${untimed} of ${steps.length} steps not measured)`);
+  if (!p.ownerId) toMeasure.push('Owner');
+  const fIds = splitList(p.findingIds); const fs = fIds.map((id) => e.findings.find((f) => f.id === id)).filter(Boolean);
+  const tps = String(p.talkingPoints || '').split('\n').map((x) => x.trim()).filter(Boolean);
+  return `<div class="pbrief">
+    <div>${conf ? `<span class="conf conf-${conf[2]}" title="${esc(conf[1])}">${esc(conf[0])}</span> <span class="faint small">${esc(conf[1])}${p.sources ? ' · Source: ' + esc(p.sources) : ''}</span>` : '<span class="faint small">Confidence not set</span>'}
+      ${p.summary ? `<p class="psum">${esc(p.summary)}</p>` : ''}
+      ${tps.length ? `<h5>Talking points</h5><ul class="tps">${tps.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}</div>
+    <div>${toMeasure.length ? `<h5>Still to measure</h5><ul class="tm">${toMeasure.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : '<h5>Measured</h5><p class="small muted">Volumes and times are in.</p>'}
+      ${fs.length ? `<h5>Linked findings</h5><ul class="lf">${fs.map((f) => `<li><span class="chip sev-${esc(f.severity || 'medium')}">${esc(f.severity || 'medium')}</span> ${esc(f.title)}</li>`).join('')}</ul>` : ''}</div>
+  </div>`;
+}
+
+/** Numbered warnings list + selected step detail. */
+function flowSidePanels(e, p, people, tools, departments) {
+  const flags = flowFlags(p, people, tools, departments);
+  const steps = p.steps || []; const idx = Object.fromEntries(steps.map((s, i) => [s.id, i]));
+  const list = flags.length ? `<ol class="flags">${flags.map((f) => `<li class="clk ${f.stepId === ui.stepId ? 'on' : ''}" data-action="flowStep" data-id="${esc(f.stepId)}">${flagIcon(f.type, f.n)}<div><div class="small"><b>${FLAG_TYPES[f.type][0]}</b> · ${f.on === 'link' ? 'into ' : ''}step ${idx[f.stepId] + 1}: ${esc(trunc((steps[idx[f.stepId]] || {}).name, 60))}</div><div>${esc(f.text)}</div><div class="faint small">${esc(f.by || '')}${f.date ? ' · ' + esc(f.date) : ''}</div></div></li>`).join('')}</ol>` : '<p class="empty">No warnings on this flow.</p>';
+  const s = steps.find((x) => x.id === ui.stepId);
+  let detail = '<p class="empty">Click a step in the flow to see its detail, and to flag an issue or something unverified.</p>';
+  if (s) {
+    const pById = byId(people), dById = byId(departments), t = byId(tools)[s.toolId]; const pp = s.actorId && pById[s.actorId];
+    const tm = teamInfo(stepTeam(s, pById, dById));
+    const own = (s.flags || []).map((f, k) => `<li>${flagIcon(FLAG_TYPES[f.type] ? f.type : 'issue')} <span>${esc(f.text)} <span class="faint small">${esc(f.by || '')}${f.date ? ' · ' + esc(f.date) : ''}</span></span> <button class="btn sm ghost" data-action="removeFlowFlag" data-id="${k}" title="Remove (e.g. once verified)">✕</button></li>`).join('');
+    detail = `<h4 style="margin-top:0">Step ${idx[s.id] + 1}: ${esc(s.name)}</h4>
+      <dl class="sd"><dt>Team</dt><dd><i class="tdot" style="background:${tm[2]}"></i>${esc(tm[1])}</dd><dt>Who</dt><dd>${esc(pp ? (ui.anon ? pp.title : pp.name) : (s.actorLabel || '—'))}</dd>
+      <dt>System</dt><dd>${esc(t ? t.name : 'No system')}</dd><dt>Mode</dt><dd>${s.automated ? 'Automated' : 'Manual'}</dd><dt>Time</dt><dd>${num(s.durationMins) ? num(s.durationMins) + ' min per run' : '<span class="warn-t">Not measured</span>'}</dd>
+      ${s.input || s.output ? `<dt>In → out</dt><dd>${esc(s.input || '—')} → ${esc(s.output || '—')}</dd>` : ''}
+      ${s.painPoint ? `<dt>Pain point</dt><dd>${esc(s.painPoint)}</dd>` : ''}</dl>
+      ${own ? `<h5>Flags added</h5><ul class="ownf">${own}</ul>` : ''}
+      <div class="btn-row"><button class="btn sm" data-action="addFlowFlag" data-id="issue">+ Flag issue</button><button class="btn sm" data-action="addFlowFlag" data-id="unverified">+ Flag unverified</button><button class="btn sm" data-action="addFlowFlag" data-id="weakness">+ Flag weakness</button></div>`;
+  }
+  return `<div class="flow-panels">${card(`Warnings along this flow (${flags.length})`, list)}${card('Step detail', detail)}</div>`;
+}
+
 /* ---- demo.js ---- */
 /* Fictional sample engagement so every view has something to show.
    NOT Location Bank data. Delete it once you have a real client loaded. */
@@ -1941,29 +2182,40 @@ function viewTools(e) {
 function viewProcesses(e) {
   const st = stateFor(e, ui.scenario); const cur = stateFor(e, 'current');
   const procs = st.processes;
-  if (!procs.length) return `<div class="page-h"><div><span class="eyebrow">Processes</span><h1>Process maps</h1></div></div>${empty('No processes yet. Add them in Data & Claude. Each process has steps, and each step has an actor, a tool, a duration and an optional pain point.')}`;
+  if (!procs.length) return `<div class="page-h"><div><span class="eyebrow">Processes</span><h1>Process maps</h1></div></div>${empty('No processes yet. Add them in Data & Claude. Each process has steps, and each step has a team, an actor, a tool, a duration and an optional pain point.')}`;
   if (!procs.find((p) => p.id === ui.processId)) ui.processId = procs[0].id;
   const p = procs.find((x) => x.id === ui.processId); const pc = cur.processes.find((x) => x.id === p.id);
+  if (ui.stepId && !(p.steps || []).some((x) => x.id === ui.stepId)) ui.stepId = '';
   const h = processHours(p), mh = processManualHours(p);
-  const list = `<div class="proc-list">${procs.map((x) => `<button class="proc-btn ${x.id === p.id ? 'on' : ''} ${x._removed ? 'row-removed' : ''}" data-action="proc" data-id="${x.id}"><strong>${esc(x.name)}</strong><span>${hrs(processHours(x))}/mo · ${live(x.steps).length} steps</span>${stChip(x)}</button>`).join('')}</div>`;
+  const measured = h > 0;
+  const flags = flowFlags(p, st.people, st.tools, st.departments);
+  const fc = (t) => flags.filter((f) => f.type === t).length;
   const stats = `<div class="kpis">
-    ${kpi('Hours / month', hrs(h), pc && ui.scenario !== 'current' ? deltaHTML(processHours(pc), h, hrs) : '')}
-    ${kpi('Manual share', h ? pct(mh / h * 100) : '—')}
-    ${kpi('Staff cost / yr', fmtMoney(processCostMonthly(p, st) * 12), pc && ui.scenario !== 'current' ? deltaHTML(processCostMonthly(pc, cur) * 12, processCostMonthly(p, st) * 12, fmtMoney) : '')}
-    ${kpi('Runs / month', num(p.runsPerMonth) || '—', `<div class="k-delta">${esc(p.frequency || '')}</div>`)}
-    ${kpi('Pain points', live(p.steps).filter((s) => s.painPoint).length)}
+    ${kpi('Steps', live(p.steps).length, `<div class="k-delta">${live(p.steps).filter((x) => !x.automated).length} manual · ${live(p.steps).filter((x) => x.automated).length} automated</div>`)}
+    ${kpi('Warnings', flags.length, `<div class="k-delta">${fc('issue')} issues · ${fc('unverified')} unverified · ${fc('weakness')} weaknesses</div>`)}
+    ${kpi('Hours / month', measured ? hrs(h) : 'Not measured', measured && pc && ui.scenario !== 'current' ? deltaHTML(processHours(pc), h, hrs) : '')}
+    ${kpi('Manual share', measured ? pct(mh / h * 100) : '—')}
+    ${kpi('Staff cost / yr', measured ? fmtMoney(processCostMonthly(p, st) * 12) : 'Not measured', measured && pc && ui.scenario !== 'current' ? deltaHTML(processCostMonthly(pc, cur) * 12, processCostMonthly(p, st) * 12, fmtMoney) : '')}
   </div>`;
-  const legendHTML = `<div class="legend"><span><span class="chip">▭ Manual step</span></span><span><span class="chip" style="border-style:dashed;border-color:var(--s1)">▭ Automated</span></span><span><span class="chip sev-high">! Pain point</span></span><span><span class="chip st-added">+ New</span></span><span><span class="chip st-changed">~ Changed</span></span><span><span class="chip st-removed">✕ Removed</span></span></div>`;
-  const z = `style="zoom:${ui.zoom}"`;
-  const lanes = ui.scenario !== 'current' && pc
-    ? `<h4>Before (current)</h4><div class="lane-wrap" ${z}>${swimlane(pc, cur.people, cur.tools, { anonymise: ui.anon })}</div><h4>After: ${esc(scenarioName(e, ui.scenario))}</h4><div class="lane-wrap" ${z}>${swimlane(p, st.people, st.tools, { anonymise: ui.anon })}</div>`
-    : `<div class="lane-wrap" ${z}>${swimlane(p, st.people, st.tools, { anonymise: ui.anon })}</div>`;
-  return `${scenarioBanner(e)}<div class="page-h"><div><span class="eyebrow">Processes</span><h1>${esc(p.name)}</h1><p class="muted">${esc(p.inputs || '')} → ${esc(p.outputs || '')}</p></div></div>
-  <div class="proc-layout">${list}<div>${stats}
-    <div class="toolbar"><label class="tog"><input type="checkbox" data-ui="anon" ${ui.anon ? 'checked' : ''}> Anonymise</label><button class="btn sm" data-action="zoom" data-id="-1">−</button><button class="btn sm" data-action="zoom" data-id="1">+</button></div>
-    ${legendHTML}${lanes}
-    ${card('All processes by monthly hours', hbars(live(procs).map((x) => ({ label: x.name, value: processHours(x), tip: `${pct(processManualHours(x) / Math.max(1, processHours(x)) * 100)} manual · ${fmtMoney(processCostMonthly(x, st) * 12)}/yr` })).sort((a, b) => b.value - a.value), { fmt: hrs, color: 'var(--s1)' }))}
-  </div></div>`;
+  const mainW = (document.getElementById('main') || {}).clientWidth || 1100;
+  const cols = ui.flowCols || (mainW < 640 ? 1 : mainW < 1000 ? 2 : 3);
+  const sch = (proc, s2, selected) => flowSchematic(proc, s2.people, s2.tools, s2.departments, { cols, selected, anonymise: ui.anon });
+  const view = ui.procView === 'lanes'
+    ? `<div class="legend"><span><span class="chip">▭ Manual step</span></span><span><span class="chip" style="border-style:dashed;border-color:var(--s1)">▭ Automated</span></span><span><span class="chip sev-high">! Pain point</span></span></div>${ui.scenario !== 'current' && pc ? `<h4>Before (current)</h4><div class="lane-wrap">${swimlane(pc, cur.people, cur.tools, { anonymise: ui.anon })}</div><h4>After: ${esc(scenarioName(e, ui.scenario))}</h4>` : ''}<div class="lane-wrap">${swimlane(p, st.people, st.tools, { anonymise: ui.anon })}</div>`
+    : `${flowLegend()}${ui.scenario !== 'current' && pc ? `<h4>Before (current)</h4>${sch(pc, cur, '')}<h4>After: ${esc(scenarioName(e, ui.scenario))}</h4>` : ''}${sch(p, st, ui.stepId)}${flowSidePanels(e, p, st.people, st.tools, st.departments)}`;
+  return `${scenarioBanner(e)}<div class="page-h"><div><span class="eyebrow">Processes</span><h1>How the work flows</h1><p class="muted">Click a stage's process to open its flow. Click any step for detail. Warnings mark issues, unverified points and weaknesses along the path.</p></div></div>
+  ${card('Client journey, end to end', journeyStrip(procs, st.people, st.tools, st.departments, p.id), { sub: 'Stages from first contact to renewal. Dashed stages are not mapped yet.' })}
+  <section class="card pflow"><header class="card-h"><div><span class="eyebrow">${esc((STAGES.find((x) => x[0] === p.stage) || ['', 'Process'])[1])}</span><h3 class="ptitle">${esc(p.name)}</h3><p class="sub">${esc(p.inputs || 'Start')} → ${esc(p.outputs || 'End')}</p></div>
+    <div class="btn-row"><button class="btn sm ${ui.procView !== 'lanes' ? 'on' : ''}" data-action="procView" data-id="flow">Flow</button><button class="btn sm ${ui.procView === 'lanes' ? 'on' : ''}" data-action="procView" data-id="lanes">Swimlane</button><label class="tog small"><input type="checkbox" data-ui="anon" ${ui.anon ? 'checked' : ''}> Anonymise</label></div></header>
+    ${processBrief(e, p)}
+    <div style="margin-top:14px">${stats}</div>
+    <div style="margin-top:12px">${view}</div>
+  </section>
+  ${processes_hours_card(procs, st)}`;
+}
+function processes_hours_card(procs, st) {
+  const any = live(procs).some((x) => processHours(x) > 0);
+  return any ? card('All processes by monthly hours', hbars(live(procs).map((x) => ({ label: x.name, value: processHours(x), tip: `${pct(processManualHours(x) / Math.max(1, processHours(x)) * 100)} manual · ${fmtMoney(processCostMonthly(x, st) * 12)}/yr` })).sort((a, b) => b.value - a.value), { fmt: hrs, color: 'var(--s1)' })) : '';
 }
 
 /* ---------------- Interviews ---------------- */
@@ -2522,8 +2774,9 @@ function renderReport(e) {
       const p = cur.processes.find((x) => x.id === pid); if (!p) return;
       const pn = next ? next.processes.find((x) => x.id === pid) : null;
       h += `<h3>${esc(p.name)}</h3><p class="muted small">${hrs(processHours(p))}/month · ${pct(processManualHours(p) / Math.max(1, processHours(p)) * 100)} manual · about ${fmtMoney(processCostMonthly(p, cur) * 12)}/yr staff time${pn ? ` → after: ${hrs(processHours(pn))}/month, about ${fmtMoney(processCostMonthly(pn, next) * 12)}/yr` : ''}</p>
-        <div class="rpt-fig">${swimlane(p, cur.people, cur.tools, { anonymise: anon })}</div>
-        ${pn ? `<div class="rpt-fig">${swimlane(pn, next.people, next.tools, { anonymise: anon })}</div>` : ''}`;
+        ${p.summary ? `<p>${esc(p.summary)}</p>` : ''}
+        <div class="rpt-fig">${flowSchematic(p, cur.people, cur.tools, cur.departments, { cols: 2, anonymise: anon, interactive: false })}</div>
+        ${pn ? `<h4>After</h4><div class="rpt-fig">${flowSchematic(pn, next.people, next.tools, next.departments, { cols: 2, anonymise: anon, interactive: false })}</div>` : ''}`;
     });
     h += '</section>';
   }
@@ -2571,7 +2824,7 @@ body{margin:0;background:#f6f1e9;font-family:Inter,ui-sans-serif,-apple-system,B
    App shell — storage, routing, actions, data editor, Claude bridge
    ============================================================ */
 const STORE_KEY = 'tgm.studio.v1';
-const ui = { tab: 'overview', scenario: 'current', processId: '', anon: false, ghosts: true, showCost: true, compare: true, zoom: 1, area: 'All', recType: 'All', coll: 'people', theme: '', reportType: 'status', capture: false, draft: null, session: false, sessionId: '', prioOnly: true };
+const ui = { tab: 'overview', scenario: 'current', processId: '', stepId: '', procView: 'flow', flowCols: 0, anon: false, ghosts: true, showCost: true, compare: true, zoom: 1, area: 'All', recType: 'All', coll: 'people', theme: '', reportType: 'status', capture: false, draft: null, session: false, sessionId: '', prioOnly: true };
 let db = { activeId: '', engagements: {} };
 
 /* ---------- storage (localStorage, wrapped; the JSON file export is the real backup) ---------- */
@@ -2693,7 +2946,7 @@ const FIELD_DEFS = {
   departments: [['id', 'text'], ['name', 'text'], ['type', DEPT_TYPES.map((d) => d[0])], ['headId', 'person'], ['notes', 'text']],
   people: [['id', 'text'], ['name', 'text'], ['title', 'text'], ['departmentId', 'dept'], ['managerId', 'person'], ['employmentType', ['Full-time', 'Part-time', 'Contractor', 'Outsourced', 'Vacant']], ['fte', 'num'], ['annualCost', 'num'], ['location', 'text'], ['startDate', 'date'], ['notes', 'text']],
   tools: [['id', 'text'], ['name', 'text'], ['category', 'text'], ['vendor', 'text'], ['monthlyCost', 'num'], ['seats', 'num'], ['activeUsers', 'num'], ['departmentIds', 'text'], ['ownerId', 'person'], ['purpose', 'text'], ['notes', 'text']],
-  processes: [['id', 'text'], ['name', 'text'], ['departmentId', 'dept'], ['ownerId', 'person'], ['frequency', 'text'], ['runsPerMonth', 'num'], ['hoursPerMonth', 'num'], ['inputs', 'text'], ['outputs', 'text'], ['steps', 'json']],
+  processes: [['id', 'text'], ['name', 'text'], ['stage', STAGES.map((x) => x[0])], ['departmentId', 'dept'], ['ownerId', 'person'], ['confidence', Object.keys(CONFIDENCE)], ['sources', 'text'], ['summary', 'long'], ['talkingPoints', 'long'], ['findingIds', 'text'], ['frequency', 'text'], ['runsPerMonth', 'num'], ['hoursPerMonth', 'num'], ['inputs', 'text'], ['outputs', 'text'], ['steps', 'json']],
   segments: [['id', 'text'], ['name', 'text'], ['customers', 'num'], ['annualRevenue', 'num'], ['churnPct', 'num'], ['acquisitionChannel', 'text'], ['notes', 'text']],
   markets: [['id', 'text'], ['name', 'text'], ['region', 'text'], ['revenueShare', 'num'], ['notes', 'text']],
   topClients: [['id', 'text'], ['name', 'text'], ['segmentId', 'text'], ['annualRevenue', 'num'], ['notes', 'text']],
@@ -2757,8 +3010,9 @@ Schema "tgm.engagement/1". Include only the collections you have data for. Every
   "departments": [{ "id","name","headId" }],
   "people": [{ "id","name","title","departmentId","managerId","employmentType":"Full-time|Part-time|Contractor|Outsourced|Vacant","fte":1,"annualCost":0,"location","notes" }],
   "tools": [{ "id","name","category","vendor","monthlyCost":0,"seats":0,"activeUsers":0,"departmentIds":"d_a,d_b","purpose" }],
-  "processes": [{ "id","name","departmentId","ownerId","frequency","runsPerMonth":0,"inputs","outputs",
-     "steps": [{ "id","name","actorId":"<person id or empty>","actorLabel":"<role if no person>","toolId","durationMins":0,"automated":false,"input","output","painPoint" }] }],
+  "processes": [{ "id","name","stage":"attract|sell|onboard|deliver|grow (blank = internal)","departmentId","ownerId","confidence":"heard|corroborated|measured","sources","summary","talkingPoints":"one per line","findingIds":"f_a,f_b","frequency","runsPerMonth":0,"inputs","outputs",
+     "steps": [{ "id","name","team":"client|marketing|sales|cs|ops|product|leadership|finance|system","actorId":"<person id or empty>","actorLabel":"<role if no person>","toolId","durationMins":0,"automated":false,"input","output","painPoint",
+        "flags":[{ "type":"issue|unverified|weakness","text","by","date" }] }] }],
   "segments": [{ "id","name","customers":0,"annualRevenue":0,"churnPct":0,"acquisitionChannel" }],
   "markets": [{ "id","name","region","revenueShare":0 }],
   "topClients": [{ "id","name","segmentId","annualRevenue":0 }],
@@ -2805,7 +3059,21 @@ function stripMarks(o) { return JSON.parse(JSON.stringify(o, (k, v) => (k.starts
 const actions = {
   tab: (el) => { ui.tab = el.dataset.id; saveUI(); render(); window.scrollTo(0, 0); },
   setScenario: (el) => { ui.scenario = el.dataset.id; render(); },
-  proc: (el) => { ui.processId = el.dataset.id; render(); },
+  proc: (el) => { ui.processId = el.dataset.id; ui.stepId = ''; render(); },
+  procView: (el) => { ui.procView = el.dataset.id; render(); },
+  flowStep: (el) => { ui.stepId = el.dataset.id; render(); const d = document.querySelector('.flow-panels'); if (d && d.getBoundingClientRect().top > window.innerHeight) d.scrollIntoView({ behavior: 'smooth', block: 'start' }); },
+  addFlowFlag: (el) => {
+    const proc = E().processes.find((x) => x.id === ui.processId); const st = proc && (proc.steps || []).find((x) => x.id === ui.stepId);
+    if (!st) return toast('This step only exists in the scenario. Flag it in the current state.');
+    const label = { issue: 'Describe the issue', unverified: 'What needs to be confirmed?', weakness: 'Describe the weakness' }[el.dataset.id];
+    const text = prompt(label); if (!text || !text.trim()) return;
+    st.flags = [...(st.flags || []), { type: el.dataset.id, text: text.trim(), by: E().meta.consultant && E().meta.consultant !== 'The Growth Machine' ? E().meta.consultant : 'TGM', date: todayISO() }];
+    touch(proc); save(); render(); toast('Flag added to the flow');
+  },
+  removeFlowFlag: (el) => {
+    const proc = E().processes.find((x) => x.id === ui.processId); const st = proc && (proc.steps || []).find((x) => x.id === ui.stepId);
+    if (!st || !st.flags) return; st.flags.splice(+el.dataset.id, 1); touch(proc); save(); render();
+  },
   area: (el) => { ui.area = el.dataset.id; render(); },
   recType: (el) => { ui.recType = el.dataset.id; render(); },
   coll: (el) => { ui.coll = el.dataset.id; saveUI(); render(); },
