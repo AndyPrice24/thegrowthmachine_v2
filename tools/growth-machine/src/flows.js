@@ -113,9 +113,10 @@ function flowSchematic(proc, people, tools, departments, { cols = 3, selected = 
     const t = tById[s.toolId];
     const lines = wrapText(s.name || 'Step', 31, 3);
     const nf = flags.filter((f) => f.on === 'node' && f.stepId === s.id);
+    const flagged = exec && flags.some((f) => f.stepId === s.id && f.type !== 'unverified');
     const rv = (s.review && s.review.status) || 'assumed';
     const hot = exec && isHotspot(s);
-    svg += `<g class="fnode ${s.collapsed ? 'collapsed' : ''} ${s.automated ? 'auto' : 'manual'} ${exec && s.kind === 'decision' ? 'decision' : ''} rvs-${rv} ${st} ${selected === s.id ? 'sel' : near && near.has(i) ? 'nbr' : near ? 'dim' : ''} ${interactive ? 'clk' : ''}" transform="translate(${x},${y})" ${interactive ? `data-action="flowStep" data-id="${esc(s.id)}"` : ''} data-tip="${esc([s.name, actor, t ? 'Tool: ' + t.name : 'No system', s.automated ? 'Automated' : 'Manual', stepTimeText(s, true), REVIEW_STATUS[rv][0] + (s.review && s.review.by ? ' by ' + s.review.by : '')].filter(Boolean).join(' · '))}">`;
+    svg += `<g class="fnode ${flagged ? 'has-issue' : ''} ${s.collapsed ? 'collapsed' : ''} ${s.automated ? 'auto' : 'manual'} ${exec && s.kind === 'decision' ? 'decision' : ''} rvs-${rv} ${st} ${selected === s.id ? 'sel' : near && near.has(i) ? 'nbr' : near ? 'dim' : ''} ${interactive ? 'clk' : ''}" transform="translate(${x},${y})" ${interactive ? `data-action="flowStep" data-id="${esc(s.id)}"` : ''} data-tip="${esc([s.name, actor, t ? 'Tool: ' + t.name : 'No system', s.automated ? 'Automated' : 'Manual', stepTimeText(s, true), REVIEW_STATUS[rv][0] + (s.review && s.review.by ? ' by ' + s.review.by : '')].filter(Boolean).join(' · '))}">`;
     svg += `<rect class="nb" width="${NW}" height="${NH}" rx="12"/>`;
     svg += `<rect class="band" width="${NW}" height="28" rx="12" style="fill:${tm[2]}"/><rect class="band" y="16" width="${NW}" height="12" style="fill:${tm[2]}"/>`;
     svg += `<circle class="num" cx="18" cy="14" r="10"/><text class="numt" x="18" y="18" text-anchor="middle" ${String(s.displayNum || '').length > 2 ? 'style="font-size:8px"' : ''}>${esc(s.displayNum || i + 1)}</text>`;
@@ -469,7 +470,7 @@ function journeyLanes(st, J, { exec = true, interactive = true, zoom = 0 } = {})
     if (P.other) { g += `<g class="jl-o ${interactive ? 'clk' : ''}" ${act} data-tip="${tip}"><rect x="${P.x}" y="${P.y}" width="${P.w}" height="${P.h}" rx="20" style="stroke:${tm[2]}"/>${T(P.x + 12, P.y + 17, `${i + 1} · ${tm[1]}`, 'jl-ot')}${T(P.x + 12, P.y + 31, trunc(x.s.name, 24), 'jl-on')}</g>`; return; }
     const hot = exec && isHotspot(x.s); const dec = exec && x.s.kind === 'decision';
     const rv = (x.s.review && x.s.review.status) || 'assumed';
-    g += `<g class="jl-n ${x.s.automated ? 'auto' : ''} ${dec ? 'decision' : ''} rvs-${rv} ${interactive ? 'clk' : ''}" ${act} data-tip="${tip}">`;
+    g += `<g class="jl-n ${exec && x.flags.length ? 'has-issue' : ''} ${x.s.automated ? 'auto' : ''} ${dec ? 'decision' : ''} rvs-${rv} ${interactive ? 'clk' : ''}" ${act} data-tip="${tip}">`;
     g += `<rect class="nb" x="${P.x}" y="${P.y}" width="${P.w}" height="${P.h}" rx="10"/><rect x="${P.x}" y="${P.y}" width="5" height="${P.h}" rx="2" style="fill:${tm[2]}"/>`;
     g += `<circle class="num" cx="${P.x + 18}" cy="${P.y + 16}" r="9"/>${T(P.x + 18, P.y + 20, i + 1, 'numt', 'middle')}`;
     if (dec) g += T(P.x + 32, P.y + 20, '◇ DECISION', 'jl-dec');
@@ -534,7 +535,7 @@ function journeyView(e, st) {
     ${journeyControls(st, J)}
     ${J.layout === 'flow' ? flowToolbar(cols) : `<div class="flow-tools"><span class="faint small">View</span><button class="btn sm ${ui.flowWhole && ui.flowZoom ? 'on' : ''}" data-action="flowZoom" data-id="fit">⤢ Whole journey</button><button class="btn sm" data-action="flowZoom" data-id="out">−</button><span class="small zl">${Math.round(laneZoom * 100)}%</span><button class="btn sm" data-action="flowZoom" data-id="in">+</button><button class="btn sm ${laneZoom === 1 ? 'on' : ''}" data-action="flowZoom" data-id="100">100%</button><span class="faint small" style="margin-left:8px">Scroll sideways or drag to move along the journey; Ctrl + scroll to zoom.</span></div>`}
     <div class="flow-tools flow-export"><span class="faint small">Export</span><button class="btn sm" data-action="exportJourney" data-id="png">Image (PNG)</button><button class="btn sm" data-action="exportJourney" data-id="svg">Vector (SVG)</button><button class="btn sm" data-action="exportJourney" data-id="pdf">PDF page</button><span class="faint small">Client-safe: no internal notes.</span></div>
-    ${exec ? flowLegend(true) : '<div class="legend flow-legend"><span class="faint">Executive view is off: steps, people, systems and hand-offs only.</span></div>'}
+    ${exec ? execBar(shown.map((x) => x.s), issues.map(({ f }) => f)) + flowLegend(true) : '<div class="legend flow-legend"><span class="faint">Executive view is off: steps, people, systems and hand-offs only.</span></div>'}
     ${diagram}
     ${exec && issues.length ? `<details class="jiss" open><summary><b>Issues and weaknesses along this view (${issues.length})</b></summary><ol class="flags">${issues.map(({ f, x }) => `<li class="clk" data-action="flowStep" data-id="${esc(x.s.id)}">${flagIcon(f.type)}<div><div class="small"><b>${FLAG_TYPES[f.type][0]}</b> · step ${idx[x.s.id]} (${esc(teamInfo(x.team)[1])}): ${esc(trunc(x.s.name, 60))}</div><div>${esc(f.text)}</div></div></li>`).join('')}</ol></details>` : ''}
   </section>`;
@@ -549,4 +550,14 @@ h1{font-family:Georgia,serif;font-weight:400;font-size:24px;margin:4px 0}.flow-w
 @page{size:A3 landscape;margin:8mm}</style></head><body><main><div class="eyebrow">${esc(e.client.name)} · The Growth Machine</div>
 <h1>${J.by === 'team' ? esc(J.teams.map((t) => teamInfo(t)[1]).join(' + ')) + ' across the journey' : 'Selected processes, end to end'}</h1><p class="muted">${date}${ui.execView !== false ? ' · Executive view: issues, weaknesses, decisions, management involvement and time hotspots shown' : ''}</p>
 ${ui.execView !== false ? flowLegend(true) : ''}${markup}<p class="muted" style="font-size:10.5px">The Growth Machine · ${date} · Confidential. Prepared for ${esc(e.client.name)}.</p></main></body></html>`;
+}
+
+/** Executive summary strip: what the executive view is surfacing for the steps shown. */
+function execBar(steps, flags) {
+  const live2 = steps.filter((x) => !x._removed && !x.collapsed);
+  const n = (t) => flags.filter((f) => f.type === t).length;
+  const dec = live2.filter((x) => x.kind === 'decision').length, mg = live2.filter((x) => x.involves).length, hot = live2.filter(isHotspot).length;
+  const timed = live2.filter((x) => num(x.durationMins) || num(x.elapsedDays)).length;
+  const item = (v, label, hint) => `<div class="eb-i ${v ? '' : 'eb-z'}"><b>${v}</b><span>${label}</span>${!v && hint ? `<em>${hint}</em>` : ''}</div>`;
+  return `<div class="exec-bar"><span class="eb-t">Executive view</span>${item(n('issue'), 'issues')}${item(n('weakness'), 'weaknesses')}${item(live2.filter((x) => flags.some((f) => f.stepId === x.id && f.type !== 'unverified')).length, 'steps affected')}${item(dec, 'decision points', 'none mapped yet')}${item(mg, 'management touchpoints', 'none mapped yet')}${item(hot, 'time hotspots', timed ? '' : 'add times to steps')}</div>`;
 }
