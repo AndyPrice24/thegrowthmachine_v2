@@ -154,7 +154,7 @@ function journeyStrip(procs, people, tools, departments, current, clientSafe = f
     return `<div class="jstage ${ps.length ? '' : 'jempty'}"><div class="jh ${ps.length ? 'clk' : ''}" ${ps.length ? `data-action="proc" data-id="${esc(ps[0].id)}"` : ''}><span class="jn">${i + 1}</span>${esc(label)}</div>${ps.length ? ps.map(pBtn).join('') : '<p class="faint small">Not mapped yet</p>'}</div>`;
   }).join('<div class="jarrow" aria-hidden="true">›</div>');
   const other = procs.filter((p) => !STAGES.some(([id]) => id === p.stage));
-  return `<div class="journey">${stageCards}</div>${other.length ? `<div class="jother"><span class="faint small">Other processes:</span> ${other.map(pBtn).join('')}</div>` : ''}`;
+  return `<div class="journey">${stageCards}</div>${other.length ? `<div class="jother"><span class="small warn-t">Not placed on the journey yet: open one and choose its stage ↓</span> ${other.map(pBtn).join('')}</div>` : ''}`;
 }
 
 /** Confidence shown: measured if set; corroborated once the team has sense-checked it; otherwise what was set. */

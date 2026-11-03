@@ -270,6 +270,7 @@ ol.flags li:hover,ol.flags li.on{border-color:var(--ink)}
 .exec-bar .eb-i{display:grid;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:5px 10px;min-width:96px}
 .exec-bar .eb-i b{font-family:Georgia,serif;font-size:20px;font-weight:400;line-height:1.1}.exec-bar .eb-i span{font-size:11.5px;color:var(--muted)}
 .exec-bar .eb-i em{font-size:10.5px;color:var(--faint);font-style:normal}.exec-bar .eb-z b{color:var(--faint)}
+.stage-pick{display:inline-flex;align-items:center;gap:6px;margin-bottom:4px}.stage-pick select{font-size:12px;padding:3px 6px}
 </style>
 <style id="report-css">/* Founder report styles (also embedded in exported HTML reports) */
 .rpt{background:#fffdf9;color:#171715;border:1px solid #d7cfc3;border-radius:14px;padding:40px 46px;
@@ -493,7 +494,7 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="tip" hidden></div>
 <script>
-const STUDIO_BUILD = '2026-11-03 14:20 UTC';
+const STUDIO_BUILD = '2026-11-03 14:27 UTC';
 /* ---- model.js ---- */
 /* ============================================================
    The Growth Machine — data model, scenario engine, scoring, insights
@@ -1824,7 +1825,7 @@ function journeyStrip(procs, people, tools, departments, current, clientSafe = f
     return `<div class="jstage ${ps.length ? '' : 'jempty'}"><div class="jh ${ps.length ? 'clk' : ''}" ${ps.length ? `data-action="proc" data-id="${esc(ps[0].id)}"` : ''}><span class="jn">${i + 1}</span>${esc(label)}</div>${ps.length ? ps.map(pBtn).join('') : '<p class="faint small">Not mapped yet</p>'}</div>`;
   }).join('<div class="jarrow" aria-hidden="true">›</div>');
   const other = procs.filter((p) => !STAGES.some(([id]) => id === p.stage));
-  return `<div class="journey">${stageCards}</div>${other.length ? `<div class="jother"><span class="faint small">Other processes:</span> ${other.map(pBtn).join('')}</div>` : ''}`;
+  return `<div class="journey">${stageCards}</div>${other.length ? `<div class="jother"><span class="small warn-t">Not placed on the journey yet: open one and choose its stage ↓</span> ${other.map(pBtn).join('')}</div>` : ''}`;
 }
 
 /** Confidence shown: measured if set; corroborated once the team has sense-checked it; otherwise what was set. */
@@ -2657,7 +2658,7 @@ function viewProcesses(e) {
   return `${scenarioBanner(e)}<div class="page-h"><div><span class="eyebrow">Processes</span><h1>How the work flows</h1><p class="muted">Click a stage's process to open its flow. Click any step for detail. Warnings mark issues, unverified points and weaknesses along the path.</p></div></div>
   ${card('Client journey, end to end', journeyStrip(procs, st.people, st.tools, st.departments, ui.jView === 'journey' ? '' : p.id), { sub: 'Stages from first contact to renewal. Dashed stages are not mapped yet.', actions: `<button class="btn sm ${ui.jView === 'journey' ? 'on' : ''}" data-action="journeyOpen">◫ View across the journey</button>` })}
   ${ui.jView === 'journey' ? journeyView(e, st) + processes_hours_card(procs, st) : `
-  <section class="card pflow"><header class="card-h"><div><span class="eyebrow">${esc((STAGES.find((x) => x[0] === p.stage) || ['', 'Process'])[1])}</span><h3 class="ptitle">${esc(p.name)}</h3><p class="sub">${esc(p.inputs || 'Start')} → ${esc(p.outputs || 'End')}</p></div>
+  <section class="card pflow"><header class="card-h"><div><label class="stage-pick small"><span class="faint">Journey stage</span> ${sel([...STAGES, ['', 'Not on the journey (internal)']], p.stage || '', 'data-proc-stage', false)}</label><h3 class="ptitle">${esc(p.name)}</h3><p class="sub">${esc(p.inputs || 'Start')} → ${esc(p.outputs || 'End')}</p></div>
     <div class="btn-row"><button class="btn sm" data-action="reviewSetup" title="Walk this flow live with someone and record what they confirm or correct">▶ Sense-check</button><button class="btn sm ${ui.procView !== 'lanes' ? 'on' : ''}" data-action="procView" data-id="flow">Flow</button><button class="btn sm ${ui.procView === 'lanes' ? 'on' : ''}" data-action="procView" data-id="lanes">Swimlane</button><label class="tog small"><input type="checkbox" data-ui="execView" ${ui.execView !== false ? 'checked' : ''}> <b>Executive view</b></label><label class="tog small"><input type="checkbox" data-ui="anon" ${ui.anon ? 'checked' : ''}> Anonymise</label></div></header>
     ${ui.reviewSetup === p.id ? reviewChooser(e, p) : ''}
     ${processBrief(e, p)}
@@ -3860,6 +3861,7 @@ document.addEventListener('change', (ev) => {
   if (t.dataset.draftsel) { setPath(ui.draft, t.dataset.draftsel, t.value); if (t.dataset.draftsel === 'personId') { const p = E().people.find((x) => x.id === t.value); ui.draft.level = guessLevel(E(), p); ui.draft.deptType = ''; } saveDraft(ui.draft); render(); return; }
   if (t.dataset.draftchk) { ui.draft[t.dataset.draftchk] = t.checked; saveDraft(ui.draft); return; }
   if (t.dataset.action && t.type === 'checkbox') { const fn = actions[t.dataset.action]; if (fn) fn(t, ev); return; }
+  if (t.hasAttribute('data-proc-stage')) { const proc = E().processes.find((x) => x.id === ui.processId); if (!proc) return; proc.stage = t.value; touch(proc); save(); render(); toast(t.value ? 'Placed on the journey' : 'Removed from the journey'); return; }
   if (t.dataset.ed) {
     const proc = E().processes.find((x) => x.id === ui.processId); const step = proc && (proc.steps || []).find((x) => x.id === ui.editStep); if (!step) return;
     const f = t.dataset.ed; let v = t.value;

@@ -585,6 +585,7 @@ document.addEventListener('change', (ev) => {
   if (t.dataset.draftsel) { setPath(ui.draft, t.dataset.draftsel, t.value); if (t.dataset.draftsel === 'personId') { const p = E().people.find((x) => x.id === t.value); ui.draft.level = guessLevel(E(), p); ui.draft.deptType = ''; } saveDraft(ui.draft); render(); return; }
   if (t.dataset.draftchk) { ui.draft[t.dataset.draftchk] = t.checked; saveDraft(ui.draft); return; }
   if (t.dataset.action && t.type === 'checkbox') { const fn = actions[t.dataset.action]; if (fn) fn(t, ev); return; }
+  if (t.hasAttribute('data-proc-stage')) { const proc = E().processes.find((x) => x.id === ui.processId); if (!proc) return; proc.stage = t.value; touch(proc); save(); render(); toast(t.value ? 'Placed on the journey' : 'Removed from the journey'); return; }
   if (t.dataset.ed) {
     const proc = E().processes.find((x) => x.id === ui.processId); const step = proc && (proc.steps || []).find((x) => x.id === ui.editStep); if (!step) return;
     const f = t.dataset.ed; let v = t.value;
