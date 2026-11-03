@@ -24,7 +24,7 @@ function stepTeam(s, pById, dById) {
 }
 
 /** Every warning along a process, numbered in path order. Hand-off weaknesses sit on the connector into a step. */
-function flowFlags(proc, people, tools, departments) {
+function flowFlags(proc, people, tools, departments, clientSafe = false) {
   const steps = proc.steps || []; const pById = byId(people), tById = byId(tools), dById = byId(departments);
   const list = []; const add = (f) => { f.n = list.length + 1; list.push(f); };
   steps.forEach((s, i) => {
@@ -41,7 +41,7 @@ function flowFlags(proc, people, tools, departments) {
       }
     }
     if (s.painPoint) add({ type: 'issue', on: 'node', stepId: s.id, text: s.painPoint, by: proc.sources || 'Interviews' });
-    (s.flags || []).forEach((f, k) => add({ type: FLAG_TYPES[f.type] ? f.type : 'issue', on: 'node', stepId: s.id, text: f.text, by: f.by || 'Team', date: f.date, idx: k }));
+    if (!clientSafe) (s.flags || []).forEach((f, k) => add({ type: FLAG_TYPES[f.type] ? f.type : 'issue', on: 'node', stepId: s.id, text: f.text, by: f.by || 'Team', date: f.date, idx: k }));
   });
   return list;
 }
@@ -55,11 +55,11 @@ function flagShape(type, n, x, y, r = 11) {
 const flagIcon = (type, n = '') => `<svg class="fl-ico" width="24" height="24" viewBox="-12 -12 24 24" aria-hidden="true">${flagShape(type, n, 0, type === 'unverified' ? 2 : 0, 10)}</svg>`;
 
 /** Serpentine flow: Start → numbered step nodes (team-coloured) → End, with warning markers on nodes and links. */
-function flowSchematic(proc, people, tools, departments, { cols = 3, selected = '', anonymise = false, interactive = true, zoom = 0 } = {}) {
+function flowSchematic(proc, people, tools, departments, { cols = 3, selected = '', anonymise = false, interactive = true, zoom = 0, clientSafe = false } = {}) {
   const steps = proc.steps || [];
   if (!steps.length) return '<p class="empty">This process has no steps yet.</p>';
   const pById = byId(people), tById = byId(tools), dById = byId(departments);
-  const flags = flowFlags(proc, people, tools, departments);
+  const flags = flowFlags(proc, people, tools, departments, clientSafe);
   cols = Math.max(1, Math.min(cols, steps.length));
   const NW = 262, NH = 136, GX = 78, GY = 96, PX = 34, TOP = 74;
   const rows = Math.ceil(steps.length / cols);
@@ -71,7 +71,7 @@ function flowSchematic(proc, people, tools, departments, { cols = 3, selected = 
   let svg = `<svg class="flow-svg" viewBox="0 0 ${W} ${H}" ${zoom ? `width="${Math.round(W * zoom)}" height="${Math.round(H * zoom)}" style="max-width:none"` : `width="100%" style="max-width:${W}px"`} role="img" aria-label="Flow: ${esc(proc.name)}" data-w="${W}" data-h="${H}">`;
   svg += `<defs><marker id="${mid}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fa"/></marker></defs>`;
   // start / end pills
-  const pill = (x, y, label, text) => `<g class="pill"><rect x="${x}" y="${y}" width="${NW}" height="34" rx="17"/><text x="${x + 16}" y="${y + 22}"><tspan class="pl">${label}</tspan> ${esc(trunc(text, 34))}</text></g>`;
+  const pill = (x, y, label, text) => `<g class="pill"><rect x="${x}" y="${y}" width="${NW}" height="34" rx="17"/><text x="${x + 16}" y="${y + 22}"><tspan class="pl">${label}</tspan> ${esc(trunc(text, 29))}</text></g>`;
   const p0 = pos[0], pl = pos[pos.length - 1];
   svg += `<path class="link" d="M${p0.x + NW / 2},${p0.y - 40 + 34} V${p0.y - 3}" marker-end="url(#${mid})"/>`;
   svg += pill(p0.x, p0.y - 40 - 6, 'START', proc.inputs || 'Trigger');
@@ -116,19 +116,19 @@ function flowSchematic(proc, people, tools, departments, { cols = 3, selected = 
     svg += '</g>';
   });
   svg += '</svg>';
-  return `<div class="flow-wrap">${svg}</div>`;
+  return `<div class="flow-wrap">${clientSafe ? svg.replace(/ data-tip="[^"]*"/g, '') : svg}</div>`;
 }
 
-const flowLegend = () => `<div class="legend flow-legend">
+const flowLegend = (clientSafe = false) => `<div class="legend flow-legend">
   <span>${flagIcon('issue')} Issue <span class="faint">(team / interviews)</span></span>
-  <span>${flagIcon('unverified')} Unverified <span class="faint">(to confirm)</span></span>
+  ${clientSafe ? '' : `<span>${flagIcon('unverified')} Unverified <span class="faint">(to confirm)</span></span>`}
   <span>${flagIcon('weakness')} Weakness <span class="faint">(flagged by the machine)</span></span>
   <span><span class="ho-ico">⇄</span> Hand-off between teams</span>
   <span><span class="chip" style="border-style:dashed">⚙ Automated</span></span></div>`;
 
 /** Client journey strip: stages left to right, the processes mapped in each, with warning counts. */
-function journeyStrip(procs, people, tools, departments, current) {
-  const counts = (p) => { const f = flowFlags(p, people, tools, departments); return ['issue', 'unverified', 'weakness'].map((t) => [t, f.filter((x) => x.type === t).length]); };
+function journeyStrip(procs, people, tools, departments, current, clientSafe = false) {
+  const counts = (p) => { const f = flowFlags(p, people, tools, departments, clientSafe); return ['issue', 'unverified', 'weakness'].map((t) => [t, f.filter((x) => x.type === t).length]); };
   const pBtn = (p) => `<button class="jp ${p.id === current ? 'on' : ''}" data-action="proc" data-id="${esc(p.id)}"><strong>${esc(p.name)}</strong><span class="jc">${counts(p).filter(([, n]) => n).map(([t, n]) => `<span class="jcn jcn-${t}" title="${FLAG_TYPES[t][0]}">${flagIcon(t)}${n}</span>`).join('') || '<span class="faint small">No warnings</span>'}</span>${p.confidence ? `<span class="conf conf-${CONFIDENCE[p.confidence] ? CONFIDENCE[p.confidence][2] : 'warn'}">${esc((CONFIDENCE[p.confidence] || [p.confidence])[0])}</span>` : ''}</button>`;
   const stageCards = STAGES.map(([id, label], i) => {
     const ps = procs.filter((p) => p.stage === id);
@@ -200,4 +200,77 @@ function flowToolbar(cols) {
     <span class="faint small" style="margin-left:8px">Steps per row</span>${[1, 2, 3, 4, 5].map((n) => `<button class="btn sm ${cols === n ? 'on' : ''}" data-action="flowCols" data-id="${n}">${n}</button>`).join('')}
     <span class="faint small" style="margin-left:8px">Tip: Ctrl + scroll (or pinch) to zoom; drag to move around when zoomed in.</span>
     ${ui.stepId ? '<button class="btn sm ghost" data-action="flowClear" style="margin-left:auto">Clear highlight</button>' : ''}</div>`;
+}
+
+/* ---------- Export: PNG, SVG, PDF/HTML page (internal or client-safe) ---------- */
+const LIGHT_TOKENS = { '--bg': '#f6f1e9', '--surface': '#fffdf9', '--surface-2': '#eee7dd', '--ink': '#171715', '--muted': '#665f57', '--faint': '#8a8074', '--line': '#d7cfc3', '--grid': '#e6dfd4', '--red': '#c8221c',
+  '--s1': '#2a78d6', '--s2': '#eb6834', '--s3': '#1baf7a', '--s4': '#eda100', '--s5': '#e87ba4', '--s6': '#008300', '--s7': '#6250d6', '--s8': '#e34948', '--s-other': '#9a948b',
+  '--good': '#0ca30c', '--warn': '#fab219', '--serious': '#ec835a', '--crit': '#d03b3b', '--good-ink': '#0a7a0a', '--warn-ink': '#8a5a00', '--crit-ink': '#b02a2a' };
+
+/** Standalone SVG with styles inlined (light theme), ready for PNG/SVG download. */
+function flowStandaloneSVG(proc, st, clientSafe) {
+  const holder = document.createElement('div');
+  holder.style.cssText = 'position:fixed;left:-100000px;top:0;width:2400px';
+  Object.entries(LIGHT_TOKENS).forEach(([k, v]) => holder.style.setProperty(k, v));
+  holder.innerHTML = flowSchematic(proc, st.people, st.tools, st.departments, { cols: ui.flowCols || ui.flowColsAuto || 3, interactive: false, clientSafe, anonymise: ui.anon });
+  document.body.appendChild(holder);
+  const svg = holder.querySelector('svg');
+  const W = +svg.dataset.w, H = +svg.dataset.h;
+  svg.setAttribute('width', W); svg.setAttribute('height', H); svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg'); svg.removeAttribute('style');
+  const props = ['fill', 'stroke', 'stroke-width', 'stroke-dasharray', 'opacity', 'font-size', 'font-weight', 'letter-spacing'];
+  const els = [...svg.querySelectorAll('*')];
+  const styles = els.map((el) => { const cs = getComputedStyle(el); const out = props.map((pr) => `${pr}:${cs.getPropertyValue(pr)}`); if (el.tagName === 'text' || el.tagName === 'tspan') out.push('font-family:Inter,Segoe UI,Helvetica,Arial,sans-serif'); return out.join(';'); });
+  els.forEach((el, i) => { el.setAttribute('style', styles[i]); el.removeAttribute('class'); });
+  const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  bg.setAttribute('width', W); bg.setAttribute('height', H); bg.setAttribute('fill', '#fffdf9'); svg.insertBefore(bg, svg.firstChild);
+  const xml = new XMLSerializer().serializeToString(svg); holder.remove();
+  return { xml, W, H };
+}
+
+/** A printable page for one or more flows. Internal adds sources, unverified points and what is still to measure. */
+function flowExportDoc(e, procs, st, { internal = false, journey = false } = {}) {
+  const css = (document.getElementById('viz-css') || {}).textContent || '';
+  const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  const part = (p) => {
+    const flags = flowFlags(p, st.people, st.tools, st.departments, !internal);
+    const steps = p.steps || []; const idx = Object.fromEntries(steps.map((x, i) => [x.id, i]));
+    const tps = String(p.talkingPoints || '').split('\n').map((x) => x.trim()).filter(Boolean);
+    const conf = CONFIDENCE[p.confidence];
+    const untimed = live(steps).filter((x) => !num(x.durationMins)).length;
+    return `<section class="fx-sec"><div class="eyebrow">${esc((STAGES.find((x) => x[0] === p.stage) || ['', 'Process'])[1])}</div><h2>${esc(p.name)}</h2>
+      <p class="muted">${esc(p.inputs || 'Start')} → ${esc(p.outputs || 'End')}${internal && conf ? ` · <span class="conf conf-${conf[2]}">${esc(conf[0])}</span> ${p.sources ? 'Source: ' + esc(p.sources) : ''}` : ''}</p>
+      <div class="fx-body"><div class="fx-fig">${flowLegend(!internal)}${flowSchematic(p, st.people, st.tools, st.departments, { cols: 3, interactive: false, clientSafe: !internal, anonymise: ui.anon })}</div><div class="fx-text">
+      ${p.summary ? `<p>${esc(p.summary)}</p>` : ''}
+      ${tps.length ? `<h4>${internal ? 'Talking points' : 'Key points'}</h4><ul>${tps.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
+      ${flags.length ? `<h4>Points along the flow</h4><ol class="fx-flags">${flags.map((f) => `<li>${flagIcon(f.type, f.n)}<span><b>${FLAG_TYPES[f.type][0]}</b> · ${f.on === 'link' ? 'into ' : ''}step ${idx[f.stepId] + 1}: ${esc(f.text)}${internal && f.by ? ` <span class="faint">(${esc(f.by)})</span>` : ''}</span></li>`).join('')}</ol>` : ''}
+      ${internal && (untimed || !num(p.runsPerMonth)) ? `<p class="faint small">Still to measure: ${[!num(p.runsPerMonth) ? 'how often it runs' : '', untimed ? `time per step (${untimed} of ${live(steps).length})` : ''].filter(Boolean).join('; ')}.</p>` : ''}
+      </div></div>
+    </section>`;
+  };
+  return `<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc((procs.length === 1 ? procs[0].name : 'Process flows') + ' · ' + e.client.name)}</title><style>${css}
+body{margin:0;background:#fff;font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#171715;font-size:13px;line-height:1.45}
+main{max-width:1180px;margin:24px auto;padding:0 20px}.eyebrow{text-transform:uppercase;letter-spacing:.16em;font-size:10.5px;font-weight:750;color:#c8221c}
+h1{font-family:Georgia,serif;font-weight:400;font-size:28px;margin:4px 0}h2{font-family:Georgia,serif;font-weight:400;font-size:22px;margin:2px 0 4px}h4{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#665f57;margin:14px 0 6px}
+.muted{color:#665f57}.faint{color:#8a8074}.small{font-size:11.5px}ul{margin:0;padding-left:18px}.flow-wrap{border:0;padding:0;margin-top:6px}.flow-svg{max-width:100%!important}
+.fx-sec{margin:22px 0 34px}.fx-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.7fr);gap:18px;align-items:start}.fx-body .fx-fig{order:2}.fx-body .fx-text{order:1}.fx-flags{list-style:none;padding:0;margin:0;display:grid;gap:5px}.fx-flags .fl-ico{width:20px;height:20px}@media (max-width:800px){.fx-body{grid-template-columns:1fr}}.fx-flags li{display:flex;gap:6px;align-items:flex-start}
+.jp{cursor:default}.foot{border-top:1px solid #d7cfc3;margin-top:24px;padding-top:8px;color:#8a8074;font-size:11px}
+.fx-fig{break-inside:avoid;page-break-inside:avoid}
+@page{size:A4 landscape;margin:10mm}@media print{main{margin:0;max-width:none;padding:0}.fx-sec+.fx-sec{break-before:page}.fx-cover+.fx-sec{break-before:page}.journey{flex-wrap:nowrap}.jstage{min-width:0}.flow-svg{max-height:146mm;width:auto!important;max-width:100%!important}.fx-body{display:block}.fx-body .fx-fig{float:right;width:63%;margin:0 0 8px 16px}.fx-body::after{content:'';display:block;clear:both}.fx-text{font-size:10.5px}.fx-text h4{margin:8px 0 4px}.fx-sec h2{font-size:19px}.fx-fig .legend{font-size:10px}}
+</style></head><body><main>
+<div class="eyebrow">${esc(e.client.name)} · ${internal ? 'TGM internal' : 'Process flows'}</div><h1>${procs.length === 1 ? esc(procs[0].name) : 'How the work flows'}</h1><p class="muted">${date}${internal ? ' · Internal working view: includes unverified points and sources' : ''}</p>
+${journey ? `<div class="fx-cover"><h4>Client journey</h4>${journeyStrip(st.processes, st.people, st.tools, st.departments, '', !internal)}<p class="faint small">Each stage's flow follows on its own page. Markers: ● issue, ◆ weakness${internal ? ', ▲ unverified' : ''}; ⇄ hand-off between teams.</p></div>` : ''}
+${procs.map(part).join('')}
+<div class="foot">The Growth Machine · ${date} · ${internal ? 'Internal working document: not for client distribution.' : `Confidential. Prepared for ${esc(e.client.name)}.`}</div>
+</main></body></html>`;
+}
+
+/** Export toolbar row shown under the flow. */
+function flowExportBar() {
+  const a = ui.flowAudience === 'internal';
+  return `<div class="flow-tools flow-export"><span class="faint small">Export</span>
+    <select data-ui="flowAudience" title="Who is it for?"><option value="client" ${a ? '' : 'selected'}>Client-safe (issues and weaknesses only)</option><option value="internal" ${a ? 'selected' : ''}>TGM internal (adds unverified points and sources)</option></select>
+    <button class="btn sm" data-action="exportFlow" data-id="png">Image (PNG)</button><button class="btn sm" data-action="exportFlow" data-id="svg">Vector (SVG)</button>
+    <button class="btn sm" data-action="exportFlow" data-id="pdf">PDF page</button><button class="btn sm" data-action="exportFlow" data-id="html">HTML page</button>
+    <button class="btn sm ghost" data-action="exportFlow" data-id="all">All flows + journey (PDF)</button></div>`;
 }

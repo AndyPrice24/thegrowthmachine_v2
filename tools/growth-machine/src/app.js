@@ -246,6 +246,27 @@ const actions = {
     const side = document.querySelector('.flow-side'); if (side && getComputedStyle(side).position !== 'sticky' && el.closest('.flow-svg')) side.scrollIntoView({ behavior: 'smooth', block: 'start' });
   },
   flowClear: () => { ui.stepId = ''; render(); },
+  exportFlow: (el) => {
+    const e = E(); const st = stateFor(e, ui.scenario); const p = st.processes.find((x) => x.id === ui.processId); if (!p) return;
+    const internal = ui.flowAudience === 'internal'; const k = el.dataset.id;
+    const slug = (s2) => String(s2).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const base = `${slug(e.client.name)}-${slug(p.name)}${internal ? '-INTERNAL' : ''}-${todayISO()}`;
+    if (k === 'svg' || k === 'png') {
+      const { xml, W, H } = flowStandaloneSVG(p, st, !internal);
+      if (k === 'svg') return downloadFile(base + '.svg', xml, 'image/svg+xml');
+      const img = new Image(); const scale = 2;
+      img.onload = () => { const c = document.createElement('canvas'); c.width = W * scale; c.height = H * scale; const g = c.getContext('2d'); g.scale(scale, scale); g.drawImage(img, 0, 0);
+        c.toBlob((b) => { const a2 = document.createElement('a'); a2.href = URL.createObjectURL(b); a2.download = base + '.png'; document.body.appendChild(a2); a2.click(); setTimeout(() => { URL.revokeObjectURL(a2.href); a2.remove(); }, 500); }, 'image/png'); };
+      img.onerror = () => toast('Could not draw the image. Try SVG instead.');
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml); return;
+    }
+    const all = k === 'all'; const procs = all ? STAGES.flatMap(([id]) => st.processes.filter((x) => x.stage === id)).concat(st.processes.filter((x) => !STAGES.some(([id]) => id === x.stage))).filter((x) => !x._removed) : [p];
+    const html = flowExportDoc(e, procs, st, { internal, journey: all });
+    if (k === 'html') return downloadFile((all ? `${slug(e.client.name)}-process-flows${internal ? '-INTERNAL' : ''}-${todayISO()}` : base) + '.html', html, 'text/html');
+    const w = window.open('', '_blank'); if (!w) return toast('Allow pop-ups for this file to print, or use HTML page.');
+    w.document.open(); w.document.write(html); w.document.close(); setTimeout(() => { w.focus(); w.print(); }, 400);
+    toast('Choose "Save as PDF" in the print window');
+  },
   flowCols: (el) => { ui.flowCols = +el.dataset.id; ui.flowZoom = 0; ui.flowWhole = false; render(); },
   flowZoom: (el) => {
     const svg = document.querySelector('.flow-svg'); const wrap = document.querySelector('.flow-wrap'); if (!svg || !wrap) return;
