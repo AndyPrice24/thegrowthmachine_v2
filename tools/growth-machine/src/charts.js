@@ -189,7 +189,7 @@ function orgLegend(departments) {
 }
 
 /* ---- Swimlane process map ---- */
-function swimlane(proc, people, tools, { anonymise = false } = {}) {
+function swimlane(proc, people, tools, { anonymise = false, exec = true } = {}) {
   const steps = proc.steps || [];
   if (!steps.length) return '<p class="empty">This process has no steps yet. Add steps in Data → Processes, or paste them from Claude.</p>';
   const pById = byId(people), tById = byId(tools);
@@ -229,13 +229,13 @@ function swimlane(proc, people, tools, { anonymise = false } = {}) {
     const t = tById[s.toolId];
     const lines = wrapText(s.name, 24, 2);
     const time = `${num(s.durationMins) ? num(s.durationMins) + ' min' : '—'} · ${s.automated ? 'automated' : 'manual'}`;
-    const tip = [s.name, t ? 'Tool: ' + t.name : '', time, s.input ? 'In: ' + s.input : '', s.output ? 'Out: ' + s.output : '', s.painPoint ? 'Pain: ' + s.painPoint : '', s._by ? 'Change: ' + s._by : ''].filter(Boolean).join(' · ');
+    const tip = [s.name, t ? 'Tool: ' + t.name : '', time, s.input ? 'In: ' + s.input : '', s.output ? 'Out: ' + s.output : '', exec && s.painPoint ? 'Pain: ' + s.painPoint : '', s._by ? 'Change: ' + s._by : ''].filter(Boolean).join(' · ');
     svg += `<g class="step ${s.automated ? 'auto' : 'manual'} ${st}" transform="translate(${x},${y})" data-tip="${esc(tip)}">`;
     svg += `<rect class="box" width="${BW}" height="${BH}" rx="8"/>`;
     svg += lines.map((ln, k) => `<text class="s-name" x="10" y="${18 + k * 14}">${esc(ln)}</text>`).join('');
     svg += `<text class="s-tool" x="10" y="${BH - 22}">${esc(trunc(t ? t.name : (s.toolLabel || 'No tool'), 26))}${t && t._removed ? ' (removed)' : ''}</text>`;
     svg += `<text class="s-time" x="10" y="${BH - 9}">${esc(time)}</text>`;
-    if (s.painPoint) svg += `<g class="pain" transform="translate(${BW - 4},4)"><circle r="8"/><text y="3.5" text-anchor="middle">!</text></g>`;
+    if (exec && s.painPoint) svg += `<g class="pain" transform="translate(${BW - 4},4)"><circle r="8"/><text y="3.5" text-anchor="middle">!</text></g>`;
     if (st) svg += `<text x="${BW - 8}" y="${BH - 9}" text-anchor="end" style="font-size:9.5px;font-weight:800;fill:${st === 'removed' ? 'var(--crit-ink)' : st === 'added' ? 'var(--good-ink)' : 'var(--warn-ink)'}">${st === 'removed' ? '✕ REMOVED' : st === 'added' ? '+ NEW' : '~ CHANGED'}</text>`;
     svg += '</g>';
   });
