@@ -100,7 +100,7 @@ function flowSchematic(proc, people, tools, departments, { cols = 3, selected = 
     const hl = near && (i === si || i - 1 === si) ? ' hl' : near ? ' dim' : '';
     svg += `<path class="link${handoff ? ' handoff' : ''}${ghost}${hl}" d="${d}" marker-end="url(#${mid})"/>`;
     const lf = flags.filter((f) => f.on === 'link' && f.stepId === s.id);
-    if (lf.length) svg += lf.map((f, k) => `<g data-tip="${esc(`${f.n}. ${f.text}`)}" ${interactive ? `data-action="flowStep" data-id="${esc(s.id)}"` : ''} class="clk">${flagShape('weakness', f.n, mx + k * 26, my)}</g>`).join('');
+    if (lf.length) svg += lf.map((f, k) => `<g data-tip="${esc(`${f.n}. ${f.text}`)}" ${interactive ? `data-action="flowStep" data-id="${esc(s.id)}" data-flag="link"` : ''} class="clk">${flagShape('weakness', f.n, mx + k * 26, my)}</g>`).join('');
     else if (handoff) svg += `<g class="ho" transform="translate(${mx},${my})" data-tip="${esc(`Hand-off: ${ta[1]} → ${tb[1]}`)}"><circle r="9"/><text y="4" text-anchor="middle">⇄</text></g>`;
   });
   // nodes

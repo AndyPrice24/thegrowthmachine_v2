@@ -112,7 +112,15 @@ function renderHeader() {
   document.getElementById('nav').innerHTML = TABS.map(([id, n]) => `<button class="nav-btn ${ui.tab === id ? 'on' : ''}" data-action="tab" data-id="${id}">${n}${badge(id)}</button>`).join('')
     + `<div class="nav-foot"><div id="status" class="faint small">Saved in this browser</div><div class="faint small">Last backup: ${e.meta.lastExported ? new Date(e.meta.lastExported).toLocaleString('en-GB') : 'never'}</div><div class="faint small">Studio version: ${typeof STUDIO_BUILD === 'undefined' ? 'dev' : STUDIO_BUILD}</div></div>`;
 }
+/** Scroll the visual so a step sits in the middle of the viewer (horizontally inside the scroll box, vertically on the page). */
+function centreStep(id) {
+  const n = document.querySelector(`.pv-visual [data-id="${CSS.escape(id)}"].fnode, .pv-visual [data-id="${CSS.escape(id)}"].jl-n, .pv-visual [data-id="${CSS.escape(id)}"].jl-o, .flow-svg g.fnode[data-id="${CSS.escape(id)}"]`);
+  if (!n) return; const wrap = n.closest('.flow-wrap'); const r = n.getBoundingClientRect();
+  if (wrap) { const w = wrap.getBoundingClientRect(); wrap.scrollLeft += (r.left + r.width / 2) - (w.left + w.width / 2); if (wrap.scrollHeight > wrap.clientHeight) wrap.scrollTop += (r.top + r.height / 2) - (w.top + w.height / 2); }
+  const r2 = n.getBoundingClientRect(); if (r2.top < 70 || r2.bottom > window.innerHeight) window.scrollBy({ top: (r2.top + r2.height / 2) - window.innerHeight / 2, behavior: 'smooth' });
+}
 function render() {
+  const keep = [...document.querySelectorAll('#main .flow-wrap')].map((w) => [w.scrollLeft, w.scrollTop]);
   const e = E();
   renderHeader();
   const views = { competitors: viewCompetitors, progress: viewProgress, discovery: viewDiscovery, overview: viewOverview, business: viewBusiness, finance: viewFinance, org: viewOrg, tools: viewTools, processes: viewProcesses, interviews: viewInterviews, crossover: viewCrossover, recs: viewRecs, scenarios: viewScenarios, report: viewReport, data: viewData };
@@ -120,6 +128,7 @@ function render() {
   try { html = (views[ui.tab] || viewOverview)(e); }
   catch (err) { console.error(err); html = `<div class="banner err">Something in this client's data could not be displayed: ${esc(err.message)}. Check the Data tab.</div>`; }
   document.getElementById('main').innerHTML = html;
+  document.querySelectorAll('#main .flow-wrap').forEach((w, i) => { if (keep[i]) { w.scrollLeft = keep[i][0]; w.scrollTop = keep[i][1]; } });
   document.documentElement.dataset.theme = ui.theme || '';
   if (!ui.theme) delete document.documentElement.dataset.theme;
 }
@@ -247,13 +256,11 @@ const actions = {
   setScenario: (el) => { ui.scenario = el.dataset.id; render(); },
   proc: (el) => { ui.pv = Object.assign({}, ui.pv, { mode: 'proc', procs: [el.dataset.id] }); ui.stepId = ''; ui.review = null; ui.reviewSetup = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; saveUI(); render(); },
   flowStep: (el) => {
-    if (ui.review) { const { proc } = reviewCtx(); const i = proc ? (proc.steps || []).findIndex((x) => x.id === el.dataset.id) : -1; if (i >= 0) { ui.review.idx = i; render(); } return; }
-    ui.stepId = el.dataset.id; render();
-    const n = document.querySelector(`.flow-svg g.fnode[data-id="${CSS.escape(ui.stepId)}"]`);
-    if (n && el.dataset.scroll) n.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-    const side = document.querySelector('.flow-side'); if (side && getComputedStyle(side).position !== 'sticky' && el.closest('.flow-svg')) side.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (ui.review) { const { proc } = reviewCtx(); const i = proc ? (proc.steps || []).findIndex((x) => x.id === el.dataset.id) : -1; if (i >= 0) { ui.review.idx = i; render(); centreStep(el.dataset.id); } return; }
+    ui.stepId = el.dataset.id; ui.flagFocus = el.dataset.flag ? { stepId: el.dataset.id, kind: el.dataset.flag } : null; render();
+    centreStep(ui.stepId);
   },
-  flowClear: () => { ui.stepId = ''; render(); },
+  flowClear: () => { ui.stepId = ''; ui.flagFocus = null; render(); },
   findReplace: () => {
     const find = (document.getElementById('frFind').value || ''); const repl = document.getElementById('frRepl').value || ''; const mc = document.getElementById('frCase').checked;
     if (!find.trim()) return toast('Type the text to find');

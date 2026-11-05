@@ -100,9 +100,9 @@ function pvLanes(st, P, seqChains, { exec = true, interactive = true, zoom = 0, 
     const cross = prev.dept !== it.dept; const x1 = a.x + a.w, y1 = a.y + a.h / 2, x2 = b.x - 2, y2 = b.y + b.h / 2, mx = (x1 + x2) / 2;
     const hl = selected && (it.s.id === selected || prev.s.id === selected) ? ' hl' : '';
     g += `<path class="jl-link ${cross ? 'ho' : ''}${it.procStart ? ' trig' : ''}${hl}" d="M${x1},${y1} H${mx} V${y2} H${x2}" marker-end="url(#${cross ? 'jlb' : 'jla'})"/>`;
-    if (it.procStart) g += T(mx + 4, Math.min(y1, y2) - 6, 'triggers', 'jl-trig');
+    if (it.procStart) g += T(b.x + 2, b.y - 7, '▸ triggers: ' + trunc(it.p.name, 22), 'jl-trig');
     const wk = exec ? (flagsFor[it.s.id] || []).filter((f) => f.on === 'link') : [];
-    if (wk.length) g += `<g data-tip="${esc(wk.map((f) => f.text).join(' · '))}">${flagShape('weakness', '', mx, (y1 + y2) / 2, 10)}</g>`; }));
+    if (wk.length) g += `<g class="${interactive ? 'clk' : ''}" ${interactive ? `data-action="flowStep" data-id="${esc(it.s.id)}" data-flag="link"` : ''} data-tip="${esc(wk.map((f) => f.text).join(' · '))}">${flagShape('weakness', '', mx, (y1 + y2) / 2, 10)}</g>`; }));
   all.forEach((it) => { const P2 = pos.get(it); const t = tById[it.s.toolId]; const tm = teamInfo(it.dept); const act = interactive ? `data-action="flowStep" data-id="${esc(it.s.id)}"` : '';
     const fl = exec ? (flagsFor[it.s.id] || []) : [];
     const tip = esc([`${it.num}. ${it.s.name}`, tm[1], it.s.actorLabel, t ? t.name : 'No system', stepTimeText(it.s, true), fl.map((f) => f.text).join(' · ')].filter(Boolean).join(' · '));
@@ -219,6 +219,18 @@ function pvSide(e, st, P, seqChains, flags, exec) {
       <p class="faint small">Click any step to see its detail, where it comes from and goes to, and to edit or flag it.</p>`);
   }
   const chain = seqChains.find((c) => c.items.includes(it)); const i = chain.items.indexOf(it); const prev = chain.items[i - 1], next = chain.items[i + 1];
+  let focus = '';
+  if (ui.flagFocus && ui.flagFocus.stepId === it.s.id && prev) {
+    const wk = flags.filter((f) => f.stepId === it.s.id && f.on === 'link');
+    const a2 = teamInfo(prev.dept), b2 = teamInfo(it.dept);
+    const switchTool = wk.some((f) => /switches tool/.test(f.text));
+    focus = `<div class="wk-focus"><div class="wk-h">${flagIcon('weakness')}<b>Weakness on the hand-off</b></div>
+      <div class="wk-path"><span><i class="tdot" style="background:${a2[2]}"></i>Step ${prev.num}: ${esc(trunc(prev.s.name, 48))}<em>${esc(a2[1])} · ${esc((tById[prev.s.toolId] || {}).name || 'No system')}</em></span><span class="wk-arrow">↓ hand-off</span><span><i class="tdot" style="background:${b2[2]}"></i>Step ${it.num}: ${esc(trunc(it.s.name, 48))}<em>${esc(b2[1])} · ${esc((tById[it.s.toolId] || {}).name || 'No system')}</em></span></div>
+      ${wk.map((f) => `<p style="margin:6px 0">${esc(f.text)}</p>`).join('')}
+      <p class="small muted" style="margin:4px 0"><b>Why it matters:</b> ${switchTool ? 'the same information is likely re-typed from one system into another, which costs time and creates errors.' : 'work moves between departments by email, chat or memory, so it can be missed, delayed or done twice, and nobody can see where it is.'}</p>
+      <p class="small muted" style="margin:4px 0"><b>Typical fix:</b> ${switchTool ? 'connect the two systems or work from one shared record, so the hand-off happens automatically.' : 'give the receiving department a system where the hand-off arrives as a task with an owner and a due date (e.g. created automatically when the previous step is completed).'}</p>
+      <p class="faint small" style="margin:4px 0">Flagged by the machine from the departments and systems on these two steps. Confirm it in a sense-check.</p></div>`;
+  }
   const s = it.s; const t = tById[s.toolId]; const tm = teamInfo(it.dept);
   const who = (x) => { const pp = x.actorId && pById[x.actorId]; return pp ? (ui.anon ? pp.title : pp.name) : (x.actorLabel || '—'); };
   const nb = (x, dir) => {
@@ -229,7 +241,7 @@ function pvSide(e, st, P, seqChains, flags, exec) {
   const mine = exec ? flags.filter((f) => f.stepId === s.id || (next && f.on === 'link' && f.stepId === next.s.id)) : [];
   const own = (s.flags || []).map((f, k) => `<li>${flagIcon(FLAG_TYPES[f.type] ? f.type : 'issue')} <span>${esc(f.text)} <span class="faint small">${esc(f.by || '')}${f.date ? ' · ' + esc(f.date) : ''}</span></span> <button class="btn sm ghost" data-action="removeFlowFlag" data-id="${k}" title="Clear (e.g. once verified)">✕ Clear</button></li>`).join('');
   const rv = (s.review && s.review.status) || 'assumed';
-  return card('Step detail', `<div class="btn-row" style="margin:0 0 8px"><button class="btn sm" data-action="flowClear">← Takeaways</button>${prev ? `<button class="btn sm" data-action="flowStep" data-id="${esc(prev.s.id)}" data-scroll="1">‹ Previous</button>` : ''}${next ? `<button class="btn sm" data-action="flowStep" data-id="${esc(next.s.id)}" data-scroll="1">Next ›</button>` : ''}</div>
+  return card(focus ? 'Weakness detail' : 'Step detail', `${focus}<div class="btn-row" style="margin:0 0 8px"><button class="btn sm" data-action="flowClear">← Takeaways</button>${prev ? `<button class="btn sm" data-action="flowStep" data-id="${esc(prev.s.id)}" data-scroll="1">‹ Previous</button>` : ''}${next ? `<button class="btn sm" data-action="flowStep" data-id="${esc(next.s.id)}" data-scroll="1">Next ›</button>` : ''}</div>
     <div class="faint small">${esc(it.p.name)}</div><h4 style="margin-top:2px">Step ${it.num}: ${esc(s.name)}</h4>
     ${nb(prev, 'from')}
     <dl class="sd"><dt>Department</dt><dd><i class="tdot" style="background:${tm[2]}"></i>${esc(tm[1])}</dd><dt>Who</dt><dd>${esc(who(s))}</dd><dt>System</dt><dd>${esc(t ? t.name : 'No system')}</dd><dt>Mode</dt><dd>${s.automated ? 'Automated' : 'Manual'}</dd>
