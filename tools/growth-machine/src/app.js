@@ -30,7 +30,7 @@ function save() {
 function flushSave() { if (!saveTimer) return; clearTimeout(saveTimer); saveTimer = null; try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); } catch (err) { /* ignore */ } }
 window.addEventListener('pagehide', flushSave);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
-function saveUI() { try { localStorage.setItem(STORE_KEY + '.ui', JSON.stringify({ tab: ui.tab, pv: ui.pv, execView: ui.execView, anon: ui.anon, showCost: ui.showCost, ghosts: ui.ghosts, compare: ui.compare, coll: ui.coll, theme: ui.theme })); } catch (err) { /* ignore */ } }
+function saveUI() { try { localStorage.setItem(STORE_KEY + '.ui', JSON.stringify({ tab: ui.tab, pv: ui.pv, execView: ui.execView, bpTop: ui.bpTop, anon: ui.anon, showCost: ui.showCost, ghosts: ui.ghosts, compare: ui.compare, coll: ui.coll, theme: ui.theme })); } catch (err) { /* ignore */ } }
 const E = () => db.engagements[db.activeId];
 function procOfStep(id) { return E().processes.find((p) => (p.steps || []).some((x) => x.id === id)); }
 function reviewCtx() {
@@ -261,6 +261,7 @@ const actions = {
     centreStep(ui.stepId);
   },
   flowClear: () => { ui.stepId = ''; ui.flagFocus = null; render(); },
+  bpTop: (el) => { ui.bpTop = +el.dataset.id; saveUI(); render(); },
   findReplace: () => {
     const find = (document.getElementById('frFind').value || ''); const repl = document.getElementById('frRepl').value || ''; const mc = document.getElementById('frCase').checked;
     if (!find.trim()) return toast('Type the text to find');

@@ -24,6 +24,25 @@ function stepTimeText(s, long = false) {
 }
 /** A step where work waits or takes long enough to matter (shown in executive view). */
 const isHotspot = (s) => num(s.elapsedDays) >= 2 || num(s.durationMins) >= 60;
+/** Rank steps by how badly they break: 2 per issue, 1.5 per weakness, 1 for a time hotspot. Top N get the strong highlight. */
+function breakPoints(steps, flags, topN) {
+  const n = topN == null ? (ui.bpTop == null ? 5 : ui.bpTop) : topN;
+  const score = {}, why = {}; const pos = {}; steps.forEach((s, i) => { pos[s.id] = i; });
+  steps.forEach((s) => {
+    if (!s || s.collapsed || s._removed) return;
+    const f = flags.filter((x) => x.stepId === s.id && x.type !== 'unverified');
+    const W = { high: 4, medium: 2, low: 1 };
+    const issues = f.filter((x) => x.type === 'issue'); const wk = f.filter((x) => x.type === 'weakness').length, hot = isHotspot(s) ? 1 : 0;
+    const iw = sum(issues, (x) => (x.on === 'node' && x.idx == null ? W[s.painSeverity] || 2 : W[x.severity] || 2));
+    const sc = iw + wk * 1.5 + hot;
+    const sev = s.painSeverity && s.painPoint ? ` (${s.painSeverity})` : '';
+    if (sc > 0) { score[s.id] = sc; why[s.id] = [issues.length && `${issues.length} issue${issues.length > 1 ? 's' : ''}${sev}`, wk && `${wk} weak hand-off${wk > 1 ? 's' : ''}`, hot && 'time hotspot'].filter(Boolean).join(' · '); }
+  });
+  const order = Object.keys(score).sort((a, c) => score[c] - score[a] || pos[a] - pos[c]);
+  const ranks = {}; const label = {}; const picked = order.slice(0, n ? n : order.length);
+  picked.forEach((id, i) => { const first = order.findIndex((x) => score[x] === score[id]); const tied = order.filter((x) => score[x] === score[id]).length > 1; ranks[id] = i + 1; label[id] = `#${first + 1}${tied ? '=' : ''}`; });
+  return { ranks, label, order, score, why };
+}
 const teamInfo = (id) => TEAMS.find((t) => t[0] === id) || ['', 'Unassigned', 'var(--line)'];
 
 function stepTeam(s, pById, dById) {
@@ -66,11 +85,12 @@ function flagShape(type, n, x, y, r = 11) {
 const flagIcon = (type, n = '') => `<svg class="fl-ico" width="24" height="24" viewBox="-12 -12 24 24" aria-hidden="true">${flagShape(type, n, 0, type === 'unverified' ? 2 : 0, 10)}</svg>`;
 
 /** Serpentine flow: Start → numbered step nodes (team-coloured) → End, with warning markers on nodes and links. */
-function flowSchematic(proc, people, tools, departments, { cols = 3, selected = '', anonymise = false, interactive = true, zoom = 0, clientSafe = false, exec = true } = {}) {
+function flowSchematic(proc, people, tools, departments, { cols = 3, selected = '', anonymise = false, interactive = true, zoom = 0, clientSafe = false, exec = true, ranks = null } = {}) {
   const steps = proc.steps || [];
   if (!steps.length) return '<p class="empty">This process has no steps yet.</p>';
   const pById = byId(people), tById = byId(tools), dById = byId(departments);
   const flags = exec ? flowFlags(proc, people, tools, departments, clientSafe) : [];
+  const bpx = exec ? (ranks ? { ranks, label: (ranks._label || {}) } : breakPoints(steps, flags)) : { ranks: {}, label: {} }; const rk = bpx.ranks;
   cols = Math.max(1, Math.min(cols, steps.length));
   const NW = 262, NH = 150, GX = 78, GY = 96, PX = 34, TOP = 74;
   const rows = Math.ceil(steps.length / cols);
@@ -112,12 +132,13 @@ function flowSchematic(proc, people, tools, departments, { cols = 3, selected = 
     const t = tById[s.toolId];
     const lines = wrapText(s.name || 'Step', 31, 3);
     const nf = flags.filter((f) => f.on === 'node' && f.stepId === s.id);
-    const flagged = exec && flags.some((f) => f.stepId === s.id && f.type !== 'unverified');
+    const flagged = exec && flags.some((f) => f.stepId === s.id && f.type !== 'unverified'); const rank = rk[s.id];
     const rv = (s.review && s.review.status) || 'assumed';
     const hot = exec && isHotspot(s);
-    svg += `<g class="fnode ${flagged ? 'has-issue' : ''} ${s._focus ? 'focus' : ''} ${s.collapsed ? 'collapsed' : ''} ${s.automated ? 'auto' : 'manual'} ${exec && s.kind === 'decision' ? 'decision' : ''} rvs-${rv} ${st} ${selected === s.id ? 'sel' : near && near.has(i) ? 'nbr' : near ? 'dim' : ''} ${interactive ? 'clk' : ''}" transform="translate(${x},${y})" ${interactive ? `data-action="flowStep" data-id="${esc(s.id)}"` : ''} data-tip="${esc([s.name, actor, t ? 'Tool: ' + t.name : 'No system', s.automated ? 'Automated' : 'Manual', stepTimeText(s, true), REVIEW_STATUS[rv][0] + (s.review && s.review.by ? ' by ' + s.review.by : '')].filter(Boolean).join(' · '))}">`;
+    svg += `<g class="fnode ${rank ? 'bp-top' : flagged ? 'bp-lite' : ''} ${s._focus ? 'focus' : ''} ${s.collapsed ? 'collapsed' : ''} ${s.automated ? 'auto' : 'manual'} ${exec && s.kind === 'decision' ? 'decision' : ''} rvs-${rv} ${st} ${selected === s.id ? 'sel' : near && near.has(i) ? 'nbr' : near ? 'dim' : ''} ${interactive ? 'clk' : ''}" transform="translate(${x},${y})" ${interactive ? `data-action="flowStep" data-id="${esc(s.id)}"` : ''} data-tip="${esc([s.name, actor, t ? 'Tool: ' + t.name : 'No system', s.automated ? 'Automated' : 'Manual', stepTimeText(s, true), REVIEW_STATUS[rv][0] + (s.review && s.review.by ? ' by ' + s.review.by : '')].filter(Boolean).join(' · '))}">`;
     svg += `<rect class="nb" width="${NW}" height="${NH}" rx="12"/>`;
-    if (s._procStart) svg += `<text class="pstart" x="2" y="-9">▸ triggers: ${esc(trunc(s._procStart, 34))}</text>`;
+    if (s._procStart) svg += `<text class="pstart" x="2" y="${rank ? -27 : -9}">▸ triggers: ${esc(trunc(s._procStart, 34))}</text>`;
+    if (rank) svg += `<g class="bp-pill"><rect x="${NW / 2 - 56}" y="-12" width="112" height="21" rx="10.5"/><text x="${NW / 2}" y="3" text-anchor="middle">${bpx.label[s.id] || '#' + rank} BREAK POINT</text></g>`;
     svg += `<rect class="band" width="${NW}" height="28" rx="12" style="fill:${tm[2]}"/><rect class="band" y="16" width="${NW}" height="12" style="fill:${tm[2]}"/>`;
     svg += `<circle class="num" cx="18" cy="14" r="10"/><text class="numt" x="18" y="18" text-anchor="middle" ${String(s.displayNum || '').length > 2 ? 'style="font-size:8px"' : ''}>${esc(s.displayNum || i + 1)}</text>`;
     svg += `<text class="team" x="36" y="18.5">${exec && s.kind === 'decision' ? '◇ DECISION · ' : ''}${esc(s.collapsed ? 'OTHER TEAMS' : tm[1].toUpperCase())}</text>`;
@@ -250,6 +271,8 @@ function stepFields(s, st, attr) {
       <label class="fld"><span>Hands-on time (minutes)</span><input type="number" min="0" ${attr}="durationMins" value="${esc(s.durationMins || '')}"></label>
       <label class="fld"><span>Waiting / elapsed (days)</span><input type="number" min="0" step="0.5" ${attr}="elapsedDays" value="${esc(s.elapsedDays || '')}"></label>
     </div>
+    <div class="rv-grid"><label class="fld"><span>Issue at this step (pain point)</span><input ${attr}="painPoint" value="${esc(s.painPoint || '')}" placeholder="What goes wrong here?"></label>
+      <label class="fld"><span>How serious?</span>${sel([['high', 'High: costs money, clients or a lot of time'], ['medium', 'Medium (default)'], ['low', 'Low: an annoyance']], s.painSeverity || 'medium', `${attr}="painSeverity"`, false)}</label></div>
     <label class="fld"><span>Who else gets involved (management approval, escalation, other team)?</span><input ${attr}="involves" value="${esc(s.involves || '')}" placeholder="e.g. CRO approves Tier 1"></label>
     <div class="rv-grid"><label class="fld"><span>Decision point?</span>${sel([['', 'No'], ['decision', 'Yes, a decision']], s.kind || '', `${attr}="kind"`, false)}</label>
       ${s.kind === 'decision' ? `<label class="fld"><span>If no, what happens?</span><input ${attr}="decisionNo" value="${esc(s.decisionNo || '')}" placeholder="e.g. back to Sales to re-scope"></label>` : '<span></span>'}</div>`;
@@ -329,11 +352,11 @@ ${procs.map(part).join('')}
 
 
 /** Executive summary strip: what the executive view is surfacing for the steps shown. */
-function execBar(steps, flags) {
+function execBar(steps, flags, bpCount) {
   const live2 = steps.filter((x) => !x._removed && !x.collapsed);
   const n = (t) => flags.filter((f) => f.type === t).length;
   const dec = live2.filter((x) => x.kind === 'decision').length, mg = live2.filter((x) => x.involves).length, hot = live2.filter(isHotspot).length;
   const timed = live2.filter((x) => num(x.durationMins) || num(x.elapsedDays)).length;
   const item = (v, label, hint) => `<div class="eb-i ${v ? '' : 'eb-z'}"><b>${v}</b><span>${label}</span>${!v && hint ? `<em>${hint}</em>` : ''}</div>`;
-  return `<div class="exec-bar"><span class="eb-t">Executive view</span>${item(n('issue'), 'issues')}${item(n('weakness'), 'weaknesses')}${item(live2.filter((x) => flags.some((f) => f.stepId === x.id && f.type !== 'unverified')).length, 'steps affected')}${item(dec, 'decision points', 'none mapped yet')}${item(mg, 'management touchpoints', 'none mapped yet')}${item(hot, 'time hotspots', timed ? '' : 'add times to steps')}</div>`;
+  return `<div class="exec-bar"><span class="eb-t">Executive view</span>${bpCount != null ? `<div class="eb-i eb-bp"><b>${bpCount}</b><span>top break points</span><em>highlighted below</em></div>` : ''}${item(n('issue'), 'issues')}${item(n('weakness'), 'weaknesses')}${item(live2.filter((x) => flags.some((f) => f.stepId === x.id && f.type !== 'unverified')).length, 'steps affected')}${item(dec, 'decision points', 'none mapped yet')}${item(mg, 'management touchpoints', 'none mapped yet')}${item(hot, 'time hotspots', timed ? '' : 'add times to steps')}</div>`;
 }
