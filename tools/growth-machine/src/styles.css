@@ -178,3 +178,4 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 #mergeHist summary{cursor:pointer;padding:4px 0}
 .fr-row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}.fr-row .fld{margin:0;min-width:220px}
 #main .flow-side h4{text-transform:none;letter-spacing:0;font-size:15px;color:var(--ink);line-height:1.3}
+.btn.sm[disabled]{opacity:.45;cursor:not-allowed}

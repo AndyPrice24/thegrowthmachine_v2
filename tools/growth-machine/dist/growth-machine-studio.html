@@ -318,6 +318,22 @@ ol.flags li:hover,ol.flags li.on{border-color:var(--ink)}
 .bp-pill rect{fill:var(--crit)}.bp-pill text{fill:#fff;font-size:10.5px;font-weight:800;letter-spacing:.07em;font-family:inherit}
 .exec-bar .eb-bp{border-color:var(--crit);border-width:2px}.exec-bar .eb-bp b{color:var(--crit-ink)}
 .pv-top5 li{display:flex;gap:8px;align-items:flex-start}.bp-n{flex:none;background:var(--crit);color:#fff;font-weight:800;font-size:11px;border-radius:999px;padding:2px 7px;margin-top:1px}
+/* compact controls */
+.pv-top{gap:8px;padding:12px 16px}.pv-toprow{display:flex;flex-wrap:wrap;gap:14px;align-items:center}.pv-toprow .pv-what{font-size:14px}
+.pv-top .pv-sec h5{margin:0 0 4px}.pv-top .pv-group{margin-bottom:2px}
+.pv-main{padding-top:0}
+.pv-bar{position:sticky;top:57px;z-index:15;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;justify-content:space-between;margin:0 -18px;padding:8px 18px;background:var(--surface);border-bottom:1px solid var(--line);border-radius:14px 14px 0 0}
+.pv-g{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.pv-r{margin-left:auto}
+.pv-switch.sm .seg{padding:4px 10px;font-size:12px}.pv-switch .seg.zl{cursor:default;min-width:46px;text-align:center;font-weight:600;background:var(--surface-2)}
+.pv-key-pop{width:min(560px,90vw)}.pv-key-pop .flow-legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin:0}
+.exec-slim{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0 6px;padding:6px 10px;border:1.5px solid var(--crit);border-radius:10px;background:var(--red-soft)}
+.exec-slim.off{border-color:var(--line);background:transparent}
+.exec-slim .es-t{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--crit-ink);margin-right:4px}
+.exec-slim .es-i{font-size:12px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px 9px}.exec-slim .es-i b{font-weight:800}
+.exec-slim .es-z{color:var(--faint)}.exec-slim .es-bp{border-color:var(--crit);color:var(--crit-ink)}
+@media (max-width:820px){.pv-bar{position:static}}
+.pv-main .flow-side{top:112px;max-height:calc(100vh - 124px)}
+.pv-switch.sm .seg{padding:4px 9px}.pv-bar .tog{gap:4px}
 </style>
 <style id="report-css">/* Founder report styles (also embedded in exported HTML reports) */
 .rpt{background:#fffdf9;color:#171715;border:1px solid #d7cfc3;border-radius:14px;padding:40px 46px;
@@ -531,6 +547,7 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 #mergeHist summary{cursor:pointer;padding:4px 0}
 .fr-row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}.fr-row .fld{margin:0;min-width:220px}
 #main .flow-side h4{text-transform:none;letter-spacing:0;font-size:15px;color:var(--ink);line-height:1.3}
+.btn.sm[disabled]{opacity:.45;cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -543,7 +560,7 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="tip" hidden></div>
 <script>
-const STUDIO_BUILD = '2026-11-05 08:24 UTC';
+const STUDIO_BUILD = '2026-11-05 08:31 UTC';
 /* ---- model.js ---- */
 /* ============================================================
    The Growth Machine — data model, scenario engine, scoring, insights
@@ -2252,23 +2269,27 @@ function processPage(e) {
        <div class="pv-sec"><h5>2 · Processes ${esc(teamInfo(P.dept)[1])} is involved in</h5>${groupBlock(P.deptProcs, 'dproc', (id) => P.procIds.includes(id))}</div>`
     : `<div class="pv-sec"><h5>1 · Processes</h5>${groupBlock(P.procs.map((p) => p.id), 'proc', (id) => P.procIds.includes(id))}</div>
        <div class="pv-sec"><h5>2 · Departments involved</h5><div class="jrow">${P.availDepts.filter((t) => t !== 'client' && t !== 'system').map((t) => deptChip(t, 'dept', P.shownDepts.includes(t))).join('')}<span class="faint small">Unticked departments shrink to grey markers.</span></div></div>`;
-  // 5. view options
-  const opts = `<div class="pv-opts"><div class="pv-switch sm"><button class="seg ${P.layout === 'flow' ? 'on' : ''}" data-action="pvSet" data-k="layout" data-id="flow">Flow</button><button class="seg ${P.layout === 'lanes' ? 'on' : ''}" data-action="pvSet" data-k="layout" data-id="lanes">Swimlane</button></div>
-    <label class="tog"><input type="checkbox" data-ui="execView" ${exec ? 'checked' : ''}> <b>Executive view</b></label>${exec ? `<span class="faint small">Highlight top</span><span class="pv-switch sm">${[3, 5, 10, 0].map((n) => `<button class="seg ${(ui.bpTop == null ? 5 : ui.bpTop) === n ? 'on' : ''}" data-action="bpTop" data-id="${n}">${n || 'All'}</button>`).join('')}</span>` : ''}<label class="tog"><input type="checkbox" data-ui="anon" ${ui.anon ? 'checked' : ''}> Anonymise</label>
-    <span class="pv-sp"></span>${single ? `<button class="btn sm" data-action="reviewSetup" title="Walk this process live with someone and record what they confirm or correct">▶ Sense-check</button>` : '<span class="faint small" title="Select a single process to sense-check it">▶ Sense-check: select one process</span>'}</div>`;
-  // 6. fine controls + export
   const mainW = (document.getElementById('main') || {}).clientWidth || 1100;
   const visW = mainW > 1100 ? mainW - 390 : mainW;
   const colsN = ui.flowCols || ui.flowColsAuto || (visW < 560 ? 1 : visW < 900 ? 2 : 3);
   const laneW = 210 + all.length * 172 + (seqChains.length - 1) * 60 + 24;
   const laneZoom = ui.flowZoom || Math.min(1, Math.max((visW - 30) / laneW, 0.8));
   const z = P.layout === 'lanes' ? laneZoom : ui.flowZoom;
-  const fine = `<div class="flow-tools"><span class="faint small">Size</span><button class="btn sm ${ui.flowWhole && ui.flowZoom ? 'on' : ''}" data-action="flowZoom" data-id="fit">⤢ Whole view</button><button class="btn sm" data-action="flowZoom" data-id="out">−</button><span class="small zl">${z ? Math.round(z * 100) + '%' : 'Fit width'}</span><button class="btn sm" data-action="flowZoom" data-id="in">+</button><button class="btn sm ${z === 1 ? 'on' : ''}" data-action="flowZoom" data-id="100">100%</button>
-    ${P.layout === 'flow' ? `<span class="faint small" style="margin-left:6px">Steps per row</span>${[1, 2, 3, 4, 5].map((n) => `<button class="btn sm ${colsN === n ? 'on' : ''}" data-action="flowCols" data-id="${n}">${n}</button>`).join('')}` : ''}
-    <span class="pv-sp"></span><details class="pv-export"><summary class="btn sm">Export ▾</summary><div class="pv-exp-menu">
+  const seg = (on, act, k, id, label, title = '') => `<button class="seg ${on ? 'on' : ''}" data-action="${act}" ${k ? `data-k="${k}"` : ''} data-id="${id}" ${title ? `title="${title}"` : ''}>${label}</button>`;
+  const bar = `<div class="pv-bar">
+    <div class="pv-g"><span class="pv-switch sm">${seg(P.layout === 'flow', 'pvSet', 'layout', 'flow', 'Flow')}${seg(P.layout === 'lanes', 'pvSet', 'layout', 'lanes', 'Swimlane')}</span>
+      <label class="tog"><input type="checkbox" data-ui="execView" ${exec ? 'checked' : ''}> <b>Executive view</b></label>
+      ${exec ? `<span class="faint small">Top</span><span class="pv-switch sm" title="How many top break points to highlight">${[3, 5, 10, 0].map((n) => seg((ui.bpTop == null ? 5 : ui.bpTop) === n, 'bpTop', '', n, n || 'All')).join('')}</span>` : ''}
+      <label class="tog"><input type="checkbox" data-ui="anon" ${ui.anon ? 'checked' : ''}> Anonymise</label></div>
+    <div class="pv-g"><span class="pv-switch sm" title="Size">${seg(ui.flowWhole && ui.flowZoom, 'flowZoom', '', 'fit', '⤢', 'Whole view on one screen')}${seg(false, 'flowZoom', '', 'out', '−', 'Zoom out')}<span class="seg zl" title="Current size">${z ? Math.round(z * 100) + '%' : 'Fit'}</span>${seg(false, 'flowZoom', '', 'in', '+', 'Zoom in')}${seg(z === 1, 'flowZoom', '', '100', '1:1', 'Full size')}</span>
+      ${P.layout === 'flow' ? `<span class="pv-switch sm" title="Steps per row"><span class="seg zl" title="Steps per row">▦</span>${[1, 2, 3, 4, 5].map((n) => seg(colsN === n, 'flowCols', '', n, n)).join('')}</span>` : ''}</div>
+    <div class="pv-g pv-r">${single ? '<button class="btn sm" data-action="reviewSetup" title="Walk this process live with someone and record what they confirm or correct">▶ Sense-check</button>' : '<button class="btn sm" disabled title="Select a single process to sense-check it">▶ Sense-check</button>'}
+      <details class="pv-export pv-key"><summary class="btn sm" title="What the symbols mean">?</summary><div class="pv-exp-menu pv-key-pop">${flowLegend(!exec)}</div></details>
+      <details class="pv-export"><summary class="btn sm">Export ▾</summary><div class="pv-exp-menu">
       <label class="fld"><span>For</span><select data-ui="flowAudience"><option value="client" ${ui.flowAudience === 'internal' ? '' : 'selected'}>Client-safe (issues and weaknesses only)</option><option value="internal" ${ui.flowAudience === 'internal' ? 'selected' : ''}>TGM internal (adds unverified points and sources)</option></select></label>
       <button class="btn sm" data-action="pvExport" data-id="png">Image (PNG)</button><button class="btn sm" data-action="pvExport" data-id="svg">Vector (SVG)</button><button class="btn sm" data-action="pvExport" data-id="pdf">PDF page</button><button class="btn sm" data-action="pvExport" data-id="html">HTML page</button>
-      <button class="btn sm ghost" data-action="pvExport" data-id="all">Each selected process, one page each (PDF)</button>${single ? '<button class="btn sm ghost" data-action="exportFlow" data-id="sheet">Sense-check sheet (PDF)</button>' : ''}</div></details></div>`;
+      <button class="btn sm ghost" data-action="pvExport" data-id="all">Each selected process, one page each (PDF)</button>${single ? '<button class="btn sm ghost" data-action="exportFlow" data-id="sheet">Sense-check sheet (PDF)</button>' : ''}</div></details></div></div>
+  </div>`;
   // flags for the visual (internal: includes unverified)
   const flags = []; seqChains.forEach((c) => c.chain.forEach((p) => flowFlags(p, st.people, st.tools, st.departments).forEach((f) => flags.push(f))));
   const shownIds = new Set(all.filter((it) => it.shown).map((it) => it.s.id));
@@ -2281,13 +2302,15 @@ function processPage(e) {
   const side = pvSide(e, st, P, seqChains, shownFlags, exec, BP);
   // 9. summaries
   const summaries = pvSummaries(e, st, P, seqChains, shownFlags);
-  const legend = exec ? execBar(all.filter((it) => it.shown).map((it) => it.s), shownFlags, Object.keys(BP.ranks).length) + flowLegend() : '<div class="legend flow-legend"><span class="faint">Executive view is off: steps, people, systems and hand-offs only.</span></div>';
+  const shownSteps = all.filter((it) => it.shown).map((it) => it.s); const nT = (t) => shownFlags.filter((f) => f.type === t).length;
+  const dec = shownSteps.filter((x) => x.kind === 'decision').length, mg = shownSteps.filter((x) => x.involves).length, hot = shownSteps.filter(isHotspot).length;
+  const pill = (v, label, cls = '') => `<span class="es-i ${v ? '' : 'es-z'} ${cls}"><b>${v}</b> ${label}</span>`;
+  const legend = exec ? `<div class="exec-slim"><span class="es-t">Executive view</span>${pill(Object.keys(BP.ranks).length, 'top break points', 'es-bp')}${pill(nT('issue'), 'issues')}${pill(nT('weakness'), 'weak hand-offs')}${pill(nT('unverified'), 'to confirm')}${pill(dec, 'decisions')}${pill(mg, 'management touchpoints')}${pill(hot, hot ? 'time hotspots' : 'time hotspots (add times)')}</div>` : '<div class="exec-slim off"><span class="faint small">Executive view is off: steps, people, systems and hand-offs only.</span></div>';
   const what = P.mode === 'dept' ? `${teamInfo(P.dept)[1]} · ${P.procIds.length} process${P.procIds.length === 1 ? '' : 'es'}` : (() => { const nd = P.shownDepts.filter((t) => t !== 'client' && t !== 'system').length; return `${P.procIds.length} process${P.procIds.length === 1 ? '' : 'es'} · ${nd} department${nd === 1 ? '' : 's'}`; })();
   return `${scenarioBanner(e)}${head}
-  <section class="card pv-top">${sw}${refine}</section>
+  <section class="card pv-top"><div class="pv-toprow">${sw}<span class="pv-what"><b>${esc(what)}</b> <span class="faint small">· ${all.filter((it) => it.shown).length} steps · ${all.filter((it, i) => it.shown && i && all[i - 1].dept !== it.dept).length} hand-offs</span></span></div>${refine}</section>
   ${ui.reviewSetup && single ? reviewChooser(e, single) : ''}
-  <section class="card pv-main"><div class="pv-what"><b>${esc(what)}</b> <span class="faint small">· ${all.filter((it) => it.shown).length} steps · ${all.filter((it, i) => it.shown && i && all[i - 1].dept !== it.dept).length} hand-offs between departments</span></div>
-    ${opts}${fine}${legend}
+  <section class="card pv-main">${bar}${legend}
     <div class="flow-split"><div class="pv-visual">${visual}</div><aside class="flow-side">${side}</aside></div></section>
   ${summaries}`;
 }
