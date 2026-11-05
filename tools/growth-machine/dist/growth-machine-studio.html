@@ -447,6 +447,19 @@ tr.lk-total td{font-weight:600;border-top:1px solid var(--line)}
 @media (max-width:700px){.rpt{padding:22px 18px}.rpt-2{grid-template-columns:1fr}.rpt-cover h1{font-size:34px}}
 @media print{.rpt-break{break-before:page}.rpt-fig{overflow:visible}.rpt-fig svg{max-width:100%;height:auto}.rpt-sec{break-inside:auto}.rpt .tbl tr{break-inside:avoid}}
 .rpt-lead{font-family:Georgia,serif;font-size:15pt;line-height:1.45;color:#171715;margin:0 0 12px}
+
+/* Feedback cheatsheet */
+.rpt .fb-top{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0 6px}
+.rpt .fb-top div{background:#171715;color:#fbf9f5;border-radius:12px;padding:12px 14px}.rpt .fb-top b{display:block;font-family:Georgia,serif;font-size:28px;font-weight:400}.rpt .fb-top span{font-size:12px;opacity:.85}
+.rpt .fb-area{font-size:15px;text-transform:uppercase;letter-spacing:.12em;color:#c8221c;margin:22px 0 8px;font-family:inherit}
+.rpt .fb-i{display:grid;grid-template-columns:150px 1fr;gap:16px;border:1px solid #e3ddd3;border-left:5px solid #d9d2c7;border-radius:12px;padding:12px 16px;margin:0 0 10px;background:#fff;break-inside:avoid}
+.rpt .fb-i.fb-high{border-left-color:#c8221c}.rpt .fb-i.fb-medium{border-left-color:#e0a10b}
+.rpt .fb-num b{display:block;font-family:Georgia,serif;font-weight:400;font-size:30px;line-height:1.05;color:#171715}.rpt .fb-num span{font-size:12px;color:#665f57}
+.rpt .fb-body h4{margin:0 0 6px;font-size:15px}.rpt .fb-body p{margin:4px 0;font-size:13px}
+.rpt .fb-l{display:block;margin-bottom:1px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#8a8074;font-weight:700}
+.rpt .fb-s{background:#f3efe8;border-radius:8px;padding:6px 8px}.rpt .fb-src{font-size:11px;color:#8a8074}
+.rpt .fb-draft{font-size:10px;font-weight:700;text-transform:uppercase;border:1px solid #e0a10b;color:#9a6a00;border-radius:999px;padding:1px 7px;vertical-align:2px}
+@media (max-width:700px){.rpt .fb-top{grid-template-columns:1fr 1fr}.rpt .fb-i{grid-template-columns:1fr}}
 </style>
 <style>/* App chrome */
 *{box-sizing:border-box}
@@ -641,7 +654,7 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="tip" hidden></div>
 <script>
-const STUDIO_BUILD = '2026-11-05 12:36 UTC';
+const STUDIO_BUILD = '2026-11-05 14:35 UTC';
 /* ---- model.js ---- */
 /* ============================================================
    The Growth Machine — data model, scenario engine, scoring, insights
@@ -658,7 +671,7 @@ const live = (arr) => (arr || []).filter((x) => !x._removed);
 const byId = (arr) => Object.fromEntries((arr || []).map((x) => [x.id, x]));
 const splitList = (v) => Array.isArray(v) ? v : String(v || '').split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
 
-const COLLECTIONS = ['intake', 'customQuestions', 'competitors', 'capabilities', 'intel', 'usps', 'opportunities', 'departments', 'people', 'tools', 'processes', 'segments', 'markets', 'topClients', 'revenueMovements',
+const COLLECTIONS = ['intake', 'customQuestions', 'competitors', 'capabilities', 'intel', 'usps', 'opportunities', 'departments', 'people', 'tools', 'processes', 'segments', 'markets', 'topClients', 'revenueMovements', 'feedback',
   'financePeriods', 'interviews', 'findings', 'recommendations', 'scenarios'];
 
 function blankEngagement(name) {
@@ -670,7 +683,7 @@ function blankEngagement(name) {
       businessModel: '', revenueModel: '', description: '', goals: '', constraints: '' },
     meta: { currency: 'ZAR', consultant: 'The Growth Machine', engagementStart: today, lastUpdated: new Date().toISOString(),
       lastExported: '', notes: '' },
-    departments: [], people: [], tools: [], processes: [], segments: [], markets: [], topClients: [], revenueMovements: [],
+    departments: [], people: [], tools: [], processes: [], segments: [], markets: [], topClients: [], revenueMovements: [], feedback: [],
     financePeriods: [], interviews: [], findings: [], recommendations: [], scenarios: [],
     intake: [], customQuestions: [], competitors: [], capabilities: [], intel: [], usps: [], opportunities: [], engagement: blankEngagementBlock(),
     report: { title: '', preparedFor: '', summary: '', nextSteps: '', anonymise: true, scenarioId: '', processIds: [],
@@ -3127,7 +3140,13 @@ function viewScenarios(e) {
 
 /* ---------------- Report (settings + preview) ---------------- */
 function viewReport(e) {
-  const toggle = `<div class="toolbar"><button class="btn sm ${ui.reportType === 'status' ? 'on' : ''}" data-action="reportType" data-id="status">Status report (progress, time, delays)</button><button class="btn sm ${ui.reportType !== 'status' ? 'on' : ''}" data-action="reportType" data-id="diagnostic">Diagnostic report (findings & recommendations)</button></div>`;
+  const toggle = `<div class="toolbar"><button class="btn sm ${ui.reportType === 'status' ? 'on' : ''}" data-action="reportType" data-id="status">Status report (progress, time, delays)</button><button class="btn sm ${ui.reportType === 'diagnostic' || !ui.reportType ? 'on' : ''}" data-action="reportType" data-id="diagnostic">Diagnostic report (findings & recommendations)</button><button class="btn sm ${ui.reportType === 'feedback' ? 'on' : ''}" data-action="reportType" data-id="feedback">Feedback cheatsheet (written vs practice)</button></div>`;
+  if (ui.reportType === 'feedback') {
+    const fb = e.feedback || []; const draft = fb.filter((f) => f.status !== 'Confirmed with client' && f.status !== 'Sent').length;
+    return `<div class="page-h"><div><span class="eyebrow">Report</span><h1>Feedback cheatsheet</h1><p class="muted">For the client: what their own documents say against what the data shows, with the numbers and our suggestions. Edit items under Data & Claude → Client feedback.${draft ? ` <b>${draft} item${draft === 1 ? ' is' : 's are'} still a draft</b>: confirm before sending.` : ''}</p></div>
+      <div class="btn-row"><button class="btn" data-action="printReport">Print / save PDF</button><button class="btn" data-action="downloadReport">Download HTML</button></div></div>
+      ${toggle}<div class="report-preview"><div id="report-doc" class="rpt">${renderFeedback(e)}</div></div>`;
+  }
   if (ui.reportType === 'status') {
     return `<div class="page-h"><div><span class="eyebrow">Report</span><h1>Client status report</h1><p class="muted">Output-led: what was delivered, what's next, what we need, delays, savings and one capacity line. Send it after every fortnightly review. Delays & changes is always included.</p></div>
       <div class="btn-row"><button class="btn" data-action="printReport">Print / save PDF</button><button class="btn" data-action="downloadReport">Download HTML report</button></div></div>
@@ -3855,15 +3874,38 @@ function renderReport(e) {
   return h;
 }
 
+/** Client feedback cheatsheet: the client's own rules vs what the data shows, with the numbers. Suggestions, not decisions. */
+function renderFeedback(e) {
+  const fb = (e.feedback || []).slice(); const W = { high: 0, medium: 1, low: 2 };
+  fb.sort((a, b) => (W[a.priority] ?? 1) - (W[b.priority] ?? 1));
+  const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  if (!fb.length) return '<p class="empty">No feedback items yet.</p>';
+  const top = fb.filter((f) => f.priority === 'high' && f.number).slice(0, 4);
+  const areas = [...new Set(fb.map((f) => f.area || 'Other'))];
+  const item = (f) => `<article class="fb-i fb-${esc(f.priority || 'medium')}">
+    <div class="fb-num"><b>${esc(f.number || '')}</b><span>${esc(f.numberLabel || '')}</span></div>
+    <div class="fb-body"><h4>${esc(f.topic)}${f.status && f.status !== 'Sent' && f.status !== 'Confirmed with client' ? ' <span class="fb-draft">draft</span>' : ''}</h4>
+      ${f.says ? `<p><span class="fb-l">Your documents say</span>${esc(f.says)}</p>` : ''}
+      ${f.reality ? `<p><span class="fb-l">What we see</span>${esc(f.reality)}</p>` : ''}
+      ${f.soWhat ? `<p><span class="fb-l">Why it matters</span>${esc(f.soWhat)}</p>` : ''}
+      ${f.suggestion ? `<p class="fb-s"><span class="fb-l">Our suggestion</span>${esc(f.suggestion)}</p>` : ''}
+      ${f.source ? `<p class="fb-src">Source: ${esc(f.source)}</p>` : ''}</div></article>`;
+  return `<section class="rpt-cover"><div class="rpt-eyebrow">The Growth Machine · feedback for ${esc(e.client.name)}</div><h1>What's written vs what's happening</h1>
+    <p class="muted">${date}. Your own documents set sensible rules. Below is where the data shows they are not being followed, why it matters, and what we suggest. These are suggestions for discussion, not decisions.</p></section>
+    ${top.length ? `<div class="fb-top">${top.map((f) => `<div><b>${esc(f.number)}</b><span>${esc(f.numberLabel || f.topic)}</span></div>`).join('')}</div>` : ''}
+    ${areas.map((a) => `<h2 class="fb-area">${esc(a)}</h2>${fb.filter((f) => (f.area || 'Other') === a).map(item).join('')}`).join('')}
+    <p class="faint small">Confidential. Prepared for ${esc(e.client.name)} by The Growth Machine. Figures come from ${esc(e.client.name)}'s own client register, revenue sheets and documents as shared on the dates shown; please tell us where anything is out of date.</p>`;
+}
+
 function downloadReportHTML(e, kind) {
-  const isStatus = kind === 'status';
+  const isStatus = kind === 'status'; const isFb = kind === 'feedback';
   const css = (document.getElementById('viz-css') || {}).textContent + '\n' + (document.getElementById('report-css') || {}).textContent;
   const html = `<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc((isStatus ? 'Status report' : (e.report.title || 'Report')) + ' · ' + e.client.name)}</title><style>${css}
+<title>${esc((isFb ? 'Feedback cheatsheet' : isStatus ? 'Status report' : (e.report.title || 'Report')) + ' · ' + e.client.name)}</title><style>${css}
 body{margin:0;background:#f6f1e9;font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#171715}
 .rpt{max-width:1100px;margin:24px auto;}
-</style></head><body><main class="rpt">${isStatus ? renderStatusReport(e) : renderReport(e)}</main></body></html>`;
-  const slug = (e.client.name + '-' + (isStatus ? 'status-report' : (e.report.title || 'report'))).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+</style></head><body><main class="rpt">${isFb ? renderFeedback(e) : isStatus ? renderStatusReport(e) : renderReport(e)}</main></body></html>`;
+  const slug = (e.client.name + '-' + (isFb ? 'feedback-cheatsheet' : isStatus ? 'status-report' : (e.report.title || 'report'))).toLowerCase().replace(/[^a-z0-9]+/g, '-');
   downloadFile(`${slug}-${todayISO()}.html`, html, 'text/html');
 }
 
@@ -4018,6 +4060,7 @@ const FIELD_DEFS = {
   financePeriods: [['id', 'text'], ['label', 'text'], ['months', 'num'], ['revenue', 'num'], ['cogs', 'num'], ['payroll', 'num'], ['tools', 'num'], ['marketing', 'num'], ['premises', 'num'], ['other', 'num']],
   interviews: [['id', 'text'], ['personId', 'person'], ['date', 'date'], ['interviewer', 'text'], ['summary', 'long'], ['themes', 'text'], ['painPoints', 'long'], ['ideas', 'long'], ['quotes', 'long']],
   findings: [['id', 'text'], ['title', 'text'], ['area', 'text'], ['severity', ['high', 'medium', 'low']], ['kind', ['leak', 'weakness', 'hole', 'opportunity', 'tool', 'context']], ['valueMonthly', 'num'], ['basis', ['Leaking', 'At risk', 'Spend to review', 'Upside']], ['fixId', 'text'], ['partOf', 'text'], ['nextStep', 'text'], ['lens', 'text'], ['evidence', 'long']],
+  feedback: [['id', 'text'], ['topic', 'text'], ['area', ['Revenue', 'Billing', 'Customers', 'Cost', 'Risk', 'Process', 'Documents']], ['number', 'text'], ['numberLabel', 'text'], ['says', 'long'], ['reality', 'long'], ['soWhat', 'long'], ['suggestion', 'long'], ['priority', ['high', 'medium', 'low']], ['status', ['Draft', 'Confirmed with client', 'Sent']], ['source', 'text']],
   revenueMovements: [['id', 'text'], ['fy', 'text'], ['client', 'text'], ['kind', ['lost', 'downgrade', 'new', 'growth']], ['cause', 'text'], ['monthly', 'num'], ['from', 'text'], ['reason', 'text'], ['comment', 'text']],
   customQuestions: [['id', 'text'], ['personId', 'person'], ['section', 'text'], ['q', 'long'], ['note', 'text'], ['crit', CRITERIA.map((c) => c.id)], ['p', 'num']],
   competitors: [['id', 'text'], ['name', 'text'], ['type', ['Direct', 'Indirect', 'Substitute', 'Adjacent']], ['threat', ['High', 'Medium', 'Low']], ['website', 'text'], ['hq', 'text'], ['markets', 'text'], ['segments', 'text'], ['offering', 'long'], ['pricingModel', 'text'], ['pricePoint', 'num'], ['size', 'text'], ['ownership', 'text'], ['strengths', 'long'], ['weaknesses', 'long'], ['whereWeWin', 'long'], ['whereWeLose', 'long'], ['sources', 'long'], ['lastReviewed', 'date']],
@@ -4028,7 +4071,7 @@ const FIELD_DEFS = {
   recommendations: [['id', 'text'], ['title', 'text'], ['type', ['People', 'Process', 'Tool', 'Build', 'Structure', 'Commercial']], ['horizon', ['0-3 months', '3-6 months', '6-12 months', '12+ months']], ['description', 'long'], ['effort', 'num'], ['risk', 'num'], ['confidence', 'num'], ['oneOffCost', 'num'], ['otherAnnualSaving', 'num'], ['oneOffSaving', 'num'], ['revenueUplift', 'num'], ['status', REC_STAGES], ['ops', 'json']],
   scenarios: [['id', 'text'], ['name', 'text'], ['description', 'text'], ['recommendationIds', 'json']]
 };
-const COLL_LABELS = { customQuestions: 'Custom interview questions', competitors: 'Competitors', capabilities: 'Capabilities', intel: 'Competitor intelligence', usps: 'USPs', opportunities: 'Opportunities', intake: 'Founder answers', departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Clients', revenueMovements: 'Revenue movements', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };
+const COLL_LABELS = { customQuestions: 'Custom interview questions', competitors: 'Competitors', capabilities: 'Capabilities', intel: 'Competitor intelligence', usps: 'USPs', opportunities: 'Opportunities', intake: 'Founder answers', departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Clients', revenueMovements: 'Revenue movements', feedback: 'Client feedback (written vs practice)', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };
 
 function cellInput(e, coll, row, [f, type]) {
   const v = row[f]; const base = `data-cell data-coll="${coll}" data-id="${esc(row.id)}" data-field="${f}"`;

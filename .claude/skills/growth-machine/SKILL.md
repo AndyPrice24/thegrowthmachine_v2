@@ -47,6 +47,25 @@ data say when it's combined with what we already know?
 - Be honest about data quality. Label estimates, name messy sources, and ask instead of guessing. A wrong number costs more credibility than a missing one.
 - Keep views simple: a headline list, one table, one chart. No walls of detail.
 
+## Make it stick (every recommendation)
+A fix that relies on people remembering will fail. For each recommendation, say how it will stick, using these levers in order:
+1. **System:** capture is required at the moment it happens, in the tool people already use (a required field, a stage gate).
+2. **Ease:** AI or automation drafts it (from call notes, email, the platform), so people confirm instead of type.
+3. **Visibility:** a per-person or per-team score that leaders see (dashboard, weekly meeting).
+4. **Incentive:** tie it to something that matters to them, e.g. a gate on bonus or commission ("no record, no commission").
+   Only after capture is easy, and agreed with the founders, because pay changes are sensitive.
+5. **Owner and cadence:** one named owner and a monthly check.
+
+## Suggestions, not decisions
+What we put forward is a recommendation for the client to decide, not something we have decided. Write it that way
+("we suggest starting renewals 90 days out"), give a sensible starting point, and expect to refine it with the team.
+
+## Feedback to the client
+When the client's own documents (SOPs, decks, templates) say one thing and the data shows another, keep our evidence-based
+understanding, and log the difference as a feedback item (what the documents say, what we see, the number, why it matters,
+our suggestion). The Studio turns these into the client feedback cheatsheet (Report → Feedback cheatsheet). Confirm drafts
+with the client's lead before sending.
+
 ## Working rules
 - Findings tie to the engagement target (for example, recurring cost savings) or to revenue protected or grown. Size them in rand per month or per year.
 - Interviews are reported by role. Never attribute a confidential remark to the person who made it.

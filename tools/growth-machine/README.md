@@ -175,3 +175,9 @@ severity you chose (your judgement wins over the file's suggestion). Steps the f
 - **Resolve or hold issues.** Each warning in the step panel has ✓ Resolve (fixed or not a problem; gone for good, with a
   note) and On hold (set aside, with a reason). Either way it stops counting until ↺ Reopen. Flags you added can also be
   deleted if they were a mistake. Merges keep these decisions, and editing an issue's text reopens it.
+
+### Client feedback cheatsheet (Report → Feedback cheatsheet)
+`feedback` records hold where the client's own documents and the evidence disagree: topic, area, a headline number,
+what the documents say, what we see, why it matters, our suggestion, priority and status (Draft / Confirmed with
+client / Sent). The report puts the four biggest numbers on top and groups items by area. It is worded as suggestions,
+not decisions. Print or download it once the drafts are confirmed.

@@ -248,7 +248,13 @@ function viewScenarios(e) {
 
 /* ---------------- Report (settings + preview) ---------------- */
 function viewReport(e) {
-  const toggle = `<div class="toolbar"><button class="btn sm ${ui.reportType === 'status' ? 'on' : ''}" data-action="reportType" data-id="status">Status report (progress, time, delays)</button><button class="btn sm ${ui.reportType !== 'status' ? 'on' : ''}" data-action="reportType" data-id="diagnostic">Diagnostic report (findings & recommendations)</button></div>`;
+  const toggle = `<div class="toolbar"><button class="btn sm ${ui.reportType === 'status' ? 'on' : ''}" data-action="reportType" data-id="status">Status report (progress, time, delays)</button><button class="btn sm ${ui.reportType === 'diagnostic' || !ui.reportType ? 'on' : ''}" data-action="reportType" data-id="diagnostic">Diagnostic report (findings & recommendations)</button><button class="btn sm ${ui.reportType === 'feedback' ? 'on' : ''}" data-action="reportType" data-id="feedback">Feedback cheatsheet (written vs practice)</button></div>`;
+  if (ui.reportType === 'feedback') {
+    const fb = e.feedback || []; const draft = fb.filter((f) => f.status !== 'Confirmed with client' && f.status !== 'Sent').length;
+    return `<div class="page-h"><div><span class="eyebrow">Report</span><h1>Feedback cheatsheet</h1><p class="muted">For the client: what their own documents say against what the data shows, with the numbers and our suggestions. Edit items under Data & Claude → Client feedback.${draft ? ` <b>${draft} item${draft === 1 ? ' is' : 's are'} still a draft</b>: confirm before sending.` : ''}</p></div>
+      <div class="btn-row"><button class="btn" data-action="printReport">Print / save PDF</button><button class="btn" data-action="downloadReport">Download HTML</button></div></div>
+      ${toggle}<div class="report-preview"><div id="report-doc" class="rpt">${renderFeedback(e)}</div></div>`;
+  }
   if (ui.reportType === 'status') {
     return `<div class="page-h"><div><span class="eyebrow">Report</span><h1>Client status report</h1><p class="muted">Output-led: what was delivered, what's next, what we need, delays, savings and one capacity line. Send it after every fortnightly review. Delays & changes is always included.</p></div>
       <div class="btn-row"><button class="btn" data-action="printReport">Print / save PDF</button><button class="btn" data-action="downloadReport">Download HTML report</button></div></div>

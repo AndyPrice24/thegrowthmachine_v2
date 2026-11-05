@@ -88,14 +88,37 @@ function renderReport(e) {
   return h;
 }
 
+/** Client feedback cheatsheet: the client's own rules vs what the data shows, with the numbers. Suggestions, not decisions. */
+function renderFeedback(e) {
+  const fb = (e.feedback || []).slice(); const W = { high: 0, medium: 1, low: 2 };
+  fb.sort((a, b) => (W[a.priority] ?? 1) - (W[b.priority] ?? 1));
+  const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  if (!fb.length) return '<p class="empty">No feedback items yet.</p>';
+  const top = fb.filter((f) => f.priority === 'high' && f.number).slice(0, 4);
+  const areas = [...new Set(fb.map((f) => f.area || 'Other'))];
+  const item = (f) => `<article class="fb-i fb-${esc(f.priority || 'medium')}">
+    <div class="fb-num"><b>${esc(f.number || '')}</b><span>${esc(f.numberLabel || '')}</span></div>
+    <div class="fb-body"><h4>${esc(f.topic)}${f.status && f.status !== 'Sent' && f.status !== 'Confirmed with client' ? ' <span class="fb-draft">draft</span>' : ''}</h4>
+      ${f.says ? `<p><span class="fb-l">Your documents say</span>${esc(f.says)}</p>` : ''}
+      ${f.reality ? `<p><span class="fb-l">What we see</span>${esc(f.reality)}</p>` : ''}
+      ${f.soWhat ? `<p><span class="fb-l">Why it matters</span>${esc(f.soWhat)}</p>` : ''}
+      ${f.suggestion ? `<p class="fb-s"><span class="fb-l">Our suggestion</span>${esc(f.suggestion)}</p>` : ''}
+      ${f.source ? `<p class="fb-src">Source: ${esc(f.source)}</p>` : ''}</div></article>`;
+  return `<section class="rpt-cover"><div class="rpt-eyebrow">The Growth Machine · feedback for ${esc(e.client.name)}</div><h1>What's written vs what's happening</h1>
+    <p class="muted">${date}. Your own documents set sensible rules. Below is where the data shows they are not being followed, why it matters, and what we suggest. These are suggestions for discussion, not decisions.</p></section>
+    ${top.length ? `<div class="fb-top">${top.map((f) => `<div><b>${esc(f.number)}</b><span>${esc(f.numberLabel || f.topic)}</span></div>`).join('')}</div>` : ''}
+    ${areas.map((a) => `<h2 class="fb-area">${esc(a)}</h2>${fb.filter((f) => (f.area || 'Other') === a).map(item).join('')}`).join('')}
+    <p class="faint small">Confidential. Prepared for ${esc(e.client.name)} by The Growth Machine. Figures come from ${esc(e.client.name)}'s own client register, revenue sheets and documents as shared on the dates shown; please tell us where anything is out of date.</p>`;
+}
+
 function downloadReportHTML(e, kind) {
-  const isStatus = kind === 'status';
+  const isStatus = kind === 'status'; const isFb = kind === 'feedback';
   const css = (document.getElementById('viz-css') || {}).textContent + '\n' + (document.getElementById('report-css') || {}).textContent;
   const html = `<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc((isStatus ? 'Status report' : (e.report.title || 'Report')) + ' · ' + e.client.name)}</title><style>${css}
+<title>${esc((isFb ? 'Feedback cheatsheet' : isStatus ? 'Status report' : (e.report.title || 'Report')) + ' · ' + e.client.name)}</title><style>${css}
 body{margin:0;background:#f6f1e9;font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#171715}
 .rpt{max-width:1100px;margin:24px auto;}
-</style></head><body><main class="rpt">${isStatus ? renderStatusReport(e) : renderReport(e)}</main></body></html>`;
-  const slug = (e.client.name + '-' + (isStatus ? 'status-report' : (e.report.title || 'report'))).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+</style></head><body><main class="rpt">${isFb ? renderFeedback(e) : isStatus ? renderStatusReport(e) : renderReport(e)}</main></body></html>`;
+  const slug = (e.client.name + '-' + (isFb ? 'feedback-cheatsheet' : isStatus ? 'status-report' : (e.report.title || 'report'))).toLowerCase().replace(/[^a-z0-9]+/g, '-');
   downloadFile(`${slug}-${todayISO()}.html`, html, 'text/html');
 }
