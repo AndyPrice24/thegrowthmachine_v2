@@ -166,7 +166,7 @@ function processPage(e) {
   const sw0 = `<div class="pv-switch"><button class="seg ${P.mode === 'dept' ? 'on' : ''}" data-action="pvSet" data-k="mode" data-id="dept">Department view</button><button class="seg ${P.mode === 'proc' ? 'on' : ''}" data-action="pvSet" data-k="mode" data-id="proc">Process view</button></div>`;
   if (P.mode === 'proc' && !P.focus) return `${scenarioBanner(e)}${head}${pvIndex(e, st, P, sw0)}`;
   if (P.mode === 'proc' && !P.focusMapped) return `${scenarioBanner(e)}${head}${pvFocusHead(e, st, P, sw0, [])}${pvUnmapped(e, P)}`;
-  if (!P.procs.length) return head + empty('No processes mapped yet. Click + New process, or merge process maps from Claude in Data & Claude.');
+  if (!P.procs.length) return head + empty('No processes mapped yet. Click + New process, or merge process maps from Claude in Sources & data.');
   const exec = ui.execView !== false;
   const pById = byId(st.people), dById = byId(st.departments);
   const seqChains = pvSeq(st, P); const all = seqChains.flatMap((c) => c.items);
@@ -189,23 +189,23 @@ function processPage(e) {
        <div class="pv-sec"><h5>2 · Departments involved</h5><div class="jrow">${P.availDepts.filter((t) => t !== 'client' && t !== 'system').map((t) => deptChip(t, 'dept', P.shownDepts.includes(t))).join('')}<span class="faint small">Unticked departments shrink to grey markers.</span></div></div>`;
   const mainW = (document.getElementById('main') || {}).clientWidth || 1100;
   const visW = mainW > 1100 ? mainW - 390 : mainW;
-  const colsN = ui.flowCols || ui.flowColsAuto || (visW < 560 ? 1 : visW < 900 ? 2 : 3);
+  const colsN = ui.flowColsAuto || (visW < 560 ? 1 : visW < 900 ? 2 : 3);
   const laneW = 210 + all.length * 172 + (seqChains.length - 1) * 60 + 24;
   const laneZoom = ui.flowZoom || Math.min(1, Math.max((visW - 30) / laneW, 0.8));
   const z = P.layout === 'lanes' ? laneZoom : ui.flowZoom;
   const seg = (on, act, k, id, label, title = '') => `<button class="seg ${on ? 'on' : ''}" data-action="${act}" ${k ? `data-k="${k}"` : ''} data-id="${id}" ${title ? `title="${title}"` : ''}>${label}</button>`;
   const bar = `<div class="pv-bar">
     <div class="pv-g"><span class="pv-switch sm">${seg(P.layout === 'flow', 'pvSet', 'layout', 'flow', 'Flow')}${seg(P.layout === 'lanes', 'pvSet', 'layout', 'lanes', 'Swimlane')}</span>
-      <label class="tog"><input type="checkbox" data-ui="execView" ${exec ? 'checked' : ''}> <b>Executive view</b></label>
-      <label class="tog"><input type="checkbox" data-ui="anon" ${ui.anon ? 'checked' : ''}> Anonymise</label></div>
-    <div class="pv-g"><span class="pv-switch sm" title="Size">${seg(ui.flowWhole && ui.flowZoom, 'flowZoom', '', 'fit', '⤢', 'Whole view on one screen')}${seg(false, 'flowZoom', '', 'out', '−', 'Zoom out')}<span class="seg zl" title="Current size">${z ? Math.round(z * 100) + '%' : 'Fit'}</span>${seg(false, 'flowZoom', '', 'in', '+', 'Zoom in')}${seg(z === 1, 'flowZoom', '', '100', '1:1', 'Full size')}</span>
-      ${P.layout === 'flow' ? `<span class="pv-switch sm" title="Steps per row"><span class="seg zl" title="Steps per row">▦</span>${[1, 2, 3, 4, 5].map((n) => seg(colsN === n, 'flowCols', '', n, n)).join('')}</span>` : ''}</div>
+      <label class="tog"><input type="checkbox" data-ui="execView" ${exec ? 'checked' : ''}> <b>Executive view</b></label></div>
+    <div class="pv-g"><span class="pv-switch sm" title="Size">${seg(ui.flowWhole && ui.flowZoom, 'flowZoom', '', 'fit', '⤢', 'Whole view on one screen')}${seg(false, 'flowZoom', '', 'out', '−', 'Zoom out')}<span class="seg zl" title="Current size">${z ? Math.round(z * 100) + '%' : 'Fit'}</span>${seg(false, 'flowZoom', '', 'in', '+', 'Zoom in')}${seg(z === 1, 'flowZoom', '', '100', '1:1', 'Full size')}</span></div>
     <div class="pv-g pv-r">${single ? '<button class="btn sm" data-action="reviewSetup" title="Walk this process live with someone and record what they confirm or correct">▶ Sense-check</button>' : '<button class="btn sm" disabled title="Select a single process to sense-check it">▶ Sense-check</button>'}
       <details class="pv-export pv-key"><summary class="btn sm" title="What the symbols mean">?</summary><div class="pv-exp-menu pv-key-pop">${flowLegend(!exec)}</div></details>
       <details class="pv-export"><summary class="btn sm">Export ▾</summary><div class="pv-exp-menu">
       <label class="fld"><span>For</span><select data-ui="flowAudience"><option value="client" ${ui.flowAudience === 'internal' ? '' : 'selected'}>Client-safe (issues and weaknesses only)</option><option value="internal" ${ui.flowAudience === 'internal' ? 'selected' : ''}>TGM internal (adds unverified points and sources)</option></select></label>
-      <button class="btn sm" data-action="pvExport" data-id="png">Image (PNG)</button><button class="btn sm" data-action="pvExport" data-id="svg">Vector (SVG)</button><button class="btn sm" data-action="pvExport" data-id="pdf">PDF page</button><button class="btn sm" data-action="pvExport" data-id="html">HTML page</button>
-      <button class="btn sm ghost" data-action="pvExport" data-id="all">Each selected process, one page each (PDF)</button>${single ? '<button class="btn sm ghost" data-action="exportFlow" data-id="sheet">Sense-check sheet (PDF)</button>' : ''}</div></details></div></div>
+      <label class="tog small"><input type="checkbox" data-ui="anon" ${ui.anon ? 'checked' : ''} ${ui.share ? 'disabled title="On while screen share is on"' : ''}> Anonymise (roles instead of names)</label>
+      <button class="btn sm" data-action="pvExport" data-id="png">Image (PNG)</button><button class="btn sm" data-action="pvExport" data-id="pdf">PDF page</button>
+      ${single ? '<button class="btn sm ghost" data-action="exportFlow" data-id="sheet">Sense-check sheet (PDF)</button>' : ''}
+      <details class="pv-more"><summary class="small">More</summary><button class="btn sm ghost" data-action="pvExport" data-id="svg">Vector (SVG)</button><button class="btn sm ghost" data-action="pvExport" data-id="html">HTML page</button><button class="btn sm ghost" data-action="pvExport" data-id="all">Each selected process, one page each (PDF)</button></details></div></details></div></div>
   </div>`;
   // flags for the visual (internal: includes unverified)
   const flags = []; seqChains.forEach((c) => c.chain.forEach((p) => flowFlags(p, st.people, st.tools, st.departments).forEach((f) => flags.push(f))));

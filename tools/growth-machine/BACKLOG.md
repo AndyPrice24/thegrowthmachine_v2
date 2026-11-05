@@ -3,9 +3,10 @@
 Ideas parked for later. Nothing here is being built until Andrew says so.
 
 ## Maybe later
-- **Screen-share mode** (parked 5 Nov 2026). One switch in the top bar that hides confidential content on every page while
-  sharing a screen with client staff: interview outliers and confidential notes, private 🔒 activities, sensitive findings
-  (e.g. commission), step pain points in the side panel, and the Leaks & opportunities detail. Flows stay usable for
-  sense-checks (as with executive view off). Shows a "Screen share" badge while on. Note: executive view only hides flow
-  warnings on the Processes page, so it is not a substitute.
-- **Simplify the Studio** (raised 5 Nov 2026). Fewer pages, with Leaks & opportunities as the home page.
+(Nothing parked right now.)
+
+## Done
+- **Simplify the Studio** (raised 5 Nov 2026, built 5 Nov 2026): 16 pages became 7, Leaks & opportunities is home.
+- **Screen-share mode** (parked 5 Nov 2026, built 5 Nov 2026 with the simplification): one switch in the top bar; names
+  become roles; 🔒 reminders, the work diary and confidential interview points are hidden. Still shown while on: step
+  pain points and the Leaks & opportunities detail, because they are the substance of a sense-check. Hide more if needed.

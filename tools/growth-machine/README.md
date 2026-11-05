@@ -2,17 +2,36 @@
 
 The Growth Machine's internal diagnostic tool, built for use across every client. You put a client's business into it (profile, finances, people and org, tools, processes, customers and markets, interviews) and it shows:
 
-- **Client register and client health** (Business & market): loads a client's own contract register (contracts, renewals due, out-of-contract, check-ins overdue, satisfaction, upsells, clients per CSM, watchlist) and their Client Success scoring (effort to serve × adoption). Personal contact details are never loaded.
+- **Client register and client health** (Evidence → Clients): loads a client's own contract register (contracts, renewals due, out-of-contract, check-ins overdue, satisfaction, upsells, clients per CSM, watchlist) and their Client Success scoring (effort to serve × adoption). Personal contact details are never loaded.
 - **Visuals of the current state.** Org chart, process flows, tool stack and overlap, finance trends, customer concentration.
-- **Business processes and flows.** Choose **Department view** (one primary department, then tick the processes it is involved in; other departments' steps are shown in full, the primary department highlighted) or **Process view** (tick processes, then the departments to show; unticked departments shrink to grey markers). Processes have no fixed stages: each has an optional group label (e.g. Client lifecycle, Product, Finance) and can **trigger** other processes; linked processes are drawn as one chain with "triggers" markers, unlinked ones side by side. Then pick **Flow** (snaking, colour-coded by department) or **Swimlane** (one row per department, hand-offs crossing rows, a tools strip showing shared tools), **Executive view** and **Anonymise**; size and steps-per-row controls and **Export** sit above the visual. The right-hand panel shows key takeaways, or the clicked step in context (comes from / goes to, hand-offs, warnings, edit, flags). Summaries underneath: at a glance, tools and systems, still to measure, linked findings, and process details (edit name, group, trigger links, summary, talking points). Operations can be split into departments such as Ops: Onboarding and Ops: Tech & maintenance.
-- **Top break points.** In Executive view, steps are scored (issues by severity: high ×4, medium ×2, low ×1; weak hand-offs ×1.5; time hotspots ×1). Only the top 3, 5 or 10 (your choice) get the strong red highlight and a numbered "#1 BREAK POINT" label; other steps with problems are just outlined. Ties show as "#1=". Set an issue's severity in ✎ Edit step.
+- **Business processes and flows.** Choose **Department view** (one primary department, then tick the processes it is involved in; other departments' steps are shown in full, the primary department highlighted) or **Process view** (tick processes, then the departments to show; unticked departments shrink to grey markers). Processes have no fixed stages: each has an optional group label (e.g. Client lifecycle, Product, Finance) and can **trigger** other processes; linked processes are drawn as one chain with "triggers" markers, unlinked ones side by side. Then pick **Flow** (snaking, colour-coded by department) or **Swimlane** (one row per department, hand-offs crossing rows, a tools strip showing shared tools), **Executive view**; size controls and **Export** (with Anonymise, and SVG/HTML under More) sit above the visual. Steps per row are set automatically. The right-hand panel shows key takeaways, or the clicked step in context (comes from / goes to, hand-offs, warnings, edit, flags). Summaries underneath: at a glance, tools and systems, still to measure, linked findings, and process details (edit name, group, trigger links, summary, talking points). Operations can be split into departments such as Ops: Onboarding and Ops: Tech & maintenance.
+- **Top break points.** In Executive view, steps are scored (issues by severity: high ×4, medium ×2, low ×1; weak hand-offs ×1.5; time hotspots ×1). A step is marked as a break point only when it stands out (at least half the top score); a tie is never split, ties show as "#1=", and when every step scores the same none is singled out. Other steps with problems are just outlined. Issues can be resolved or put on hold. Set an issue's severity in ✎ Edit step.
 - **Executive view** (on/off, single process and journey views): on shows issues, weaknesses, decision points, management involvement and time hotspots (≥2 days waiting or ≥1 hour hands-on, marked ⏱); off shows only steps, people, systems and hand-offs.
-- **Find and replace** (Data & Claude): corrects a word everywhere in a client (e.g. a misspelt product name) across findings, recommendations, processes, interviews, questions and notes. It shows the count per area before changing anything and never touches IDs or the merge history.
+- **Find and replace** (Sources & data): corrects a word everywhere in a client (e.g. a misspelt product name) across findings, recommendations, processes, interviews, questions and notes. It shows the count per area before changing anything and never touches IDs or the merge history.
 - **Assume, then sense-check.** Build your assumed flow in the step panel (✎ Edit step: name, team, who, system, manual/automated, hands-on minutes, waiting days, who else gets involved, decision points with what happens if not; add, move or delete steps). Times you enter are marked ≈ (assumed). Then **▶ Sense-check** walks the flow live with a decision maker: for each step they say ✓ yes, ✎ mostly (you correct it on the spot), ? not sure, or ✕ doesn't happen; you can add missing steps, concerns they raise and notes, and tick off your own questions (hidden by default, for screen-sharing). Step numbers turn green when confirmed, amber when unsure, red when they don't happen; the process shows who checked it and becomes *Corroborated*. **Sense-check sheet (PDF)** prints the assumed flow plus a table per step (Is this right? ☐ Yes ☐ Partly ☐ No, corrections) for anyone you can't walk through it live.
-- **Crossover signals.** It crosses the data sets, e.g. payroll against revenue, people against processes (who carries what, single points of failure, overload), tools against pain points, interview themes against departments.
-- **Ranked recommendations.** Each one is scored on value, effort, risk and confidence.
-- **Scenarios.** A scenario is a set of recommendations applied to the current state. Every view can switch between "current" and any scenario, with changes flagged as New / Changed / Removed.
+- **Crossover signals** (shown on Home, marked "auto"). It crosses the data sets, e.g. payroll against revenue, people against processes (who carries what, single points of failure, overload), tools against pain points, interview themes against departments.
+- **Ranked recommendations** (Plan). Each one is scored on value, effort, risk and confidence, and says how it will stick (`stick`) and who owns it (`owner`).
+- **Scenarios** (Plan). A scenario is a set of recommendations applied to the current state. Plan, Processes and Evidence can switch between "current" and any scenario, with changes flagged as New / Changed / Removed.
 - **A founder report.** Print it to PDF or download it as one self-contained HTML file. It holds no raw data and needs neither this tool nor Claude to open.
+
+## The seven pages
+Each page answers one question. Older page names still work as links and redirect.
+
+| Page | The question it answers | What's on it |
+|---|---|---|
+| **Leaks & opportunities** (home) | What's leaking, what's it worth, and what needs me today? | Money at stake (leaking, at risk, spend to review, upside), savings approved against the target, a **Needs your input** strip (overdue client items, items with no action, items not sized, to-dos past their date), then the ranked list (top 5, "Show all"). |
+| **Plan** | What do we suggest, how will it stick, and what will it save? | Savings against the target, recommendations by stage (Identified → Approved → In progress → Realised; top 5 per stage), each with "How it sticks" and owner; scenarios as bundles of recommendations. |
+| **Processes** | Where does work break? | Department view and Process view (unchanged). |
+| **Evidence** | What proves it? | Tabs: Money (finance), Clients (segments, concentration, revenue leaks, register, health), People (org, department scorecard, who carries which process), Tools, Market (competitors, opportunities, business profile). |
+| **Conversations** | Who do we ask what next? | **By person**: prepared questions in run order (★ first), what they've answered, and the data requests they owe; Start interview. Plus Interviews and Discovery. |
+| **Progress & reports** | Are we on track, and who owes whom? | Progress & time; Reports (status report, founder report, feedback cheatsheet). |
+| **Sources & data** | Where did every number come from? | Source register, back up / restore / merge, paste from Claude, find and replace, edit data. |
+
+**View as** (current state or a scenario) appears only on Plan, Processes and Evidence. Empty sections fold away (no delays
+logged, no staff survey responses).
+
+**Screen share** (top bar): names show as roles, and TGM-only material is hidden: 🔒 reminders, the work diary and
+confidential interview points. Switching it off restores your Anonymise setting.
 
 ## Running an engagement (Progress & time, Discovery)
 
@@ -55,9 +74,9 @@ It loads with two clients:
 
 The tool is deliberately **Claude-friendly but not Claude-dependent**:
 
-1. **Data & Claude → Copy Claude prompt.** Paste it into Claude, then paste your raw material underneath: interview notes or transcripts, an org list, a P&L export, a process description.
+1. **Sources & data → Copy Claude prompt.** Paste it into Claude, then paste your raw material underneath: interview notes or transcripts, an org list, a P&L export, a process description.
 2. Claude returns JSON in the Studio's format.
-3. **Data & Claude → Paste from Claude → Merge.** New records are added, and records with the same `id` are updated. Nothing is deleted.
+3. **Sources & data → Paste from Claude → Merge.** New records are added, and records with the same `id` are updated. Nothing is deleted.
 4. To get Claude's analysis, use **Copy client JSON for Claude**, paste it into a conversation and ask, e.g., "draft recommendations with ops for the onboarding process".
 
 Tip: keep one Claude Project per client, holding the interview transcripts and the latest exported JSON.
@@ -145,9 +164,9 @@ One ranked list of everything found, sorted into five lenses: leaks, weaknesses,
   counted twice in the totals.
 - "Biggest first" ranks by money at stake: leaking counts in full, at risk and upside at half, spend to review at a fifth.
 - An item counts as actioned when it has a fix (a recommendation) or a next step (a question for a named role or a data request).
-- "Gaps in the diagnosis" lists items with no fix, items with no size, and open data requests. The Overview page shows the top 5.
+- The "Needs your input" strip counts items with no action and items not sized; click a count to filter the list.
 
-### Revenue leaks (Business & market)
+### Revenue leaks (Evidence → Clients)
 Digests a client's own churn and new-business sheets into `revenueMovements` (lost, downgrade, new, growth; cause; rand per month).
 The card shows the takeaways first (findings with `lens: 'Revenue leaks'`), then the leak and win per year, where revenue leaks by
 cause, the biggest single leaks and, if `client.locationTrend` is set, a location trend. Figures are estimates until they are

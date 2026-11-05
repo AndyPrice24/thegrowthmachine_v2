@@ -2,7 +2,7 @@
    App shell — storage, routing, actions, data editor, Claude bridge
    ============================================================ */
 const STORE_KEY = 'tgm.studio.v1';
-const ui = { tab: 'overview', scenario: 'current', processId: '', stepId: '', editStep: '', pv: null, execView: true, review: null, reviewSetup: '', procView: 'flow', flowCols: 0, flowZoom: 0, flowWhole: false, anon: false, ghosts: true, showCost: true, compare: true, zoom: 1, area: 'All', recType: 'All', coll: 'people', theme: '', reportType: 'status', capture: false, draft: null, session: false, sessionId: '', prioOnly: true };
+const ui = { tab: 'home', sub: {}, all: {}, share: false, scenario: 'current', processId: '', stepId: '', editStep: '', pv: null, execView: true, review: null, reviewSetup: '', procView: 'flow', flowCols: 0, flowZoom: 0, flowWhole: false, anon: false, ghosts: true, showCost: true, compare: true, zoom: 1, area: 'All', recType: 'All', coll: 'people', theme: '', reportType: 'status', capture: false, draft: null, session: false, sessionId: '', prioOnly: true };
 let db = { activeId: '', engagements: {} };
 
 /* ---------- storage (localStorage, wrapped; the JSON file export is the real backup) ---------- */
@@ -16,7 +16,7 @@ function loadDB() {
   if (db.engagements.eng_demo && (!db.engagements.eng_demo.engagement.phases.length || !db.engagements.eng_demo.competitors.length)) db.engagements.eng_demo = demoEngagement(); // refresh old demo with tracking sample
   if (!db.engagements[db.activeId]) db.activeId = Object.keys(db.engagements)[0];
   try { Object.assign(ui, JSON.parse(localStorage.getItem(STORE_KEY + '.ui') || '{}'), { scenario: 'current' }); } catch (err) { /* ignore */ }
-  landProcesses();
+  ui.flowCols = 0; ui.all = {}; landProcesses();
 }
 let saveTimer = null;
 function save() {
@@ -33,7 +33,7 @@ window.addEventListener('pagehide', flushSave);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
 /** The Processes page always opens on Department view; Process view starts with just the "Choose process" button. */
 function landProcesses() { ui.pv = Object.assign({}, ui.pv, { mode: 'dept', focus: '', pick: '', hl: '', journey: false }); ui.stepId = ''; ui.editStep = ''; }
-function saveUI() { try { localStorage.setItem(STORE_KEY + '.ui', JSON.stringify({ tab: ui.tab, pv: ui.pv, execView: ui.execView, bpTop: ui.bpTop, lo: ui.lo && { lens: ui.lo.lens, sort: ui.lo.sort, signals: ui.lo.signals, noFix: ui.lo.noFix }, anon: ui.anon, showCost: ui.showCost, ghosts: ui.ghosts, compare: ui.compare, coll: ui.coll, theme: ui.theme })); } catch (err) { /* ignore */ } }
+function saveUI() { try { localStorage.setItem(STORE_KEY + '.ui', JSON.stringify({ tab: ui.tab, sub: ui.sub, share: ui.share, anonBefore: ui.anonBefore, talkP: ui.talkP, pv: ui.pv, execView: ui.execView, bpTop: ui.bpTop, lo: ui.lo && { lens: ui.lo.lens, sort: ui.lo.sort, signals: ui.lo.signals, noFix: ui.lo.noFix, unsized: ui.lo.unsized }, anon: ui.anon, showCost: ui.showCost, ghosts: ui.ghosts, compare: ui.compare, coll: ui.coll, theme: ui.theme })); } catch (err) { /* ignore */ } }
 const E = () => db.engagements[db.activeId];
 function procOfStep(id) { return E().processes.find((p) => (p.steps || []).some((x) => x.id === id)); }
 function reviewCtx() {
@@ -101,15 +101,16 @@ function setPath(obj, path, val) { const ks = path.split('.'); const last = ks.p
 
 /* ---------- render ---------- */
 function renderHeader() {
+  normaliseTab();
   const e = E();
   const engOpts = Object.values(db.engagements).map((x) => `<option value="${x.id}" ${x.id === db.activeId ? 'selected' : ''}>${esc(x.client.name)}</option>`).join('');
   const scOpts = [['current', 'Current state'], ...e.scenarios.map((s) => [s.id, s.name]), ['all', 'All recommendations']].map(([id, n]) => `<option value="${id}" ${ui.scenario === id ? 'selected' : ''}>${esc(n)}</option>`).join('');
   document.getElementById('topbar').innerHTML = `
     <div class="brand"><span class="cog" aria-hidden="true">✹</span><span>THE <strong>GROWTH</strong> MACHINE</span><em>Studio</em></div>
     <label class="hsel"><span>Client</span><select id="engSel">${engOpts}</select></label>
-    <label class="hsel"><span>View as</span><select id="scSel">${scOpts}</select></label>
+    ${SCENARIO_TABS.includes(ui.tab) || ui.scenario !== 'current' ? `<label class="hsel"><span>View as</span><select id="scSel">${scOpts}</select></label>` : ''}
     ${flagBadge(e)}
-    <div class="hbtns"><button class="btn sm" data-action="newEng">+ New client</button><button class="btn sm" data-action="exportJSON" title="Download everything saved for ${esc(e.client.name)}: data, interviews, findings, progress, diary and merge history">Back up</button><button class="btn sm ghost" data-action="theme" title="Toggle light/dark">◐</button></div>`;
+    <div class="hbtns"><button class="btn sm ${ui.share ? 'on share-on' : 'ghost'}" data-action="share" title="Screen-share mode: names become roles, and TGM-only notes (🔒 reminders, the work diary, confidential interview points) are hidden">${ui.share ? '● Screen share on' : 'Screen share'}</button><button class="btn sm" data-action="newEng">+ New client</button><button class="btn sm" data-action="exportJSON" title="Download everything saved for ${esc(e.client.name)}: data, interviews, findings, progress, diary and merge history">Back up</button><button class="btn sm ghost" data-action="theme" title="Toggle light/dark">◐</button></div>`;
   const st = e.engagement.phases.length ? engagementStatus(e) : null;
   const badge = (id) => id === 'progress' && st && (st.openDelays.length || st.overdue.length) ? `<span class="nav-badge" title="Open delays / overdue client items">⚑ ${st.openDelays.length + st.overdue.length}</span>` : '';
   document.getElementById('nav').innerHTML = TABS.map(([id, n]) => `<button class="nav-btn ${ui.tab === id ? 'on' : ''}" data-action="tab" data-id="${id}">${n}${badge(id)}</button>`).join('')
@@ -126,17 +127,19 @@ function render() {
   const keep = [...document.querySelectorAll('#main .flow-wrap')].map((w) => [w.scrollLeft, w.scrollTop]);
   const e = E();
   renderHeader();
-  const views = { competitors: viewCompetitors, progress: viewProgress, discovery: viewDiscovery, overview: viewOverview, leaks: viewLeaks, business: viewBusiness, finance: viewFinance, org: viewOrg, tools: viewTools, processes: viewProcesses, interviews: viewInterviews, crossover: viewCrossover, recs: viewRecs, scenarios: viewScenarios, report: viewReport, data: viewData };
+  normaliseTab();
+  const views = { home: viewLeaks, plan: viewPlan, processes: viewProcesses, evidence: viewEvidence, talk: viewTalk, progress: viewProgressReports, data: viewData };
   let html;
-  try { html = (views[ui.tab] || viewOverview)(e); }
-  catch (err) { console.error(err); html = `<div class="banner err">Something in this client's data could not be displayed: ${esc(err.message)}. Check the Data tab.</div>`; }
+  try { html = (views[ui.tab] || viewLeaks)(e); }
+  catch (err) { console.error(err); html = `<div class="banner err">Something in this client's data could not be displayed: ${esc(err.message)}. Check Sources &amp; data.</div>`; }
   document.getElementById('main').innerHTML = html;
+  document.body.classList.toggle('share', !!ui.share);
   document.querySelectorAll('#main .flow-wrap').forEach((w, i) => { if (keep[i]) { w.scrollLeft = keep[i][0]; w.scrollTop = keep[i][1]; } });
   document.documentElement.dataset.theme = ui.theme || '';
   if (!ui.theme) delete document.documentElement.dataset.theme;
 }
 
-/* ---------- Data & Claude view (lives here because it is tied to the editor) ---------- */
+/* ---------- Sources & data view (lives here because it is tied to the editor) ---------- */
 const FIELD_DEFS = {
   departments: [['id', 'text'], ['name', 'text'], ['type', DEPT_TYPES.map((d) => d[0])], ['headId', 'person'], ['notes', 'text']],
   people: [['id', 'text'], ['name', 'text'], ['title', 'text'], ['departmentId', 'dept'], ['managerId', 'person'], ['employmentType', ['Full-time', 'Part-time', 'Contractor', 'Outsourced', 'Vacant']], ['fte', 'num'], ['annualCost', 'num'], ['location', 'text'], ['startDate', 'date'], ['notes', 'text']],
@@ -157,7 +160,7 @@ const FIELD_DEFS = {
   usps: [['id', 'text'], ['claim', 'text'], ['strength', ['Unique', 'Shared', 'Claimed only']], ['proof', 'long'], ['competitorsWithIt', 'text'], ['notes', 'text']],
   opportunities: [['id', 'text'], ['title', 'text'], ['area', OPP_AREAS], ['description', 'long'], ['basedOn', 'text'], ['impact', ['High', 'Medium', 'Low']], ['effort', ['High', 'Medium', 'Low']], ['status', ['Idea', 'Proposed', 'Recommendation']], ['valueMonthly', 'num'], ['recommendationId', 'text'], ['nextStep', 'text']],
   capabilities: [['id', 'text'], ['name', 'text'], ['importance', ['High', 'Medium', 'Low']], ['client', ['Strong', 'Partial', 'None']], ['notes', 'text'], ['scores', 'json']],
-  recommendations: [['id', 'text'], ['title', 'text'], ['type', ['People', 'Process', 'Tool', 'Build', 'Structure', 'Commercial']], ['horizon', ['0-3 months', '3-6 months', '6-12 months', '12+ months']], ['description', 'long'], ['effort', 'num'], ['risk', 'num'], ['confidence', 'num'], ['oneOffCost', 'num'], ['otherAnnualSaving', 'num'], ['oneOffSaving', 'num'], ['revenueUplift', 'num'], ['status', REC_STAGES], ['ops', 'json']],
+  recommendations: [['id', 'text'], ['title', 'text'], ['type', ['People', 'Process', 'Tool', 'Build', 'Structure', 'Commercial']], ['horizon', ['0-3 months', '3-6 months', '6-12 months', '12+ months']], ['description', 'long'], ['effort', 'num'], ['risk', 'num'], ['confidence', 'num'], ['oneOffCost', 'num'], ['otherAnnualSaving', 'num'], ['oneOffSaving', 'num'], ['revenueUplift', 'num'], ['status', REC_STAGES], ['stick', 'long'], ['owner', 'text'], ['ops', 'json']],
   scenarios: [['id', 'text'], ['name', 'text'], ['description', 'text'], ['recommendationIds', 'json']]
 };
 const COLL_LABELS = { customQuestions: 'Custom interview questions', competitors: 'Competitors', capabilities: 'Capabilities', intel: 'Competitor intelligence', usps: 'USPs', opportunities: 'Opportunities', intake: 'Founder answers', departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Clients', revenueMovements: 'Revenue movements', feedback: 'Client feedback (written vs practice)', sources: 'Sources (where every number comes from)', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };
@@ -178,7 +181,7 @@ function viewData(e) {
   const grid = `<table class="tbl grid-edit"><thead><tr>${defs.map(([f]) => `<th>${f}</th>`).join('')}<th></th></tr></thead><tbody>
     ${e[coll].map((row) => `<tr>${defs.map((d) => `<td>${cellInput(e, coll, row, d)}</td>`).join('')}<td><button class="btn sm ghost" data-action="delRow" data-coll="${coll}" data-id="${esc(row.id)}" title="Delete row">✕</button></td></tr>`).join('')}
     </tbody></table>`;
-  return `<div class="page-h"><div><span class="eyebrow">Data & Claude</span><h1>Get information in and out</h1><p class="muted">This browser saves your work automatically, but browser storage is not a backup. <strong>Back up after every session</strong> and keep the files somewhere private, such as your own Google Drive. Never put them in the website repo.</p></div></div>
+  return `<div class="page-h"><div><span class="eyebrow">Sources &amp; data</span><h1>Get information in and out</h1><p class="muted">This browser saves your work automatically, but browser storage is not a backup. <strong>Back up after every session</strong> and keep the files somewhere private, such as your own Google Drive. Never put them in the website repo.</p></div></div>
   <div class="grid-2">
     ${card('Back up / restore', `<div class="btn-row">
         <button class="btn" data-action="exportJSON">Back up ${esc(e.client.name)} (everything)</button>
@@ -191,6 +194,7 @@ function viewData(e) {
       <div class="btn-row"><button class="btn" data-action="mergePaste">Merge into ${esc(e.client.name)}</button><button class="btn ghost" data-action="copyPrompt">Copy Claude prompt</button><button class="btn ghost" data-action="copyContext">Copy client JSON for Claude</button></div>
       <p class="faint small">Merge adds new records and updates records with the same id. Nothing is deleted.</p>`)}
   </div>
+  ${sourcesCard(e)}
   ${card('Find and replace text', `<div class="fr-row"><label class="fld"><span>Find</span><input id="frFind" placeholder="e.g. a misspelt name"></label><label class="fld"><span>Replace with</span><input id="frRepl"></label>
       <label class="tog small"><input type="checkbox" id="frCase"> Match case</label><button class="btn" data-action="findReplace">Find and replace…</button></div>
       <p class="faint small">Searches every text in ${esc(e.client.name)}: findings, recommendations, processes and steps, interviews, questions, notes. It shows how many it found and where before changing anything. IDs and the merge history are never changed.</p>`)}
@@ -258,7 +262,12 @@ function toast(t) { const el = document.getElementById('toast'); el.textContent 
 function stripMarks(o) { return JSON.parse(JSON.stringify(o, (k, v) => (k.startsWith('_') ? undefined : v))); }
 
 const actions = {
-  tab: (el) => { if (el.dataset.id === 'processes' && ui.tab !== 'processes') landProcesses(); ui.tab = el.dataset.id; saveUI(); render(); window.scrollTo(0, 0); },
+  tab: (el) => { if (el.dataset.id === 'processes' && ui.tab !== 'processes') landProcesses(); ui.tab = el.dataset.id; ui.capture = false; ui.session = false; if (el.dataset.sub) { normaliseTab(); ui.sub[ui.tab] = el.dataset.sub; } saveUI(); render(); window.scrollTo(0, 0); },
+  sub: (el) => { ui.sub = Object.assign({}, ui.sub, { [el.dataset.tab]: el.dataset.id }); ui.capture = false; ui.session = false; saveUI(); render(); },
+  showAll: (el) => { ui.all = Object.assign({}, ui.all, { [el.dataset.id]: !(ui.all || {})[el.dataset.id] }); render(); },
+  loNeed: (el) => { const k = el.dataset.k; const L = ui.lo || {}; ui.lo = Object.assign({}, L, k === 'clear' ? { noFix: false, unsized: false } : { noFix: k === 'noFix' ? !L.noFix : false, unsized: k === 'unsized' ? !L.unsized : false }, { open: '' }); ui.all = Object.assign({}, ui.all, { home: !!(ui.lo.noFix || ui.lo.unsized) }); saveUI(); render(); },
+  talkP: (el) => { ui.talkP = el.dataset.id; render(); },
+  share: () => { if (!ui.share) { ui.anonBefore = !!ui.anon; ui.anon = true; ui.share = true; } else { ui.share = false; ui.anon = !!ui.anonBefore; } saveUI(); render(); toast(ui.share ? 'Screen share on: names show as roles; TGM-only notes are hidden' : 'Screen share off'); },
   pvPick: (el) => { ui.pv = Object.assign({}, ui.pv, { mode: 'proc', focus: '', pick: el.dataset.id || '' }); ui.stepId = ''; saveUI(); render(); },
   pvBack: (el) => { ui.pv = Object.assign({}, ui.pv, { mode: 'proc', focus: '', hl: '', journey: false, pick: el.dataset.id || 'open' }); ui.stepId = ''; ui.editStep = ''; saveUI(); render(); window.scrollTo(0, 0); },
   setScenario: (el) => { ui.scenario = el.dataset.id; render(); },
@@ -611,7 +620,7 @@ const actions = {
     el.checked ? ids.add(el.dataset.rec) : ids.delete(el.dataset.rec); s.recommendationIds = [...ids]; touch(s); save(); render();
   },
   toggleReportProc: (el) => { const r = E().report; const ids = new Set(r.processIds || []); el.checked ? ids.add(el.dataset.id) : ids.delete(el.dataset.id); r.processIds = [...ids]; save(); render(); },
-  printReport: () => { if (ui.tab !== 'report') { ui.tab = 'report'; render(); } setTimeout(() => window.print(), 50); },
+  printReport: () => { if (!(ui.tab === 'progress' && subOf('progress') === 'report')) { ui.tab = 'report'; render(); } setTimeout(() => window.print(), 50); },
   downloadReport: () => downloadReportHTML(E(), ui.reportType)
 };
 
@@ -724,7 +733,7 @@ document.addEventListener('change', (ev) => {
     if (coll === 'engagement.activities' && field === 'status') row.doneDate = v === 'Done' ? (row.doneDate || todayISO()) : '';
     if (coll === 'engagement.phases' && field === 'status' && v === 'Done') { const ps = E().engagement.phases; const i = ps.indexOf(row); if (ps[i + 1] && ps[i + 1].status === 'Not started') ps[i + 1].status = 'In progress'; }
     save();
-    if ((coll === 'recommendations' && ui.tab === 'recs') || ui.tab === 'leaks' || (ui.tab === 'progress' && (t.tagName === 'SELECT' || t.type === 'date' || t.type === 'number'))) render();
+    if ((coll === 'recommendations' && ui.tab === 'plan') || ui.tab === 'home' || (ui.tab === 'progress' && (t.tagName === 'SELECT' || t.type === 'date' || t.type === 'number'))) render();
   }
 });
 document.addEventListener('input', (ev) => {

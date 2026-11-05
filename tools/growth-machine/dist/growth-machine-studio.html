@@ -644,6 +644,35 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 .fr-row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}.fr-row .fld{margin:0;min-width:220px}
 #main .flow-side h4{text-transform:none;letter-spacing:0;font-size:15px;color:var(--ink);line-height:1.3}
 .btn.sm[disabled]{opacity:.45;cursor:not-allowed}
+
+/* ---------- seven-page shell ---------- */
+.subnav{display:flex;gap:4px;flex-wrap:wrap;margin:0 0 14px;padding:4px;background:var(--surface);border:1px solid var(--line);border-radius:10px;width:max-content;max-width:100%}
+.sub-btn{background:none;border:0;padding:6px 14px;border-radius:7px;cursor:pointer;color:var(--muted);font:inherit}
+.sub-btn:hover{background:var(--surface-2);color:var(--ink)}
+.sub-btn.on{background:var(--red-soft);color:var(--red);font-weight:650}
+.needs{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:4px 0 16px;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--red);border-radius:10px}
+.needs-h{font-weight:650;margin-right:4px}
+.need{border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:4px 12px;cursor:pointer;font:inherit;font-size:13px;color:var(--ink)}
+.need:hover,.need.on{border-color:var(--red);color:var(--red)}
+.need b{font-weight:700}
+.show-all{text-align:center;margin:10px 0 2px}
+.slim-line{margin:4px 0 14px}
+.plan-stick{margin-top:4px}
+.talk{display:grid;grid-template-columns:260px 1fr;gap:14px;align-items:start}
+.talk-list{display:flex;flex-direction:column;gap:2px;padding:8px;position:sticky;top:70px;max-height:calc(100vh - 90px);overflow:auto}
+.talk-p{display:flex;flex-direction:column;align-items:flex-start;text-align:left;background:none;border:0;border-radius:8px;padding:8px 10px;cursor:pointer;font:inherit;color:var(--ink)}
+.talk-p:hover{background:var(--surface-2)}
+.talk-p.on{background:var(--red-soft)}
+.talk-reqs{background:var(--surface-2);border-radius:8px;padding:8px 12px;margin:6px 0 10px}
+.talk-reqs ul{margin:4px 0 0;padding-left:18px}
+.talk-qs h5{margin:16px 0 6px}
+.tq{padding:8px 0;border-bottom:1px solid var(--line)}
+.tq-done{opacity:.75}
+.tq-a{margin-top:4px;padding:6px 10px;border-left:3px solid var(--s3, #2a9d8f);background:var(--surface-2);border-radius:4px}
+.share-on{background:var(--red)!important;color:#fff!important;border-color:var(--red)!important}
+.pv-more{margin-top:6px}.pv-more summary{cursor:pointer}.pv-more .btn{margin:4px 4px 0 0}
+details.card>summary{cursor:pointer}
+@media (max-width:820px){.talk{grid-template-columns:1fr}.talk-list{position:static;max-height:none}}
 </style>
 </head>
 <body>
@@ -656,7 +685,7 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="tip" hidden></div>
 <script>
-const STUDIO_BUILD = '2026-11-05 16:45 UTC';
+const STUDIO_BUILD = '2026-11-05 17:26 UTC';
 /* ---- model.js ---- */
 /* ============================================================
    The Growth Machine — data model, scenario engine, scoring, insights
@@ -2415,7 +2444,7 @@ function processPage(e) {
   const sw0 = `<div class="pv-switch"><button class="seg ${P.mode === 'dept' ? 'on' : ''}" data-action="pvSet" data-k="mode" data-id="dept">Department view</button><button class="seg ${P.mode === 'proc' ? 'on' : ''}" data-action="pvSet" data-k="mode" data-id="proc">Process view</button></div>`;
   if (P.mode === 'proc' && !P.focus) return `${scenarioBanner(e)}${head}${pvIndex(e, st, P, sw0)}`;
   if (P.mode === 'proc' && !P.focusMapped) return `${scenarioBanner(e)}${head}${pvFocusHead(e, st, P, sw0, [])}${pvUnmapped(e, P)}`;
-  if (!P.procs.length) return head + empty('No processes mapped yet. Click + New process, or merge process maps from Claude in Data & Claude.');
+  if (!P.procs.length) return head + empty('No processes mapped yet. Click + New process, or merge process maps from Claude in Sources & data.');
   const exec = ui.execView !== false;
   const pById = byId(st.people), dById = byId(st.departments);
   const seqChains = pvSeq(st, P); const all = seqChains.flatMap((c) => c.items);
@@ -2438,23 +2467,23 @@ function processPage(e) {
        <div class="pv-sec"><h5>2 · Departments involved</h5><div class="jrow">${P.availDepts.filter((t) => t !== 'client' && t !== 'system').map((t) => deptChip(t, 'dept', P.shownDepts.includes(t))).join('')}<span class="faint small">Unticked departments shrink to grey markers.</span></div></div>`;
   const mainW = (document.getElementById('main') || {}).clientWidth || 1100;
   const visW = mainW > 1100 ? mainW - 390 : mainW;
-  const colsN = ui.flowCols || ui.flowColsAuto || (visW < 560 ? 1 : visW < 900 ? 2 : 3);
+  const colsN = ui.flowColsAuto || (visW < 560 ? 1 : visW < 900 ? 2 : 3);
   const laneW = 210 + all.length * 172 + (seqChains.length - 1) * 60 + 24;
   const laneZoom = ui.flowZoom || Math.min(1, Math.max((visW - 30) / laneW, 0.8));
   const z = P.layout === 'lanes' ? laneZoom : ui.flowZoom;
   const seg = (on, act, k, id, label, title = '') => `<button class="seg ${on ? 'on' : ''}" data-action="${act}" ${k ? `data-k="${k}"` : ''} data-id="${id}" ${title ? `title="${title}"` : ''}>${label}</button>`;
   const bar = `<div class="pv-bar">
     <div class="pv-g"><span class="pv-switch sm">${seg(P.layout === 'flow', 'pvSet', 'layout', 'flow', 'Flow')}${seg(P.layout === 'lanes', 'pvSet', 'layout', 'lanes', 'Swimlane')}</span>
-      <label class="tog"><input type="checkbox" data-ui="execView" ${exec ? 'checked' : ''}> <b>Executive view</b></label>
-      <label class="tog"><input type="checkbox" data-ui="anon" ${ui.anon ? 'checked' : ''}> Anonymise</label></div>
-    <div class="pv-g"><span class="pv-switch sm" title="Size">${seg(ui.flowWhole && ui.flowZoom, 'flowZoom', '', 'fit', '⤢', 'Whole view on one screen')}${seg(false, 'flowZoom', '', 'out', '−', 'Zoom out')}<span class="seg zl" title="Current size">${z ? Math.round(z * 100) + '%' : 'Fit'}</span>${seg(false, 'flowZoom', '', 'in', '+', 'Zoom in')}${seg(z === 1, 'flowZoom', '', '100', '1:1', 'Full size')}</span>
-      ${P.layout === 'flow' ? `<span class="pv-switch sm" title="Steps per row"><span class="seg zl" title="Steps per row">▦</span>${[1, 2, 3, 4, 5].map((n) => seg(colsN === n, 'flowCols', '', n, n)).join('')}</span>` : ''}</div>
+      <label class="tog"><input type="checkbox" data-ui="execView" ${exec ? 'checked' : ''}> <b>Executive view</b></label></div>
+    <div class="pv-g"><span class="pv-switch sm" title="Size">${seg(ui.flowWhole && ui.flowZoom, 'flowZoom', '', 'fit', '⤢', 'Whole view on one screen')}${seg(false, 'flowZoom', '', 'out', '−', 'Zoom out')}<span class="seg zl" title="Current size">${z ? Math.round(z * 100) + '%' : 'Fit'}</span>${seg(false, 'flowZoom', '', 'in', '+', 'Zoom in')}${seg(z === 1, 'flowZoom', '', '100', '1:1', 'Full size')}</span></div>
     <div class="pv-g pv-r">${single ? '<button class="btn sm" data-action="reviewSetup" title="Walk this process live with someone and record what they confirm or correct">▶ Sense-check</button>' : '<button class="btn sm" disabled title="Select a single process to sense-check it">▶ Sense-check</button>'}
       <details class="pv-export pv-key"><summary class="btn sm" title="What the symbols mean">?</summary><div class="pv-exp-menu pv-key-pop">${flowLegend(!exec)}</div></details>
       <details class="pv-export"><summary class="btn sm">Export ▾</summary><div class="pv-exp-menu">
       <label class="fld"><span>For</span><select data-ui="flowAudience"><option value="client" ${ui.flowAudience === 'internal' ? '' : 'selected'}>Client-safe (issues and weaknesses only)</option><option value="internal" ${ui.flowAudience === 'internal' ? 'selected' : ''}>TGM internal (adds unverified points and sources)</option></select></label>
-      <button class="btn sm" data-action="pvExport" data-id="png">Image (PNG)</button><button class="btn sm" data-action="pvExport" data-id="svg">Vector (SVG)</button><button class="btn sm" data-action="pvExport" data-id="pdf">PDF page</button><button class="btn sm" data-action="pvExport" data-id="html">HTML page</button>
-      <button class="btn sm ghost" data-action="pvExport" data-id="all">Each selected process, one page each (PDF)</button>${single ? '<button class="btn sm ghost" data-action="exportFlow" data-id="sheet">Sense-check sheet (PDF)</button>' : ''}</div></details></div></div>
+      <label class="tog small"><input type="checkbox" data-ui="anon" ${ui.anon ? 'checked' : ''} ${ui.share ? 'disabled title="On while screen share is on"' : ''}> Anonymise (roles instead of names)</label>
+      <button class="btn sm" data-action="pvExport" data-id="png">Image (PNG)</button><button class="btn sm" data-action="pvExport" data-id="pdf">PDF page</button>
+      ${single ? '<button class="btn sm ghost" data-action="exportFlow" data-id="sheet">Sense-check sheet (PDF)</button>' : ''}
+      <details class="pv-more"><summary class="small">More</summary><button class="btn sm ghost" data-action="pvExport" data-id="svg">Vector (SVG)</button><button class="btn sm ghost" data-action="pvExport" data-id="html">HTML page</button><button class="btn sm ghost" data-action="pvExport" data-id="all">Each selected process, one page each (PDF)</button></details></div></details></div></div>
   </div>`;
   // flags for the visual (internal: includes unverified)
   const flags = []; seqChains.forEach((c) => c.chain.forEach((p) => flowFlags(p, st.people, st.tools, st.departments).forEach((f) => flags.push(f))));
@@ -2908,9 +2937,8 @@ function locationBankShell() {
    Views — each returns an HTML string for the main panel
    ============================================================ */
 const TABS = [
-  ['overview', 'Overview'], ['leaks', 'Leaks & opportunities'], ['progress', 'Progress & time'], ['discovery', 'Discovery'], ['business', 'Business & market'], ['competitors', 'Competitors'], ['finance', 'Finance'], ['org', 'People & org'],
-  ['tools', 'Tools'], ['processes', 'Processes'], ['interviews', 'Interviews'], ['crossover', 'Crossover'],
-  ['recs', 'Recommendations'], ['scenarios', 'Scenarios'], ['report', 'Report'], ['data', 'Data & Claude']
+  ['home', 'Leaks & opportunities'], ['plan', 'Plan'], ['processes', 'Processes'], ['evidence', 'Evidence'],
+  ['talk', 'Conversations'], ['progress', 'Progress & reports'], ['data', 'Sources & data']
 ];
 
 const card = (title, body, { sub = '', cls = '', actions = '' } = {}) =>
@@ -2933,40 +2961,6 @@ function scenarioBanner(e) {
   return `<div class="banner">Showing the <strong>${esc(scenarioName(e, ui.scenario))}</strong> scenario. Changes are flagged: <span class="chip st-added">+ New</span> <span class="chip st-changed">~ Changed</span> <span class="chip st-removed">✕ Removed</span> <button class="link" data-action="setScenario" data-id="current">Back to current state</button></div>`;
 }
 
-/* ---------------- Overview ---------------- */
-function viewOverview(e) {
-  const imp = scenarioImpact(e, ui.scenario);
-  const { base, m } = imp; const isCur = ui.scenario === 'current';
-  const tiles = [
-    kpi('Headcount', `${m.headcount}`, isCur ? `<div class="k-delta">${base.fte.toFixed(1)} FTE</div>` : deltaHTML(base.headcount, m.headcount, (v) => v)),
-    kpi('Annual payroll', fmtMoney(m.payroll), isCur ? '' : deltaHTML(base.payroll, m.payroll, fmtMoney)),
-    kpi('Tool spend / yr', fmtMoney(m.toolSpend), isCur ? `<div class="k-delta">${m.toolCount} tools</div>` : deltaHTML(base.toolSpend, m.toolSpend, fmtMoney)),
-    kpi('Mapped process hours / mo', hrs(m.procHours), isCur ? `<div class="k-delta">${base.procHours ? pct(base.manualHours / base.procHours * 100) : '0%'} manual</div>` : deltaHTML(base.procHours, m.procHours, hrs)),
-    kpi('Run-rate revenue', fmtMoney(annualRevenue(e)), `<div class="k-delta">from finance periods</div>`)
-  ];
-  if (!isCur) tiles.push(
-    kpi('Cash saving / yr', fmtMoney(imp.cashSaving), `<div class="k-delta">+ ${fmtMoney(imp.revenueUplift)} revenue uplift</div>`),
-    kpi('One-off cost', fmtMoney(imp.oneOff), `<div class="k-delta">payback ${imp.paybackMonths == null ? 'n/a' : imp.paybackMonths.toFixed(1) + ' months'}</div>`));
-
-  const scen = e.scenarios.map((s) => ({ s, i: scenarioImpact(e, s.id) }));
-  const scenTable = scen.length ? `<table class="tbl"><thead><tr><th>Scenario</th><th class="r">Headcount Δ</th><th class="r">Cash saving/yr</th><th class="r">Revenue uplift</th><th class="r">Hours freed/mo</th><th class="r">One-off</th><th class="r">Payback</th><th></th></tr></thead><tbody>
-    ${scen.map(({ s, i }) => `<tr><td><strong>${esc(s.name)}</strong><div class="muted small">${esc(s.description || '')}</div></td><td class="r">${i.headcountDelta}</td><td class="r">${fmtMoney(i.cashSaving)}</td><td class="r">${fmtMoney(i.revenueUplift)}</td><td class="r">${hrs(i.hoursSaved)}</td><td class="r">${fmtMoney(i.oneOff)}</td><td class="r">${i.paybackMonths == null ? '—' : i.paybackMonths.toFixed(1) + ' mo'}</td><td><button class="btn sm" data-action="setScenario" data-id="${s.id}">View</button></td></tr>`).join('')}
-    </tbody></table>` : empty('No scenarios yet. Create them under Scenarios.');
-
-  const top = scoreRecommendations(e).slice(0, 5);
-  const ins = insights(e, fmtMoney, ui.anon).slice(0, 6);
-  return `${scenarioBanner(e)}
-  <div class="page-h"><div><span class="eyebrow">${esc(e.client.sector || 'Client')}${e.client.subSector ? ' · ' + esc(e.client.subSector) : ''}</span><h1>${esc(e.client.name)}</h1><p class="muted">${esc(e.client.goals || e.client.description || 'Start by completing the business profile, or paste structured data from Claude in Data & Claude.')}</p></div></div>
-  <div class="kpis">${tiles.join('')}</div>
-  ${leaksTopCard(e)}
-  ${card('Scenarios compared', scenTable, { cls: 'scroll-x', sub: 'Each scenario is the current state with a set of recommendations applied.' })}
-  <div class="grid-2">
-    ${card('Top recommendations', top.length ? `<ol class="rank">${top.map((r) => `<li><div><strong>${esc(r.rec.title)}</strong><div class="muted small">${esc(r.rec.type || '')} · ${esc(r.rec.horizon || '')} · ${fmtMoney(r.cash + r.revenue)}/yr cash + revenue · ${hrs(r.hoursSaved)}/mo freed</div></div><span class="score">${r.score}</span></li>`).join('')}</ol>` : empty('No recommendations yet.'), { actions: '<button class="btn sm" data-action="tab" data-id="recs">All →</button>' })}
-    ${card('Key crossover signals', ins.length ? `<ul class="insights">${ins.map((x) => `<li>${sevChip(x.severity)} <strong>${esc(x.title)}</strong><div class="muted small">${esc(x.area)}: ${esc(x.detail)}</div></li>`).join('')}</ul>` : empty('Signals appear as data comes in.'), { actions: '<button class="btn sm" data-action="tab" data-id="crossover">All →</button>' })}
-  </div>
-  ${card('Discovery coverage', hbars(completeness(e).map(([l, v]) => ({ label: l, value: v * 100 })), { fmt: pct, max: 100, color: 'var(--s1)' }), { sub: 'How complete each area is. Gaps here mean weaker analysis.' })}`;
-}
-
 /* ---------------- Business & market ---------------- */
 function field(path, label, value, { type = 'text', area = false, ph = '' } = {}) {
   return `<label class="fld"><span>${label}</span>${area
@@ -2977,8 +2971,25 @@ function viewBusiness(e) {
   const c = e.client; const rev = annualRevenue(e);
   const segs = e.segments.slice().sort((a, b) => num(b.annualRevenue) - num(a.annualRevenue));
   const tc = e.topClients.filter((x) => num(x.annualRevenue) > 0).sort((a, b) => num(b.annualRevenue) - num(a.annualRevenue));
-  return `<div class="page-h"><div><span class="eyebrow">Business & market</span><h1>Profile, customers, markets</h1></div></div>
-  ${card('Business profile', `<div class="form-grid">
+  return `<div class="page-h"><div><span class="eyebrow">Evidence · Clients</span><h1>Customers, segments and markets</h1></div></div>
+  <div class="grid-2">
+    ${card('Revenue by customer segment', hbars(segs.map((s) => ({ label: s.name, value: num(s.annualRevenue), tip: `${num(s.customers)} customers · ${num(s.churnPct)}% churn · ${fmtMoney(num(s.annualRevenue) / Math.max(1, num(s.customers)))} avg/customer` })), { fmt: fmtMoney }), { sub: 'Hover for customer count, churn and average value.' })}
+    ${card('Revenue share by market', hbars(e.markets.map((m) => ({ label: m.name, value: num(m.revenueShare) })), { fmt: pct, max: 100, color: 'var(--s2)' }))}
+  </div>
+  <div class="grid-2">
+    ${card('Segment economics', segs.length ? `<table class="tbl"><thead><tr><th>Segment</th><th class="r">Customers</th><th class="r">Revenue</th><th class="r">Avg / customer</th><th class="r">Churn</th><th>Acquisition</th></tr></thead><tbody>${segs.map((s) => `<tr><td>${esc(s.name)}</td><td class="r">${num(s.customers)}</td><td class="r">${fmtMoney(num(s.annualRevenue))}</td><td class="r">${fmtMoney(num(s.annualRevenue) / Math.max(1, num(s.customers)))}</td><td class="r">${num(s.churnPct)}%</td><td>${esc(s.acquisitionChannel || '')}</td></tr>`).join('')}</tbody></table>` : empty('Add segments in Sources & data.'))}
+    ${card('Customer concentration', tc.length ? hbars(tc.slice(0, 10).map((c) => ({ label: c.name, value: rev ? num(c.annualRevenue) / rev * 100 : 0, tip: fmtMoney(num(c.annualRevenue)) })), { fmt: (v) => v.toFixed(1) + '%', color: 'var(--s7)' }) : empty('Add top clients to see concentration risk.'), { sub: 'Share of run-rate revenue per client.' })}
+  </div>
+  ${revenueLeaksCard(e)}
+  ${clientRegisterCard(e)}
+  ${clientHealthCard(e)}`;
+}
+
+
+/** The business profile form (on Evidence → Market, folded away: it is edited rarely). */
+function profileCard(e) {
+  const c = e.client;
+  return `<details class="card"><summary><b>Business profile</b> <span class="faint small">what the business does, its model and goals (edit)</span></summary><div class="form-grid">
     ${field('client.name', 'Client name', c.name)}${field('client.sector', 'Sector', c.sector)}${field('client.subSector', 'Sub-sector', c.subSector)}
     ${field('client.hq', 'HQ', c.hq)}${field('client.website', 'Website', c.website)}${field('client.founded', 'Founded', c.founded)}
     ${field('client.stage', 'Stage', c.stage)}${field('meta.currency', 'Currency (ISO code)', e.meta.currency)}${field('meta.engagementStart', 'Engagement start', e.meta.engagementStart, { type: 'date' })}
@@ -2988,18 +2999,7 @@ function viewBusiness(e) {
     ${field('client.revenueModel', 'Revenue model', c.revenueModel, { area: true })}
     ${field('client.goals', 'Founder goals', c.goals, { area: true })}
     ${field('client.constraints', 'Constraints / sensitivities', c.constraints, { area: true })}
-  </div>`)}
-  <div class="grid-2">
-    ${card('Revenue by customer segment', hbars(segs.map((s) => ({ label: s.name, value: num(s.annualRevenue), tip: `${num(s.customers)} customers · ${num(s.churnPct)}% churn · ${fmtMoney(num(s.annualRevenue) / Math.max(1, num(s.customers)))} avg/customer` })), { fmt: fmtMoney }), { sub: 'Hover for customer count, churn and average value.' })}
-    ${card('Revenue share by market', hbars(e.markets.map((m) => ({ label: m.name, value: num(m.revenueShare) })), { fmt: pct, max: 100, color: 'var(--s2)' }))}
-  </div>
-  <div class="grid-2">
-    ${card('Segment economics', segs.length ? `<table class="tbl"><thead><tr><th>Segment</th><th class="r">Customers</th><th class="r">Revenue</th><th class="r">Avg / customer</th><th class="r">Churn</th><th>Acquisition</th></tr></thead><tbody>${segs.map((s) => `<tr><td>${esc(s.name)}</td><td class="r">${num(s.customers)}</td><td class="r">${fmtMoney(num(s.annualRevenue))}</td><td class="r">${fmtMoney(num(s.annualRevenue) / Math.max(1, num(s.customers)))}</td><td class="r">${num(s.churnPct)}%</td><td>${esc(s.acquisitionChannel || '')}</td></tr>`).join('')}</tbody></table>` : empty('Add segments in Data & Claude.'))}
-    ${card('Customer concentration', tc.length ? hbars(tc.slice(0, 10).map((c) => ({ label: c.name, value: rev ? num(c.annualRevenue) / rev * 100 : 0, tip: fmtMoney(num(c.annualRevenue)) })), { fmt: (v) => v.toFixed(1) + '%', color: 'var(--s7)' }) : empty('Add top clients to see concentration risk.'), { sub: 'Share of run-rate revenue per client.' })}
-  </div>
-  ${revenueLeaksCard(e)}
-  ${clientRegisterCard(e)}
-  ${clientHealthCard(e)}`;
+  </div></details>`;
 }
 
 /* ---------------- Finance ---------------- */
@@ -3026,7 +3026,7 @@ function viewFinance(e) {
   <div class="grid-2">
     ${card('Annual people + tool cost by department', hbars(sc.map((d) => ({ label: d.dept.name, value: d.payroll + d.toolSpend, swatch: deptColor(e.departments, d.dept.id), tip: `payroll ${fmtMoney(d.payroll)} · tools ${fmtMoney(d.toolSpend)} · ${d.headcount} people` })).sort((a, b) => b.value - a.value), { fmt: fmtMoney, color: 'var(--s1)' }), { sub: 'Payroll from People plus tool cost split across the departments using it. Follows the selected scenario.' })}
     ${card('Period P&L', fp.length ? `<table class="tbl"><thead><tr><th>Period</th><th class="r">Revenue</th>${costKeys.map(([, n]) => `<th class="r">${n}</th>`).join('')}<th class="r">Result</th><th class="r">Margin</th></tr></thead><tbody>
-      ${fp.map((p) => { const r = num(p.revenue) - totalCost(p); return `<tr><td>${esc(p.label)}</td><td class="r">${fmtShort(p.revenue)}</td>${costKeys.map(([k]) => `<td class="r">${fmtShort(p[k])}</td>`).join('')}<td class="r ${r < 0 ? 'delta-bad' : ''}">${fmtShort(r)}</td><td class="r">${pct(r / Math.max(1, num(p.revenue)) * 100)}</td></tr>`; }).join('')}</tbody></table>` : empty('Add finance periods in Data & Claude (quarters or months).'), { cls: 'scroll-x' })}
+      ${fp.map((p) => { const r = num(p.revenue) - totalCost(p); return `<tr><td>${esc(p.label)}</td><td class="r">${fmtShort(p.revenue)}</td>${costKeys.map(([k]) => `<td class="r">${fmtShort(p[k])}</td>`).join('')}<td class="r ${r < 0 ? 'delta-bad' : ''}">${fmtShort(r)}</td><td class="r">${pct(r / Math.max(1, num(p.revenue)) * 100)}</td></tr>`; }).join('')}</tbody></table>` : empty('Add finance periods in Sources & data (quarters or months).'), { cls: 'scroll-x' })}
   </div>`;
 }
 
@@ -3085,7 +3085,7 @@ function processes_hours_card(procs, st) {
 
 /* ---------------- Interviews ---------------- */
 function viewInterviews(e) {
-  const pById = byId(e.people); const themes = themeCounts(e);
+  const pById = byId(e.people); const themes = themeCounts(e); const outl = (iv) => (iv.outliers || []).filter((o) => !(ui.share && /confidential/i.test(o.text || '')));
   return `<div class="page-h"><div><span class="eyebrow">Interviews</span><h1>What people told us</h1><p class="muted">Tag themes consistently, e.g. "manual reporting". Themes raised by several people become crossover signals.</p></div><div class="btn-row"><button class="btn" data-action="startCapture">+ Capture an interview</button></div></div>
   ${card('Themes by number of interviews', hbars(themes.map((t) => ({ label: t.theme, value: t.count, tip: [...t.people].map((id) => pById[id] ? (ui.anon ? pById[id].title : pById[id].name) : '').join(', ') })), { fmt: (v) => v, color: 'var(--s7)' }))}
   <div class="iv-grid">${e.interviews.map((iv) => { const p = pById[iv.personId]; return `<article class="card iv">
@@ -3095,61 +3095,8 @@ function viewInterviews(e) {
     ${iv.ideas ? `<h5>Ideas</h5><p class="small">${esc(iv.ideas)}</p>` : ''}
     ${iv.quotes ? `<blockquote>${esc(iv.quotes)}</blockquote>` : ''}
     <div class="tags">${splitList(iv.themes).map((t) => `<span class="chip">${esc(t)}</span>`).join('')}</div>
-    ${Object.keys(iv.answers || {}).length || (iv.outliers || []).length ? `<details class="small"><summary>${Object.keys(iv.answers || {}).length} structured answers · ${(iv.outliers || []).length} unexpected points</summary>${CRITERIA.map((c) => { const qs = Object.entries(iv.answers || {}).filter(([q]) => qMeta(e, q) && qMeta(e, q).crit === c.id); const os = (iv.outliers || []).filter((o) => o.crit === c.id); return qs.length || os.length ? `<h5>${esc(c.label)}</h5><dl>${qs.map(([q, a]) => `<dt>${esc(qMeta(e, q).q)}</dt><dd>${esc(a)}</dd>`).join('')}${os.map((o) => `<dt>Unexpected</dt><dd>${esc(o.text)}</dd>`).join('')}</dl>` : ''; }).join('')}</details>` : ''}
-    <div class="btn-row"><button class="btn sm" data-action="editInterview" data-id="${esc(iv.id)}">Open in capture form</button></div></article>`; }).join('') || empty('No interviews yet. Paste notes into Claude and ask for interview JSON (see Data & Claude).')}</div>`;
-}
-
-/* ---------------- Crossover ---------------- */
-function viewCrossover(e) {
-  const ins = insights(e, fmtMoney, ui.anon);
-  const areas = ['All', ...new Set(ins.map((i) => i.area))];
-  const shown = ui.area && ui.area !== 'All' ? ins.filter((i) => i.area === ui.area) : ins;
-  const st = stateFor(e, ui.scenario);
-  const sc = departmentScorecard(e, st);
-  const people = live(st.people).filter((p) => personLoad(st)[p.id]);
-  const procs = live(st.processes);
-  const matrix = people.map((p) => procs.map((pr) => sum(live(pr.steps).filter((s) => s.actorId === p.id && !s.automated), (s) => stepHours(s, pr))));
-  const maxPay = Math.max(1, ...sc.map((d) => d.payroll + d.toolSpend));
-  return `${scenarioBanner(e)}<div class="page-h"><div><span class="eyebrow">Crossover</span><h1>Where the data points meet</h1><p class="muted">Signals found by crossing finance, people, tools, processes, customers and interviews. They are prompts to investigate, not conclusions.</p></div></div>
-  <div class="toolbar">${areas.map((a) => `<button class="btn sm ${((ui.area || 'All') === a) ? 'on' : ''}" data-action="area" data-id="${esc(a)}">${esc(a)}</button>`).join('')}</div>
-  ${card(`Signals (${shown.length})`, shown.length ? `<ul class="insights">${shown.map((x) => `<li>${sevChip(x.severity)} <span class="chip">${esc(x.area)}</span> <strong>${esc(x.title)}</strong><div class="muted small">${esc(x.detail)}</div></li>`).join('')}</ul>` : empty('No signals yet.'))}
-  ${card('Department scorecard', sc.length ? `<table class="tbl"><thead><tr><th>Department</th><th class="r">People</th><th>People + tool cost / yr</th><th class="r">Processes</th><th class="r">Process hrs/mo</th><th class="r">Manual</th><th class="r">Pain points raised</th></tr></thead><tbody>
-    ${sc.map((d) => `<tr><td><i class="swatch" style="background:${deptColor(e.departments, d.dept.id)}"></i>${esc(d.dept.name)}</td><td class="r">${d.headcount}</td><td><div class="inline-bar"><span style="width:${(d.payroll + d.toolSpend) / maxPay * 100}%"></span></div>${fmtMoney(d.payroll + d.toolSpend)}</td><td class="r">${d.processes}</td><td class="r">${Math.round(d.hours)}</td><td class="r">${d.hours ? pct(d.manualPct) : '—'}</td><td class="r">${d.pain}</td></tr>`).join('')}</tbody></table>` : empty('Add departments.'), { cls: 'scroll-x', sub: 'Crosses people, tools, processes and interview pain points for each department.' })}
-  ${card('Who carries which process (hours / month)', heatmap(people.map((p) => ui.anon ? p.title : p.name), procs.map((p) => p.name), matrix, { fmt: (v) => Math.round(v) }), { cls: 'scroll-x', sub: 'Darker means more hours. Look for one person carrying a whole process, or senior people doing manual work.' })}`;
-}
-
-/* ---------------- Recommendations ---------------- */
-function viewRecs(e) {
-  const rows = scoreRecommendations(e);
-  const types = ['All', ...new Set(e.recommendations.map((r) => r.type).filter(Boolean))];
-  const shown = ui.recType && ui.recType !== 'All' ? rows.filter((r) => r.rec.type === ui.recType) : rows;
-  const statusOpts = REC_STAGES;
-  return `<div class="page-h"><div><span class="eyebrow">Recommendations</span><h1>Ranked changes</h1><p class="muted">Each recommendation is scored on its own against the current state. Score = 50% value, 20% low effort, 15% low risk, 15% confidence. Value = cash saving + revenue uplift + half the value of freed hours. Freed hours are capacity, not cash, unless headcount changes.</p></div>
-    <button class="btn" data-action="addRec">+ Add recommendation</button></div>
-  <div class="toolbar">${types.map((t) => `<button class="btn sm ${((ui.recType || 'All') === t) ? 'on' : ''}" data-action="recType" data-id="${esc(t)}">${esc(t)}</button>`).join('')}</div>
-  ${card('', shown.length ? `<table class="tbl recs"><thead><tr><th>#</th><th>Recommendation</th><th>Score</th><th class="r">Cash / yr</th><th class="r">Revenue / yr</th><th class="r">Hours freed / mo</th><th class="r">Headcount</th><th class="r">One-off</th><th class="r">Payback</th><th class="c">Effort</th><th class="c">Risk</th><th class="c">Conf.</th><th>Status</th></tr></thead><tbody>
-    ${shown.map((r, i) => `<tr class="${r.rec.status === 'Rejected' ? 'row-removed' : ''}"><td>${i + 1}</td><td><strong>${esc(r.rec.title)}</strong> <span class="chip">${esc(r.rec.type || '—')}</span> <span class="chip">${esc(r.rec.horizon || '—')}</span><div class="muted small">${esc(r.rec.description || '')}</div>${(r.rec.ops || []).length ? `<div class="faint small">${r.rec.ops.length} modelled change${r.rec.ops.length > 1 ? 's' : ''}: ${esc(r.rec.ops.map((o) => o.op).join(', '))}</div>` : '<div class="faint small">Not modelled yet. Add ops so it shows in the scenarios.</div>'}</td>
-    <td><div class="score-bar"><span style="width:${r.score}%"></span></div><span class="small">${r.score}</span></td>
-    <td class="r">${fmtMoney(r.cash)}</td><td class="r">${fmtMoney(r.revenue)}</td><td class="r">${Math.round(r.hoursSaved)}</td><td class="r">${r.headcountDelta || '—'}</td><td class="r">${fmtMoney(r.oneOff)}</td><td class="r">${r.payback == null ? '—' : r.payback.toFixed(1) + ' mo'}</td>
-    <td class="c">${num(r.rec.effort) || '—'}</td><td class="c">${num(r.rec.risk) || '—'}</td><td class="c">${num(r.rec.confidence) || '—'}</td>
-    <td><select data-cell data-coll="recommendations" data-id="${r.rec.id}" data-field="status">${statusOpts.map((s) => `<option ${r.rec.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select></td></tr>`).join('')}
-    </tbody></table>` : empty('No recommendations yet.'), { cls: 'scroll-x' })}
-  <p class="muted small">Edit details, costs and modelled changes ("ops") in Data & Claude → Recommendations. Claude can draft the ops for you. See the schema in the README.</p>`;
-}
-
-/* ---------------- Scenarios ---------------- */
-function viewScenarios(e) {
-  const recs = scoreRecommendations(e);
-  const impacts = e.scenarios.map((s) => ({ s, i: scenarioImpact(e, s.id) }));
-  return `<div class="page-h"><div><span class="eyebrow">Scenarios</span><h1>Build "what it could be"</h1><p class="muted">Tick which recommendations each scenario includes. Every view (org, processes, tools, finance) can then be switched to that scenario from the selector at the top.</p></div><button class="btn" data-action="addScenario">+ Add scenario</button></div>
-  ${e.scenarios.length ? card('Scenario builder', `<table class="tbl"><thead><tr><th>Recommendation</th>${e.scenarios.map((s) => `<th class="c"><input class="inline" data-cell data-coll="scenarios" data-id="${s.id}" data-field="name" value="${esc(s.name)}"></th>`).join('')}</tr></thead><tbody>
-    ${recs.map((r) => `<tr><td>${esc(r.rec.title)} <span class="faint small">(score ${r.score})</span></td>${e.scenarios.map((s) => `<td class="c"><input type="checkbox" data-action="toggleRecInScenario" data-scenario="${s.id}" data-rec="${r.rec.id}" ${splitList(s.recommendationIds).includes(r.rec.id) ? 'checked' : ''}></td>`).join('')}</tr>`).join('')}
-    <tr><td></td>${e.scenarios.map((s) => `<td class="c"><button class="btn sm" data-action="setScenario" data-id="${s.id}">View</button> <button class="btn sm ghost" data-action="delScenario" data-id="${s.id}" title="Delete scenario">✕</button></td>`).join('')}</tr>
-    </tbody></table>`, { cls: 'scroll-x' }) : empty('No scenarios yet.')}
-  ${impacts.length ? `<div class="grid-2">
-    ${card('Annual cash saving + revenue uplift', hbars(impacts.map(({ s, i }) => ({ label: s.name, value: i.cashSaving + i.revenueUplift, tip: `cash ${fmtMoney(i.cashSaving)} · revenue ${fmtMoney(i.revenueUplift)}` })), { fmt: fmtMoney, color: 'var(--s3)' }))}
-    ${card('One-off investment', hbars(impacts.map(({ s, i }) => ({ label: s.name, value: i.oneOff, tip: i.paybackMonths == null ? '' : `payback ${i.paybackMonths.toFixed(1)} months` })), { fmt: fmtMoney, color: 'var(--s2)' }))}
-  </div>` : ''}`;
+    ${Object.keys(iv.answers || {}).length || outl(iv).length ? `<details class="small"><summary>${Object.keys(iv.answers || {}).length} structured answers · ${outl(iv).length} unexpected points</summary>${CRITERIA.map((c) => { const qs = Object.entries(iv.answers || {}).filter(([q]) => qMeta(e, q) && qMeta(e, q).crit === c.id); const os = outl(iv).filter((o) => o.crit === c.id); return qs.length || os.length ? `<h5>${esc(c.label)}</h5><dl>${qs.map(([q, a]) => `<dt>${esc(qMeta(e, q).q)}</dt><dd>${esc(a)}</dd>`).join('')}${os.map((o) => `<dt>Unexpected</dt><dd>${esc(o.text)}</dd>`).join('')}</dl>` : ''; }).join('')}</details>` : ''}
+    <div class="btn-row"><button class="btn sm" data-action="editInterview" data-id="${esc(iv.id)}">Open in capture form</button></div></article>`; }).join('') || empty('No interviews yet. Paste notes into Claude and ask for interview JSON (see Sources & data).')}</div>`;
 }
 
 /* ---------------- Report (settings + preview) ---------------- */
@@ -3157,7 +3104,7 @@ function viewReport(e) {
   const toggle = `<div class="toolbar"><button class="btn sm ${ui.reportType === 'status' ? 'on' : ''}" data-action="reportType" data-id="status">Status report (progress, time, delays)</button><button class="btn sm ${ui.reportType === 'diagnostic' || !ui.reportType ? 'on' : ''}" data-action="reportType" data-id="diagnostic">Diagnostic report (findings & recommendations)</button><button class="btn sm ${ui.reportType === 'feedback' ? 'on' : ''}" data-action="reportType" data-id="feedback">Feedback cheatsheet (written vs practice)</button></div>`;
   if (ui.reportType === 'feedback') {
     const fb = e.feedback || []; const draft = fb.filter((f) => f.status !== 'Confirmed with client' && f.status !== 'Sent').length;
-    return `<div class="page-h"><div><span class="eyebrow">Report</span><h1>Feedback cheatsheet</h1><p class="muted">For the client: what their own documents say against what the data shows, with the numbers and our suggestions. Edit items under Data & Claude → Client feedback.${draft ? ` <b>${draft} item${draft === 1 ? ' is' : 's are'} still a draft</b>: confirm before sending.` : ''}</p></div>
+    return `<div class="page-h"><div><span class="eyebrow">Report</span><h1>Feedback cheatsheet</h1><p class="muted">For the client: what their own documents say against what the data shows, with the numbers and our suggestions. Edit items under Sources & data → Client feedback.${draft ? ` <b>${draft} item${draft === 1 ? ' is' : 's are'} still a draft</b>: confirm before sending.` : ''}</p></div>
       <div class="btn-row"><button class="btn" data-action="printReport">Print / save PDF</button><button class="btn" data-action="downloadReport">Download HTML</button></div></div>
       ${toggle}<div class="report-preview"><div id="report-doc" class="rpt">${renderFeedback(e)}</div></div>`;
   }
@@ -3316,7 +3263,7 @@ function viewProgress(e) {
     ${sv.target ? kpi('Savings approved / month', fmtMoney(sv.approved), `<div class="k-delta">target ${fmtMoney(sv.target)} · realised ${fmtMoney(sv.realised)}</div>`) : ''}
   </div>`;
 
-  const delays = `<section class="card flag-card" id="delays"><header class="card-h"><div><h3>⚑ Delays & changes log</h3><p class="sub">Every slip, whatever the cause, with its date, reason, impact and the date written notice was given. This section appears in every status report. Log TGM-side slips too: that's what makes the log credible.</p></div><button class="btn" data-action="addDelay">+ Log delay / change</button></header>
+  const delays = !g.delays.length ? `<p class="small muted slim-line" id="delays">⚑ No delays or changes logged (status reports will say "none recorded"). <button class="link" data-action="addDelay">+ Log a delay or change</button></p>` : `<section class="card flag-card" id="delays"><header class="card-h"><div><h3>⚑ Delays & changes log</h3><p class="sub">Every slip, whatever the cause, with its date, reason, impact and the date written notice was given. This section appears in every status report. Log TGM-side slips too: that's what makes the log credible.</p></div><button class="btn" data-action="addDelay">+ Log delay / change</button></header>
     ${g.delays.length ? `<div class="scroll-x"><table class="tbl grid-edit"><thead><tr><th>Raised</th><th>Phase</th><th>Cause</th><th>What happened</th><th>Days impact</th><th>Written notice sent</th><th>Status</th><th>Resolution / action</th><th></th></tr></thead><tbody>
       ${g.delays.slice().sort((a, b) => (b.dateRaised || '').localeCompare(a.dateRaised || '')).map((d) => `<tr class="${d.status === 'Resolved' ? '' : 'row-flag'}"><td>${ecell('engagement.delays', d, 'dateRaised', 'date')}</td><td>${ecellSel('engagement.delays', d, 'phaseId', phaseOpts)}</td><td>${ecellSel('engagement.delays', d, 'cause', DELAY_CAUSES)}</td><td>${ecellArea('engagement.delays', d, 'description')}</td><td>${ecell('engagement.delays', d, 'daysImpact', 'number', 'style="width:70px"')}</td><td>${ecell('engagement.delays', d, 'noticeDate', 'date')}</td><td>${ecellSel('engagement.delays', d, 'status', ['Open', 'Resolved'], false)}</td><td>${ecellArea('engagement.delays', d, 'resolution')}</td><td>${delBtn('engagement.delays', d.id)}</td></tr>`).join('')}
     </tbody></table></div>` : '<p class="empty">No delays or changes logged. That will show as "none recorded" in status reports, which is itself worth reporting.</p>'}
@@ -3327,7 +3274,7 @@ function viewProgress(e) {
     ${st.reqs.map((r) => `<tr class="${r._status === 'Overdue' ? 'row-flag' : ''}"><td>${reqChip(r._status)}${r._status === 'Overdue' ? `<div><button class="link small" data-action="delayFromRequest" data-id="${esc(r.id)}">⚑ Log as delay</button></div>` : ''}</td><td>${ecellArea('engagement.requests', r, 'item')}</td><td>${ecell('engagement.requests', r, 'owner')}</td><td>${ecell('engagement.requests', r, 'requestedDate', 'date')}</td><td>${ecell('engagement.requests', r, 'dueDate', 'date')}</td><td>${ecell('engagement.requests', r, 'receivedDate', 'date')}</td><td>${ecellSel('engagement.requests', r, 'status', ['Not needed', 'Not available'])}</td><td>${ecellArea('engagement.requests', r, 'notes')}</td><td>${delBtn('engagement.requests', r.id)}</td></tr>`).join('')}
     </tbody></table></div><div class="btn-row"><button class="btn sm" data-action="addRow" data-coll="engagement.requests">+ Add request</button></div>`, { sub: 'Requests become Overdue automatically after their due date. Log a delay when a late item holds up the work.' });
 
-  const actCol = (title, list, empty) => `<div class="act-col"><h4>${title} (${list.length})</h4>${list.length ? list.map((a) => `<div class="act ${a.status === 'Waiting on client' ? 'act-wait' : ''}"><div class="act-top">${a.private ? '<span class="chip st-removed" title="TGM only: never suggested into client reports">🔒 TGM only</span> ' : ''}${ecellArea('engagement.activities', a, 'title', 1)}</div><div class="act-meta">${ecellSel('engagement.activities', a, 'phaseId', phaseOpts)} ${ecell('engagement.activities', a, a.status === 'Done' ? 'doneDate' : 'due', 'date')} ${ecellSel('engagement.activities', a, 'status', ACTIVITY_STATUSES, false)} ${delBtn('engagement.activities', a.id)}</div></div>`).join('') : `<p class="empty">${empty}</p>`}</div>`;
+  const actCol = (title, list0, empty) => { const list = ui.share ? list0.filter((a) => !a.private) : list0; return `<div class="act-col"><h4>${title} (${list.length})</h4>${list.length ? list.map((a) => `<div class="act ${a.status === 'Waiting on client' ? 'act-wait' : ''}"><div class="act-top">${a.private ? '<span class="chip st-removed" title="TGM only: never suggested into client reports">🔒 TGM only</span> ' : ''}${ecellArea('engagement.activities', a, 'title', 1)}</div><div class="act-meta">${ecellSel('engagement.activities', a, 'phaseId', phaseOpts)} ${ecell('engagement.activities', a, a.status === 'Done' ? 'doneDate' : 'due', 'date')} ${ecellSel('engagement.activities', a, 'status', ACTIVITY_STATUSES, false)} ${delBtn('engagement.activities', a.id)}</div></div>`).join('') : `<p class="empty">${empty}</p>`}</div>`; };
   const acts = card('What\'s done, what\'s happening, what\'s next', `<div class="act-grid">${actCol('✓ Done', st.done, 'Nothing completed yet.')}${actCol('● In progress / waiting', st.doing, 'Nothing in progress.')}${actCol('→ Next', st.next, 'Nothing queued.')}</div><div class="btn-row"><button class="btn sm" data-action="addActivity">+ Add activity</button></div>`, { sub: 'Marking an activity Done stamps today\'s date automatically.' });
 
   const entryDates = new Set(g.timeLog.map((t) => t.date));
@@ -3349,15 +3296,15 @@ function viewProgress(e) {
 
   return `<div class="page-h"><div><span class="eyebrow">Progress & time</span><h1>Where the engagement stands</h1><p class="muted">Point of contact: <strong>${esc(g.contact || '—')}</strong>${g.contactRole ? ' · ' + esc(g.contactRole) : ''}. Next review: <strong>${esc(fmtD(splitList(g.reviewDates).find((d) => d >= st.today) || ''))}</strong>.</p></div>
     <div class="btn-row"><button class="btn" data-action="statusReport">Status report →</button></div></div>
-    ${kpis}${card('Timeline', phaseGantt(e))}${delays}<div class="grid-2">${acts}${reqs}</div>${time}${savings}${phases}`;
+    ${kpis}${card('Timeline', phaseGantt(e))}${delays}<div class="grid-2">${acts}${reqs}</div>${ui.share ? '' : time}${savings}${phases}`;
 }
 
-function savingsBlock(sv) {
+function savingsBlock(sv, { rows = true } = {}) {
   const mx = Math.max(sv.target, sv.identified, 1);
   const bar = (v, c, label) => `<div class="sv-row"><span>${label}</span><div class="sv-track"><span style="width:${v / mx * 100}%;background:${c}"></span><i style="left:${sv.target / mx * 100}%" title="Target"></i></div><b>${fmtMoney(v)}</b></div>`;
   return `<div class="sv">${bar(sv.identified, 'var(--seq-3)', 'Identified (estimates)')}${bar(sv.approved, 'var(--seq-5)', 'Approved')}${bar(sv.realised, 'var(--seq-7)', 'Realised')}
     <p class="small muted">Target ${fmtMoney(sv.target)}/month (marker line)${sv.baseline ? ` against a baseline of ${fmtMoney(sv.baseline)}/month` : ' · baseline not yet set'}. <b>Identified</b> are our estimates until the client approves them; only Approved and Realised count towards the target. Reported separately: one-off savings ${fmtMoney(sv.oneOffSavings)}; one-off costs of approved items ${fmtMoney(sv.oneOffCosts)}; time freed ${Math.round(sv.hours)} hrs/month (capacity, not cash).</p></div>
-    ${sv.rows.length ? `<table class="tbl"><thead><tr><th>Initiative</th><th>Stage</th><th class="r">Net recurring / month</th><th class="r">One-off cost</th><th class="r">Hours freed / mo</th></tr></thead><tbody>${sv.rows.map((r) => `<tr class="${r.stage === 'Rejected' ? 'row-removed' : ''}"><td>${esc(r.rec.title)}</td><td><span class="chip ${r.stage === 'Realised' ? 'st-added' : r.stage === 'Approved' || r.stage === 'In progress' ? 'st-changed' : ''}">${esc(r.stage)}</span></td><td class="r ${r.monthlyNet < 0 ? 'delta-bad' : ''}">${fmtMoney(r.monthlyNet)}</td><td class="r">${fmtMoney(r.oneOffCost)}</td><td class="r">${Math.round(r.hoursMonth)}</td></tr>`).join('')}</tbody></table>` : ''}`;
+    ${rows && sv.rows.length ? `<table class="tbl"><thead><tr><th>Initiative</th><th>Stage</th><th class="r">Net recurring / month</th><th class="r">One-off cost</th><th class="r">Hours freed / mo</th></tr></thead><tbody>${sv.rows.map((r) => `<tr class="${r.stage === 'Rejected' ? 'row-removed' : ''}"><td>${esc(r.rec.title)}</td><td><span class="chip ${r.stage === 'Realised' ? 'st-added' : r.stage === 'Approved' || r.stage === 'In progress' ? 'st-changed' : ''}">${esc(r.stage)}</span></td><td class="r ${r.monthlyNet < 0 ? 'delta-bad' : ''}">${fmtMoney(r.monthlyNet)}</td><td class="r">${fmtMoney(r.oneOffCost)}</td><td class="r">${Math.round(r.hoursMonth)}</td></tr>`).join('')}</tbody></table>` : ''}`;
 }
 
 /* ---------- Discovery: coverage, founder intake, interview capture ---------- */
@@ -3384,9 +3331,9 @@ function viewDiscovery(e) {
       <p class="faint small">Answers from live sessions and from the Google Form merge per person. A form submission fills gaps without overwriting what you captured live.</p>${intake}`)}
     ${card('Interview checklist', people.length ? `<table class="tbl"><thead><tr><th>Person</th><th>Level</th><th>Question set</th><th></th></tr></thead><tbody>${people.map((p) => { const d = e.departments.find((x) => x.id === p.departmentId); const dt = deptType(d); return `<tr><td>${esc(p.name)}<div class="faint small">${esc(p.title || '')}</div></td><td>${esc(guessLevel(e, p))}</td><td class="small">${esc((DEPT_TYPES.find((x) => x[0] === dt) || ['', 'core only'])[1])}</td><td>${done.has(p.id) ? '<span class="chip st-added">✓ Interviewed</span>' : `${e.staffSurvey.some((x) => x.personId === p.id) ? '<span class="chip">✓ Questionnaire</span> ' : ''}<button class="btn sm" data-action="startCapture" data-id="${esc(p.id)}">Interview</button>`}</td></tr>`; }).join('')}</tbody></table>` : '<p class="empty">Add the org chart (People) first. The checklist and question sets then build themselves from it.</p>', { sub: 'Built from the org chart. Level and department decide each person\'s questions.' })}
   </div>
-  ${card(`Staff questionnaire (${e.staffSurvey.length} responses)`, `<div class="btn-row"><label class="btn sm">Import staff responses (CSV)<input type="file" accept=".csv,text/csv" id="staffFile" hidden></label></div>
+  ${e.staffSurvey.length ? '' : '<details class="card"><summary class="small"><b>Staff questionnaire</b> · no responses yet (import a CSV)</summary>'}${card(`Staff questionnaire (${e.staffSurvey.length} responses)`, `<div class="btn-row"><label class="btn sm">Import staff responses (CSV)<input type="file" accept=".csv,text/csv" id="staffFile" hidden></label></div>
     <p class="faint small">The 10-minute pre-interview form. Responses match to people by name, and each person's answers appear at the top of their interview capture form.</p>
-    ${e.staffSurvey.length ? `<table class="tbl"><thead><tr><th>Name</th><th>Role</th><th>Matched to org chart</th><th>Biggest frustration</th></tr></thead><tbody>${e.staffSurvey.map((r) => `<tr><td>${esc(r.respondent)}</td><td>${esc(r.role)}</td><td>${r.personId ? '<span class="chip st-added">✓</span>' : '<span class="chip sev-medium">● not matched</span>'}</td><td class="small">${esc(trunc(r.answers.st_frustration || '', 120))}</td></tr>`).join('')}</tbody></table>` : '<p class="empty">No staff responses yet.</p>'}`)}`;
+    ${e.staffSurvey.length ? `<table class="tbl"><thead><tr><th>Name</th><th>Role</th><th>Matched to org chart</th><th>Biggest frustration</th></tr></thead><tbody>${e.staffSurvey.map((r) => `<tr><td>${esc(r.respondent)}</td><td>${esc(r.role)}</td><td>${r.personId ? '<span class="chip st-added">✓</span>' : '<span class="chip sev-medium">● not matched</span>'}</td><td class="small">${esc(trunc(r.answers.st_frustration || '', 120))}</td></tr>`).join('')}</tbody></table>` : '<p class="empty">No staff responses yet.</p>'}`)}${e.staffSurvey.length ? '' : '</details>'}`;
 }
 
 const DRAFT_KEY = () => STORE_KEY + '.draft';
@@ -3620,7 +3567,7 @@ function viewCompetitors(e) {
     </dl>
     <p class="faint small">${c.sources ? 'Sources: ' + esc(trunc(c.sources, 140)) : '⚑ No sources recorded'} · ${c.lastReviewed ? 'Reviewed ' + esc(fmtD(c.lastReviewed, { day: 'numeric', month: 'short', year: 'numeric' })) : 'Not reviewed'}</p>
     <div class="btn-row"><button class="btn sm" data-action="editCompetitor" data-id="${esc(c.id)}">Edit profile</button><button class="btn sm ghost" data-action="addIntel" data-id="${esc(c.id)}">+ Intel</button><span class="faint small">${e.intel.filter((x) => x.competitorId === c.id).length} intel entries</span></div></article>`).join('')}</div>`
-    : card('', '<p class="empty">No competitors yet. Add them here or in Data & Claude, or ask Claude to research them and paste the result in (the prompt includes the competitor format).</p>')}
+    : card('', '<p class="empty">No competitors yet. Add them here or in Sources & data, or ask Claude to research them and paste the result in (the prompt includes the competitor format).</p>')}
   ${card('Capability comparison', `<div class="scroll-x">${capabilityMatrix(e)}</div>`, { sub: 'Choose Strong / Partial / None per cell, and leave it blank when there is no evidence. The weighted score uses each capability\'s importance (High 3, Medium 2, Low 1). The Location Bank column is for the founders to confirm.' })}
   ${intelBlock(e)}
   ${sharpenBlock(e)}
@@ -3737,14 +3684,18 @@ function viewLeaks(e) {
   const count = (k) => all.filter((x) => x.kind === k).length;
   let list = all.filter((x) => L.lens === 'all' || x.kind === L.lens);
   if (L.noFix) list = list.filter((x) => !x.fix && !x.next && x.src !== 'signal');
-  const ranked = rankItems(list, L.sort);
+  if (L.unsized) list = list.filter((x) => !x.value && x.src !== 'signal');
+  const rankedAll = rankItems(list, L.sort);
+  const tops = rankedAll.filter((x) => !x.nested); const keep = new Set(topN('home', tops).map((x) => x.id));
+  const ranked = rankedAll.filter((x) => keep.has(x.nested ? x.partOf : x.id));
+  const sv = savingsTracker(e);
   const noFix = all.filter((x) => !x.fix && !x.next && x.src !== 'signal').length, unsized = all.filter((x) => !x.value && x.src !== 'signal').length;
   const kp = (label, v, sub) => kpi(label, v ? fmtMoney(v) + '/mo' : '—', `<div class="k-delta">${sub}</div>`);
   const seg = (on, k, v, label) => `<button class="seg ${on ? 'on' : ''}" data-action="loSet" data-k="${k}" data-id="${v}">${label}</button>`;
   const recOpts = (cur) => `<option value="">— none —</option>${e.recommendations.map((r) => `<option value="${esc(r.id)}" ${cur === r.id ? 'selected' : ''}>${esc(trunc(r.title, 70))}</option>`).join('')}`;
   const parentOpts = (x) => `<option value="">— top level —</option>${all.filter((y) => y.src === 'finding' && y.id !== x.id && !y.partOf).map((y) => `<option value="${esc(y.id)}" ${x.partOf === y.id ? 'selected' : ''}>${esc(trunc(y.title, 70))}</option>`).join('')}`;
   const cell = (x, field, html) => (x.src === 'finding' ? html.replace('<select', `<select data-cell data-coll="findings" data-id="${esc(x.id)}" data-field="${field}"`) : '');
-  const editor = (x) => x.src !== 'finding' ? (x.src === 'opportunity' ? '<p class="faint small">Edit this opportunity in Competitors → Opportunities, or on the Data page.</p>' : '<p class="faint small">Spotted by combining data already in the Studio (the same rules as the Crossover page). Fix the cause, or add a finding if it matters.</p>') : `
+  const editor = (x) => x.src !== 'finding' ? (x.src === 'opportunity' ? '<p class="faint small">Edit this opportunity in Evidence → Market, or in Sources &amp; data.</p>' : '<p class="faint small">Spotted by combining data already in the Studio (crossing finance, people, tools, processes and interviews). Fix the cause, or add a finding if it matters.</p>') : `
       <div class="lo-edit">
         <label>Lens ${cell(x, 'kind', `<select>${LENSES.map(([k, n]) => `<option value="${k}" ${x.kind === k ? 'selected' : ''}>${n}</option>`).join('')}<option value="context">Background only (hide)</option></select>`)}</label>
         <label>Size per month <input type="number" data-cell data-type="num" data-coll="findings" data-id="${esc(x.id)}" data-field="valueMonthly" value="${x.value || ''}" placeholder="R / month"></label>
@@ -3768,33 +3719,203 @@ function viewLeaks(e) {
   };
   let n = 0;
   const byLens = LENSES.map(([k, name]) => ({ label: name, value: sum(all.filter((x) => x.kind === k && !x.partOf), (x) => x.value), tip: `${count(k)} items` }));
-  const reqs = ((e.engagement || {}).requests || []).filter((r) => !r.receivedDate);
-  return `<div class="page-h"><div><span class="eyebrow">The machine</span><h1>Leaks &amp; opportunities</h1><p class="muted">Everything the machine has found, ranked by money at stake. Each item says what is at stake and what fixes it.</p></div></div>
-  <div class="kpis">${kp('Leaking now', tot['Leaking'], 'revenue or spend being lost')}${kp('At risk', tot['At risk'], 'could be lost')}${kp('Spend to review', tot['Spend to review'], 'cost base where savings sit')}${kp('Upside', tot['Upside'], 'revenue not yet taken')}${kpi('No action yet', noFix, `<div class="k-delta">${unsized} not sized yet</div>`)}</div>
-  <p class="faint small" style="margin:6px 0 14px">Totals count each item once (parts nested under a bigger item are not added again). Sizes are estimates from the sources named in each item. “Biggest first” ranks by money at stake: leaking counts in full, at risk and upside at half, spend to review at a fifth (only part of a cost base is a realistic saving).</p>
+  return `<div class="page-h"><div><span class="eyebrow">${esc(e.client.name)}</span><h1>Leaks &amp; opportunities</h1><p class="muted">What's leaking, what it's worth, and what needs you today. Ranked by money at stake; each item says what fixes it.</p></div></div>
+  <div class="kpis">${kp('Leaking now', tot['Leaking'], 'revenue or spend being lost')}${kp('At risk', tot['At risk'], 'could be lost')}${kp('Spend to review', tot['Spend to review'], 'cost base where savings sit')}${kp('Upside', tot['Upside'], 'revenue not yet taken')}${sv.target ? kpi('Savings approved', fmtMoney(sv.approved) + '/mo', `<div class="k-delta">of ${fmtMoney(sv.target)} target · ${fmtMoney(sv.identified)} identified (estimates)</div>`) : ''}</div>
+  ${needsInput(e, all)}
   <section class="card">
     <div class="lo-bar">
       <span class="pv-switch sm">${seg(L.lens === 'all', 'lens', 'all', `All (${all.length})`)}${LENSES.map(([k, name]) => seg(L.lens === k, 'lens', k, `${LENS_ICON[k]} ${name} (${count(k)})`)).join('')}</span>
       <span class="pv-switch sm">${seg(L.sort === 'size', 'sort', 'size', 'Biggest first')}${seg(L.sort === 'severity', 'sort', 'severity', 'Most severe first')}</span>
-      <label class="small"><input type="checkbox" data-action="loTick" data-k="noFix" ${L.noFix ? 'checked' : ''}> No action yet only</label>
       <label class="small"><input type="checkbox" data-action="loTick" data-k="signals" ${L.signals ? 'checked' : ''}> Include signals spotted automatically</label>
     </div>
     ${L.lens !== 'all' ? `<p class="small muted" style="margin:8px 0 0">${esc((LENSES.find((l) => l[0] === L.lens) || [])[2] || '')}</p>` : ''}
     <div class="lo-head"><span>#</span><span></span><span>What</span><span>At stake</span><span>Fix</span></div>
     <div class="lo-list">${ranked.length ? ranked.map((x) => row(x, x.nested ? 0 : ++n)).join('') : empty('Nothing here yet.')}</div>
+    ${showAllBtn('home', tops.length)}
+    ${L.noFix || L.unsized ? `<p class="small" style="margin:8px 0 0">Filtered: ${L.noFix ? 'no action yet' : 'not sized'}. <button class="link" data-action="loNeed" data-k="clear">Show everything</button></p>` : ''}
+    <p class="faint small" style="margin:10px 0 0">Totals count each item once (parts nested under a bigger item are not added again). Sizes are estimates from the sources named in each item. “Biggest first” counts leaking in full, at risk and upside at half, spend to review at a fifth.</p>
   </section>
-  <div class="grid-2">
-    ${card('Where the money is, by lens', hbars(byLens.filter((x) => x.value > 0), { fmt: (v) => fmtMoney(v) + '/mo', color: 'var(--s1)' }), { sub: 'Sized items only, all bases together. Use it to see where the weight sits, not as a single total.' })}
-    ${card('Gaps in the diagnosis', `<ul class="lk-list"><li><b>${noFix}</b> items have no action yet: no fix and no next step. Each needs a recommendation, a question for a named role, or a data request.</li><li><b>${unsized}</b> items are not sized. Add a rand figure, even a rough one, so they can be ranked.</li>${reqs.length ? `<li><b>${reqs.length}</b> data requests are still open, e.g. ${reqs.slice(0, 3).map((r) => esc(trunc(r.item, 60))).join('; ')}.</li>` : ''}</ul>`, { sub: 'What the machine still needs to give a full picture.' })}
+  ${card('Where the money is, by lens', hbars(byLens.filter((x) => x.value > 0), { fmt: (v) => fmtMoney(v) + '/mo', color: 'var(--s1)' }), { sub: 'Sized items only, all bases together. Use it to see where the weight sits, not as a single total.' })}`;
+}
+
+/* ---- pages.js ---- */
+/* ============================================================
+   The seven pages. Each answers one question for TGM:
+   Home (what's leaking and what needs me), Plan (what we suggest and what it saves), Processes (where work breaks),
+   Evidence (what proves it), Conversations (who we ask what next), Progress & reports (are we on track),
+   Sources & data (where every number comes from). Older page ids still work: they redirect here.
+   ============================================================ */
+const TAB_ALIAS = {
+  overview: ['home'], leaks: ['home'], crossover: ['home'],
+  recs: ['plan'], scenarios: ['plan'],
+  finance: ['evidence', 'money'], business: ['evidence', 'clients'], org: ['evidence', 'people'], tools: ['evidence', 'tools'], competitors: ['evidence', 'market'],
+  interviews: ['talk', 'interviews'], discovery: ['talk', 'discovery'],
+  report: ['progress', 'report']
+};
+const SUBTABS = {
+  evidence: [['money', 'Money'], ['clients', 'Clients'], ['people', 'People'], ['tools', 'Tools'], ['market', 'Market']],
+  talk: [['people', 'By person'], ['interviews', 'Interviews'], ['discovery', 'Discovery']],
+  progress: [['progress', 'Progress & time'], ['report', 'Reports']]
+};
+/** Pages where "View as" (current state or a scenario) changes what is shown. */
+const SCENARIO_TABS = ['plan', 'evidence', 'processes'];
+
+function normaliseTab() {
+  ui.sub = ui.sub || {};
+  const a = TAB_ALIAS[ui.tab];
+  if (a) { ui.tab = a[0]; if (a[1]) ui.sub[a[0]] = a[1]; }
+  if (!TABS.some((t) => t[0] === ui.tab)) ui.tab = 'home';
+  Object.keys(SUBTABS).forEach((t) => { if (!SUBTABS[t].some((s) => s[0] === ui.sub[t])) ui.sub[t] = SUBTABS[t][0][0]; });
+}
+const subOf = (t) => (ui.sub || {})[t] || SUBTABS[t][0][0];
+function subBar(t) {
+  return `<nav class="subnav">${SUBTABS[t].map(([id, n]) => `<button class="sub-btn ${subOf(t) === id ? 'on' : ''}" data-action="sub" data-tab="${t}" data-id="${id}">${n}</button>`).join('')}</nav>`;
+}
+
+/* ---------- "Top 5, then Show all" for long lists ---------- */
+const TOP_N = 5;
+function topN(key, list, n = TOP_N) { ui.all = ui.all || {}; return ui.all[key] ? list : list.slice(0, n); }
+function showAllBtn(key, total, n = TOP_N) {
+  if (total <= n) return '';
+  const on = (ui.all || {})[key];
+  return `<div class="show-all"><button class="link" data-action="showAll" data-id="${esc(key)}">${on ? 'Show the top ' + n + ' only' : `Show all ${total}`}</button></div>`;
+}
+
+/* ---------- Home: needs your input ---------- */
+function needsInput(e, all) {
+  const g = e.engagement || {}; const today = todayISO();
+  const st = (g.phases || []).length ? engagementStatus(e) : null;
+  const overdue = st ? st.overdue : [];
+  const noFix = all.filter((x) => !x.fix && !x.next && x.src !== 'signal').length;
+  const unsized = all.filter((x) => !x.value && x.src !== 'signal').length;
+  const stale = (g.activities || []).filter((a) => a.status !== 'Done' && a.due && a.due < today && !(ui.share && a.private));
+  const L = ui.lo || {};
+  const chip = (n, label, attrs, tip, on) => n ? `<button class="need ${on ? 'on' : ''}" ${attrs} title="${esc(tip)}"><b>${n}</b> ${label}</button>` : '';
+  const chips = [
+    chip(overdue.length, `overdue from the client`, 'data-action="tab" data-id="progress"', overdue.slice(0, 4).map((r) => r.item).join(' · ')),
+    chip(noFix, 'with no action yet', 'data-action="loNeed" data-k="noFix"', 'Each needs a recommendation, a question for a named role, or a data request. Click to filter the list.', L.noFix),
+    chip(unsized, 'not sized', 'data-action="loNeed" data-k="unsized"', 'Add a rand figure, even a rough one, so they can be ranked. Click to filter the list.', L.unsized),
+    chip(stale.length, 'to-dos past their date', 'data-action="tab" data-id="progress"', stale.slice(0, 4).map((a) => a.title).join(' · '))
+  ].filter(Boolean);
+  return `<div class="needs"><span class="needs-h">Needs your input</span>${chips.length ? chips.join('') : '<span class="faint small">Nothing right now.</span>'}</div>`;
+}
+
+/* ---------- Plan: recommendations by stage, the savings tracker, scenarios ---------- */
+function viewPlan(e) {
+  const sv = savingsTracker(e); const rows = scoreRecommendations(e);
+  const stageOf = (r) => (REC_STAGES.includes(r.rec.status) ? r.rec.status : 'Identified');
+  const groups = [['Identified', 'Identified: our suggestions, for the client to decide'], ['Approved', 'Approved by the client'], ['In progress', 'In progress'], ['Realised', 'Realised: saving or gain confirmed']];
+  const head = '<thead><tr><th>#</th><th>Recommendation</th><th>Score</th><th class="r">Value / yr</th><th class="r">Hours freed / mo</th><th class="r">One-off</th><th class="r">Payback</th><th>Stage</th></tr></thead>';
+  const row = (r, i) => `<tr class="${r.rec.status === 'Rejected' ? 'row-removed' : ''}"><td>${i + 1}</td><td><strong>${esc(r.rec.title)}</strong> <span class="chip">${esc(r.rec.type || '—')}</span> <span class="chip">${esc(r.rec.horizon || '—')}</span>
+      <div class="muted small">${esc(trunc(r.rec.description || '', 260))}</div>
+      <div class="small plan-stick">${r.rec.stick ? `<b>How it sticks:</b> ${esc(r.rec.stick)}` : '<span class="chip lo-nofix">How it sticks: not set</span> <span class="faint">system, ease, visibility, incentive, owner</span>'}${r.rec.owner ? ` · <b>Owner:</b> ${esc(r.rec.owner)}` : ''}</div></td>
+    <td><div class="score-bar"><span style="width:${r.score}%"></span></div><span class="small">${r.score}</span></td>
+    <td class="r">${fmtMoney(r.cash + r.revenue)}</td><td class="r">${Math.round(r.hoursSaved)}</td><td class="r">${fmtMoney(r.oneOff)}</td><td class="r">${r.payback == null ? '—' : r.payback.toFixed(1) + ' mo'}</td>
+    <td><select data-cell data-coll="recommendations" data-id="${r.rec.id}" data-field="status">${REC_STAGES.map((s) => `<option ${r.rec.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select></td></tr>`;
+  const block = ([stage, title]) => {
+    const list = rows.filter((r) => stageOf(r) === stage); if (!list.length) return '';
+    const key = 'plan_' + stage;
+    return card(`${title} (${list.length})`, `<table class="tbl recs">${head}<tbody>${topN(key, list).map(row).join('')}</tbody></table>${showAllBtn(key, list.length)}`, { cls: 'scroll-x' });
+  };
+  const rejected = rows.filter((r) => r.rec.status === 'Rejected');
+  const impacts = e.scenarios.map((s) => ({ s, i: scenarioImpact(e, s.id) }));
+  const scenTable = impacts.length ? `<table class="tbl"><thead><tr><th>Scenario</th><th class="r">Headcount Δ</th><th class="r">Cash saving / yr</th><th class="r">Revenue uplift</th><th class="r">Hours freed / mo</th><th class="r">One-off</th><th class="r">Payback</th><th></th></tr></thead><tbody>
+    ${impacts.map(({ s, i }) => `<tr><td><strong>${esc(s.name)}</strong><div class="muted small">${esc(s.description || '')}</div></td><td class="r">${i.headcountDelta}</td><td class="r">${fmtMoney(i.cashSaving)}</td><td class="r">${fmtMoney(i.revenueUplift)}</td><td class="r">${hrs(i.hoursSaved)}</td><td class="r">${fmtMoney(i.oneOff)}</td><td class="r">${i.paybackMonths == null ? '—' : i.paybackMonths.toFixed(1) + ' mo'}</td><td><button class="btn sm" data-action="setScenario" data-id="${s.id}">View</button></td></tr>`).join('')}</tbody></table>` : empty('No scenarios yet.');
+  const builder = e.scenarios.length ? `<table class="tbl"><thead><tr><th>Recommendation</th>${e.scenarios.map((s) => `<th class="c"><input class="inline" data-cell data-coll="scenarios" data-id="${s.id}" data-field="name" value="${esc(s.name)}"></th>`).join('')}</tr></thead><tbody>
+    ${rows.map((r) => `<tr><td>${esc(r.rec.title)} <span class="faint small">(score ${r.score})</span></td>${e.scenarios.map((s) => `<td class="c"><input type="checkbox" data-action="toggleRecInScenario" data-scenario="${s.id}" data-rec="${r.rec.id}" ${splitList(s.recommendationIds).includes(r.rec.id) ? 'checked' : ''}></td>`).join('')}</tr>`).join('')}
+    <tr><td></td>${e.scenarios.map((s) => `<td class="c"><button class="btn sm ghost" data-action="delScenario" data-id="${s.id}" title="Delete scenario">✕</button></td>`).join('')}</tr></tbody></table>` : '';
+  return `${scenarioBanner(e)}<div class="page-h"><div><span class="eyebrow">Plan</span><h1>What we suggest, and what it saves</h1><p class="muted">Recommendations are suggestions for the client to decide, ordered from identified to realised. Each says how it will stick. Only approved and realised savings count towards the target.</p></div>
+    <div class="btn-row"><button class="btn" data-action="addRec">+ Add recommendation</button></div></div>
+  ${sv.target ? card('Savings against the target', savingsBlock(sv, { rows: false }), { sub: 'Monthly recurring savings, net of new recurring costs. Stage comes from each recommendation.' }) : ''}
+  ${groups.map(block).join('')}
+  ${rejected.length ? `<details class="card"><summary class="small"><b>Rejected (${rejected.length})</b></summary><table class="tbl recs">${head}<tbody>${rejected.map(row).join('')}</tbody></table></details>` : ''}
+  ${card('Scenarios: bundles of recommendations', `<div class="scroll-x">${scenTable}</div>
+    <details class="small"><summary><b>Build or edit scenarios</b></summary><div class="btn-row"><button class="btn sm" data-action="addScenario">+ Add scenario</button></div><div class="scroll-x">${builder}</div></details>`,
+    { sub: 'A scenario is the current state with a set of recommendations applied. "View" switches Processes and Evidence to it.' })}
+  <p class="muted small">Score = 50% value, 20% low effort, 15% low risk, 15% confidence. Value = cash saving + revenue uplift + half the value of freed hours (freed hours are capacity, not cash, unless headcount changes). Edit details, "how it sticks", owner and modelled changes in Sources &amp; data → Recommendations.</p>`;
+}
+
+/* ---------- Evidence: the detail behind findings ---------- */
+function viewEvidence(e) {
+  const s = subOf('evidence');
+  const body = s === 'money' ? viewFinance(e) : s === 'clients' ? viewBusiness(e) : s === 'people' ? viewOrg(e) + peopleCrossCards(e) : s === 'tools' ? viewTools(e) : viewCompetitors(e) + profileCard(e);
+  return subBar('evidence') + body;
+}
+
+/** Department scorecard and who carries which process (formerly on the Crossover page). */
+function peopleCrossCards(e) {
+  const st = stateFor(e, ui.scenario);
+  const sc = departmentScorecard(e, st);
+  const people = live(st.people).filter((p) => personLoad(st)[p.id]);
+  const procs = live(st.processes);
+  const matrix = people.map((p) => procs.map((pr) => sum(live(pr.steps).filter((x) => x.actorId === p.id && !x.automated), (x) => stepHours(x, pr))));
+  const maxPay = Math.max(1, ...sc.map((d) => d.payroll + d.toolSpend));
+  return `${card('Department scorecard', sc.length ? `<table class="tbl"><thead><tr><th>Department</th><th class="r">People</th><th>People + tool cost / yr</th><th class="r">Processes</th><th class="r">Process hrs/mo</th><th class="r">Manual</th><th class="r">Pain points raised</th></tr></thead><tbody>
+    ${sc.map((d) => `<tr><td><i class="swatch" style="background:${deptColor(e.departments, d.dept.id)}"></i>${esc(d.dept.name)}</td><td class="r">${d.headcount}</td><td><div class="inline-bar"><span style="width:${(d.payroll + d.toolSpend) / maxPay * 100}%"></span></div>${fmtMoney(d.payroll + d.toolSpend)}</td><td class="r">${d.processes}</td><td class="r">${Math.round(d.hours)}</td><td class="r">${d.hours ? pct(d.manualPct) : '—'}</td><td class="r">${d.pain}</td></tr>`).join('')}</tbody></table>` : empty('Add departments.'), { cls: 'scroll-x', sub: 'Crosses people, tools, processes and interview pain points for each department.' })}
+  ${people.length && procs.length ? card('Who carries which process (hours / month)', heatmap(people.map((p) => ui.anon ? p.title : p.name), procs.map((p) => p.name), matrix, { fmt: (v) => Math.round(v) }), { cls: 'scroll-x', sub: 'Darker means more hours. Look for one person carrying a whole process, or senior people doing manual work.' }) : ''}`;
+}
+
+/* ---------- Conversations ---------- */
+function viewTalk(e) {
+  if (ui.capture || ui.session) return viewDiscovery(e);
+  const s = subOf('talk');
+  return subBar('talk') + (s === 'interviews' ? viewInterviews(e) : s === 'discovery' ? viewDiscovery(e) : talkPeople(e));
+}
+/** Does a request owner (free text such as "Gabby / Genevieve" or "Head of Client Operations") name this person? */
+function ownerMatches(owner, p) {
+  const o = String(owner || '').toLowerCase(); if (!o) return false;
+  const tokens = o.split(/[^a-z]+/).filter(Boolean);
+  const name = String(p.name || '').toLowerCase(); const first = name.split(/[\s(]+/)[0];
+  const nick = (name.match(/\(([^)]+)\)/) || [])[1];
+  const title = String(p.title || '').toLowerCase();
+  const acro = String(p.title || '').split(/\s+/).filter((w) => /^[A-Z]/.test(w)).map((w) => w[0]).join('').toLowerCase();
+  return (first && tokens.includes(first)) || (nick && tokens.includes(nick)) || (title.length > 6 && o.includes(title)) || (acro.length >= 2 && tokens.includes(acro));
+}
+function talkPeople(e) {
+  const pById = byId(e.people); const qs = e.customQuestions || [];
+  const nm = (p) => (ui.anon ? p.title || 'Role' : p.name);
+  const answersFor = (pid) => { const a = {}; e.interviews.filter((i) => i.personId === pid).forEach((iv) => Object.entries(iv.answers || {}).forEach(([k, v]) => { if (String(v || '').trim()) a[k] = { v, date: iv.date }; })); return a; };
+  const ids = [...new Set([...qs.map((q) => q.personId), ...e.interviews.map((i) => i.personId)])].filter((id) => pById[id]);
+  const stats = ids.map((id) => { const mine = qs.filter((q) => q.personId === id); const ans = answersFor(id); const open = mine.filter((q) => !ans[q.id]);
+    return { p: pById[id], n: mine.length, open: open.length, star: open.filter((q) => q.p).length, ivs: e.interviews.filter((i) => i.personId === id).length }; })
+    .sort((a, b) => b.star - a.star || b.open - a.open || (a.p.name || '').localeCompare(b.p.name || ''));
+  if (!stats.length) return `<div class="page-h"><div><span class="eyebrow">Conversations</span><h1>Who we ask what next</h1></div></div>${empty('No questions or interviews yet. Prepare questions with Claude (customQuestions) or capture an interview.')}`;
+  const sel = stats.some((x) => x.p.id === ui.talkP) ? ui.talkP : stats[0].p.id; const p = pById[sel];
+  const ans = answersFor(sel);
+  const mine = qs.filter((q) => q.personId === sel).map((q, i) => [q, i]).sort((a, b) => ((a[0].ord ?? 1e6 + a[1]) - (b[0].ord ?? 1e6 + b[1]))).map((x) => x[0]);
+  const shown = ui.talkOpen ? mine.filter((q) => !ans[q.id]) : mine;
+  let sec = '';
+  const qList = shown.map((q) => { const h = q.section && q.section !== sec ? `<h5>${esc((sec = q.section))}</h5>` : ''; const a = ans[q.id];
+    return `${h}<div class="tq ${a ? 'tq-done' : ''}"><div>${q.p ? '<b class="star">★</b> ' : ''}${esc(q.q)} <span class="chip">${esc((CRITERIA.find((c) => c.id === q.crit) || {}).label || q.crit || "")}</span></div>${q.note ? `<div class="faint small">${esc(q.note)}</div>` : ''}${a ? `<div class="tq-a small"><b>Answered${a.date ? ' ' + esc(fmtD(a.date)) : ''}:</b> ${esc(trunc(a.v, 400))}</div>` : ''}</div>`; }).join('');
+  const reqs = ((e.engagement || {}).requests || []).filter((r) => !r.receivedDate && ownerMatches(r.owner, p));
+  const ivs = e.interviews.filter((i) => i.personId === sel).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const st = stats.find((x) => x.p.id === sel);
+  return `<div class="page-h"><div><span class="eyebrow">Conversations</span><h1>Who we ask what next</h1><p class="muted">Pick a person: what to ask them (★ first), what they have already answered, and what they owe us.</p></div></div>
+  <div class="talk">
+    <aside class="card talk-list">${stats.map((x) => `<button class="talk-p ${x.p.id === sel ? 'on' : ''}" data-action="talkP" data-id="${esc(x.p.id)}"><b>${esc(nm(x.p))}</b><span class="faint small">${ui.anon ? '' : esc(x.p.title || '')}</span><span class="small">${x.open ? `${x.open} to ask${x.star ? ` · <b class="star">★</b> ${x.star}` : ''}` : '<span class="faint">all answered</span>'}${x.ivs ? ` · ${x.ivs} interview${x.ivs > 1 ? 's' : ''}` : ''}</span></button>`).join('')}</aside>
+    <div>
+      ${card(`${esc(nm(p))}${!ui.anon && p.title ? ` <span class="faint small">· ${esc(p.title)}</span>` : ''}`, `
+        <div class="btn-row"><button class="btn" data-action="startCapture" data-id="${esc(sel)}">▶ Start interview</button>${ivs.map((iv) => `<button class="btn sm ghost" data-action="editInterview" data-id="${esc(iv.id)}">Open interview ${esc(fmtD(iv.date) || '')}</button>`).join('')}
+          <label class="small tog"><input type="checkbox" data-ui="talkOpen" ${ui.talkOpen ? 'checked' : ''}> Still to ask only</label></div>
+        <p class="small muted">${st.n} questions · ${st.n - st.open} answered · ${st.open} to ask${st.star ? ` (${st.star} starred)` : ''}</p>
+        ${reqs.length ? `<div class="talk-reqs"><b class="small">Waiting on them (${reqs.length})</b><ul>${reqs.map((r) => `<li class="small">${esc(r.item)}${r.dueDate ? ` <span class="faint">· due ${esc(fmtD(r.dueDate))}</span>` : ''}</li>`).join('')}</ul></div>` : ''}
+        <div class="talk-qs">${qList || empty(ui.talkOpen ? 'Everything prepared for them has been answered.' : 'No prepared questions for this person.')}</div>`)}
+    </div>
   </div>`;
 }
 
-/** Top items for the Overview page. */
-function leaksTopCard(e) {
-  const items = rankItems(leakItems(e, { signals: false }), 'size').filter((x) => !x.nested).slice(0, 5);
-  if (!items.length) return '';
-  return card('Top leaks &amp; opportunities', `<ol class="rank">${items.map((x) => `<li><div><strong>${LENS_ICON[x.kind] || ''} ${esc(x.title)}</strong><div class="muted small">${x.value ? `${fmtMoney(x.value)}/mo ${esc((x.basis || '').toLowerCase())}` : 'Not sized'} · ${x.fix ? 'fix: ' + esc(trunc(x.fix.title, 60)) : x.next ? 'next: ' + esc(trunc(x.next, 60)) : '<span class="lo-neg">no action yet</span>'}</div></div></li>`).join('')}</ol>`,
-    { actions: '<button class="btn sm" data-action="tab" data-id="leaks">All →</button>' });
+/* ---------- Progress & reports ---------- */
+function viewProgressReports(e) {
+  return subBar('progress') + (subOf('progress') === 'report' ? viewReport(e) : viewProgress(e));
+}
+
+/* ---------- Sources & data: the source register ---------- */
+function sourcesCard(e) {
+  const src = (e.sources || []).slice().sort((a, b) => String(b.received || '').localeCompare(String(a.received || '')));
+  if (!src.length) return '';
+  return card(`Source register (${src.length})`, `<div class="scroll-x"><table class="tbl"><thead><tr><th>Source</th><th>Type</th><th>From</th><th>Information as of</th><th>Received</th><th>Via</th></tr></thead><tbody>
+    ${topN('sources', src, 8).map((s) => `<tr><td><strong>${esc(s.name || s.id)}</strong>${s.notes ? `<div class="faint small">${esc(trunc(s.notes, 140))}</div>` : ''}</td><td>${esc(s.type || '')}</td><td>${esc(s.from || '')}${s.person && !ui.anon ? ` <span class="faint small">(${esc(s.person)})</span>` : ''}</td><td>${esc(s.asOf || '')}</td><td>${esc(s.received || '')}</td><td>${esc(s.via || '')}</td></tr>`).join('')}
+    </tbody></table></div>${showAllBtn('sources', src.length, 8)}`, { sub: 'Every finding and feedback item cites these. Edit them under Edit data → Sources.' });
 }
 
 /* ---- report.js ---- */
@@ -3931,7 +4052,7 @@ body{margin:0;background:#f6f1e9;font-family:Inter,ui-sans-serif,-apple-system,B
    App shell — storage, routing, actions, data editor, Claude bridge
    ============================================================ */
 const STORE_KEY = 'tgm.studio.v1';
-const ui = { tab: 'overview', scenario: 'current', processId: '', stepId: '', editStep: '', pv: null, execView: true, review: null, reviewSetup: '', procView: 'flow', flowCols: 0, flowZoom: 0, flowWhole: false, anon: false, ghosts: true, showCost: true, compare: true, zoom: 1, area: 'All', recType: 'All', coll: 'people', theme: '', reportType: 'status', capture: false, draft: null, session: false, sessionId: '', prioOnly: true };
+const ui = { tab: 'home', sub: {}, all: {}, share: false, scenario: 'current', processId: '', stepId: '', editStep: '', pv: null, execView: true, review: null, reviewSetup: '', procView: 'flow', flowCols: 0, flowZoom: 0, flowWhole: false, anon: false, ghosts: true, showCost: true, compare: true, zoom: 1, area: 'All', recType: 'All', coll: 'people', theme: '', reportType: 'status', capture: false, draft: null, session: false, sessionId: '', prioOnly: true };
 let db = { activeId: '', engagements: {} };
 
 /* ---------- storage (localStorage, wrapped; the JSON file export is the real backup) ---------- */
@@ -3945,7 +4066,7 @@ function loadDB() {
   if (db.engagements.eng_demo && (!db.engagements.eng_demo.engagement.phases.length || !db.engagements.eng_demo.competitors.length)) db.engagements.eng_demo = demoEngagement(); // refresh old demo with tracking sample
   if (!db.engagements[db.activeId]) db.activeId = Object.keys(db.engagements)[0];
   try { Object.assign(ui, JSON.parse(localStorage.getItem(STORE_KEY + '.ui') || '{}'), { scenario: 'current' }); } catch (err) { /* ignore */ }
-  landProcesses();
+  ui.flowCols = 0; ui.all = {}; landProcesses();
 }
 let saveTimer = null;
 function save() {
@@ -3962,7 +4083,7 @@ window.addEventListener('pagehide', flushSave);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
 /** The Processes page always opens on Department view; Process view starts with just the "Choose process" button. */
 function landProcesses() { ui.pv = Object.assign({}, ui.pv, { mode: 'dept', focus: '', pick: '', hl: '', journey: false }); ui.stepId = ''; ui.editStep = ''; }
-function saveUI() { try { localStorage.setItem(STORE_KEY + '.ui', JSON.stringify({ tab: ui.tab, pv: ui.pv, execView: ui.execView, bpTop: ui.bpTop, lo: ui.lo && { lens: ui.lo.lens, sort: ui.lo.sort, signals: ui.lo.signals, noFix: ui.lo.noFix }, anon: ui.anon, showCost: ui.showCost, ghosts: ui.ghosts, compare: ui.compare, coll: ui.coll, theme: ui.theme })); } catch (err) { /* ignore */ } }
+function saveUI() { try { localStorage.setItem(STORE_KEY + '.ui', JSON.stringify({ tab: ui.tab, sub: ui.sub, share: ui.share, anonBefore: ui.anonBefore, talkP: ui.talkP, pv: ui.pv, execView: ui.execView, bpTop: ui.bpTop, lo: ui.lo && { lens: ui.lo.lens, sort: ui.lo.sort, signals: ui.lo.signals, noFix: ui.lo.noFix, unsized: ui.lo.unsized }, anon: ui.anon, showCost: ui.showCost, ghosts: ui.ghosts, compare: ui.compare, coll: ui.coll, theme: ui.theme })); } catch (err) { /* ignore */ } }
 const E = () => db.engagements[db.activeId];
 function procOfStep(id) { return E().processes.find((p) => (p.steps || []).some((x) => x.id === id)); }
 function reviewCtx() {
@@ -4030,15 +4151,16 @@ function setPath(obj, path, val) { const ks = path.split('.'); const last = ks.p
 
 /* ---------- render ---------- */
 function renderHeader() {
+  normaliseTab();
   const e = E();
   const engOpts = Object.values(db.engagements).map((x) => `<option value="${x.id}" ${x.id === db.activeId ? 'selected' : ''}>${esc(x.client.name)}</option>`).join('');
   const scOpts = [['current', 'Current state'], ...e.scenarios.map((s) => [s.id, s.name]), ['all', 'All recommendations']].map(([id, n]) => `<option value="${id}" ${ui.scenario === id ? 'selected' : ''}>${esc(n)}</option>`).join('');
   document.getElementById('topbar').innerHTML = `
     <div class="brand"><span class="cog" aria-hidden="true">✹</span><span>THE <strong>GROWTH</strong> MACHINE</span><em>Studio</em></div>
     <label class="hsel"><span>Client</span><select id="engSel">${engOpts}</select></label>
-    <label class="hsel"><span>View as</span><select id="scSel">${scOpts}</select></label>
+    ${SCENARIO_TABS.includes(ui.tab) || ui.scenario !== 'current' ? `<label class="hsel"><span>View as</span><select id="scSel">${scOpts}</select></label>` : ''}
     ${flagBadge(e)}
-    <div class="hbtns"><button class="btn sm" data-action="newEng">+ New client</button><button class="btn sm" data-action="exportJSON" title="Download everything saved for ${esc(e.client.name)}: data, interviews, findings, progress, diary and merge history">Back up</button><button class="btn sm ghost" data-action="theme" title="Toggle light/dark">◐</button></div>`;
+    <div class="hbtns"><button class="btn sm ${ui.share ? 'on share-on' : 'ghost'}" data-action="share" title="Screen-share mode: names become roles, and TGM-only notes (🔒 reminders, the work diary, confidential interview points) are hidden">${ui.share ? '● Screen share on' : 'Screen share'}</button><button class="btn sm" data-action="newEng">+ New client</button><button class="btn sm" data-action="exportJSON" title="Download everything saved for ${esc(e.client.name)}: data, interviews, findings, progress, diary and merge history">Back up</button><button class="btn sm ghost" data-action="theme" title="Toggle light/dark">◐</button></div>`;
   const st = e.engagement.phases.length ? engagementStatus(e) : null;
   const badge = (id) => id === 'progress' && st && (st.openDelays.length || st.overdue.length) ? `<span class="nav-badge" title="Open delays / overdue client items">⚑ ${st.openDelays.length + st.overdue.length}</span>` : '';
   document.getElementById('nav').innerHTML = TABS.map(([id, n]) => `<button class="nav-btn ${ui.tab === id ? 'on' : ''}" data-action="tab" data-id="${id}">${n}${badge(id)}</button>`).join('')
@@ -4055,17 +4177,19 @@ function render() {
   const keep = [...document.querySelectorAll('#main .flow-wrap')].map((w) => [w.scrollLeft, w.scrollTop]);
   const e = E();
   renderHeader();
-  const views = { competitors: viewCompetitors, progress: viewProgress, discovery: viewDiscovery, overview: viewOverview, leaks: viewLeaks, business: viewBusiness, finance: viewFinance, org: viewOrg, tools: viewTools, processes: viewProcesses, interviews: viewInterviews, crossover: viewCrossover, recs: viewRecs, scenarios: viewScenarios, report: viewReport, data: viewData };
+  normaliseTab();
+  const views = { home: viewLeaks, plan: viewPlan, processes: viewProcesses, evidence: viewEvidence, talk: viewTalk, progress: viewProgressReports, data: viewData };
   let html;
-  try { html = (views[ui.tab] || viewOverview)(e); }
-  catch (err) { console.error(err); html = `<div class="banner err">Something in this client's data could not be displayed: ${esc(err.message)}. Check the Data tab.</div>`; }
+  try { html = (views[ui.tab] || viewLeaks)(e); }
+  catch (err) { console.error(err); html = `<div class="banner err">Something in this client's data could not be displayed: ${esc(err.message)}. Check Sources &amp; data.</div>`; }
   document.getElementById('main').innerHTML = html;
+  document.body.classList.toggle('share', !!ui.share);
   document.querySelectorAll('#main .flow-wrap').forEach((w, i) => { if (keep[i]) { w.scrollLeft = keep[i][0]; w.scrollTop = keep[i][1]; } });
   document.documentElement.dataset.theme = ui.theme || '';
   if (!ui.theme) delete document.documentElement.dataset.theme;
 }
 
-/* ---------- Data & Claude view (lives here because it is tied to the editor) ---------- */
+/* ---------- Sources & data view (lives here because it is tied to the editor) ---------- */
 const FIELD_DEFS = {
   departments: [['id', 'text'], ['name', 'text'], ['type', DEPT_TYPES.map((d) => d[0])], ['headId', 'person'], ['notes', 'text']],
   people: [['id', 'text'], ['name', 'text'], ['title', 'text'], ['departmentId', 'dept'], ['managerId', 'person'], ['employmentType', ['Full-time', 'Part-time', 'Contractor', 'Outsourced', 'Vacant']], ['fte', 'num'], ['annualCost', 'num'], ['location', 'text'], ['startDate', 'date'], ['notes', 'text']],
@@ -4086,7 +4210,7 @@ const FIELD_DEFS = {
   usps: [['id', 'text'], ['claim', 'text'], ['strength', ['Unique', 'Shared', 'Claimed only']], ['proof', 'long'], ['competitorsWithIt', 'text'], ['notes', 'text']],
   opportunities: [['id', 'text'], ['title', 'text'], ['area', OPP_AREAS], ['description', 'long'], ['basedOn', 'text'], ['impact', ['High', 'Medium', 'Low']], ['effort', ['High', 'Medium', 'Low']], ['status', ['Idea', 'Proposed', 'Recommendation']], ['valueMonthly', 'num'], ['recommendationId', 'text'], ['nextStep', 'text']],
   capabilities: [['id', 'text'], ['name', 'text'], ['importance', ['High', 'Medium', 'Low']], ['client', ['Strong', 'Partial', 'None']], ['notes', 'text'], ['scores', 'json']],
-  recommendations: [['id', 'text'], ['title', 'text'], ['type', ['People', 'Process', 'Tool', 'Build', 'Structure', 'Commercial']], ['horizon', ['0-3 months', '3-6 months', '6-12 months', '12+ months']], ['description', 'long'], ['effort', 'num'], ['risk', 'num'], ['confidence', 'num'], ['oneOffCost', 'num'], ['otherAnnualSaving', 'num'], ['oneOffSaving', 'num'], ['revenueUplift', 'num'], ['status', REC_STAGES], ['ops', 'json']],
+  recommendations: [['id', 'text'], ['title', 'text'], ['type', ['People', 'Process', 'Tool', 'Build', 'Structure', 'Commercial']], ['horizon', ['0-3 months', '3-6 months', '6-12 months', '12+ months']], ['description', 'long'], ['effort', 'num'], ['risk', 'num'], ['confidence', 'num'], ['oneOffCost', 'num'], ['otherAnnualSaving', 'num'], ['oneOffSaving', 'num'], ['revenueUplift', 'num'], ['status', REC_STAGES], ['stick', 'long'], ['owner', 'text'], ['ops', 'json']],
   scenarios: [['id', 'text'], ['name', 'text'], ['description', 'text'], ['recommendationIds', 'json']]
 };
 const COLL_LABELS = { customQuestions: 'Custom interview questions', competitors: 'Competitors', capabilities: 'Capabilities', intel: 'Competitor intelligence', usps: 'USPs', opportunities: 'Opportunities', intake: 'Founder answers', departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Clients', revenueMovements: 'Revenue movements', feedback: 'Client feedback (written vs practice)', sources: 'Sources (where every number comes from)', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };
@@ -4107,7 +4231,7 @@ function viewData(e) {
   const grid = `<table class="tbl grid-edit"><thead><tr>${defs.map(([f]) => `<th>${f}</th>`).join('')}<th></th></tr></thead><tbody>
     ${e[coll].map((row) => `<tr>${defs.map((d) => `<td>${cellInput(e, coll, row, d)}</td>`).join('')}<td><button class="btn sm ghost" data-action="delRow" data-coll="${coll}" data-id="${esc(row.id)}" title="Delete row">✕</button></td></tr>`).join('')}
     </tbody></table>`;
-  return `<div class="page-h"><div><span class="eyebrow">Data & Claude</span><h1>Get information in and out</h1><p class="muted">This browser saves your work automatically, but browser storage is not a backup. <strong>Back up after every session</strong> and keep the files somewhere private, such as your own Google Drive. Never put them in the website repo.</p></div></div>
+  return `<div class="page-h"><div><span class="eyebrow">Sources &amp; data</span><h1>Get information in and out</h1><p class="muted">This browser saves your work automatically, but browser storage is not a backup. <strong>Back up after every session</strong> and keep the files somewhere private, such as your own Google Drive. Never put them in the website repo.</p></div></div>
   <div class="grid-2">
     ${card('Back up / restore', `<div class="btn-row">
         <button class="btn" data-action="exportJSON">Back up ${esc(e.client.name)} (everything)</button>
@@ -4120,6 +4244,7 @@ function viewData(e) {
       <div class="btn-row"><button class="btn" data-action="mergePaste">Merge into ${esc(e.client.name)}</button><button class="btn ghost" data-action="copyPrompt">Copy Claude prompt</button><button class="btn ghost" data-action="copyContext">Copy client JSON for Claude</button></div>
       <p class="faint small">Merge adds new records and updates records with the same id. Nothing is deleted.</p>`)}
   </div>
+  ${sourcesCard(e)}
   ${card('Find and replace text', `<div class="fr-row"><label class="fld"><span>Find</span><input id="frFind" placeholder="e.g. a misspelt name"></label><label class="fld"><span>Replace with</span><input id="frRepl"></label>
       <label class="tog small"><input type="checkbox" id="frCase"> Match case</label><button class="btn" data-action="findReplace">Find and replace…</button></div>
       <p class="faint small">Searches every text in ${esc(e.client.name)}: findings, recommendations, processes and steps, interviews, questions, notes. It shows how many it found and where before changing anything. IDs and the merge history are never changed.</p>`)}
@@ -4187,7 +4312,12 @@ function toast(t) { const el = document.getElementById('toast'); el.textContent 
 function stripMarks(o) { return JSON.parse(JSON.stringify(o, (k, v) => (k.startsWith('_') ? undefined : v))); }
 
 const actions = {
-  tab: (el) => { if (el.dataset.id === 'processes' && ui.tab !== 'processes') landProcesses(); ui.tab = el.dataset.id; saveUI(); render(); window.scrollTo(0, 0); },
+  tab: (el) => { if (el.dataset.id === 'processes' && ui.tab !== 'processes') landProcesses(); ui.tab = el.dataset.id; ui.capture = false; ui.session = false; if (el.dataset.sub) { normaliseTab(); ui.sub[ui.tab] = el.dataset.sub; } saveUI(); render(); window.scrollTo(0, 0); },
+  sub: (el) => { ui.sub = Object.assign({}, ui.sub, { [el.dataset.tab]: el.dataset.id }); ui.capture = false; ui.session = false; saveUI(); render(); },
+  showAll: (el) => { ui.all = Object.assign({}, ui.all, { [el.dataset.id]: !(ui.all || {})[el.dataset.id] }); render(); },
+  loNeed: (el) => { const k = el.dataset.k; const L = ui.lo || {}; ui.lo = Object.assign({}, L, k === 'clear' ? { noFix: false, unsized: false } : { noFix: k === 'noFix' ? !L.noFix : false, unsized: k === 'unsized' ? !L.unsized : false }, { open: '' }); ui.all = Object.assign({}, ui.all, { home: !!(ui.lo.noFix || ui.lo.unsized) }); saveUI(); render(); },
+  talkP: (el) => { ui.talkP = el.dataset.id; render(); },
+  share: () => { if (!ui.share) { ui.anonBefore = !!ui.anon; ui.anon = true; ui.share = true; } else { ui.share = false; ui.anon = !!ui.anonBefore; } saveUI(); render(); toast(ui.share ? 'Screen share on: names show as roles; TGM-only notes are hidden' : 'Screen share off'); },
   pvPick: (el) => { ui.pv = Object.assign({}, ui.pv, { mode: 'proc', focus: '', pick: el.dataset.id || '' }); ui.stepId = ''; saveUI(); render(); },
   pvBack: (el) => { ui.pv = Object.assign({}, ui.pv, { mode: 'proc', focus: '', hl: '', journey: false, pick: el.dataset.id || 'open' }); ui.stepId = ''; ui.editStep = ''; saveUI(); render(); window.scrollTo(0, 0); },
   setScenario: (el) => { ui.scenario = el.dataset.id; render(); },
@@ -4540,7 +4670,7 @@ const actions = {
     el.checked ? ids.add(el.dataset.rec) : ids.delete(el.dataset.rec); s.recommendationIds = [...ids]; touch(s); save(); render();
   },
   toggleReportProc: (el) => { const r = E().report; const ids = new Set(r.processIds || []); el.checked ? ids.add(el.dataset.id) : ids.delete(el.dataset.id); r.processIds = [...ids]; save(); render(); },
-  printReport: () => { if (ui.tab !== 'report') { ui.tab = 'report'; render(); } setTimeout(() => window.print(), 50); },
+  printReport: () => { if (!(ui.tab === 'progress' && subOf('progress') === 'report')) { ui.tab = 'report'; render(); } setTimeout(() => window.print(), 50); },
   downloadReport: () => downloadReportHTML(E(), ui.reportType)
 };
 
@@ -4653,7 +4783,7 @@ document.addEventListener('change', (ev) => {
     if (coll === 'engagement.activities' && field === 'status') row.doneDate = v === 'Done' ? (row.doneDate || todayISO()) : '';
     if (coll === 'engagement.phases' && field === 'status' && v === 'Done') { const ps = E().engagement.phases; const i = ps.indexOf(row); if (ps[i + 1] && ps[i + 1].status === 'Not started') ps[i + 1].status = 'In progress'; }
     save();
-    if ((coll === 'recommendations' && ui.tab === 'recs') || ui.tab === 'leaks' || (ui.tab === 'progress' && (t.tagName === 'SELECT' || t.type === 'date' || t.type === 'number'))) render();
+    if ((coll === 'recommendations' && ui.tab === 'plan') || ui.tab === 'home' || (ui.tab === 'progress' && (t.tagName === 'SELECT' || t.type === 'date' || t.type === 'number'))) render();
   }
 });
 document.addEventListener('input', (ev) => {
