@@ -372,6 +372,13 @@ tr.lk-total td{font-weight:600;border-top:1px solid var(--line)}
 @media (max-width:820px){.lo-head{display:none}.lo-main{grid-template-columns:26px 26px minmax(0,1fr);}.lo-val,.lo-fixcol{grid-column:3}.lo-val{text-align:left}.lo-detail{padding-left:14px}}
 .lo-next{color:var(--warn-ink)}
 .lo-edit .lo-wide{flex:1 1 100%}.lo-edit .lo-wide input{max-width:none;width:100%}
+/* Swimlane: department column stays visible while scrolling sideways */
+.jl-grid{display:grid;width:max-content}
+.jl-grid>*{grid-area:1/1}
+.jl-stick{position:sticky;left:0;z-index:3;align-self:start;justify-self:start;line-height:0}
+.jl-stick svg{display:block;max-width:none}
+.jl .jl-stbg{fill:var(--surface)}.jl .jl-stedge{stroke:var(--line);stroke-width:1.5}
+.flow-wrap.zoomed .jl-stick{box-shadow:6px 0 10px -6px rgba(0,0,0,.18)}
 </style>
 <style id="report-css">/* Founder report styles (also embedded in exported HTML reports) */
 .rpt{background:#fffdf9;color:#171715;border:1px solid #d7cfc3;border-radius:14px;padding:40px 46px;
@@ -598,7 +605,7 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="tip" hidden></div>
 <script>
-const STUDIO_BUILD = '2026-11-05 10:53 UTC';
+const STUDIO_BUILD = '2026-11-05 11:18 UTC';
 /* ---- model.js ---- */
 /* ============================================================
    The Growth Machine — data model, scenario engine, scoring, insights
@@ -2247,9 +2254,11 @@ function pvLanes(st, P, seqChains, { exec = true, interactive = true, zoom = 0, 
   // process brackets
   seqChains.forEach((c) => c.chain.forEach((p) => { const cs = cols.filter((k) => k.it.p.id === p.id); if (!cs.length) return; const x1 = cs[0].x + 4, x2 = cs[cs.length - 1].x + NW;
     g += `<rect class="jl-stage" x="${x1}" y="18" width="${Math.max(40, x2 - x1)}" height="44" rx="8"/>${T(x1 + 12, 35, procGroup(p).toUpperCase(), 'jl-st')}${T(x1 + 12, 52, trunc(p.name, Math.max(8, Math.floor((x2 - x1) / 7.4))), 'jl-pn')}`; }));
+  const LS = LW - 12; let lab = `<rect class="jl-stbg" x="0" y="0" width="${LS}" height="${H}"/>`; // sticky department column (shown when zoomed)
   lanes.forEach((t, i) => { const y = TOP + i * LH; const ti = teamInfo(t); const prim = P.mode === 'dept' && t === P.dept;
+    lab += `<rect class="jl-lane ${i % 2 ? 'alt' : ''} ${prim ? 'prim' : ''}" x="0" y="${y}" width="${LS}" height="${LH}"/><rect x="0" y="${y}" width="${prim ? 10 : 6}" height="${LH}" style="fill:${t === 'other' ? 'var(--line)' : ti[2]}"/>${T(20, y + LH / 2 - 2, t === 'other' ? 'Unassigned' : ti[1], 'jl-ln')}${T(20, y + LH / 2 + 15, prim ? 'primary department' : `${all.filter((k) => k.shown && k.dept === t).length} steps`, 'jl-ls')}`;
     g += `<rect class="jl-lane ${i % 2 ? 'alt' : ''} ${prim ? 'prim' : ''}" x="0" y="${y}" width="${W}" height="${LH}"/><rect x="0" y="${y}" width="${prim ? 10 : 6}" height="${LH}" style="fill:${t === 'other' ? 'var(--line)' : ti[2]}"/>${T(20, y + LH / 2 - 2, t === 'other' ? 'Unassigned' : ti[1], 'jl-ln')}${T(20, y + LH / 2 + 15, prim ? 'primary department' : `${all.filter((k) => k.shown && k.dept === t).length} steps`, 'jl-ls')}`; });
-  if (hasHidden) g += `<rect class="jl-lane other" x="0" y="${TOP + lanes.length * LH}" width="${W}" height="${OTH}"/>${T(20, TOP + lanes.length * LH + OTH / 2 - 2, 'Other departments', 'jl-ln')}${T(20, TOP + lanes.length * LH + OTH / 2 + 14, '(not ticked)', 'jl-ls')}`;
+  if (hasHidden) { const oth = (w) => `<rect class="jl-lane other" x="0" y="${TOP + lanes.length * LH}" width="${w}" height="${OTH}"/>${T(20, TOP + lanes.length * LH + OTH / 2 - 2, 'Other departments', 'jl-ln')}${T(20, TOP + lanes.length * LH + OTH / 2 + 14, '(not ticked)', 'jl-ls')}`; g += oth(W); lab += oth(LS); }
   seqChains.forEach((c, ci) => { if (!ci) return; const xc = cols.find((k) => k.it === c.items[0]).x - GAP / 2 - 6; g += `<line class="jl-div" x1="${xc}" x2="${xc}" y1="${TOP - 6}" y2="${lanesBottom}"/>`; });
   const pos = new Map(cols.map(({ it, x: cx }) => [it, { x: cx, y: it.shown ? TOP + lanes.indexOf(it.dept) * LH + (LH - NH) / 2 : TOP + lanes.length * LH + 12, w: NW, h: it.shown ? NH : 40 }]));
   seqChains.forEach((c) => c.items.forEach((it, i) => { if (!i) return; const prev = c.items[i - 1]; const a = pos.get(prev), b = pos.get(it);
@@ -2280,10 +2289,13 @@ function pvLanes(st, P, seqChains, { exec = true, interactive = true, zoom = 0, 
     g += '</g>'; });
   g += `<line class="jl-sep" x1="0" x2="${W}" y1="${lanesBottom + 22}" y2="${lanesBottom + 22}"/>${T(20, TT + 2, 'TOOLS AND SYSTEMS', 'jl-th')}${T(LW, TT + 2, '● = a step that uses this tool, coloured by department', 'jl-ls')}`;
   toolRows.forEach(([tid, set], k) => { const y = TT + 30 + k * 36; const t = tById[tid];
-    g += `<line class="jl-tl" x1="${LW - 10}" x2="${W - 20}" y1="${y - 4}" y2="${y - 4}"/>${T(20, y - 2, trunc(t.name.replace(/ \(.*/, ''), 24), 'jl-tn')}${T(20, y + 13, set.size > 1 ? 'SHARED: ' + [...set].map((l) => teamInfo(l)[1]).join(' + ') : teamInfo([...set][0])[1] + ' only', set.size > 1 ? 'jl-sh' : 'jl-ls')}`;
+    const tl = `${T(20, y - 2, trunc(t.name.replace(/ \(.*/, ''), 24), 'jl-tn')}${T(20, y + 13, set.size > 1 ? 'SHARED: ' + [...set].map((l) => teamInfo(l)[1]).join(' + ') : teamInfo([...set][0])[1] + ' only', set.size > 1 ? 'jl-sh' : 'jl-ls')}`;
+    g += `<line class="jl-tl" x1="${LW - 10}" x2="${W - 20}" y1="${y - 4}" y2="${y - 4}"/>${tl}`; lab += tl;
     cols.forEach(({ it, x: cx }) => { if (it.shown && it.s.toolId === tid) g += `<circle cx="${cx + NW / 2}" cy="${y - 4}" r="7" class="jl-dot" style="fill:${teamInfo(it.dept)[2]}"/>${T(cx + NW / 2, y + 14, it.num, 'jl-dn', 'middle')}`; }); });
   g += '</svg>';
-  return `<div class="flow-wrap${zoom ? ' zoomed' : ''}">${g}</div>`;
+  if (!zoom || !interactive) return `<div class="flow-wrap${zoom ? ' zoomed' : ''}">${g}</div>`;
+  const ov = `<svg class="jl jl-stick-svg" viewBox="0 0 ${LS} ${H}" width="${Math.round(LS * zoom)}" height="${Math.round(H * zoom)}" aria-hidden="true">${lab}${T(20, TT + 2, 'TOOLS AND SYSTEMS', 'jl-th')}<line class="jl-stedge" x1="${LS - 0.5}" x2="${LS - 0.5}" y1="0" y2="${H}"/></svg>`;
+  return `<div class="flow-wrap zoomed"><div class="jl-grid"><div class="jl-stick">${ov}</div>${g}</div></div>`;
 }
 
 /** The visual for the current selection (flow: one serpentine per chain; swimlane: all chains in one). */
