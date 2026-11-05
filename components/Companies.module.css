@@ -13,6 +13,8 @@
   --first: 430px;
   --step: 190px;
   --card: 560px;
+  /* How fast the strip turns: keep in step with PACE in Companies.jsx. */
+  --pace: 1.4;
   position: relative;
   isolation: isolate;
   overflow: hidden;
@@ -98,8 +100,8 @@
   transform: translateX(calc(var(--s) * (var(--first) + (var(--a) - 1) * var(--step))));
   opacity: calc(1 - (var(--a) - 1) * 0.2);
   transition:
-    transform 0.9s cubic-bezier(0.6, 0, 0.2, 1),
-    opacity 0.6s ease;
+    transform calc(0.9s / var(--pace)) cubic-bezier(0.6, 0, 0.2, 1),
+    opacity calc(0.6s / var(--pace)) ease;
 }
 
 .item.on {
@@ -127,8 +129,8 @@
   background: #faf8f4;
   transform: translate(-50%, -50%);
   transition:
-    opacity 0.4s ease,
-    transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+    opacity calc(0.4s / var(--pace)) ease,
+    transform calc(0.6s / var(--pace)) cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .on .pill {
@@ -217,9 +219,9 @@
   opacity: 0;
   visibility: hidden;
   transition:
-    transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1),
-    opacity 0.35s ease,
-    visibility 0s linear 0.6s;
+    transform calc(0.6s / var(--pace)) cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity calc(0.35s / var(--pace)) ease,
+    visibility 0s linear calc(0.6s / var(--pace));
 }
 
 .on .card {
@@ -227,8 +229,8 @@
   opacity: 1;
   visibility: visible;
   transition:
-    transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.45s,
-    opacity 0.4s ease 0.45s,
+    transform calc(0.7s / var(--pace)) cubic-bezier(0.2, 0.8, 0.2, 1) calc(0.45s / var(--pace)),
+    opacity calc(0.4s / var(--pace)) ease calc(0.45s / var(--pace)),
     visibility 0s;
 }
 

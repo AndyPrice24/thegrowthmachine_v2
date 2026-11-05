@@ -24,11 +24,15 @@ import styles from './Companies.module.css';
  * Companies live in companies.js.
  */
 
-// Seconds each company stays open: long enough to read what's on its card,
-// at a little under four words a second.
+// How fast the strip turns: 1 is the original pace; 1.4 is 40% faster.
+// Keep in step with --pace in Companies.module.css.
+const PACE = 1.4;
+
+// Seconds each company stays open: scaled to what's on its card (at the
+// original pace, a little under four words a second), divided by PACE.
 const hold = (c) => {
   const words = `${c.quote?.text || ''} ${c.statement || ''}`.split(/\s+/).filter(Boolean).length;
-  return Math.max(6, 4 + words * 0.22);
+  return Math.max(6, 4 + words * 0.22) / PACE;
 };
 
 export default function Companies({ companies = COMPANIES }) {
