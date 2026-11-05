@@ -656,7 +656,7 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="tip" hidden></div>
 <script>
-const STUDIO_BUILD = '2026-11-05 15:04 UTC';
+const STUDIO_BUILD = '2026-11-05 16:24 UTC';
 /* ---- model.js ---- */
 /* ============================================================
    The Growth Machine — data model, scenario engine, scoring, insights
@@ -754,6 +754,10 @@ function mergeEngagement(base, incoming) {
     const c = counts[coll] = { added: 0, updated: 0, skipped: 0 };
     items.forEach((item) => {
       const i = item.id ? arr.findIndex((x) => x.id === item.id) : -1;
+      if (item._delete) { // an update file can retire a duplicate or obsolete record
+        if (i >= 0 && !isNewer(arr[i])) { arr.splice(i, 1); out.meta.deleted = Object.assign({}, out.meta.deleted, { [coll + ':' + item.id]: ts || nowISO() }); c.updated++; }
+        return;
+      }
       if (i >= 0) {
         if (isNewer(arr[i])) { c.skipped++; skipped.push({ coll, id: item.id, why: 'newer data kept' }); return; }
         const merged = Object.assign({}, arr[i], item, ts ? { updatedAt: ts } : {});
@@ -3351,8 +3355,8 @@ function viewProgress(e) {
 function savingsBlock(sv) {
   const mx = Math.max(sv.target, sv.identified, 1);
   const bar = (v, c, label) => `<div class="sv-row"><span>${label}</span><div class="sv-track"><span style="width:${v / mx * 100}%;background:${c}"></span><i style="left:${sv.target / mx * 100}%" title="Target"></i></div><b>${fmtMoney(v)}</b></div>`;
-  return `<div class="sv">${bar(sv.identified, 'var(--seq-3)', 'Identified')}${bar(sv.approved, 'var(--seq-5)', 'Approved')}${bar(sv.realised, 'var(--seq-7)', 'Realised')}
-    <p class="small muted">Target ${fmtMoney(sv.target)}/month (marker line)${sv.baseline ? ` against an agreed baseline of ${fmtMoney(sv.baseline)}/month` : ' · baseline not yet agreed'}. Reported separately: one-off savings ${fmtMoney(sv.oneOffSavings)}; one-off costs of approved items ${fmtMoney(sv.oneOffCosts)}; time freed ${Math.round(sv.hours)} hrs/month (capacity, not cash).</p></div>
+  return `<div class="sv">${bar(sv.identified, 'var(--seq-3)', 'Identified (estimates)')}${bar(sv.approved, 'var(--seq-5)', 'Approved')}${bar(sv.realised, 'var(--seq-7)', 'Realised')}
+    <p class="small muted">Target ${fmtMoney(sv.target)}/month (marker line)${sv.baseline ? ` against a baseline of ${fmtMoney(sv.baseline)}/month` : ' · baseline not yet set'}. <b>Identified</b> are our estimates until the client approves them; only Approved and Realised count towards the target. Reported separately: one-off savings ${fmtMoney(sv.oneOffSavings)}; one-off costs of approved items ${fmtMoney(sv.oneOffCosts)}; time freed ${Math.round(sv.hours)} hrs/month (capacity, not cash).</p></div>
     ${sv.rows.length ? `<table class="tbl"><thead><tr><th>Initiative</th><th>Stage</th><th class="r">Net recurring / month</th><th class="r">One-off cost</th><th class="r">Hours freed / mo</th></tr></thead><tbody>${sv.rows.map((r) => `<tr class="${r.stage === 'Rejected' ? 'row-removed' : ''}"><td>${esc(r.rec.title)}</td><td><span class="chip ${r.stage === 'Realised' ? 'st-added' : r.stage === 'Approved' || r.stage === 'In progress' ? 'st-changed' : ''}">${esc(r.stage)}</span></td><td class="r ${r.monthlyNet < 0 ? 'delta-bad' : ''}">${fmtMoney(r.monthlyNet)}</td><td class="r">${fmtMoney(r.oneOffCost)}</td><td class="r">${Math.round(r.hoursMonth)}</td></tr>`).join('')}</tbody></table>` : ''}`;
 }
 

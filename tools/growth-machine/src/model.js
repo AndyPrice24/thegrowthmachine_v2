@@ -94,6 +94,10 @@ function mergeEngagement(base, incoming) {
     const c = counts[coll] = { added: 0, updated: 0, skipped: 0 };
     items.forEach((item) => {
       const i = item.id ? arr.findIndex((x) => x.id === item.id) : -1;
+      if (item._delete) { // an update file can retire a duplicate or obsolete record
+        if (i >= 0 && !isNewer(arr[i])) { arr.splice(i, 1); out.meta.deleted = Object.assign({}, out.meta.deleted, { [coll + ':' + item.id]: ts || nowISO() }); c.updated++; }
+        return;
+      }
       if (i >= 0) {
         if (isNewer(arr[i])) { c.skipped++; skipped.push({ coll, id: item.id, why: 'newer data kept' }); return; }
         const merged = Object.assign({}, arr[i], item, ts ? { updatedAt: ts } : {});

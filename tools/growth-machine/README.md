@@ -188,3 +188,12 @@ only), the date the information applies to, when and how it was received, and a 
 `sources: [{id, part, side}]`, where `side` is `says` (the client's documents) or `seen` (the evidence that disagrees)
 and `part` is the exact tab, section or point. The cheatsheet prints both sides under "Where this comes from" (roles only),
 and the Leaks & opportunities detail lists them (with names).
+
+### Retiring records from an update file
+An update file can remove an obsolete or duplicate record by sending `{"id": "...", "_delete": true}` in its collection.
+The record is removed and a tombstone is kept, so an older file can't bring it back. Records edited in the Studio after
+the file was made are left alone.
+
+### Savings tracker
+"Identified" savings are TGM's estimates (from recommendation changes) until the client approves them; only Approved and
+Realised count towards the target. The baseline is `engagement.baselineMonthly`.
