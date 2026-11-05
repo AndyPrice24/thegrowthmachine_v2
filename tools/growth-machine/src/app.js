@@ -30,7 +30,7 @@ function save() {
 function flushSave() { if (!saveTimer) return; clearTimeout(saveTimer); saveTimer = null; try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); } catch (err) { /* ignore */ } }
 window.addEventListener('pagehide', flushSave);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
-function saveUI() { try { localStorage.setItem(STORE_KEY + '.ui', JSON.stringify({ tab: ui.tab, pv: ui.pv, execView: ui.execView, bpTop: ui.bpTop, anon: ui.anon, showCost: ui.showCost, ghosts: ui.ghosts, compare: ui.compare, coll: ui.coll, theme: ui.theme })); } catch (err) { /* ignore */ } }
+function saveUI() { try { localStorage.setItem(STORE_KEY + '.ui', JSON.stringify({ tab: ui.tab, pv: ui.pv, execView: ui.execView, bpTop: ui.bpTop, lo: ui.lo && { lens: ui.lo.lens, sort: ui.lo.sort, signals: ui.lo.signals, noFix: ui.lo.noFix }, anon: ui.anon, showCost: ui.showCost, ghosts: ui.ghosts, compare: ui.compare, coll: ui.coll, theme: ui.theme })); } catch (err) { /* ignore */ } }
 const E = () => db.engagements[db.activeId];
 function procOfStep(id) { return E().processes.find((p) => (p.steps || []).some((x) => x.id === id)); }
 function reviewCtx() {
@@ -123,7 +123,7 @@ function render() {
   const keep = [...document.querySelectorAll('#main .flow-wrap')].map((w) => [w.scrollLeft, w.scrollTop]);
   const e = E();
   renderHeader();
-  const views = { competitors: viewCompetitors, progress: viewProgress, discovery: viewDiscovery, overview: viewOverview, business: viewBusiness, finance: viewFinance, org: viewOrg, tools: viewTools, processes: viewProcesses, interviews: viewInterviews, crossover: viewCrossover, recs: viewRecs, scenarios: viewScenarios, report: viewReport, data: viewData };
+  const views = { competitors: viewCompetitors, progress: viewProgress, discovery: viewDiscovery, overview: viewOverview, leaks: viewLeaks, business: viewBusiness, finance: viewFinance, org: viewOrg, tools: viewTools, processes: viewProcesses, interviews: viewInterviews, crossover: viewCrossover, recs: viewRecs, scenarios: viewScenarios, report: viewReport, data: viewData };
   let html;
   try { html = (views[ui.tab] || viewOverview)(e); }
   catch (err) { console.error(err); html = `<div class="banner err">Something in this client's data could not be displayed: ${esc(err.message)}. Check the Data tab.</div>`; }
@@ -144,13 +144,13 @@ const FIELD_DEFS = {
   topClients: [['id', 'text'], ['name', 'text'], ['segment', ['Managed', 'Reseller / self-service', 'Partner / section row']], ['csm', 'text'], ['annualRevenue', 'num'], ['churnRisk', ['Low', 'Medium', 'High']], ['contractStatus', ['In contract', 'Renews within 90 days', 'Out of contract', 'Month to month', 'Unknown']], ['satisfaction', 'text'], ['touchpoint', ['Low', 'Low-Medium', 'Medium', 'Medium-High', 'High']], ['adoption', ['Low', 'Medium', 'High']], ['register', 'json'], ['csScores', 'json'], ['notes', 'text']],
   financePeriods: [['id', 'text'], ['label', 'text'], ['months', 'num'], ['revenue', 'num'], ['cogs', 'num'], ['payroll', 'num'], ['tools', 'num'], ['marketing', 'num'], ['premises', 'num'], ['other', 'num']],
   interviews: [['id', 'text'], ['personId', 'person'], ['date', 'date'], ['interviewer', 'text'], ['summary', 'long'], ['themes', 'text'], ['painPoints', 'long'], ['ideas', 'long'], ['quotes', 'long']],
-  findings: [['id', 'text'], ['title', 'text'], ['area', 'text'], ['severity', ['high', 'medium', 'low']], ['lens', 'text'], ['evidence', 'long']],
+  findings: [['id', 'text'], ['title', 'text'], ['area', 'text'], ['severity', ['high', 'medium', 'low']], ['kind', ['leak', 'weakness', 'hole', 'opportunity', 'tool', 'context']], ['valueMonthly', 'num'], ['basis', ['Leaking', 'At risk', 'Spend to review', 'Upside']], ['fixId', 'text'], ['partOf', 'text'], ['lens', 'text'], ['evidence', 'long']],
   revenueMovements: [['id', 'text'], ['fy', 'text'], ['client', 'text'], ['kind', ['lost', 'downgrade', 'new', 'growth']], ['cause', 'text'], ['monthly', 'num'], ['from', 'text'], ['reason', 'text'], ['comment', 'text']],
   customQuestions: [['id', 'text'], ['personId', 'person'], ['section', 'text'], ['q', 'long'], ['note', 'text'], ['crit', CRITERIA.map((c) => c.id)], ['p', 'num']],
   competitors: [['id', 'text'], ['name', 'text'], ['type', ['Direct', 'Indirect', 'Substitute', 'Adjacent']], ['threat', ['High', 'Medium', 'Low']], ['website', 'text'], ['hq', 'text'], ['markets', 'text'], ['segments', 'text'], ['offering', 'long'], ['pricingModel', 'text'], ['pricePoint', 'num'], ['size', 'text'], ['ownership', 'text'], ['strengths', 'long'], ['weaknesses', 'long'], ['whereWeWin', 'long'], ['whereWeLose', 'long'], ['sources', 'long'], ['lastReviewed', 'date']],
   intel: [['id', 'text'], ['competitorId', 'comp'], ['topic', INTEL_TOPICS], ['note', 'long'], ['sourceType', SOURCE_TYPES], ['source', 'text'], ['date', 'date']],
   usps: [['id', 'text'], ['claim', 'text'], ['strength', ['Unique', 'Shared', 'Claimed only']], ['proof', 'long'], ['competitorsWithIt', 'text'], ['notes', 'text']],
-  opportunities: [['id', 'text'], ['title', 'text'], ['area', OPP_AREAS], ['description', 'long'], ['basedOn', 'text'], ['impact', ['High', 'Medium', 'Low']], ['effort', ['High', 'Medium', 'Low']], ['status', ['Idea', 'Proposed', 'Recommendation']], ['recommendationId', 'text']],
+  opportunities: [['id', 'text'], ['title', 'text'], ['area', OPP_AREAS], ['description', 'long'], ['basedOn', 'text'], ['impact', ['High', 'Medium', 'Low']], ['effort', ['High', 'Medium', 'Low']], ['status', ['Idea', 'Proposed', 'Recommendation']], ['valueMonthly', 'num'], ['recommendationId', 'text']],
   capabilities: [['id', 'text'], ['name', 'text'], ['importance', ['High', 'Medium', 'Low']], ['client', ['Strong', 'Partial', 'None']], ['notes', 'text'], ['scores', 'json']],
   recommendations: [['id', 'text'], ['title', 'text'], ['type', ['People', 'Process', 'Tool', 'Build', 'Structure', 'Commercial']], ['horizon', ['0-3 months', '3-6 months', '6-12 months', '12+ months']], ['description', 'long'], ['effort', 'num'], ['risk', 'num'], ['confidence', 'num'], ['oneOffCost', 'num'], ['otherAnnualSaving', 'num'], ['oneOffSaving', 'num'], ['revenueUplift', 'num'], ['status', REC_STAGES], ['ops', 'json']],
   scenarios: [['id', 'text'], ['name', 'text'], ['description', 'text'], ['recommendationIds', 'json']]
@@ -288,6 +288,9 @@ const actions = {
     e.meta.replaceLog = [{ find, repl, count: total, at: nowISO() }, ...(e.meta.replaceLog || [])].slice(0, 50);
     save(); render(); toast(`Replaced ${total} occurrence${total === 1 ? '' : 's'}. Back up when you're ready.`);
   },
+  loSet: (el) => { ui.lo = Object.assign({}, ui.lo, { [el.dataset.k]: el.dataset.id, open: '' }); saveUI(); render(); },
+  loTick: (el) => { ui.lo = Object.assign({}, ui.lo, { [el.dataset.k]: el.checked }); saveUI(); render(); },
+  loOpen: (el) => { ui.lo = Object.assign({}, ui.lo, { open: ui.lo && ui.lo.open === el.dataset.id ? '' : el.dataset.id }); render(); },
   pvSet: (el) => { ui.pv = Object.assign({}, ui.pv, { [el.dataset.k]: el.dataset.id }); ui.stepId = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; ui.reviewSetup = ''; saveUI(); render(); },
   pvTick: (el) => {
     const P = pvState(stateFor(E(), ui.scenario)); const k = el.dataset.kind, id = el.dataset.id; const V = Object.assign({}, ui.pv);
@@ -685,7 +688,7 @@ document.addEventListener('change', (ev) => {
     if (coll === 'engagement.activities' && field === 'status') row.doneDate = v === 'Done' ? (row.doneDate || todayISO()) : '';
     if (coll === 'engagement.phases' && field === 'status' && v === 'Done') { const ps = E().engagement.phases; const i = ps.indexOf(row); if (ps[i + 1] && ps[i + 1].status === 'Not started') ps[i + 1].status = 'In progress'; }
     save();
-    if ((coll === 'recommendations' && ui.tab === 'recs') || (ui.tab === 'progress' && (t.tagName === 'SELECT' || t.type === 'date' || t.type === 'number'))) render();
+    if ((coll === 'recommendations' && ui.tab === 'recs') || ui.tab === 'leaks' || (ui.tab === 'progress' && (t.tagName === 'SELECT' || t.type === 'date' || t.type === 'number'))) render();
   }
 });
 document.addEventListener('input', (ev) => {

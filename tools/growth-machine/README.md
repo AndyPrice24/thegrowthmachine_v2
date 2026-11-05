@@ -136,6 +136,16 @@ node tools/growth-machine/build.mjs
 - Crossover rules use fixed thresholds (e.g. "more than 60% manual"). Tune them in `src/model.js` → `insights()` as we learn what matters.
 - Org charts over ~80 people get wide. Use zoom, or filter by department (not built yet).
 
+### Leaks & opportunities (the machine's main view)
+One ranked list of everything found, sorted into five lenses: leaks, weaknesses, holes, opportunities and tools.
+- Sources: findings (`kind`, `valueMonthly`, `basis`, `partOf`, `fixId`), opportunities, and signals the crossover rules spot automatically.
+- Each row shows severity, money at stake per month and its basis (leaking, at risk, spend to review, upside), plus the linked fix,
+  or "No action yet".
+- Click a row to see the evidence and set its lens, size, basis, fix, or the bigger item it belongs to. A nested item is never
+  counted twice in the totals.
+- "Biggest first" ranks by money at stake: leaking counts in full, at risk and upside at half, spend to review at a fifth.
+- "Gaps in the diagnosis" lists items with no fix, items with no size, and open data requests. The Overview page shows the top 5.
+
 ### Revenue leaks (Business & market)
 Digests a client's own churn and new-business sheets into `revenueMovements` (lost, downgrade, new, growth; cause; rand per month).
 The card shows the takeaways first (findings with `lens: 'Revenue leaks'`), then the leak and win per year, where revenue leaks by

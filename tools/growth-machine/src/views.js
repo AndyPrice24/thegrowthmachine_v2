@@ -2,7 +2,7 @@
    Views — each returns an HTML string for the main panel
    ============================================================ */
 const TABS = [
-  ['overview', 'Overview'], ['progress', 'Progress & time'], ['discovery', 'Discovery'], ['business', 'Business & market'], ['competitors', 'Competitors'], ['finance', 'Finance'], ['org', 'People & org'],
+  ['overview', 'Overview'], ['leaks', 'Leaks & opportunities'], ['progress', 'Progress & time'], ['discovery', 'Discovery'], ['business', 'Business & market'], ['competitors', 'Competitors'], ['finance', 'Finance'], ['org', 'People & org'],
   ['tools', 'Tools'], ['processes', 'Processes'], ['interviews', 'Interviews'], ['crossover', 'Crossover'],
   ['recs', 'Recommendations'], ['scenarios', 'Scenarios'], ['report', 'Report'], ['data', 'Data & Claude']
 ];
@@ -52,6 +52,7 @@ function viewOverview(e) {
   return `${scenarioBanner(e)}
   <div class="page-h"><div><span class="eyebrow">${esc(e.client.sector || 'Client')}${e.client.subSector ? ' · ' + esc(e.client.subSector) : ''}</span><h1>${esc(e.client.name)}</h1><p class="muted">${esc(e.client.goals || e.client.description || 'Start by completing the business profile, or paste structured data from Claude in Data & Claude.')}</p></div></div>
   <div class="kpis">${tiles.join('')}</div>
+  ${leaksTopCard(e)}
   ${card('Scenarios compared', scenTable, { cls: 'scroll-x', sub: 'Each scenario is the current state with a set of recommendations applied.' })}
   <div class="grid-2">
     ${card('Top recommendations', top.length ? `<ol class="rank">${top.map((r) => `<li><div><strong>${esc(r.rec.title)}</strong><div class="muted small">${esc(r.rec.type || '')} · ${esc(r.rec.horizon || '')} · ${fmtMoney(r.cash + r.revenue)}/yr cash + revenue · ${hrs(r.hoursSaved)}/mo freed</div></div><span class="score">${r.score}</span></li>`).join('')}</ol>` : empty('No recommendations yet.'), { actions: '<button class="btn sm" data-action="tab" data-id="recs">All →</button>' })}

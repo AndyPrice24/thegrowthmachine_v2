@@ -342,6 +342,34 @@ tr.lk-total td{font-weight:600;border-top:1px solid var(--line)}
 .lk-list li{margin:4px 0}
 .lk-bars > div + div{margin-top:18px}
 .lk-loc{max-width:760px}
+/* Leaks & opportunities */
+.lo-bar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.lo-bar label{display:flex;gap:6px;align-items:center;cursor:pointer}
+.lo-head,.lo-main{display:grid;grid-template-columns:34px 30px minmax(0,1fr) 150px minmax(0,300px);gap:10px;align-items:center}
+.lo-head{margin-top:14px;padding:6px 10px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.lo-row{border-bottom:1px solid var(--line)}
+.lo-row.open{background:var(--surface-2)}
+.lo-main{width:100%;background:none;border:0;padding:10px;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.lo-main:hover{background:var(--surface-2)}
+.lo-rank{font-weight:700;color:var(--muted);text-align:right}
+.lo-lens{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--surface-2);font-size:14px}
+.lo-leak{background:var(--red-soft)}
+.lo-title{line-height:1.35}
+.lo-val{text-align:right;white-space:nowrap}
+.lo-val em{display:block;font-style:normal;font-size:11.5px;color:var(--muted)}
+.lo-fixcol{font-size:12.5px}
+.lo-fix{color:var(--ink)}
+.chip.lo-nofix{border-color:var(--crit);color:var(--crit-ink)}
+.chip.lo-auto{font-size:10.5px;padding:0 6px;color:var(--muted)}
+.lo-neg{color:var(--crit-ink)}
+.lo-row.nested .lo-main{padding-left:28px}
+.lo-row.nested .lo-title{font-size:13.5px}
+.lo-detail{padding:0 14px 14px 84px}
+.lo-detail p{margin:4px 0 8px}
+.lo-edit{display:flex;flex-wrap:wrap;gap:10px 14px}
+.lo-edit label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
+.lo-edit select,.lo-edit input{max-width:320px}
+@media (max-width:820px){.lo-head{display:none}.lo-main{grid-template-columns:26px 26px minmax(0,1fr);}.lo-val,.lo-fixcol{grid-column:3}.lo-val{text-align:left}.lo-detail{padding-left:14px}}
 </style>
 <style id="report-css">/* Founder report styles (also embedded in exported HTML reports) */
 .rpt{background:#fffdf9;color:#171715;border:1px solid #d7cfc3;border-radius:14px;padding:40px 46px;
@@ -568,7 +596,7 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="tip" hidden></div>
 <script>
-const STUDIO_BUILD = '2026-11-05 08:54 UTC';
+const STUDIO_BUILD = '2026-11-05 09:00 UTC';
 /* ---- model.js ---- */
 /* ============================================================
    The Growth Machine — data model, scenario engine, scoring, insights
@@ -2665,7 +2693,7 @@ function locationBankShell() {
    Views — each returns an HTML string for the main panel
    ============================================================ */
 const TABS = [
-  ['overview', 'Overview'], ['progress', 'Progress & time'], ['discovery', 'Discovery'], ['business', 'Business & market'], ['competitors', 'Competitors'], ['finance', 'Finance'], ['org', 'People & org'],
+  ['overview', 'Overview'], ['leaks', 'Leaks & opportunities'], ['progress', 'Progress & time'], ['discovery', 'Discovery'], ['business', 'Business & market'], ['competitors', 'Competitors'], ['finance', 'Finance'], ['org', 'People & org'],
   ['tools', 'Tools'], ['processes', 'Processes'], ['interviews', 'Interviews'], ['crossover', 'Crossover'],
   ['recs', 'Recommendations'], ['scenarios', 'Scenarios'], ['report', 'Report'], ['data', 'Data & Claude']
 ];
@@ -2715,6 +2743,7 @@ function viewOverview(e) {
   return `${scenarioBanner(e)}
   <div class="page-h"><div><span class="eyebrow">${esc(e.client.sector || 'Client')}${e.client.subSector ? ' · ' + esc(e.client.subSector) : ''}</span><h1>${esc(e.client.name)}</h1><p class="muted">${esc(e.client.goals || e.client.description || 'Start by completing the business profile, or paste structured data from Claude in Data & Claude.')}</p></div></div>
   <div class="kpis">${tiles.join('')}</div>
+  ${leaksTopCard(e)}
   ${card('Scenarios compared', scenTable, { cls: 'scroll-x', sub: 'Each scenario is the current state with a set of recommendations applied.' })}
   <div class="grid-2">
     ${card('Top recommendations', top.length ? `<ol class="rank">${top.map((r) => `<li><div><strong>${esc(r.rec.title)}</strong><div class="muted small">${esc(r.rec.type || '')} · ${esc(r.rec.horizon || '')} · ${fmtMoney(r.cash + r.revenue)}/yr cash + revenue · ${hrs(r.hoursSaved)}/mo freed</div></div><span class="score">${r.score}</span></li>`).join('')}</ol>` : empty('No recommendations yet.'), { actions: '<button class="btn sm" data-action="tab" data-id="recs">All →</button>' })}
@@ -3401,6 +3430,150 @@ function sharpenBlock(e) {
   </section>`;
 }
 
+/* ---- leaks.js ---- */
+/* ============================================================
+   Leaks & opportunities: everything the machine has found, in one ranked list.
+   Sources: findings (kind, valueMonthly, basis, partOf, fixId), opportunities, and the
+   crossover rule engine (signals spotted automatically by combining data).
+   ============================================================ */
+const LENSES = [
+  ['leak', 'Leaks', 'Money, time or customers being lost'],
+  ['weakness', 'Weaknesses', 'Processes, people, structure or decisions that hold the business back'],
+  ['hole', 'Holes', 'Things that should exist and don\'t'],
+  ['opportunity', 'Opportunities', 'Revenue or advantage not yet taken'],
+  ['tool', 'Tools', 'Systems and vendors to replace, consolidate or cut'],
+];
+const LENS_ICON = { leak: '💧', weakness: '⚠', hole: '◌', opportunity: '★', tool: '⚙' };
+const BASES = ['Leaking', 'At risk', 'Spend to review', 'Upside'];
+const SEV_W = { high: 3, medium: 2, low: 1 };
+/* Ranking weight per basis: money leaking counts in full; at risk and upside at half; spend to review at a fifth,
+   because only part of a cost base is a realistic saving. Shown on the page so the ranking is transparent. */
+const BASIS_W = { 'Leaking': 1, 'At risk': 0.5, 'Upside': 0.5, 'Spend to review': 0.2 };
+const stake = (x) => x.value * (BASIS_W[x.basis] != null ? BASIS_W[x.basis] : 1);
+
+/** Best guess at a lens when a finding has none set (the page lets you change it). */
+function guessLens(f) {
+  const a = String(f.area || '').toLowerCase(), t = String(f.title || '').toLowerCase();
+  if (/opportunit|upsell|win-back/.test(t)) return 'opportunity';
+  if (a === 'tools') return 'tool';
+  if (/^no |missing|not defined|no agreed|nobody/.test(t) || a === 'data') return 'hole';
+  if (a === 'revenue' || a === 'cost' || /leak|lost|churn|spend|cost/.test(t)) return 'leak';
+  return 'weakness';
+}
+function signalLens(area) {
+  if (/^Tools/.test(area)) return 'tool';
+  if (/Cost|Finance|Customers|Price/.test(area)) return 'leak';
+  if (/Competition/.test(area)) return 'opportunity';
+  return 'weakness';
+}
+
+/** One flat list of items from every source. Findings with kind 'context' are background, not issues. */
+function leakItems(e, { signals = true } = {}) {
+  const recs = byId(e.recommendations);
+  const items = [];
+  e.findings.forEach((f) => {
+    const kind = f.kind || guessLens(f); if (kind === 'context') return;
+    items.push({ src: 'finding', id: f.id, kind, kindSet: !!f.kind, sev: f.severity || 'low', title: f.title || f.id, detail: f.evidence || '', area: f.area || '',
+      value: num(f.valueMonthly), basis: f.basis || (num(f.valueMonthly) ? 'Leaking' : ''), partOf: f.partOf || '', fix: recs[f.fixId] || null, rec: f });
+  });
+  e.opportunities.forEach((o) => {
+    if (o.status === 'Recommendation' && !o.recommendationId) return;
+    items.push({ src: 'opportunity', id: o.id, kind: 'opportunity', kindSet: true, sev: ({ High: 'high', Medium: 'medium', Low: 'low' })[o.impact] || 'low', title: o.title, detail: o.description || '', area: o.area || '',
+      value: num(o.valueMonthly), basis: num(o.valueMonthly) ? 'Upside' : '', partOf: '', fix: recs[o.recommendationId] || null, rec: o });
+  });
+  if (signals) insights(e, fmtMoney, ui.anon).filter((x) => x.severity !== 'low').forEach((x, i) => items.push({ src: 'signal', id: 'sig_' + i, kind: signalLens(x.area), kindSet: true, sev: x.severity, title: x.title, detail: x.detail, area: x.area, value: 0, basis: '', partOf: '', fix: null }));
+  const ids = new Set(items.map((x) => x.id)); items.forEach((x) => { if (x.partOf && !ids.has(x.partOf)) x.partOf = ''; });
+  return items;
+}
+
+/** Totals per basis, counting only top-level items so nested parts are never double counted. */
+function leakTotals(items) {
+  const t = {}; BASES.forEach((b) => { t[b] = 0; });
+  items.filter((x) => !x.partOf && x.value > 0 && t[x.basis] != null).forEach((x) => { t[x.basis] += x.value; });
+  return t;
+}
+function rankItems(items, sort) {
+  const cmp = sort === 'severity' ? (a, b) => (SEV_W[b.sev] || 0) - (SEV_W[a.sev] || 0) || b.value - a.value
+    : (a, b) => stake(b) - stake(a) || (SEV_W[b.sev] || 0) - (SEV_W[a.sev] || 0);
+  const top = items.filter((x) => !x.partOf).sort(cmp);
+  const kids = (id) => items.filter((x) => x.partOf === id).sort(cmp);
+  const out = []; top.forEach((x) => { out.push(x); kids(x.id).forEach((k) => out.push(Object.assign(k, { nested: true }))); });
+  items.filter((x) => x.partOf && !out.includes(x)).forEach((x) => out.push(x));
+  return out;
+}
+
+function leakFixChip(x) {
+  if (x.fix) return `<span class="lo-fix" title="${esc(x.fix.title)}">→ ${esc(trunc(x.fix.title, 46))} <span class="chip">${esc(x.fix.status || 'Identified')}</span></span>`;
+  if (x.src === 'signal') return '<span class="faint small">Spotted automatically</span>';
+  return '<span class="chip lo-nofix">No action yet</span>';
+}
+
+function viewLeaks(e) {
+  const L = ui.lo = Object.assign({ lens: 'all', sort: 'size', signals: true, noFix: false, open: '' }, ui.lo || {});
+  const all = leakItems(e, { signals: L.signals });
+  const tot = leakTotals(all);
+  const count = (k) => all.filter((x) => x.kind === k).length;
+  let list = all.filter((x) => L.lens === 'all' || x.kind === L.lens);
+  if (L.noFix) list = list.filter((x) => !x.fix && x.src !== 'signal');
+  const ranked = rankItems(list, L.sort);
+  const noFix = all.filter((x) => !x.fix && x.src !== 'signal').length, unsized = all.filter((x) => !x.value && x.src !== 'signal').length;
+  const kp = (label, v, sub) => kpi(label, v ? fmtMoney(v) + '/mo' : '—', `<div class="k-delta">${sub}</div>`);
+  const seg = (on, k, v, label) => `<button class="seg ${on ? 'on' : ''}" data-action="loSet" data-k="${k}" data-id="${v}">${label}</button>`;
+  const recOpts = (cur) => `<option value="">— none —</option>${e.recommendations.map((r) => `<option value="${esc(r.id)}" ${cur === r.id ? 'selected' : ''}>${esc(trunc(r.title, 70))}</option>`).join('')}`;
+  const parentOpts = (x) => `<option value="">— top level —</option>${all.filter((y) => y.src === 'finding' && y.id !== x.id && !y.partOf).map((y) => `<option value="${esc(y.id)}" ${x.partOf === y.id ? 'selected' : ''}>${esc(trunc(y.title, 70))}</option>`).join('')}`;
+  const cell = (x, field, html) => (x.src === 'finding' ? html.replace('<select', `<select data-cell data-coll="findings" data-id="${esc(x.id)}" data-field="${field}"`) : '');
+  const editor = (x) => x.src !== 'finding' ? (x.src === 'opportunity' ? '<p class="faint small">Edit this opportunity in Competitors → Opportunities, or on the Data page.</p>' : '<p class="faint small">Spotted by combining data already in the Studio (the same rules as the Crossover page). Fix the cause, or add a finding if it matters.</p>') : `
+      <div class="lo-edit">
+        <label>Lens ${cell(x, 'kind', `<select>${LENSES.map(([k, n]) => `<option value="${k}" ${x.kind === k ? 'selected' : ''}>${n}</option>`).join('')}<option value="context">Background only (hide)</option></select>`)}</label>
+        <label>Size per month <input type="number" data-cell data-type="num" data-coll="findings" data-id="${esc(x.id)}" data-field="valueMonthly" value="${x.value || ''}" placeholder="R / month"></label>
+        <label>Basis ${cell(x, 'basis', `<select><option value=""></option>${BASES.map((b) => `<option ${x.basis === b ? 'selected' : ''}>${b}</option>`).join('')}</select>`)}</label>
+        <label>Fix ${cell(x, 'fixId', `<select>${recOpts(x.fix && x.fix.id)}</select>`)}</label>
+        <label>Part of ${cell(x, 'partOf', `<select>${parentOpts(x)}</select>`)}</label>
+      </div>`;
+  const row = (x, i) => {
+    const open = L.open === x.id;
+    return `<div class="lo-row ${x.nested ? 'nested' : ''} ${open ? 'open' : ''}">
+      <button class="lo-main" data-action="loOpen" data-id="${esc(x.id)}">
+        <span class="lo-rank">${x.nested ? '↳' : i}</span>
+        <span class="lo-lens lo-${x.kind}" title="${esc((LENSES.find((l) => l[0] === x.kind) || [])[1] || '')}">${LENS_ICON[x.kind] || ''}</span>
+        <span class="lo-title">${sevChip(x.sev)} ${esc(x.title)}${x.src === 'signal' ? ' <span class="chip lo-auto">auto</span>' : ''}${x.kindSet ? '' : ' <span class="chip lo-auto" title="Lens guessed from the area. Open to set it.">lens?</span>'}</span>
+        <span class="lo-val">${x.value ? `<b>${fmtMoney(x.value)}</b>/mo<em>${esc((x.basis || '').toLowerCase())}</em>` : '<span class="faint">Not sized</span>'}</span>
+        <span class="lo-fixcol">${leakFixChip(x)}</span>
+      </button>
+      ${open ? `<div class="lo-detail"><p>${esc(x.detail)}</p><p class="faint small">${esc(x.area)}${x.partOf ? ` · part of: ${esc((all.find((y) => y.id === x.partOf) || {}).title || x.partOf)}` : ''}${x.fix ? ` · fix: ${esc(x.fix.title)} (${esc(x.fix.horizon || '')})` : ''}</p>${editor(x)}</div>` : ''}
+    </div>`;
+  };
+  let n = 0;
+  const byLens = LENSES.map(([k, name]) => ({ label: name, value: sum(all.filter((x) => x.kind === k && !x.partOf), (x) => x.value), tip: `${count(k)} items` }));
+  const reqs = ((e.engagement || {}).requests || []).filter((r) => !r.receivedDate);
+  return `<div class="page-h"><div><span class="eyebrow">The machine</span><h1>Leaks &amp; opportunities</h1><p class="muted">Everything the machine has found, ranked by money at stake. Each item says what is at stake and what fixes it.</p></div></div>
+  <div class="kpis">${kp('Leaking now', tot['Leaking'], 'revenue or spend being lost')}${kp('At risk', tot['At risk'], 'could be lost')}${kp('Spend to review', tot['Spend to review'], 'cost base where savings sit')}${kp('Upside', tot['Upside'], 'revenue not yet taken')}${kpi('No action yet', noFix, `<div class="k-delta">${unsized} not sized yet</div>`)}</div>
+  <p class="faint small" style="margin:6px 0 14px">Totals count each item once (parts nested under a bigger item are not added again). Sizes are estimates from the sources named in each item. “Biggest first” ranks by money at stake: leaking counts in full, at risk and upside at half, spend to review at a fifth (only part of a cost base is a realistic saving).</p>
+  <section class="card">
+    <div class="lo-bar">
+      <span class="pv-switch sm">${seg(L.lens === 'all', 'lens', 'all', `All (${all.length})`)}${LENSES.map(([k, name]) => seg(L.lens === k, 'lens', k, `${LENS_ICON[k]} ${name} (${count(k)})`)).join('')}</span>
+      <span class="pv-switch sm">${seg(L.sort === 'size', 'sort', 'size', 'Biggest first')}${seg(L.sort === 'severity', 'sort', 'severity', 'Most severe first')}</span>
+      <label class="small"><input type="checkbox" data-action="loTick" data-k="noFix" ${L.noFix ? 'checked' : ''}> No action yet only</label>
+      <label class="small"><input type="checkbox" data-action="loTick" data-k="signals" ${L.signals ? 'checked' : ''}> Include signals spotted automatically</label>
+    </div>
+    ${L.lens !== 'all' ? `<p class="small muted" style="margin:8px 0 0">${esc((LENSES.find((l) => l[0] === L.lens) || [])[2] || '')}</p>` : ''}
+    <div class="lo-head"><span>#</span><span></span><span>What</span><span>At stake</span><span>Fix</span></div>
+    <div class="lo-list">${ranked.length ? ranked.map((x) => row(x, x.nested ? 0 : ++n)).join('') : empty('Nothing here yet.')}</div>
+  </section>
+  <div class="grid-2">
+    ${card('Where the money is, by lens', hbars(byLens.filter((x) => x.value > 0), { fmt: (v) => fmtMoney(v) + '/mo', color: 'var(--s1)' }), { sub: 'Sized items only, all bases together. Use it to see where the weight sits, not as a single total.' })}
+    ${card('Gaps in the diagnosis', `<ul class="lk-list"><li><b>${noFix}</b> items have no fix linked yet. Each needs a recommendation, a question for a named role, or a data request.</li><li><b>${unsized}</b> items are not sized. Add a rand figure, even a rough one, so they can be ranked.</li>${reqs.length ? `<li><b>${reqs.length}</b> data requests are still open, e.g. ${reqs.slice(0, 3).map((r) => esc(trunc(r.item, 60))).join('; ')}.</li>` : ''}</ul>`, { sub: 'What the machine still needs to give a full picture.' })}
+  </div>`;
+}
+
+/** Top items for the Overview page. */
+function leaksTopCard(e) {
+  const items = rankItems(leakItems(e, { signals: false }), 'size').filter((x) => !x.nested).slice(0, 5);
+  if (!items.length) return '';
+  return card('Top leaks &amp; opportunities', `<ol class="rank">${items.map((x) => `<li><div><strong>${LENS_ICON[x.kind] || ''} ${esc(x.title)}</strong><div class="muted small">${x.value ? `${fmtMoney(x.value)}/mo ${esc((x.basis || '').toLowerCase())}` : 'Not sized'} · ${x.fix ? 'fix: ' + esc(trunc(x.fix.title, 60)) : '<span class="lo-neg">no action yet</span>'}</div></div></li>`).join('')}</ol>`,
+    { actions: '<button class="btn sm" data-action="tab" data-id="leaks">All →</button>' });
+}
+
 /* ---- report.js ---- */
 /* ============================================================
    Founder report — rendered from the engagement, exportable as PDF (print) or standalone HTML
@@ -3537,7 +3710,7 @@ function save() {
 function flushSave() { if (!saveTimer) return; clearTimeout(saveTimer); saveTimer = null; try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); } catch (err) { /* ignore */ } }
 window.addEventListener('pagehide', flushSave);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
-function saveUI() { try { localStorage.setItem(STORE_KEY + '.ui', JSON.stringify({ tab: ui.tab, pv: ui.pv, execView: ui.execView, bpTop: ui.bpTop, anon: ui.anon, showCost: ui.showCost, ghosts: ui.ghosts, compare: ui.compare, coll: ui.coll, theme: ui.theme })); } catch (err) { /* ignore */ } }
+function saveUI() { try { localStorage.setItem(STORE_KEY + '.ui', JSON.stringify({ tab: ui.tab, pv: ui.pv, execView: ui.execView, bpTop: ui.bpTop, lo: ui.lo && { lens: ui.lo.lens, sort: ui.lo.sort, signals: ui.lo.signals, noFix: ui.lo.noFix }, anon: ui.anon, showCost: ui.showCost, ghosts: ui.ghosts, compare: ui.compare, coll: ui.coll, theme: ui.theme })); } catch (err) { /* ignore */ } }
 const E = () => db.engagements[db.activeId];
 function procOfStep(id) { return E().processes.find((p) => (p.steps || []).some((x) => x.id === id)); }
 function reviewCtx() {
@@ -3630,7 +3803,7 @@ function render() {
   const keep = [...document.querySelectorAll('#main .flow-wrap')].map((w) => [w.scrollLeft, w.scrollTop]);
   const e = E();
   renderHeader();
-  const views = { competitors: viewCompetitors, progress: viewProgress, discovery: viewDiscovery, overview: viewOverview, business: viewBusiness, finance: viewFinance, org: viewOrg, tools: viewTools, processes: viewProcesses, interviews: viewInterviews, crossover: viewCrossover, recs: viewRecs, scenarios: viewScenarios, report: viewReport, data: viewData };
+  const views = { competitors: viewCompetitors, progress: viewProgress, discovery: viewDiscovery, overview: viewOverview, leaks: viewLeaks, business: viewBusiness, finance: viewFinance, org: viewOrg, tools: viewTools, processes: viewProcesses, interviews: viewInterviews, crossover: viewCrossover, recs: viewRecs, scenarios: viewScenarios, report: viewReport, data: viewData };
   let html;
   try { html = (views[ui.tab] || viewOverview)(e); }
   catch (err) { console.error(err); html = `<div class="banner err">Something in this client's data could not be displayed: ${esc(err.message)}. Check the Data tab.</div>`; }
@@ -3651,13 +3824,13 @@ const FIELD_DEFS = {
   topClients: [['id', 'text'], ['name', 'text'], ['segment', ['Managed', 'Reseller / self-service', 'Partner / section row']], ['csm', 'text'], ['annualRevenue', 'num'], ['churnRisk', ['Low', 'Medium', 'High']], ['contractStatus', ['In contract', 'Renews within 90 days', 'Out of contract', 'Month to month', 'Unknown']], ['satisfaction', 'text'], ['touchpoint', ['Low', 'Low-Medium', 'Medium', 'Medium-High', 'High']], ['adoption', ['Low', 'Medium', 'High']], ['register', 'json'], ['csScores', 'json'], ['notes', 'text']],
   financePeriods: [['id', 'text'], ['label', 'text'], ['months', 'num'], ['revenue', 'num'], ['cogs', 'num'], ['payroll', 'num'], ['tools', 'num'], ['marketing', 'num'], ['premises', 'num'], ['other', 'num']],
   interviews: [['id', 'text'], ['personId', 'person'], ['date', 'date'], ['interviewer', 'text'], ['summary', 'long'], ['themes', 'text'], ['painPoints', 'long'], ['ideas', 'long'], ['quotes', 'long']],
-  findings: [['id', 'text'], ['title', 'text'], ['area', 'text'], ['severity', ['high', 'medium', 'low']], ['lens', 'text'], ['evidence', 'long']],
+  findings: [['id', 'text'], ['title', 'text'], ['area', 'text'], ['severity', ['high', 'medium', 'low']], ['kind', ['leak', 'weakness', 'hole', 'opportunity', 'tool', 'context']], ['valueMonthly', 'num'], ['basis', ['Leaking', 'At risk', 'Spend to review', 'Upside']], ['fixId', 'text'], ['partOf', 'text'], ['lens', 'text'], ['evidence', 'long']],
   revenueMovements: [['id', 'text'], ['fy', 'text'], ['client', 'text'], ['kind', ['lost', 'downgrade', 'new', 'growth']], ['cause', 'text'], ['monthly', 'num'], ['from', 'text'], ['reason', 'text'], ['comment', 'text']],
   customQuestions: [['id', 'text'], ['personId', 'person'], ['section', 'text'], ['q', 'long'], ['note', 'text'], ['crit', CRITERIA.map((c) => c.id)], ['p', 'num']],
   competitors: [['id', 'text'], ['name', 'text'], ['type', ['Direct', 'Indirect', 'Substitute', 'Adjacent']], ['threat', ['High', 'Medium', 'Low']], ['website', 'text'], ['hq', 'text'], ['markets', 'text'], ['segments', 'text'], ['offering', 'long'], ['pricingModel', 'text'], ['pricePoint', 'num'], ['size', 'text'], ['ownership', 'text'], ['strengths', 'long'], ['weaknesses', 'long'], ['whereWeWin', 'long'], ['whereWeLose', 'long'], ['sources', 'long'], ['lastReviewed', 'date']],
   intel: [['id', 'text'], ['competitorId', 'comp'], ['topic', INTEL_TOPICS], ['note', 'long'], ['sourceType', SOURCE_TYPES], ['source', 'text'], ['date', 'date']],
   usps: [['id', 'text'], ['claim', 'text'], ['strength', ['Unique', 'Shared', 'Claimed only']], ['proof', 'long'], ['competitorsWithIt', 'text'], ['notes', 'text']],
-  opportunities: [['id', 'text'], ['title', 'text'], ['area', OPP_AREAS], ['description', 'long'], ['basedOn', 'text'], ['impact', ['High', 'Medium', 'Low']], ['effort', ['High', 'Medium', 'Low']], ['status', ['Idea', 'Proposed', 'Recommendation']], ['recommendationId', 'text']],
+  opportunities: [['id', 'text'], ['title', 'text'], ['area', OPP_AREAS], ['description', 'long'], ['basedOn', 'text'], ['impact', ['High', 'Medium', 'Low']], ['effort', ['High', 'Medium', 'Low']], ['status', ['Idea', 'Proposed', 'Recommendation']], ['valueMonthly', 'num'], ['recommendationId', 'text']],
   capabilities: [['id', 'text'], ['name', 'text'], ['importance', ['High', 'Medium', 'Low']], ['client', ['Strong', 'Partial', 'None']], ['notes', 'text'], ['scores', 'json']],
   recommendations: [['id', 'text'], ['title', 'text'], ['type', ['People', 'Process', 'Tool', 'Build', 'Structure', 'Commercial']], ['horizon', ['0-3 months', '3-6 months', '6-12 months', '12+ months']], ['description', 'long'], ['effort', 'num'], ['risk', 'num'], ['confidence', 'num'], ['oneOffCost', 'num'], ['otherAnnualSaving', 'num'], ['oneOffSaving', 'num'], ['revenueUplift', 'num'], ['status', REC_STAGES], ['ops', 'json']],
   scenarios: [['id', 'text'], ['name', 'text'], ['description', 'text'], ['recommendationIds', 'json']]
@@ -3795,6 +3968,9 @@ const actions = {
     e.meta.replaceLog = [{ find, repl, count: total, at: nowISO() }, ...(e.meta.replaceLog || [])].slice(0, 50);
     save(); render(); toast(`Replaced ${total} occurrence${total === 1 ? '' : 's'}. Back up when you're ready.`);
   },
+  loSet: (el) => { ui.lo = Object.assign({}, ui.lo, { [el.dataset.k]: el.dataset.id, open: '' }); saveUI(); render(); },
+  loTick: (el) => { ui.lo = Object.assign({}, ui.lo, { [el.dataset.k]: el.checked }); saveUI(); render(); },
+  loOpen: (el) => { ui.lo = Object.assign({}, ui.lo, { open: ui.lo && ui.lo.open === el.dataset.id ? '' : el.dataset.id }); render(); },
   pvSet: (el) => { ui.pv = Object.assign({}, ui.pv, { [el.dataset.k]: el.dataset.id }); ui.stepId = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; ui.reviewSetup = ''; saveUI(); render(); },
   pvTick: (el) => {
     const P = pvState(stateFor(E(), ui.scenario)); const k = el.dataset.kind, id = el.dataset.id; const V = Object.assign({}, ui.pv);
@@ -4192,7 +4368,7 @@ document.addEventListener('change', (ev) => {
     if (coll === 'engagement.activities' && field === 'status') row.doneDate = v === 'Done' ? (row.doneDate || todayISO()) : '';
     if (coll === 'engagement.phases' && field === 'status' && v === 'Done') { const ps = E().engagement.phases; const i = ps.indexOf(row); if (ps[i + 1] && ps[i + 1].status === 'Not started') ps[i + 1].status = 'In progress'; }
     save();
-    if ((coll === 'recommendations' && ui.tab === 'recs') || (ui.tab === 'progress' && (t.tagName === 'SELECT' || t.type === 'date' || t.type === 'number'))) render();
+    if ((coll === 'recommendations' && ui.tab === 'recs') || ui.tab === 'leaks' || (ui.tab === 'progress' && (t.tagName === 'SELECT' || t.type === 'date' || t.type === 'number'))) render();
   }
 });
 document.addEventListener('input', (ev) => {

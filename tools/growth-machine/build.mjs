@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url));
 const src = (f) => readFileSync(join(here, 'src', f), 'utf8');
 const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
-const js = `const STUDIO_BUILD = '${stamp}';\n` + ['model.js', 'questions.js', 'engagement.js', 'charts.js', 'flows.js', 'processes.js', 'demo.js', 'views.js', 'views2.js', 'report.js', 'app.js'].map((f) => `/* ---- ${f} ---- */\n${src(f)}`).join('\n');
+const js = `const STUDIO_BUILD = '${stamp}';\n` + ['model.js', 'questions.js', 'engagement.js', 'charts.js', 'flows.js', 'processes.js', 'demo.js', 'views.js', 'views2.js', 'leaks.js', 'report.js', 'app.js'].map((f) => `/* ---- ${f} ---- */\n${src(f)}`).join('\n');
 const html = src('index.html')
   .replace('/*VIZ_CSS*/', () => src('viz.css'))
   .replace('/*REPORT_CSS*/', () => src('report.css'))
