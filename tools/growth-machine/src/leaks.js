@@ -109,7 +109,7 @@ function viewLeaks(e) {
         <span class="lo-val">${x.value ? `<b>${fmtMoney(x.value)}</b>/mo<em>${esc((x.basis || '').toLowerCase())}</em>` : '<span class="faint">Not sized</span>'}</span>
         <span class="lo-fixcol">${leakFixChip(x)}</span>
       </button>
-      ${open ? `<div class="lo-detail"><p>${esc(x.detail)}</p><p class="faint small">${esc(x.area)}${x.partOf ? ` · part of: ${esc((all.find((y) => y.id === x.partOf) || {}).title || x.partOf)}` : ''}${x.fix ? ` · fix: ${esc(x.fix.title)} (${esc(x.fix.horizon || '')})` : ''}${x.next ? ` · next: ${esc(x.next)}` : ''}</p>${editor(x)}</div>` : ''}
+      ${open ? `<div class="lo-detail"><p>${esc(x.detail)}</p>${x.rec && Array.isArray(x.rec.sources) && x.rec.sources.length ? `<div class="lo-srcs"><b class="small">Sources</b><ol>${x.rec.sources.map((r) => `<li class="small">${r.side === 'says' ? '<span class="chip">documents say</span> ' : r.side === 'seen' ? '<span class="chip">evidence</span> ' : ''}${esc(sourceLine(e, r, true))}</li>`).join('')}</ol></div>` : ''}<p class="faint small">${esc(x.area)}${x.partOf ? ` · part of: ${esc((all.find((y) => y.id === x.partOf) || {}).title || x.partOf)}` : ''}${x.fix ? ` · fix: ${esc(x.fix.title)} (${esc(x.fix.horizon || '')})` : ''}${x.next ? ` · next: ${esc(x.next)}` : ''}</p>${editor(x)}</div>` : ''}
     </div>`;
   };
   let n = 0;

@@ -66,6 +66,11 @@ understanding, and log the difference as a feedback item (what the documents say
 our suggestion). The Studio turns these into the client feedback cheatsheet (Report → Feedback cheatsheet). Confirm drafts
 with the client's lead before sending.
 
+**Cite both sides, precisely.** Every discrepancy names where each side comes from: the source (document, sheet, tab,
+slide section, interview or meeting), who it came from (by role for anything the client sees), the date the information
+applies to, and when and how we received it. Register each source once in the Studio's Sources list and reference it
+(with the exact tab or section), so the cheatsheet, Leaks & opportunities and the questions all show the same citation.
+
 ## Working rules
 - Findings tie to the engagement target (for example, recurring cost savings) or to revenue protected or grown. Size them in rand per month or per year.
 - Interviews are reported by role. Never attribute a confidential remark to the person who made it.

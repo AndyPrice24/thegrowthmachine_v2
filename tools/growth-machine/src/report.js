@@ -96,6 +96,9 @@ function renderFeedback(e) {
   if (!fb.length) return '<p class="empty">No feedback items yet.</p>';
   const top = fb.filter((f) => f.priority === 'high' && f.number).slice(0, 4);
   const areas = [...new Set(fb.map((f) => f.area || 'Other'))];
+  const srcBlock = (f) => { const rs = Array.isArray(f.sources) ? f.sources : []; if (!rs.length) return f.source ? `<p class="fb-src">Source: ${esc(f.source)}</p>` : '';
+    const side = (k, label) => { const xs = rs.filter((r) => (r.side || 'seen') === k); return xs.length ? `<div class="fb-cite"><b>${label}</b><ol>${xs.map((r) => `<li>${esc(sourceLine(e, r, false))}</li>`).join('')}</ol></div>` : ''; };
+    return `<div class="fb-srcs"><span class="fb-l">Where this comes from</span>${side('says', 'Your documents')}${side('seen', 'The evidence that disagrees')}</div>`; };
   const item = (f) => `<article class="fb-i fb-${esc(f.priority || 'medium')}">
     <div class="fb-num"><b>${esc(f.number || '')}</b><span>${esc(f.numberLabel || '')}</span></div>
     <div class="fb-body"><h4>${esc(f.topic)}${f.status && f.status !== 'Sent' && f.status !== 'Confirmed with client' ? ' <span class="fb-draft">draft</span>' : ''}</h4>
@@ -103,7 +106,7 @@ function renderFeedback(e) {
       ${f.reality ? `<p><span class="fb-l">What we see</span>${esc(f.reality)}</p>` : ''}
       ${f.soWhat ? `<p><span class="fb-l">Why it matters</span>${esc(f.soWhat)}</p>` : ''}
       ${f.suggestion ? `<p class="fb-s"><span class="fb-l">Our suggestion</span>${esc(f.suggestion)}</p>` : ''}
-      ${f.source ? `<p class="fb-src">Source: ${esc(f.source)}</p>` : ''}</div></article>`;
+      ${srcBlock(f)}</div></article>`;
   return `<section class="rpt-cover"><div class="rpt-eyebrow">The Growth Machine · feedback for ${esc(e.client.name)}</div><h1>What's written vs what's happening</h1>
     <p class="muted">${date}. Your own documents set sensible rules. Below is where the data shows they are not being followed, why it matters, and what we suggest. These are suggestions for discussion, not decisions.</p></section>
     ${top.length ? `<div class="fb-top">${top.map((f) => `<div><b>${esc(f.number)}</b><span>${esc(f.numberLabel || f.topic)}</span></div>`).join('')}</div>` : ''}

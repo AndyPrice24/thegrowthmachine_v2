@@ -13,7 +13,7 @@ const live = (arr) => (arr || []).filter((x) => !x._removed);
 const byId = (arr) => Object.fromEntries((arr || []).map((x) => [x.id, x]));
 const splitList = (v) => Array.isArray(v) ? v : String(v || '').split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
 
-const COLLECTIONS = ['intake', 'customQuestions', 'competitors', 'capabilities', 'intel', 'usps', 'opportunities', 'departments', 'people', 'tools', 'processes', 'segments', 'markets', 'topClients', 'revenueMovements', 'feedback',
+const COLLECTIONS = ['intake', 'customQuestions', 'competitors', 'capabilities', 'intel', 'usps', 'opportunities', 'departments', 'people', 'tools', 'processes', 'segments', 'markets', 'topClients', 'revenueMovements', 'feedback', 'sources',
   'financePeriods', 'interviews', 'findings', 'recommendations', 'scenarios'];
 
 function blankEngagement(name) {
@@ -25,7 +25,7 @@ function blankEngagement(name) {
       businessModel: '', revenueModel: '', description: '', goals: '', constraints: '' },
     meta: { currency: 'ZAR', consultant: 'The Growth Machine', engagementStart: today, lastUpdated: new Date().toISOString(),
       lastExported: '', notes: '' },
-    departments: [], people: [], tools: [], processes: [], segments: [], markets: [], topClients: [], revenueMovements: [], feedback: [],
+    departments: [], people: [], tools: [], processes: [], segments: [], markets: [], topClients: [], revenueMovements: [], feedback: [], sources: [],
     financePeriods: [], interviews: [], findings: [], recommendations: [], scenarios: [],
     intake: [], customQuestions: [], competitors: [], capabilities: [], intel: [], usps: [], opportunities: [], engagement: blankEngagementBlock(),
     report: { title: '', preparedFor: '', summary: '', nextSteps: '', anonymise: true, scenarioId: '', processIds: [],
@@ -62,6 +62,14 @@ function normalise(e) {
 /** Steps from an update file, merged by id into the Studio's steps: the file sets order and the fields it sends;
     fields only set in the Studio (severity, review, times, notes) are kept, and flags added in the Studio are kept too. */
 const STUDIO_OWNED = ['painSeverity', 'painState', 'linkState']; // judgements made in the Studio win over a file's suggestion
+/** One citation line for a source reference {id, part, side}: what, where in it, from whom, as of when, received when.
+    Client-facing lines name roles only; internal lines add the person. */
+function sourceLine(e, ref, internal) {
+  const s = (e.sources || []).find((x) => x.id === ref.id) || { name: ref.id };
+  const who = [s.from, internal && s.person ? `(${s.person})` : ''].filter(Boolean).join(' ');
+  return [`${s.name}${s.type ? ` (${s.type})` : ''}`, ref.part, who ? `from ${who}` : '', s.asOf ? (/^(last edited|actuals|as at|as of)/i.test(s.asOf) ? s.asOf : `information as of ${s.asOf}`) : '', s.received ? `received ${s.received}${s.via ? ` via ${s.via}` : ''}` : ''].filter(Boolean).join(' · ');
+}
+
 function mergeSteps(old, incoming) {
   if (!incoming.length && old.length) return old; // an empty list in a file never wipes mapped steps
   const byOld = {}; old.forEach((s) => { if (s.id) byOld[s.id] = s; });

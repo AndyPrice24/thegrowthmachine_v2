@@ -415,6 +415,7 @@ tr.lk-total td{font-weight:600;border-top:1px solid var(--line)}
 .closed-iss ul{list-style:none;padding:0;margin:8px 0 0}.closed-iss li{margin-bottom:8px;font-size:13px}
 .cs-resolved{color:var(--good-ink);font-weight:700}.cs-hold{color:var(--warn-ink);font-weight:700}
 .es-i.es-done{border-color:var(--good);color:var(--good-ink)}
+.lo-srcs{margin:4px 0 10px}.lo-srcs ol{margin:4px 0 0;padding-left:18px}.lo-srcs li{margin:2px 0}
 </style>
 <style id="report-css">/* Founder report styles (also embedded in exported HTML reports) */
 .rpt{background:#fffdf9;color:#171715;border:1px solid #d7cfc3;border-radius:14px;padding:40px 46px;
@@ -460,6 +461,7 @@ tr.lk-total td{font-weight:600;border-top:1px solid var(--line)}
 .rpt .fb-s{background:#f3efe8;border-radius:8px;padding:6px 8px}.rpt .fb-src{font-size:11px;color:#8a8074}
 .rpt .fb-draft{font-size:10px;font-weight:700;text-transform:uppercase;border:1px solid #e0a10b;color:#9a6a00;border-radius:999px;padding:1px 7px;vertical-align:2px}
 @media (max-width:700px){.rpt .fb-top{grid-template-columns:1fr 1fr}.rpt .fb-i{grid-template-columns:1fr}}
+.rpt .fb-srcs{margin-top:8px;border-top:1px dashed #e3ddd3;padding-top:6px}.rpt .fb-cite{font-size:11.5px;color:#4a443d;margin-top:3px}.rpt .fb-cite b{font-size:11.5px}.rpt .fb-cite ol{margin:2px 0 0;padding-left:18px}.rpt .fb-cite li{margin:1px 0}
 </style>
 <style>/* App chrome */
 *{box-sizing:border-box}
@@ -654,7 +656,7 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="tip" hidden></div>
 <script>
-const STUDIO_BUILD = '2026-11-05 14:35 UTC';
+const STUDIO_BUILD = '2026-11-05 15:04 UTC';
 /* ---- model.js ---- */
 /* ============================================================
    The Growth Machine — data model, scenario engine, scoring, insights
@@ -671,7 +673,7 @@ const live = (arr) => (arr || []).filter((x) => !x._removed);
 const byId = (arr) => Object.fromEntries((arr || []).map((x) => [x.id, x]));
 const splitList = (v) => Array.isArray(v) ? v : String(v || '').split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
 
-const COLLECTIONS = ['intake', 'customQuestions', 'competitors', 'capabilities', 'intel', 'usps', 'opportunities', 'departments', 'people', 'tools', 'processes', 'segments', 'markets', 'topClients', 'revenueMovements', 'feedback',
+const COLLECTIONS = ['intake', 'customQuestions', 'competitors', 'capabilities', 'intel', 'usps', 'opportunities', 'departments', 'people', 'tools', 'processes', 'segments', 'markets', 'topClients', 'revenueMovements', 'feedback', 'sources',
   'financePeriods', 'interviews', 'findings', 'recommendations', 'scenarios'];
 
 function blankEngagement(name) {
@@ -683,7 +685,7 @@ function blankEngagement(name) {
       businessModel: '', revenueModel: '', description: '', goals: '', constraints: '' },
     meta: { currency: 'ZAR', consultant: 'The Growth Machine', engagementStart: today, lastUpdated: new Date().toISOString(),
       lastExported: '', notes: '' },
-    departments: [], people: [], tools: [], processes: [], segments: [], markets: [], topClients: [], revenueMovements: [], feedback: [],
+    departments: [], people: [], tools: [], processes: [], segments: [], markets: [], topClients: [], revenueMovements: [], feedback: [], sources: [],
     financePeriods: [], interviews: [], findings: [], recommendations: [], scenarios: [],
     intake: [], customQuestions: [], competitors: [], capabilities: [], intel: [], usps: [], opportunities: [], engagement: blankEngagementBlock(),
     report: { title: '', preparedFor: '', summary: '', nextSteps: '', anonymise: true, scenarioId: '', processIds: [],
@@ -720,6 +722,14 @@ function normalise(e) {
 /** Steps from an update file, merged by id into the Studio's steps: the file sets order and the fields it sends;
     fields only set in the Studio (severity, review, times, notes) are kept, and flags added in the Studio are kept too. */
 const STUDIO_OWNED = ['painSeverity', 'painState', 'linkState']; // judgements made in the Studio win over a file's suggestion
+/** One citation line for a source reference {id, part, side}: what, where in it, from whom, as of when, received when.
+    Client-facing lines name roles only; internal lines add the person. */
+function sourceLine(e, ref, internal) {
+  const s = (e.sources || []).find((x) => x.id === ref.id) || { name: ref.id };
+  const who = [s.from, internal && s.person ? `(${s.person})` : ''].filter(Boolean).join(' ');
+  return [`${s.name}${s.type ? ` (${s.type})` : ''}`, ref.part, who ? `from ${who}` : '', s.asOf ? (/^(last edited|actuals|as at|as of)/i.test(s.asOf) ? s.asOf : `information as of ${s.asOf}`) : '', s.received ? `received ${s.received}${s.via ? ` via ${s.via}` : ''}` : ''].filter(Boolean).join(' · ');
+}
+
 function mergeSteps(old, incoming) {
   if (!incoming.length && old.length) return old; // an empty list in a file never wipes mapped steps
   const byOld = {}; old.forEach((s) => { if (s.id) byOld[s.id] = s; });
@@ -3749,7 +3759,7 @@ function viewLeaks(e) {
         <span class="lo-val">${x.value ? `<b>${fmtMoney(x.value)}</b>/mo<em>${esc((x.basis || '').toLowerCase())}</em>` : '<span class="faint">Not sized</span>'}</span>
         <span class="lo-fixcol">${leakFixChip(x)}</span>
       </button>
-      ${open ? `<div class="lo-detail"><p>${esc(x.detail)}</p><p class="faint small">${esc(x.area)}${x.partOf ? ` · part of: ${esc((all.find((y) => y.id === x.partOf) || {}).title || x.partOf)}` : ''}${x.fix ? ` · fix: ${esc(x.fix.title)} (${esc(x.fix.horizon || '')})` : ''}${x.next ? ` · next: ${esc(x.next)}` : ''}</p>${editor(x)}</div>` : ''}
+      ${open ? `<div class="lo-detail"><p>${esc(x.detail)}</p>${x.rec && Array.isArray(x.rec.sources) && x.rec.sources.length ? `<div class="lo-srcs"><b class="small">Sources</b><ol>${x.rec.sources.map((r) => `<li class="small">${r.side === 'says' ? '<span class="chip">documents say</span> ' : r.side === 'seen' ? '<span class="chip">evidence</span> ' : ''}${esc(sourceLine(e, r, true))}</li>`).join('')}</ol></div>` : ''}<p class="faint small">${esc(x.area)}${x.partOf ? ` · part of: ${esc((all.find((y) => y.id === x.partOf) || {}).title || x.partOf)}` : ''}${x.fix ? ` · fix: ${esc(x.fix.title)} (${esc(x.fix.horizon || '')})` : ''}${x.next ? ` · next: ${esc(x.next)}` : ''}</p>${editor(x)}</div>` : ''}
     </div>`;
   };
   let n = 0;
@@ -3882,6 +3892,9 @@ function renderFeedback(e) {
   if (!fb.length) return '<p class="empty">No feedback items yet.</p>';
   const top = fb.filter((f) => f.priority === 'high' && f.number).slice(0, 4);
   const areas = [...new Set(fb.map((f) => f.area || 'Other'))];
+  const srcBlock = (f) => { const rs = Array.isArray(f.sources) ? f.sources : []; if (!rs.length) return f.source ? `<p class="fb-src">Source: ${esc(f.source)}</p>` : '';
+    const side = (k, label) => { const xs = rs.filter((r) => (r.side || 'seen') === k); return xs.length ? `<div class="fb-cite"><b>${label}</b><ol>${xs.map((r) => `<li>${esc(sourceLine(e, r, false))}</li>`).join('')}</ol></div>` : ''; };
+    return `<div class="fb-srcs"><span class="fb-l">Where this comes from</span>${side('says', 'Your documents')}${side('seen', 'The evidence that disagrees')}</div>`; };
   const item = (f) => `<article class="fb-i fb-${esc(f.priority || 'medium')}">
     <div class="fb-num"><b>${esc(f.number || '')}</b><span>${esc(f.numberLabel || '')}</span></div>
     <div class="fb-body"><h4>${esc(f.topic)}${f.status && f.status !== 'Sent' && f.status !== 'Confirmed with client' ? ' <span class="fb-draft">draft</span>' : ''}</h4>
@@ -3889,7 +3902,7 @@ function renderFeedback(e) {
       ${f.reality ? `<p><span class="fb-l">What we see</span>${esc(f.reality)}</p>` : ''}
       ${f.soWhat ? `<p><span class="fb-l">Why it matters</span>${esc(f.soWhat)}</p>` : ''}
       ${f.suggestion ? `<p class="fb-s"><span class="fb-l">Our suggestion</span>${esc(f.suggestion)}</p>` : ''}
-      ${f.source ? `<p class="fb-src">Source: ${esc(f.source)}</p>` : ''}</div></article>`;
+      ${srcBlock(f)}</div></article>`;
   return `<section class="rpt-cover"><div class="rpt-eyebrow">The Growth Machine · feedback for ${esc(e.client.name)}</div><h1>What's written vs what's happening</h1>
     <p class="muted">${date}. Your own documents set sensible rules. Below is where the data shows they are not being followed, why it matters, and what we suggest. These are suggestions for discussion, not decisions.</p></section>
     ${top.length ? `<div class="fb-top">${top.map((f) => `<div><b>${esc(f.number)}</b><span>${esc(f.numberLabel || f.topic)}</span></div>`).join('')}</div>` : ''}
@@ -4059,8 +4072,9 @@ const FIELD_DEFS = {
   topClients: [['id', 'text'], ['name', 'text'], ['segment', ['Managed', 'Reseller / self-service', 'Partner / section row']], ['csm', 'text'], ['annualRevenue', 'num'], ['churnRisk', ['Low', 'Medium', 'High']], ['contractStatus', ['In contract', 'Renews within 90 days', 'Out of contract', 'Month to month', 'Unknown']], ['satisfaction', 'text'], ['touchpoint', ['Low', 'Low-Medium', 'Medium', 'Medium-High', 'High']], ['adoption', ['Low', 'Medium', 'High']], ['register', 'json'], ['csScores', 'json'], ['notes', 'text']],
   financePeriods: [['id', 'text'], ['label', 'text'], ['months', 'num'], ['revenue', 'num'], ['cogs', 'num'], ['payroll', 'num'], ['tools', 'num'], ['marketing', 'num'], ['premises', 'num'], ['other', 'num']],
   interviews: [['id', 'text'], ['personId', 'person'], ['date', 'date'], ['interviewer', 'text'], ['summary', 'long'], ['themes', 'text'], ['painPoints', 'long'], ['ideas', 'long'], ['quotes', 'long']],
-  findings: [['id', 'text'], ['title', 'text'], ['area', 'text'], ['severity', ['high', 'medium', 'low']], ['kind', ['leak', 'weakness', 'hole', 'opportunity', 'tool', 'context']], ['valueMonthly', 'num'], ['basis', ['Leaking', 'At risk', 'Spend to review', 'Upside']], ['fixId', 'text'], ['partOf', 'text'], ['nextStep', 'text'], ['lens', 'text'], ['evidence', 'long']],
-  feedback: [['id', 'text'], ['topic', 'text'], ['area', ['Revenue', 'Billing', 'Customers', 'Cost', 'Risk', 'Process', 'Documents']], ['number', 'text'], ['numberLabel', 'text'], ['says', 'long'], ['reality', 'long'], ['soWhat', 'long'], ['suggestion', 'long'], ['priority', ['high', 'medium', 'low']], ['status', ['Draft', 'Confirmed with client', 'Sent']], ['source', 'text']],
+  findings: [['id', 'text'], ['title', 'text'], ['area', 'text'], ['severity', ['high', 'medium', 'low']], ['kind', ['leak', 'weakness', 'hole', 'opportunity', 'tool', 'context']], ['valueMonthly', 'num'], ['basis', ['Leaking', 'At risk', 'Spend to review', 'Upside']], ['fixId', 'text'], ['partOf', 'text'], ['nextStep', 'text'], ['lens', 'text'], ['evidence', 'long'], ['sources', 'json']],
+  sources: [['id', 'text'], ['name', 'text'], ['type', ['Interview', 'Meeting', 'Voice note', 'Spreadsheet', 'Presentation', 'Document', 'Management accounts', 'Platform export', 'Other']], ['from', 'text'], ['person', 'text'], ['asOf', 'text'], ['received', 'text'], ['via', 'text'], ['link', 'text'], ['notes', 'text']],
+  feedback: [['id', 'text'], ['topic', 'text'], ['area', ['Revenue', 'Billing', 'Customers', 'Cost', 'Risk', 'Process', 'Documents']], ['number', 'text'], ['numberLabel', 'text'], ['says', 'long'], ['reality', 'long'], ['soWhat', 'long'], ['suggestion', 'long'], ['priority', ['high', 'medium', 'low']], ['status', ['Draft', 'Confirmed with client', 'Sent']], ['source', 'text'], ['sources', 'json']],
   revenueMovements: [['id', 'text'], ['fy', 'text'], ['client', 'text'], ['kind', ['lost', 'downgrade', 'new', 'growth']], ['cause', 'text'], ['monthly', 'num'], ['from', 'text'], ['reason', 'text'], ['comment', 'text']],
   customQuestions: [['id', 'text'], ['personId', 'person'], ['section', 'text'], ['q', 'long'], ['note', 'text'], ['crit', CRITERIA.map((c) => c.id)], ['p', 'num']],
   competitors: [['id', 'text'], ['name', 'text'], ['type', ['Direct', 'Indirect', 'Substitute', 'Adjacent']], ['threat', ['High', 'Medium', 'Low']], ['website', 'text'], ['hq', 'text'], ['markets', 'text'], ['segments', 'text'], ['offering', 'long'], ['pricingModel', 'text'], ['pricePoint', 'num'], ['size', 'text'], ['ownership', 'text'], ['strengths', 'long'], ['weaknesses', 'long'], ['whereWeWin', 'long'], ['whereWeLose', 'long'], ['sources', 'long'], ['lastReviewed', 'date']],
@@ -4071,7 +4085,7 @@ const FIELD_DEFS = {
   recommendations: [['id', 'text'], ['title', 'text'], ['type', ['People', 'Process', 'Tool', 'Build', 'Structure', 'Commercial']], ['horizon', ['0-3 months', '3-6 months', '6-12 months', '12+ months']], ['description', 'long'], ['effort', 'num'], ['risk', 'num'], ['confidence', 'num'], ['oneOffCost', 'num'], ['otherAnnualSaving', 'num'], ['oneOffSaving', 'num'], ['revenueUplift', 'num'], ['status', REC_STAGES], ['ops', 'json']],
   scenarios: [['id', 'text'], ['name', 'text'], ['description', 'text'], ['recommendationIds', 'json']]
 };
-const COLL_LABELS = { customQuestions: 'Custom interview questions', competitors: 'Competitors', capabilities: 'Capabilities', intel: 'Competitor intelligence', usps: 'USPs', opportunities: 'Opportunities', intake: 'Founder answers', departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Clients', revenueMovements: 'Revenue movements', feedback: 'Client feedback (written vs practice)', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };
+const COLL_LABELS = { customQuestions: 'Custom interview questions', competitors: 'Competitors', capabilities: 'Capabilities', intel: 'Competitor intelligence', usps: 'USPs', opportunities: 'Opportunities', intake: 'Founder answers', departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Clients', revenueMovements: 'Revenue movements', feedback: 'Client feedback (written vs practice)', sources: 'Sources (where every number comes from)', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };
 
 function cellInput(e, coll, row, [f, type]) {
   const v = row[f]; const base = `data-cell data-coll="${coll}" data-id="${esc(row.id)}" data-field="${f}"`;

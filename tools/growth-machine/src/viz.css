@@ -408,3 +408,4 @@ tr.lk-total td{font-weight:600;border-top:1px solid var(--line)}
 .closed-iss ul{list-style:none;padding:0;margin:8px 0 0}.closed-iss li{margin-bottom:8px;font-size:13px}
 .cs-resolved{color:var(--good-ink);font-weight:700}.cs-hold{color:var(--warn-ink);font-weight:700}
 .es-i.es-done{border-color:var(--good);color:var(--good-ink)}
+.lo-srcs{margin:4px 0 10px}.lo-srcs ol{margin:4px 0 0;padding-left:18px}.lo-srcs li{margin:2px 0}

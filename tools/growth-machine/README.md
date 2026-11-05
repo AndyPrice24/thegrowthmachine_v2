@@ -181,3 +181,10 @@ severity you chose (your judgement wins over the file's suggestion). Steps the f
 what the documents say, what we see, why it matters, our suggestion, priority and status (Draft / Confirmed with
 client / Sent). The report puts the four biggest numbers on top and groups items by area. It is worded as suggestions,
 not decisions. Print or download it once the drafts are confirmed.
+
+### Sources (where every number comes from)
+`sources` is a register of every document, sheet, interview and meeting: name, type, from (role), person (internal
+only), the date the information applies to, when and how it was received, and a link. Feedback items and findings carry
+`sources: [{id, part, side}]`, where `side` is `says` (the client's documents) or `seen` (the evidence that disagrees)
+and `part` is the exact tab, section or point. The cheatsheet prints both sides under "Where this comes from" (roles only),
+and the Leaks & opportunities detail lists them (with names).

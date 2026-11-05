@@ -27,7 +27,8 @@ The full method is in the `growth-machine` skill (`.claude/skills/growth-machine
 - Be honest: say when a number is an estimate or a source is messy, and ask rather than guess.
 - Recommendations are suggestions for the client to decide. Each one says how it will stick (system, ease, visibility,
   incentive, owner); see the skill.
-- Where the client's documents disagree with the evidence, keep the evidence and log a feedback item for the client.
+- Where the client's documents disagree with the evidence, keep the evidence and log a feedback item for the client,
+  citing both sides precisely: source, tab or section, who, date of the information, and when we received it.
 
 ## Data and privacy
 - Client data lives only in `clients/<client>/` (gitignored). Never commit it; this repo is public.

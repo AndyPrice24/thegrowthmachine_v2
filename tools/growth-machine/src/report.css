@@ -42,3 +42,4 @@
 .rpt .fb-s{background:#f3efe8;border-radius:8px;padding:6px 8px}.rpt .fb-src{font-size:11px;color:#8a8074}
 .rpt .fb-draft{font-size:10px;font-weight:700;text-transform:uppercase;border:1px solid #e0a10b;color:#9a6a00;border-radius:999px;padding:1px 7px;vertical-align:2px}
 @media (max-width:700px){.rpt .fb-top{grid-template-columns:1fr 1fr}.rpt .fb-i{grid-template-columns:1fr}}
+.rpt .fb-srcs{margin-top:8px;border-top:1px dashed #e3ddd3;padding-top:6px}.rpt .fb-cite{font-size:11.5px;color:#4a443d;margin-top:3px}.rpt .fb-cite b{font-size:11.5px}.rpt .fb-cite ol{margin:2px 0 0;padding-left:18px}.rpt .fb-cite li{margin:1px 0}
