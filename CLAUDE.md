@@ -35,6 +35,7 @@ The full method is in the `growth-machine` skill (`.claude/skills/growth-machine
 - Exclude personal data of clients' contacts (names, birthdays, phone numbers).
 - Report interviews by role. Never attribute confidential remarks to the person who made them.
 - Studio updates are stamped JSON files (`_meta.generatedAt`) that the user merges in the Studio, then backs up.
+- When new data arrives, the same update closes the matching data requests (received date, what came in, what is still missing).
 
 ## Code
 - Studio source: `tools/growth-machine/src/`. Build: `node tools/growth-machine/build.mjs` → `dist/growth-machine-studio.html`.

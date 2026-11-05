@@ -76,4 +76,6 @@ applies to, and when and how we received it. Register each source once in the St
 - Interviews are reported by role. Never attribute a confidential remark to the person who made it.
 - Leave out client contacts' personal data (names, birthdays, phone numbers). Client data stays in the gitignored `clients/` folder.
 - Studio updates are stamped JSON files (`_meta.generatedAt`). The user backs up, replaces the Studio if needed, merges the file, then backs up again.
+- **Close the loop on requests.** Whenever new data arrives, the same update file marks the matching data requests received
+  (date and what came in), notes what is still missing on partly answered ones, and marks duplicates 'Not needed'.
 - Stay in scope: do what was asked and don't touch live systems unless asked. Offer bigger ideas instead of building them unasked.
