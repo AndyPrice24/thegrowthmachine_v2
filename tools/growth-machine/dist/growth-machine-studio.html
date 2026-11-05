@@ -334,6 +334,14 @@ ol.flags li:hover,ol.flags li.on{border-color:var(--ink)}
 @media (max-width:820px){.pv-bar{position:static}}
 .pv-main .flow-side{top:112px;max-height:calc(100vh - 124px)}
 .pv-switch.sm .seg{padding:4px 9px}.pv-bar .tog{gap:4px}
+/* Revenue leaks */
+.lk-neg{color:var(--crit-ink)}
+.lk-pos{color:var(--good-ink)}
+tr.lk-total td{font-weight:600;border-top:1px solid var(--line)}
+.lk-list{margin:4px 0 0;padding-left:18px}
+.lk-list li{margin:4px 0}
+.lk-bars > div + div{margin-top:18px}
+.lk-loc{max-width:760px}
 </style>
 <style id="report-css">/* Founder report styles (also embedded in exported HTML reports) */
 .rpt{background:#fffdf9;color:#171715;border:1px solid #d7cfc3;border-radius:14px;padding:40px 46px;
@@ -560,7 +568,7 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="tip" hidden></div>
 <script>
-const STUDIO_BUILD = '2026-11-05 08:40 UTC';
+const STUDIO_BUILD = '2026-11-05 08:54 UTC';
 /* ---- model.js ---- */
 /* ============================================================
    The Growth Machine — data model, scenario engine, scoring, insights
@@ -577,7 +585,7 @@ const live = (arr) => (arr || []).filter((x) => !x._removed);
 const byId = (arr) => Object.fromEntries((arr || []).map((x) => [x.id, x]));
 const splitList = (v) => Array.isArray(v) ? v : String(v || '').split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
 
-const COLLECTIONS = ['intake', 'customQuestions', 'competitors', 'capabilities', 'intel', 'usps', 'opportunities', 'departments', 'people', 'tools', 'processes', 'segments', 'markets', 'topClients',
+const COLLECTIONS = ['intake', 'customQuestions', 'competitors', 'capabilities', 'intel', 'usps', 'opportunities', 'departments', 'people', 'tools', 'processes', 'segments', 'markets', 'topClients', 'revenueMovements',
   'financePeriods', 'interviews', 'findings', 'recommendations', 'scenarios'];
 
 function blankEngagement(name) {
@@ -589,7 +597,7 @@ function blankEngagement(name) {
       businessModel: '', revenueModel: '', description: '', goals: '', constraints: '' },
     meta: { currency: 'ZAR', consultant: 'The Growth Machine', engagementStart: today, lastUpdated: new Date().toISOString(),
       lastExported: '', notes: '' },
-    departments: [], people: [], tools: [], processes: [], segments: [], markets: [], topClients: [],
+    departments: [], people: [], tools: [], processes: [], segments: [], markets: [], topClients: [], revenueMovements: [],
     financePeriods: [], interviews: [], findings: [], recommendations: [], scenarios: [],
     intake: [], customQuestions: [], competitors: [], capabilities: [], intel: [], usps: [], opportunities: [], engagement: blankEngagementBlock(),
     report: { title: '', preparedFor: '', summary: '', nextSteps: '', anonymise: true, scenarioId: '', processIds: [],
@@ -1532,7 +1540,7 @@ function niceMax(v) {
 }
 
 /* ---- Line chart (change over time, one shared y-axis) ---- */
-function lineChart(labels, series, { fmt = (v) => v, height = 240 } = {}) {
+function lineChart(labels, series, { fmt = (v) => v, height = 240, tickEvery = 1 } = {}) {
   if (!labels.length) return '<p class="empty">Add finance periods to see trends.</p>';
   const W = 640, H = height, L = 64, R = 16, T = 12, B = 28;
   const all = series.flatMap((s) => s.values.map(num));
@@ -1543,7 +1551,7 @@ function lineChart(labels, series, { fmt = (v) => v, height = 240 } = {}) {
   let svg = `<svg viewBox="0 0 ${W} ${H}" role="img">`;
   svg += `<g class="grid">${ticks.map((t) => `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}"/>`).join('')}</g>`;
   svg += `<g class="axis">${ticks.map((t) => `<text x="${L - 8}" y="${y(t) + 4}" text-anchor="end">${esc(fmt(t))}</text>`).join('')}`;
-  svg += labels.map((l, i) => `<text x="${x(i)}" y="${H - 8}" text-anchor="middle">${esc(l)}</text>`).join('') + '</g>';
+  svg += labels.map((l, i) => ((i % tickEvery || labels.length - 1 - i < tickEvery / 1.5) && i !== labels.length - 1 ? '' : `<text x="${x(i)}" y="${H - 8}" text-anchor="middle">${esc(l)}</text>`)).join('') + '</g>';
   series.forEach((s) => {
     const pts = s.values.map((v, i) => `${x(i)},${y(num(v))}`).join(' ');
     svg += `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
@@ -2745,6 +2753,7 @@ function viewBusiness(e) {
     ${card('Segment economics', segs.length ? `<table class="tbl"><thead><tr><th>Segment</th><th class="r">Customers</th><th class="r">Revenue</th><th class="r">Avg / customer</th><th class="r">Churn</th><th>Acquisition</th></tr></thead><tbody>${segs.map((s) => `<tr><td>${esc(s.name)}</td><td class="r">${num(s.customers)}</td><td class="r">${fmtMoney(num(s.annualRevenue))}</td><td class="r">${fmtMoney(num(s.annualRevenue) / Math.max(1, num(s.customers)))}</td><td class="r">${num(s.churnPct)}%</td><td>${esc(s.acquisitionChannel || '')}</td></tr>`).join('')}</tbody></table>` : empty('Add segments in Data & Claude.'))}
     ${card('Customer concentration', tc.length ? hbars(tc.slice(0, 10).map((c) => ({ label: c.name, value: rev ? num(c.annualRevenue) / rev * 100 : 0, tip: fmtMoney(num(c.annualRevenue)) })), { fmt: (v) => v.toFixed(1) + '%', color: 'var(--s7)' }) : empty('Add top clients to see concentration risk.'), { sub: 'Share of run-rate revenue per client.' })}
   </div>
+  ${revenueLeaksCard(e)}
   ${clientRegisterCard(e)}
   ${clientHealthCard(e)}`;
 }
@@ -2945,6 +2954,32 @@ function clientHealthCard(e) {
     ${grid}<div class="legend small" style="margin:6px 0 12px"><span><i class="ch-key risk"></i>Low adoption: churn risk</span><span><i class="ch-key cost"></i>High effort, not high adoption: costly to serve</span><span><i class="ch-key good"></i>High adoption, manageable effort</span></div>
     <div class="grid-2"><div><h5>Adoption: how clients use the platform</h5>${bars('a')}</div><div><h5>Effort: what clients need from Client Success</h5>${bars('t')}</div></div>
     <p class="faint small">Bars: Low · Medium · High share of scored clients. For adoption, low is bad; for effort, high is costly.</p>`, { sub: 'Effort to serve × adoption. Add revenue per client to see who costs more than they pay.' });
+}
+
+/* ---------- Revenue leaks: where recurring revenue walks out, by cause (from the client's own movement sheets) ---------- */
+const LEAK_KINDS = ['lost', 'downgrade'], WIN_KINDS = ['new', 'growth'];
+function revenueLeaksCard(e) {
+  const mv = e.revenueMovements || []; if (!mv.length) return '';
+  const fys = [...new Set(mv.map((m) => m.fy))].sort();
+  const tot = (fy, kinds) => sum(mv.filter((m) => m.fy === fy && kinds.includes(m.kind)), (m) => num(m.monthly));
+  const mo = (v) => fmtMoney(v) + '/mo';
+  const causes = (fy, kinds) => { const c = {}; mv.filter((m) => m.fy === fy && kinds.includes(m.kind)).forEach((m) => { const x = c[m.cause] = c[m.cause] || { v: 0, n: 0, names: [] }; x.v += num(m.monthly); x.n++; x.names.push(m.client.trim()); });
+    return Object.entries(c).sort((a, b) => b[1].v - a[1].v); };
+  const table = `<table class="tbl"><thead><tr><th></th>${fys.map((f) => `<th class="r">${esc(f)}</th>`).join('')}</tr></thead><tbody>
+    ${[['Lost (clients left)', ['lost'], 'neg'], ['Downgraded', ['downgrade'], 'neg'], ['Total leak', LEAK_KINDS, 'neg b'], ['Won (new + win-back)', ['new'], 'pos'], ['Grown (upsell, price, locations)', ['growth'], 'pos'], ['Net', null, 'b']].map(([l, k, cls]) =>
+      `<tr class="${cls.includes('b') ? 'lk-total' : ''}"><td>${l}</td>${fys.map((f) => { const v = k ? tot(f, k) : tot(f, WIN_KINDS) - tot(f, LEAK_KINDS); return `<td class="r ${cls.includes('neg') ? 'lk-neg' : cls.includes('pos') ? 'lk-pos' : v < 0 ? 'lk-neg' : 'lk-pos'}">${k && cls.includes('neg') ? '−' : !k && v > 0 ? '+' : ''}${mo(Math.abs(v))}</td>`; }).join('')}</tr>`).join('')}</tbody></table>`;
+  const latest = fys[fys.length - 1];
+  const leakBars = fys.slice().reverse().map((f) => `<div><h5>Where it leaks: ${esc(f)}${f === latest ? ' (so far)' : ''}</h5>${hbars(causes(f, LEAK_KINDS).map(([k, x]) => ({ label: `${k} (${x.n})`, value: x.v, tip: x.names.join(', ') })), { fmt: mo, color: 'var(--crit)' })}</div>`).join('');
+  const big = mv.filter((m) => LEAK_KINDS.includes(m.kind)).sort((a, b) => num(b.monthly) - num(a.monthly)).slice(0, 6);
+  const insights = e.findings.filter((f) => f.lens === 'Revenue leaks');
+  const lt = e.client.locationTrend;
+  const loc = lt && lt.labels ? `<div class="lk-loc"><h5 style="margin-top:14px">Locations under management</h5>${lineChart(lt.labels, lt.series.map((s, i) => ({ name: s.name, values: s.values, color: ['var(--s1)', 'var(--s2)', 'var(--s5)'][i] || 'var(--s-other)' })), { fmt: (v) => Math.round(v).toLocaleString('en-ZA'), height: 260, tickEvery: 3 })}<p class="faint small">${esc(lt.note || '')}</p></div>` : '';
+  return card('Revenue leaks', `<p class="small muted" style="margin-top:0">Recurring revenue lost, cut, won and grown per month, digested from Location Bank's own New &amp; Lost sheets and combined with the register and client health data. Figures are estimates until checked against billing.</p>
+    ${insights.length ? `<h5>What it tells us</h5><ul class="lk-list">${insights.map((f) => `<li><span class="chip sev-${esc(f.severity || 'low')}">${esc(f.severity || '')}</span> ${esc(f.title)}</li>`).join('')}</ul>` : ''}
+    <div class="grid-2" style="margin-top:14px"><div><h5>The numbers per month</h5>${table}
+      <h5 style="margin-top:14px">Biggest single leaks</h5><p class="small">${big.map((m) => `${esc(m.client.trim())} <span class="lk-neg">−${mo(num(m.monthly))}</span> <span class="faint">(${esc(m.cause.toLowerCase())}, ${esc(m.fy)})</span>`).join(' · ')}</p></div>
+      <div class="lk-bars">${leakBars}</div></div>
+    ${loc}`, { sub: 'Lost and cut revenue by cause, against what was won. Fixing the biggest cause pays more than chasing new sales.' });
 }
 
 /* ---------- Client register (from the client's own contract register) ---------- */
@@ -3616,7 +3651,8 @@ const FIELD_DEFS = {
   topClients: [['id', 'text'], ['name', 'text'], ['segment', ['Managed', 'Reseller / self-service', 'Partner / section row']], ['csm', 'text'], ['annualRevenue', 'num'], ['churnRisk', ['Low', 'Medium', 'High']], ['contractStatus', ['In contract', 'Renews within 90 days', 'Out of contract', 'Month to month', 'Unknown']], ['satisfaction', 'text'], ['touchpoint', ['Low', 'Low-Medium', 'Medium', 'Medium-High', 'High']], ['adoption', ['Low', 'Medium', 'High']], ['register', 'json'], ['csScores', 'json'], ['notes', 'text']],
   financePeriods: [['id', 'text'], ['label', 'text'], ['months', 'num'], ['revenue', 'num'], ['cogs', 'num'], ['payroll', 'num'], ['tools', 'num'], ['marketing', 'num'], ['premises', 'num'], ['other', 'num']],
   interviews: [['id', 'text'], ['personId', 'person'], ['date', 'date'], ['interviewer', 'text'], ['summary', 'long'], ['themes', 'text'], ['painPoints', 'long'], ['ideas', 'long'], ['quotes', 'long']],
-  findings: [['id', 'text'], ['title', 'text'], ['area', 'text'], ['severity', ['high', 'medium', 'low']], ['evidence', 'long']],
+  findings: [['id', 'text'], ['title', 'text'], ['area', 'text'], ['severity', ['high', 'medium', 'low']], ['lens', 'text'], ['evidence', 'long']],
+  revenueMovements: [['id', 'text'], ['fy', 'text'], ['client', 'text'], ['kind', ['lost', 'downgrade', 'new', 'growth']], ['cause', 'text'], ['monthly', 'num'], ['from', 'text'], ['reason', 'text'], ['comment', 'text']],
   customQuestions: [['id', 'text'], ['personId', 'person'], ['section', 'text'], ['q', 'long'], ['note', 'text'], ['crit', CRITERIA.map((c) => c.id)], ['p', 'num']],
   competitors: [['id', 'text'], ['name', 'text'], ['type', ['Direct', 'Indirect', 'Substitute', 'Adjacent']], ['threat', ['High', 'Medium', 'Low']], ['website', 'text'], ['hq', 'text'], ['markets', 'text'], ['segments', 'text'], ['offering', 'long'], ['pricingModel', 'text'], ['pricePoint', 'num'], ['size', 'text'], ['ownership', 'text'], ['strengths', 'long'], ['weaknesses', 'long'], ['whereWeWin', 'long'], ['whereWeLose', 'long'], ['sources', 'long'], ['lastReviewed', 'date']],
   intel: [['id', 'text'], ['competitorId', 'comp'], ['topic', INTEL_TOPICS], ['note', 'long'], ['sourceType', SOURCE_TYPES], ['source', 'text'], ['date', 'date']],
@@ -3626,7 +3662,7 @@ const FIELD_DEFS = {
   recommendations: [['id', 'text'], ['title', 'text'], ['type', ['People', 'Process', 'Tool', 'Build', 'Structure', 'Commercial']], ['horizon', ['0-3 months', '3-6 months', '6-12 months', '12+ months']], ['description', 'long'], ['effort', 'num'], ['risk', 'num'], ['confidence', 'num'], ['oneOffCost', 'num'], ['otherAnnualSaving', 'num'], ['oneOffSaving', 'num'], ['revenueUplift', 'num'], ['status', REC_STAGES], ['ops', 'json']],
   scenarios: [['id', 'text'], ['name', 'text'], ['description', 'text'], ['recommendationIds', 'json']]
 };
-const COLL_LABELS = { customQuestions: 'Custom interview questions', competitors: 'Competitors', capabilities: 'Capabilities', intel: 'Competitor intelligence', usps: 'USPs', opportunities: 'Opportunities', intake: 'Founder answers', departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Clients', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };
+const COLL_LABELS = { customQuestions: 'Custom interview questions', competitors: 'Competitors', capabilities: 'Capabilities', intel: 'Competitor intelligence', usps: 'USPs', opportunities: 'Opportunities', intake: 'Founder answers', departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Clients', revenueMovements: 'Revenue movements', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };
 
 function cellInput(e, coll, row, [f, type]) {
   const v = row[f]; const base = `data-cell data-coll="${coll}" data-id="${esc(row.id)}" data-field="${f}"`;

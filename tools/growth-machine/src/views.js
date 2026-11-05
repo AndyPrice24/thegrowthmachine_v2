@@ -90,6 +90,7 @@ function viewBusiness(e) {
     ${card('Segment economics', segs.length ? `<table class="tbl"><thead><tr><th>Segment</th><th class="r">Customers</th><th class="r">Revenue</th><th class="r">Avg / customer</th><th class="r">Churn</th><th>Acquisition</th></tr></thead><tbody>${segs.map((s) => `<tr><td>${esc(s.name)}</td><td class="r">${num(s.customers)}</td><td class="r">${fmtMoney(num(s.annualRevenue))}</td><td class="r">${fmtMoney(num(s.annualRevenue) / Math.max(1, num(s.customers)))}</td><td class="r">${num(s.churnPct)}%</td><td>${esc(s.acquisitionChannel || '')}</td></tr>`).join('')}</tbody></table>` : empty('Add segments in Data & Claude.'))}
     ${card('Customer concentration', tc.length ? hbars(tc.slice(0, 10).map((c) => ({ label: c.name, value: rev ? num(c.annualRevenue) / rev * 100 : 0, tip: fmtMoney(num(c.annualRevenue)) })), { fmt: (v) => v.toFixed(1) + '%', color: 'var(--s7)' }) : empty('Add top clients to see concentration risk.'), { sub: 'Share of run-rate revenue per client.' })}
   </div>
+  ${revenueLeaksCard(e)}
   ${clientRegisterCard(e)}
   ${clientHealthCard(e)}`;
 }
@@ -290,6 +291,32 @@ function clientHealthCard(e) {
     ${grid}<div class="legend small" style="margin:6px 0 12px"><span><i class="ch-key risk"></i>Low adoption: churn risk</span><span><i class="ch-key cost"></i>High effort, not high adoption: costly to serve</span><span><i class="ch-key good"></i>High adoption, manageable effort</span></div>
     <div class="grid-2"><div><h5>Adoption: how clients use the platform</h5>${bars('a')}</div><div><h5>Effort: what clients need from Client Success</h5>${bars('t')}</div></div>
     <p class="faint small">Bars: Low · Medium · High share of scored clients. For adoption, low is bad; for effort, high is costly.</p>`, { sub: 'Effort to serve × adoption. Add revenue per client to see who costs more than they pay.' });
+}
+
+/* ---------- Revenue leaks: where recurring revenue walks out, by cause (from the client's own movement sheets) ---------- */
+const LEAK_KINDS = ['lost', 'downgrade'], WIN_KINDS = ['new', 'growth'];
+function revenueLeaksCard(e) {
+  const mv = e.revenueMovements || []; if (!mv.length) return '';
+  const fys = [...new Set(mv.map((m) => m.fy))].sort();
+  const tot = (fy, kinds) => sum(mv.filter((m) => m.fy === fy && kinds.includes(m.kind)), (m) => num(m.monthly));
+  const mo = (v) => fmtMoney(v) + '/mo';
+  const causes = (fy, kinds) => { const c = {}; mv.filter((m) => m.fy === fy && kinds.includes(m.kind)).forEach((m) => { const x = c[m.cause] = c[m.cause] || { v: 0, n: 0, names: [] }; x.v += num(m.monthly); x.n++; x.names.push(m.client.trim()); });
+    return Object.entries(c).sort((a, b) => b[1].v - a[1].v); };
+  const table = `<table class="tbl"><thead><tr><th></th>${fys.map((f) => `<th class="r">${esc(f)}</th>`).join('')}</tr></thead><tbody>
+    ${[['Lost (clients left)', ['lost'], 'neg'], ['Downgraded', ['downgrade'], 'neg'], ['Total leak', LEAK_KINDS, 'neg b'], ['Won (new + win-back)', ['new'], 'pos'], ['Grown (upsell, price, locations)', ['growth'], 'pos'], ['Net', null, 'b']].map(([l, k, cls]) =>
+      `<tr class="${cls.includes('b') ? 'lk-total' : ''}"><td>${l}</td>${fys.map((f) => { const v = k ? tot(f, k) : tot(f, WIN_KINDS) - tot(f, LEAK_KINDS); return `<td class="r ${cls.includes('neg') ? 'lk-neg' : cls.includes('pos') ? 'lk-pos' : v < 0 ? 'lk-neg' : 'lk-pos'}">${k && cls.includes('neg') ? '−' : !k && v > 0 ? '+' : ''}${mo(Math.abs(v))}</td>`; }).join('')}</tr>`).join('')}</tbody></table>`;
+  const latest = fys[fys.length - 1];
+  const leakBars = fys.slice().reverse().map((f) => `<div><h5>Where it leaks: ${esc(f)}${f === latest ? ' (so far)' : ''}</h5>${hbars(causes(f, LEAK_KINDS).map(([k, x]) => ({ label: `${k} (${x.n})`, value: x.v, tip: x.names.join(', ') })), { fmt: mo, color: 'var(--crit)' })}</div>`).join('');
+  const big = mv.filter((m) => LEAK_KINDS.includes(m.kind)).sort((a, b) => num(b.monthly) - num(a.monthly)).slice(0, 6);
+  const insights = e.findings.filter((f) => f.lens === 'Revenue leaks');
+  const lt = e.client.locationTrend;
+  const loc = lt && lt.labels ? `<div class="lk-loc"><h5 style="margin-top:14px">Locations under management</h5>${lineChart(lt.labels, lt.series.map((s, i) => ({ name: s.name, values: s.values, color: ['var(--s1)', 'var(--s2)', 'var(--s5)'][i] || 'var(--s-other)' })), { fmt: (v) => Math.round(v).toLocaleString('en-ZA'), height: 260, tickEvery: 3 })}<p class="faint small">${esc(lt.note || '')}</p></div>` : '';
+  return card('Revenue leaks', `<p class="small muted" style="margin-top:0">Recurring revenue lost, cut, won and grown per month, digested from Location Bank's own New &amp; Lost sheets and combined with the register and client health data. Figures are estimates until checked against billing.</p>
+    ${insights.length ? `<h5>What it tells us</h5><ul class="lk-list">${insights.map((f) => `<li><span class="chip sev-${esc(f.severity || 'low')}">${esc(f.severity || '')}</span> ${esc(f.title)}</li>`).join('')}</ul>` : ''}
+    <div class="grid-2" style="margin-top:14px"><div><h5>The numbers per month</h5>${table}
+      <h5 style="margin-top:14px">Biggest single leaks</h5><p class="small">${big.map((m) => `${esc(m.client.trim())} <span class="lk-neg">−${mo(num(m.monthly))}</span> <span class="faint">(${esc(m.cause.toLowerCase())}, ${esc(m.fy)})</span>`).join(' · ')}</p></div>
+      <div class="lk-bars">${leakBars}</div></div>
+    ${loc}`, { sub: 'Lost and cut revenue by cause, against what was won. Fixing the biggest cause pays more than chasing new sales.' });
 }
 
 /* ---------- Client register (from the client's own contract register) ---------- */

@@ -135,3 +135,9 @@ node tools/growth-machine/build.mjs
 - Data entry is a spreadsheet-style grid plus JSON for nested lists. Claude is the fast route for bulk input.
 - Crossover rules use fixed thresholds (e.g. "more than 60% manual"). Tune them in `src/model.js` → `insights()` as we learn what matters.
 - Org charts over ~80 people get wide. Use zoom, or filter by department (not built yet).
+
+### Revenue leaks (Business & market)
+Digests a client's own churn and new-business sheets into `revenueMovements` (lost, downgrade, new, growth; cause; rand per month).
+The card shows the takeaways first (findings with `lens: 'Revenue leaks'`), then the leak and win per year, where revenue leaks by
+cause, the biggest single leaks and, if `client.locationTrend` is set, a location trend. Figures are estimates until they are
+checked against billing.

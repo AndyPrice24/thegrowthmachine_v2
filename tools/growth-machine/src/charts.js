@@ -41,7 +41,7 @@ function niceMax(v) {
 }
 
 /* ---- Line chart (change over time, one shared y-axis) ---- */
-function lineChart(labels, series, { fmt = (v) => v, height = 240 } = {}) {
+function lineChart(labels, series, { fmt = (v) => v, height = 240, tickEvery = 1 } = {}) {
   if (!labels.length) return '<p class="empty">Add finance periods to see trends.</p>';
   const W = 640, H = height, L = 64, R = 16, T = 12, B = 28;
   const all = series.flatMap((s) => s.values.map(num));
@@ -52,7 +52,7 @@ function lineChart(labels, series, { fmt = (v) => v, height = 240 } = {}) {
   let svg = `<svg viewBox="0 0 ${W} ${H}" role="img">`;
   svg += `<g class="grid">${ticks.map((t) => `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}"/>`).join('')}</g>`;
   svg += `<g class="axis">${ticks.map((t) => `<text x="${L - 8}" y="${y(t) + 4}" text-anchor="end">${esc(fmt(t))}</text>`).join('')}`;
-  svg += labels.map((l, i) => `<text x="${x(i)}" y="${H - 8}" text-anchor="middle">${esc(l)}</text>`).join('') + '</g>';
+  svg += labels.map((l, i) => ((i % tickEvery || labels.length - 1 - i < tickEvery / 1.5) && i !== labels.length - 1 ? '' : `<text x="${x(i)}" y="${H - 8}" text-anchor="middle">${esc(l)}</text>`)).join('') + '</g>';
   series.forEach((s) => {
     const pts = s.values.map((v, i) => `${x(i)},${y(num(v))}`).join(' ');
     svg += `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
