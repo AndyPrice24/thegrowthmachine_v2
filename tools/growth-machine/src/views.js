@@ -90,6 +90,7 @@ function viewBusiness(e) {
     ${card('Segment economics', segs.length ? `<table class="tbl"><thead><tr><th>Segment</th><th class="r">Customers</th><th class="r">Revenue</th><th class="r">Avg / customer</th><th class="r">Churn</th><th>Acquisition</th></tr></thead><tbody>${segs.map((s) => `<tr><td>${esc(s.name)}</td><td class="r">${num(s.customers)}</td><td class="r">${fmtMoney(num(s.annualRevenue))}</td><td class="r">${fmtMoney(num(s.annualRevenue) / Math.max(1, num(s.customers)))}</td><td class="r">${num(s.churnPct)}%</td><td>${esc(s.acquisitionChannel || '')}</td></tr>`).join('')}</tbody></table>` : empty('Add segments in Data & Claude.'))}
     ${card('Customer concentration', tc.length ? hbars(tc.slice(0, 10).map((c) => ({ label: c.name, value: rev ? num(c.annualRevenue) / rev * 100 : 0, tip: fmtMoney(num(c.annualRevenue)) })), { fmt: (v) => v.toFixed(1) + '%', color: 'var(--s7)' }) : empty('Add top clients to see concentration risk.'), { sub: 'Share of run-rate revenue per client.' })}
   </div>
+  ${clientRegisterCard(e)}
   ${clientHealthCard(e)}`;
 }
 
@@ -289,4 +290,22 @@ function clientHealthCard(e) {
     ${grid}<div class="legend small" style="margin:6px 0 12px"><span><i class="ch-key risk"></i>Low adoption: churn risk</span><span><i class="ch-key cost"></i>High effort, not high adoption: costly to serve</span><span><i class="ch-key good"></i>High adoption, manageable effort</span></div>
     <div class="grid-2"><div><h5>Adoption: how clients use the platform</h5>${bars('a')}</div><div><h5>Effort: what clients need from Client Success</h5>${bars('t')}</div></div>
     <p class="faint small">Bars: Low · Medium · High share of scored clients. For adoption, low is bad; for effort, high is costly.</p>`, { sub: 'Effort to serve × adoption. Add revenue per client to see who costs more than they pay.' });
+}
+
+/* ---------- Client register (from the client's own contract register) ---------- */
+function clientRegisterCard(e) {
+  const all = e.topClients.filter((c) => c.register); if (!all.length) return '';
+  const man = all.filter((c) => c.segment === 'Managed');
+  const n = (f) => man.filter(f).length;
+  const renew = man.filter((c) => c.contractStatus === 'Renews within 90 days').sort((a, b) => String(a.register.contractEnd).localeCompare(String(b.register.contractEnd)));
+  const sats = man.map((c) => parseInt(c.satisfaction, 10)).filter((x) => x > 0);
+  const ups = sum(man, (c) => c.register.upsellValueMonthly);
+  const watch = man.filter((c) => c.churnRisk === 'High' || (parseInt(c.satisfaction, 10) > 0 && parseInt(c.satisfaction, 10) <= 6));
+  const port = {}; man.forEach((c) => { const k = c.csm || '(no CSM)'; port[k] = (port[k] || 0) + 1; });
+  const riskChip = (v) => v ? `<span class="chip ${v === 'High' ? 'sev-high' : v === 'Medium' ? 'sev-medium' : ''}">${esc(v)}</span>` : '<span class="faint">—</span>';
+  return card(`Client register (${all.length} clients)`, `<p class="small muted" style="margin-top:0">From Location Bank's own contract register (Current clients tab). ${man.length} clients are managed directly by Client Success; ${all.length - man.length} are reseller or self-service accounts. Revenue per client is not in the register.</p>
+    <div class="kpis">${kpi('Renewals in 90 days', renew.length, '<div class="k-delta">contracts ending by early Feb</div>')}${kpi('Out of contract', n((c) => c.contractStatus === 'Out of contract'), `<div class="k-delta">+ ${n((c) => c.contractStatus === 'Month to month')} month to month</div>`)}${kpi('Check-ins overdue', n((c) => /^Overdue/.test(c.register.meetingStatus || '')), `<div class="k-delta">of ${n((c) => c.register.meetingStatus && c.register.meetingStatus !== 'N/A')} with a meeting record</div>`)}${kpi('Satisfaction', sats.length ? (sum(sats) / sats.length).toFixed(1) + '/10' : '—', `<div class="k-delta">${sats.length} clients rated</div>`)}${kpi('Upsells 2025/26', fmtMoney(ups) + '/mo', `<div class="k-delta">${man.filter((c) => c.register.upsellValueMonthly > 0).length} clients</div>`)}</div>
+    <div class="grid-2" style="margin-top:12px"><div><h5>Renewals due in the next 90 days</h5>${renew.length ? `<table class="tbl"><thead><tr><th>Client</th><th>Ends</th><th>CSM</th><th>Churn risk</th><th>Satisfaction</th></tr></thead><tbody>${renew.map((c) => `<tr><td>${esc(c.name)}</td><td class="nowrap">${esc(c.register.contractEnd)}</td><td>${esc(c.csm || '—')}</td><td>${riskChip(c.churnRisk)}</td><td>${esc(c.satisfaction || '—')}</td></tr>`).join('')}</tbody></table>` : '<p class="empty">None.</p>'}</div>
+      <div><h5>Clients per CSM (managed)</h5>${hbars(Object.entries(port).sort((a, b) => b[1] - a[1]).map(([k, v]) => ({ label: k, value: v })), { fmt: (v) => v, color: 'var(--s3)' })}
+        <h5 style="margin-top:14px">Watchlist: high churn risk or satisfaction 6 or below (${watch.length})</h5><p class="small">${watch.map((c) => `${esc(c.name)} <span class="faint">(${[c.churnRisk && c.churnRisk + ' risk', c.satisfaction && 'sat ' + c.satisfaction].filter(Boolean).join(', ')})</span>`).join(' · ')}</p></div></div>`, { sub: 'Contracts, renewals, check-ins, satisfaction and CSM portfolios.' });
 }
