@@ -403,3 +403,8 @@ tr.lk-total td{font-weight:600;border-top:1px solid var(--line)}
 .pi-list{margin-top:12px}
 .pv-index .pv-toprow .btn.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
 @media (max-width:820px){.ps-tiles{grid-template-columns:1fr 1fr}}
+.iss-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.closed-iss{margin:8px 0;border:1px dashed var(--line);border-radius:10px;padding:6px 10px}.closed-iss summary{cursor:pointer}
+.closed-iss ul{list-style:none;padding:0;margin:8px 0 0}.closed-iss li{margin-bottom:8px;font-size:13px}
+.cs-resolved{color:var(--good-ink);font-weight:700}.cs-hold{color:var(--warn-ink);font-weight:700}
+.es-i.es-done{border-color:var(--good);color:var(--good-ink)}

@@ -26,7 +26,7 @@ function stepTimeText(s, long = false) {
 const isHotspot = (s) => num(s.elapsedDays) >= 2 || num(s.durationMins) >= 60;
 /** Rank steps by how badly they break: 2 per issue, 1.5 per weakness, 1 for a time hotspot. Top N get the strong highlight. */
 function breakPoints(steps, flags, topN) {
-  const n = topN == null ? (ui.bpTop == null ? 5 : ui.bpTop) : topN;
+  const n = topN == null ? 0 : topN; // 0 = no cap: every step that stands out is marked
   const score = {}, why = {}; const pos = {}; steps.forEach((s, i) => { pos[s.id] = i; });
   steps.forEach((s) => {
     if (!s || s.collapsed || s._removed) return;
@@ -72,16 +72,29 @@ function flowFlags(proc, people, tools, departments, clientSafe = false) {
         const a = stepTeam(prev, pById, dById), b = stepTeam(s, pById, dById);
         if (a && b && a !== b && a !== 'client' && b !== 'client') {
           const ta = tById[prev.toolId], tb = tById[s.toolId];
-          if (!tb) add({ type: 'weakness', on: 'link', stepId: s.id, text: `Hand-off from ${teamInfo(a)[1]} to ${teamInfo(b)[1]} with no system to receive it: relies on email, chat or memory`, by: 'Machine' });
-          else if (ta && tb && ta.id !== tb.id) add({ type: 'weakness', on: 'link', stepId: s.id, text: `Hand-off from ${teamInfo(a)[1]} to ${teamInfo(b)[1]} switches tool (${ta.name} → ${tb.name}): information re-entered?`, by: 'Machine' });
+          if (!isClosed(s.linkState)) {
+            if (!tb) add({ type: 'weakness', on: 'link', stepId: s.id, src: 'link', text: `Hand-off from ${teamInfo(a)[1]} to ${teamInfo(b)[1]} with no system to receive it: relies on email, chat or memory`, by: 'Machine' });
+            else if (ta && tb && ta.id !== tb.id) add({ type: 'weakness', on: 'link', stepId: s.id, src: 'link', text: `Hand-off from ${teamInfo(a)[1]} to ${teamInfo(b)[1]} switches tool (${ta.name} → ${tb.name}): information re-entered?`, by: 'Machine' });
+          }
         }
       }
     }
-    if (s.painPoint) add({ type: 'issue', on: 'node', stepId: s.id, text: s.painPoint, by: proc.sources || 'Interviews' });
-    if (!clientSafe) (s.flags || []).forEach((f, k) => add({ type: FLAG_TYPES[f.type] ? f.type : 'issue', on: 'node', stepId: s.id, text: f.text, by: f.by || 'Team', date: f.date, idx: k, severity: f.severity }));
-    if (s._sub && s._sub.n) add({ type: 'issue', on: 'node', stepId: s.id, text: `${s._sub.n} issue${s._sub.n === 1 ? '' : 's'} inside the sub-process "${s._sub.name}"`, by: 'Sub-process', idx: 'sub', severity: s._sub.sev });
+    if (s.painPoint && !isClosed(s.painState)) add({ type: 'issue', on: 'node', stepId: s.id, src: 'pain', text: s.painPoint, by: proc.sources || 'Interviews' });
+    if (!clientSafe) (s.flags || []).forEach((f, k) => { if (!isClosed(f.state)) add({ type: FLAG_TYPES[f.type] ? f.type : 'issue', on: 'node', stepId: s.id, src: 'flag', text: f.text, by: f.by || 'Team', date: f.date, idx: k, severity: f.severity }); });
+    if (s._sub && s._sub.n) add({ type: 'issue', on: 'node', stepId: s.id, src: 'sub', text: `${s._sub.n} issue${s._sub.n === 1 ? '' : 's'} inside the sub-process "${s._sub.name}"`, by: 'Sub-process', idx: 'sub', severity: s._sub.sev });
   });
   return list;
+}
+
+/** Issues can be resolved (gone for good) or put on hold (set aside); either way they stop counting until reopened. */
+const isClosed = (state) => !!(state && (state.status === 'resolved' || state.status === 'hold'));
+/** Resolved and on-hold issues on a step, for the side panel. */
+function closedIssues(s) {
+  const out = [];
+  if (s.painPoint && isClosed(s.painState)) out.push({ src: 'pain', type: 'issue', text: s.painPoint, state: s.painState });
+  (s.flags || []).forEach((f, k) => { if (isClosed(f.state)) out.push({ src: 'flag', idx: k, type: FLAG_TYPES[f.type] ? f.type : 'issue', text: f.text, state: f.state }); });
+  if (isClosed(s.linkState)) out.push({ src: 'link', type: 'weakness', text: s.linkState.text || 'Weak hand-off into this step', state: s.linkState });
+  return out;
 }
 
 function flagShape(type, n, x, y, r = 11) {

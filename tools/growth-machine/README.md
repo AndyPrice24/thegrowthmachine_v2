@@ -170,5 +170,8 @@ severity you chose (your judgement wins over the file's suggestion). Steps the f
 - **Sub-processes.** A step can open into its own process (`subProcessId`; ⊞ on the card). Issues inside count on the
   parent step. Use "⊞ Map as sub-process" only where a step is a break point or has a serious issue.
 - **Not mapped yet.** Processes with no steps show the question to ask and "Start mapping".
-- **Break points must stand out.** A step needs at least half the top score, a tie is never split at the cut-off, and
-  nothing is marked when every step scores the same.
+- **Break points are automatic.** Every step that clearly stands out (at least half the top score) is marked; there is no
+  Top-N setting. Nothing is marked when every step scores the same.
+- **Resolve or hold issues.** Each warning in the step panel has ✓ Resolve (fixed or not a problem; gone for good, with a
+  note) and On hold (set aside, with a reason). Either way it stops counting until ↺ Reopen. Flags you added can also be
+  deleted if they were a mistake. Merges keep these decisions, and editing an issue's text reopens it.

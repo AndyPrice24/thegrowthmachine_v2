@@ -467,6 +467,24 @@ const actions = {
     st.flags = [...(st.flags || []), { type: el.dataset.id, text: text.trim(), by: E().meta.consultant && E().meta.consultant !== 'The Growth Machine' ? E().meta.consultant : 'TGM', date: todayISO() }];
     touch(proc); save(); render(); toast('Flag added to the flow');
   },
+  issueState: (el) => {
+    const id = el.dataset.step; const proc = procOfStep(id); const step = proc && (proc.steps || []).find((x) => x.id === id); if (!step) return;
+    const v = el.dataset.id; const src = el.dataset.src;
+    let state = null;
+    if (v !== 'open') {
+      const note = prompt(v === 'resolved' ? 'Resolved: what fixed it, or why it is not a problem? (optional)' : 'On hold: why, and until when? (optional)', '');
+      if (note === null) return;
+      state = { status: v, note: note.trim(), date: todayISO(), by: 'TGM' };
+    }
+    if (src === 'pain') step.painState = state;
+    else if (src === 'flag') { const f = (step.flags || [])[+el.dataset.k]; if (!f) return; f.state = state; }
+    else if (src === 'link') { const fl = flowFlags(proc, E().people, E().tools, E().departments).find((x) => x.stepId === id && x.on === 'link'); step.linkState = state && Object.assign(state, { text: fl ? fl.text : (step.linkState || {}).text || '' }); }
+    touch(proc); save(); render(); toast(v === 'open' ? 'Reopened' : v === 'resolved' ? 'Resolved: it no longer counts' : 'On hold: it no longer counts until reopened');
+  },
+  issueDelete: (el) => {
+    const id = el.dataset.step; const proc = procOfStep(id); const step = proc && (proc.steps || []).find((x) => x.id === id); if (!step || !step.flags || !confirm('Delete this flag? (Use Resolve if it was real but is now fixed.)')) return;
+    step.flags.splice(+el.dataset.k, 1); touch(proc); save(); render();
+  },
   removeFlowFlag: (el) => {
     const proc = procOfStep(ui.stepId); const st = proc && (proc.steps || []).find((x) => x.id === ui.stepId);
     if (!st || !st.flags) return; st.flags.splice(+el.dataset.id, 1); touch(proc); save(); render();
@@ -671,6 +689,7 @@ document.addEventListener('change', (ev) => {
     const f = t.dataset.ed; let v = t.value;
     if (f === 'durationMins' || f === 'elapsedDays') { v = v === '' ? '' : num(v); if (!(step.review && ['confirmed', 'corrected'].includes(step.review.status))) step.timeBasis = 'assumed'; }
     if (f === 'automated') v = v === 'yes';
+    if (f === 'painPoint' && v !== step.painPoint) step.painState = null; // a new or changed issue starts open
     step[f] = v; if (f === 'actorLabel') step.actorId = '';
     touch(proc); save(); render(); return;
   }

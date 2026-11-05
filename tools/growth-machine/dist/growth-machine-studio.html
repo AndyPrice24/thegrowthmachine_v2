@@ -410,6 +410,11 @@ tr.lk-total td{font-weight:600;border-top:1px solid var(--line)}
 .pi-list{margin-top:12px}
 .pv-index .pv-toprow .btn.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
 @media (max-width:820px){.ps-tiles{grid-template-columns:1fr 1fr}}
+.iss-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.closed-iss{margin:8px 0;border:1px dashed var(--line);border-radius:10px;padding:6px 10px}.closed-iss summary{cursor:pointer}
+.closed-iss ul{list-style:none;padding:0;margin:8px 0 0}.closed-iss li{margin-bottom:8px;font-size:13px}
+.cs-resolved{color:var(--good-ink);font-weight:700}.cs-hold{color:var(--warn-ink);font-weight:700}
+.es-i.es-done{border-color:var(--good);color:var(--good-ink)}
 </style>
 <style id="report-css">/* Founder report styles (also embedded in exported HTML reports) */
 .rpt{background:#fffdf9;color:#171715;border:1px solid #d7cfc3;border-radius:14px;padding:40px 46px;
@@ -636,7 +641,7 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="tip" hidden></div>
 <script>
-const STUDIO_BUILD = '2026-11-05 12:32 UTC';
+const STUDIO_BUILD = '2026-11-05 12:36 UTC';
 /* ---- model.js ---- */
 /* ============================================================
    The Growth Machine — data model, scenario engine, scoring, insights
@@ -701,7 +706,7 @@ function normalise(e) {
     - Deleted records (meta.deleted tombstones) are not resurrected by an older file. */
 /** Steps from an update file, merged by id into the Studio's steps: the file sets order and the fields it sends;
     fields only set in the Studio (severity, review, times, notes) are kept, and flags added in the Studio are kept too. */
-const STUDIO_OWNED = ['painSeverity']; // judgements made in the Studio win over a file's suggestion
+const STUDIO_OWNED = ['painSeverity', 'painState', 'linkState']; // judgements made in the Studio win over a file's suggestion
 function mergeSteps(old, incoming) {
   if (!incoming.length && old.length) return old; // an empty list in a file never wipes mapped steps
   const byOld = {}; old.forEach((s) => { if (s.id) byOld[s.id] = s; });
@@ -709,7 +714,8 @@ function mergeSteps(old, incoming) {
     const o = s.id && byOld[s.id]; if (!o) return s;
     const keep = {}; Object.keys(o).forEach((k) => { if (s[k] === undefined || s[k] === '' || s[k] === null || (STUDIO_OWNED.includes(k) && o[k])) keep[k] = o[k]; });
     const m = Object.assign({}, o, s, keep);
-    if (Array.isArray(o.flags) && o.flags.length) { const key = (f) => f.type + '|' + f.text; const have = new Set((m.flags || []).map(key)); m.flags = (m.flags || []).concat(o.flags.filter((f) => !have.has(key(f)))); }
+    if (Array.isArray(o.flags) && o.flags.length) { const key = (f) => f.type + '|' + f.text; const prev = {}; o.flags.forEach((f) => { prev[key(f)] = f; });
+      const have = new Set((m.flags || []).map(key)); m.flags = (m.flags || []).map((f) => (prev[key(f)] && prev[key(f)].state && !f.state ? Object.assign({}, f, { state: prev[key(f)].state }) : f)).concat(o.flags.filter((f) => !have.has(key(f)))); }
     return m;
   });
 }
@@ -1856,7 +1862,7 @@ function stepTimeText(s, long = false) {
 const isHotspot = (s) => num(s.elapsedDays) >= 2 || num(s.durationMins) >= 60;
 /** Rank steps by how badly they break: 2 per issue, 1.5 per weakness, 1 for a time hotspot. Top N get the strong highlight. */
 function breakPoints(steps, flags, topN) {
-  const n = topN == null ? (ui.bpTop == null ? 5 : ui.bpTop) : topN;
+  const n = topN == null ? 0 : topN; // 0 = no cap: every step that stands out is marked
   const score = {}, why = {}; const pos = {}; steps.forEach((s, i) => { pos[s.id] = i; });
   steps.forEach((s) => {
     if (!s || s.collapsed || s._removed) return;
@@ -1902,16 +1908,29 @@ function flowFlags(proc, people, tools, departments, clientSafe = false) {
         const a = stepTeam(prev, pById, dById), b = stepTeam(s, pById, dById);
         if (a && b && a !== b && a !== 'client' && b !== 'client') {
           const ta = tById[prev.toolId], tb = tById[s.toolId];
-          if (!tb) add({ type: 'weakness', on: 'link', stepId: s.id, text: `Hand-off from ${teamInfo(a)[1]} to ${teamInfo(b)[1]} with no system to receive it: relies on email, chat or memory`, by: 'Machine' });
-          else if (ta && tb && ta.id !== tb.id) add({ type: 'weakness', on: 'link', stepId: s.id, text: `Hand-off from ${teamInfo(a)[1]} to ${teamInfo(b)[1]} switches tool (${ta.name} → ${tb.name}): information re-entered?`, by: 'Machine' });
+          if (!isClosed(s.linkState)) {
+            if (!tb) add({ type: 'weakness', on: 'link', stepId: s.id, src: 'link', text: `Hand-off from ${teamInfo(a)[1]} to ${teamInfo(b)[1]} with no system to receive it: relies on email, chat or memory`, by: 'Machine' });
+            else if (ta && tb && ta.id !== tb.id) add({ type: 'weakness', on: 'link', stepId: s.id, src: 'link', text: `Hand-off from ${teamInfo(a)[1]} to ${teamInfo(b)[1]} switches tool (${ta.name} → ${tb.name}): information re-entered?`, by: 'Machine' });
+          }
         }
       }
     }
-    if (s.painPoint) add({ type: 'issue', on: 'node', stepId: s.id, text: s.painPoint, by: proc.sources || 'Interviews' });
-    if (!clientSafe) (s.flags || []).forEach((f, k) => add({ type: FLAG_TYPES[f.type] ? f.type : 'issue', on: 'node', stepId: s.id, text: f.text, by: f.by || 'Team', date: f.date, idx: k, severity: f.severity }));
-    if (s._sub && s._sub.n) add({ type: 'issue', on: 'node', stepId: s.id, text: `${s._sub.n} issue${s._sub.n === 1 ? '' : 's'} inside the sub-process "${s._sub.name}"`, by: 'Sub-process', idx: 'sub', severity: s._sub.sev });
+    if (s.painPoint && !isClosed(s.painState)) add({ type: 'issue', on: 'node', stepId: s.id, src: 'pain', text: s.painPoint, by: proc.sources || 'Interviews' });
+    if (!clientSafe) (s.flags || []).forEach((f, k) => { if (!isClosed(f.state)) add({ type: FLAG_TYPES[f.type] ? f.type : 'issue', on: 'node', stepId: s.id, src: 'flag', text: f.text, by: f.by || 'Team', date: f.date, idx: k, severity: f.severity }); });
+    if (s._sub && s._sub.n) add({ type: 'issue', on: 'node', stepId: s.id, src: 'sub', text: `${s._sub.n} issue${s._sub.n === 1 ? '' : 's'} inside the sub-process "${s._sub.name}"`, by: 'Sub-process', idx: 'sub', severity: s._sub.sev });
   });
   return list;
+}
+
+/** Issues can be resolved (gone for good) or put on hold (set aside); either way they stop counting until reopened. */
+const isClosed = (state) => !!(state && (state.status === 'resolved' || state.status === 'hold'));
+/** Resolved and on-hold issues on a step, for the side panel. */
+function closedIssues(s) {
+  const out = [];
+  if (s.painPoint && isClosed(s.painState)) out.push({ src: 'pain', type: 'issue', text: s.painPoint, state: s.painState });
+  (s.flags || []).forEach((f, k) => { if (isClosed(f.state)) out.push({ src: 'flag', idx: k, type: FLAG_TYPES[f.type] ? f.type : 'issue', text: f.text, state: f.state }); });
+  if (isClosed(s.linkState)) out.push({ src: 'link', type: 'weakness', text: s.linkState.text || 'Weak hand-off into this step', state: s.linkState });
+  return out;
 }
 
 function flagShape(type, n, x, y, r = 11) {
@@ -2400,7 +2419,6 @@ function processPage(e) {
   const bar = `<div class="pv-bar">
     <div class="pv-g"><span class="pv-switch sm">${seg(P.layout === 'flow', 'pvSet', 'layout', 'flow', 'Flow')}${seg(P.layout === 'lanes', 'pvSet', 'layout', 'lanes', 'Swimlane')}</span>
       <label class="tog"><input type="checkbox" data-ui="execView" ${exec ? 'checked' : ''}> <b>Executive view</b></label>
-      ${exec ? `<span class="faint small">Top</span><span class="pv-switch sm" title="How many top break points to highlight">${[3, 5, 10, 0].map((n) => seg((ui.bpTop == null ? 5 : ui.bpTop) === n, 'bpTop', '', n, n || 'All')).join('')}</span>` : ''}
       <label class="tog"><input type="checkbox" data-ui="anon" ${ui.anon ? 'checked' : ''}> Anonymise</label></div>
     <div class="pv-g"><span class="pv-switch sm" title="Size">${seg(ui.flowWhole && ui.flowZoom, 'flowZoom', '', 'fit', '⤢', 'Whole view on one screen')}${seg(false, 'flowZoom', '', 'out', '−', 'Zoom out')}<span class="seg zl" title="Current size">${z ? Math.round(z * 100) + '%' : 'Fit'}</span>${seg(false, 'flowZoom', '', 'in', '+', 'Zoom in')}${seg(z === 1, 'flowZoom', '', '100', '1:1', 'Full size')}</span>
       ${P.layout === 'flow' ? `<span class="pv-switch sm" title="Steps per row"><span class="seg zl" title="Steps per row">▦</span>${[1, 2, 3, 4, 5].map((n) => seg(colsN === n, 'flowCols', '', n, n)).join('')}</span>` : ''}</div>
@@ -2426,7 +2444,8 @@ function processPage(e) {
   const shownSteps = all.filter((it) => it.shown).map((it) => it.s); const nT = (t) => shownFlags.filter((f) => f.type === t).length;
   const dec = shownSteps.filter((x) => x.kind === 'decision').length, mg = shownSteps.filter((x) => x.involves).length, hot = shownSteps.filter(isHotspot).length;
   const pill = (v, label, cls = '') => `<span class="es-i ${v ? '' : 'es-z'} ${cls}"><b>${v}</b> ${label}</span>`;
-  const legend = exec ? `<div class="exec-slim"><span class="es-t">Executive view</span>${pill(Object.keys(BP.ranks).length, 'top break points', 'es-bp')}${pill(nT('issue'), 'issues')}${pill(nT('weakness'), 'weak hand-offs')}${pill(nT('unverified'), 'to confirm')}${pill(dec, 'decisions')}${pill(mg, 'management touchpoints')}${pill(hot, hot ? 'time hotspots' : 'time hotspots (add times)')}</div>` : '<div class="exec-slim off"><span class="faint small">Executive view is off: steps, people, systems and hand-offs only.</span></div>';
+  const closedN = sum(shownSteps, (x) => closedIssues(x).length);
+  const legend = exec ? `<div class="exec-slim"><span class="es-t">Executive view</span>${pill(Object.keys(BP.ranks).length, 'break points', 'es-bp')}${pill(nT('issue'), 'issues')}${pill(nT('weakness'), 'weak hand-offs')}${pill(nT('unverified'), 'to confirm')}${pill(dec, 'decisions')}${pill(mg, 'management touchpoints')}${pill(hot, hot ? 'time hotspots' : 'time hotspots (add times)')}${closedN ? pill(closedN, 'resolved or on hold', 'es-done') : ''}</div>` : '<div class="exec-slim off"><span class="faint small">Executive view is off: steps, people, systems and hand-offs only.</span></div>';
   const what = P.mode === 'dept' ? `${teamInfo(P.dept)[1]} · ${P.procIds.length} process${P.procIds.length === 1 ? '' : 'es'}` : (() => { const nd = P.shownDepts.filter((t) => t !== 'client' && t !== 'system').length; return `${P.procIds.length} process${P.procIds.length === 1 ? '' : 'es'} · ${nd} department${nd === 1 ? '' : 's'}`; })();
   const top = P.mode === 'proc' ? pvFocusHead(e, st, P, sw, all) : `<section class="card pv-top"><div class="pv-toprow">${sw}<span class="pv-what"><b>${esc(what)}</b> <span class="faint small">· ${all.filter((it) => it.shown).length} steps · ${all.filter((it, i) => it.shown && i && all[i - 1].dept !== it.dept).length} hand-offs</span></span></div>${refine}</section>`;
   return `${scenarioBanner(e)}${head}
@@ -2445,7 +2464,7 @@ function pvSide(e, st, P, seqChains, flags, exec, BP) {
     const iss = flags.filter((f) => f.type !== 'unverified'); const uv = flags.filter((f) => f.type === 'unverified');
     const top = Object.entries(BP.ranks).sort((a, b) => a[1] - b[1]).map(([id, r]) => { const x = all.find((k) => k.s.id === id); return x ? `<li class="clk" data-action="flowStep" data-id="${esc(id)}" data-scroll="1"><span class="bp-n">${esc(BP.label[id] || '#' + r)}</span><div><b>Step ${x.num}:</b> ${esc(trunc(x.s.name, 60))}<div class="faint small">${esc(BP.why[id])} · ${esc(teamInfo(x.dept)[1])}</div></div></li>` : ''; }).join('');
     const tps = [...new Set(seqChains.flatMap((c) => c.chain.flatMap((p) => String(p.talkingPoints || '').split('\n').map((t) => t.trim()).filter(Boolean))))].slice(0, 8);
-    return card('Key takeaways', `${exec && top ? `<h5 style="margin-top:0">Top break points</h5><p class="faint small" style="margin:0 0 6px">Scored by issues (high ×4, medium ×2, low ×1), weak hand-offs (×1.5) and time hotspots (×1). Only steps that clearly stand out (at least half the top score) are marked. "=" means tied: set each issue's severity in ✎ Edit step to separate them.${BP.cut ? ` ${BP.cut} more steps tie for the next place: choose a higher Top number to see them.` : ''}${BP.order.length > Object.keys(BP.ranks).length ? ` ${BP.order.length - Object.keys(BP.ranks).length} more step${BP.order.length - Object.keys(BP.ranks).length === 1 ? '' : 's'} with smaller problems are outlined in red.` : ''}</p><ol class="pv-top5">${top}</ol>` : ''}${exec && !top && BP.flat ? `<h5 style="margin-top:0">Top break points</h5><p class="small muted" style="margin:0 0 8px">No single step stands out: ${BP.order.length} steps have problems of a similar size (outlined in red). Set each issue's severity in ✎ Edit step to separate them.</p>` : ''}
+    return card('Key takeaways', `${exec && top ? `<h5 style="margin-top:0">Break points</h5><p class="faint small" style="margin:0 0 6px">Scored by issues (high ×4, medium ×2, low ×1), weak hand-offs (×1.5) and time hotspots (×1). Only steps that clearly stand out (at least half the top score) are marked. "=" means tied: set each issue's severity in ✎ Edit step to separate them.${BP.cut ? ` ${BP.cut} more steps tie for the next place: choose a higher Top number to see them.` : ''}${BP.order.length > Object.keys(BP.ranks).length ? ` ${BP.order.length - Object.keys(BP.ranks).length} more step${BP.order.length - Object.keys(BP.ranks).length === 1 ? '' : 's'} with smaller problems are outlined in red.` : ''}</p><ol class="pv-top5">${top}</ol>` : ''}${exec && !top && BP.flat ? `<h5 style="margin-top:0">Break points</h5><p class="small muted" style="margin:0 0 8px">No single step stands out: ${BP.order.length} steps have problems of a similar size (outlined in red). Set each issue's severity in ✎ Edit step to separate them.</p>` : ''}
       ${tps.length ? `<h5>Talking points</h5><ul class="tps">${tps.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : '<p class="small muted">No talking points yet for these processes.</p>'}
       ${exec && uv.length ? `<p class="small warn-t">${uv.length} point${uv.length === 1 ? '' : 's'} still to confirm (▲).</p>` : ''}
       <p class="faint small">Click any step to see its detail, where it comes from and goes to, and to edit or flag it.</p>`);
@@ -2471,6 +2490,8 @@ function pvSide(e, st, P, seqChains, flags, exec, BP) {
     return `<button class="nbx clk" data-action="flowStep" data-id="${esc(x.s.id)}" data-scroll="1"><span class="faint small">${dir === 'from' ? '‹ Comes from' : 'Goes to ›'} step ${x.num}${ho ? ` · <b>hand-off ${dir === 'from' ? esc(a[1]) + ' → ' + esc(tm[1]) : esc(tm[1]) + ' → ' + esc(a[1])}</b>` : ''}${trig ? ` · <b>triggers ${esc(dir === 'from' ? it.p.name : x.p.name)}</b>` : ''}</span><div><i class="tdot" style="background:${a[2]}"></i>${esc(x.s.name)}</div><span class="faint small">${esc(who(x.s))} · ${esc((tById[x.s.toolId] || {}).name || 'No system')}</span></button>`;
   };
   const mine = exec ? flags.filter((f) => f.stepId === s.id || (next && f.on === 'link' && f.stepId === next.s.id)) : [];
+  const issueBtns = (f) => f.src === 'sub' ? '<div class="faint small">Resolve it inside the sub-process.</div>' : !f.src ? '' : `<div class="iss-btns"><button class="btn sm" data-action="issueState" data-step="${esc(f.stepId)}" data-src="${f.src}" data-k="${f.idx == null ? '' : f.idx}" data-id="resolved" title="Fixed, or not a problem: remove it for good">✓ Resolve</button><button class="btn sm ghost" data-action="issueState" data-step="${esc(f.stepId)}" data-src="${f.src}" data-k="${f.idx == null ? '' : f.idx}" data-id="hold" title="Set it aside for now; it stops counting until reopened">On hold</button>${f.src === 'flag' ? `<button class="btn sm ghost" data-action="issueDelete" data-step="${esc(f.stepId)}" data-k="${f.idx}" title="Added by mistake">✕ Delete</button>` : ''}</div>`;
+  const closed = [s, next && next.s].filter(Boolean).flatMap((x, i) => closedIssues(x).filter((c) => i === 0 || c.src === 'link').map((c) => Object.assign(c, { stepId: x.id })));
   const own = (s.flags || []).map((f, k) => `<li>${flagIcon(FLAG_TYPES[f.type] ? f.type : 'issue')} <span>${esc(f.text)} <span class="faint small">${esc(f.by || '')}${f.date ? ' · ' + esc(f.date) : ''}</span></span> <button class="btn sm ghost" data-action="removeFlowFlag" data-id="${k}" title="Clear (e.g. once verified)">✕ Clear</button></li>`).join('');
   const rv = (s.review && s.review.status) || 'assumed';
   return card(focus ? 'Weakness detail' : 'Step detail', `${focus}<div class="btn-row" style="margin:0 0 8px"><button class="btn sm" data-action="flowClear">← Takeaways</button>${prev ? `<button class="btn sm" data-action="flowStep" data-id="${esc(prev.s.id)}" data-scroll="1">‹ Previous</button>` : ''}${next ? `<button class="btn sm" data-action="flowStep" data-id="${esc(next.s.id)}" data-scroll="1">Next ›</button>` : ''}</div>
@@ -2482,8 +2503,8 @@ function pvSide(e, st, P, seqChains, flags, exec, BP) {
       ${exec && s.involves ? `<dt>Involves</dt><dd>${esc(s.involves)}</dd>` : ''}${exec && s.kind === 'decision' ? `<dt>Decision</dt><dd>${s.decisionNo ? 'If no: ' + esc(s.decisionNo) : 'Yes'}</dd>` : ''}</dl>
     ${s._sub ? `<button class="btn sm sub-open" data-action="pvFocus" data-id="${esc(s._sub.id)}">⊞ Open sub-process: ${esc(trunc(s._sub.name, 40))}${s._sub.n ? ` · ${s._sub.n} issue${s._sub.n === 1 ? '' : 's'} inside` : s._sub.mapped ? '' : ' · not mapped yet'}</button>` : ''}
     ${nb(next, 'to')}
-    ${exec ? (mine.length ? `<h5>Warnings here (${mine.length})</h5><ol class="flags">${mine.map((f) => `<li>${flagIcon(f.type)}<div><div class="small"><b>${FLAG_TYPES[f.type][0]}</b>${f.on === 'link' ? ' · on the hand-off' : ''}</div><div>${esc(f.text)}</div><div class="faint small">${esc(f.by || '')}</div></div></li>`).join('')}</ol>` : '<p class="small muted">No warnings on this step.</p>') : ''}
-    ${own ? `<h5>Flags you can clear</h5><ul class="ownf">${own}</ul>` : ''}
+    ${exec ? (mine.length ? `<h5>Warnings here (${mine.length})</h5><ol class="flags">${mine.map((f) => `<li>${flagIcon(f.type)}<div><div class="small"><b>${FLAG_TYPES[f.type][0]}</b>${f.on === 'link' ? ' · on the hand-off' : ''}</div><div>${esc(f.text)}</div><div class="faint small">${esc(f.by || '')}</div>${issueBtns(f)}</div></li>`).join('')}</ol>` : '<p class="small muted">No open warnings on this step.</p>') : ''}
+    ${closed.length ? `<details class="closed-iss"><summary class="small"><b>${closed.length} resolved or on hold</b></summary><ul>${closed.map((c) => `<li><span class="cs-${c.state.status}">${c.state.status === 'resolved' ? '✓ Resolved' : 'On hold'}</span> ${esc(c.text)}<div class="faint small">${esc([c.state.note, c.state.by, c.state.date].filter(Boolean).join(' · '))}</div><button class="btn sm ghost" data-action="issueState" data-step="${esc(c.stepId)}" data-src="${c.src}" data-k="${c.idx == null ? '' : c.idx}" data-id="open">↺ Reopen</button></li>`).join('')}</ul></details>` : ''}
     ${ui.editStep === s.id ? `<div class="step-edit"><h5>Edit this step</h5>${stepFields(s, st, 'data-ed')}<div class="btn-row"><button class="btn sm" data-action="stepMove" data-id="-1">↑ Earlier</button><button class="btn sm" data-action="stepMove" data-id="1">↓ Later</button><button class="btn sm" data-action="stepAdd">+ Step after</button><button class="btn sm danger" data-action="stepDelete">Delete</button><button class="btn sm" data-action="stepEdit">Done</button></div></div>`
       : `<div class="btn-row"><button class="btn sm" data-action="stepEdit">✎ Edit step</button><button class="btn sm" data-action="stepAdd">+ Step after</button>${s._sub ? '' : '<button class="btn sm ghost" data-action="subNew" title="Map this step in more detail as its own process. Worth it when the step is a break point or has a high issue.">⊞ Map as sub-process</button>'}</div>`}
     <div class="btn-row"><button class="btn sm" data-action="addFlowFlag" data-id="issue">+ Flag issue</button><button class="btn sm" data-action="addFlowFlag" data-id="unverified">+ Flag unverified</button><button class="btn sm" data-action="addFlowFlag" data-id="weakness">+ Flag weakness</button></div>`);
@@ -4316,6 +4337,24 @@ const actions = {
     st.flags = [...(st.flags || []), { type: el.dataset.id, text: text.trim(), by: E().meta.consultant && E().meta.consultant !== 'The Growth Machine' ? E().meta.consultant : 'TGM', date: todayISO() }];
     touch(proc); save(); render(); toast('Flag added to the flow');
   },
+  issueState: (el) => {
+    const id = el.dataset.step; const proc = procOfStep(id); const step = proc && (proc.steps || []).find((x) => x.id === id); if (!step) return;
+    const v = el.dataset.id; const src = el.dataset.src;
+    let state = null;
+    if (v !== 'open') {
+      const note = prompt(v === 'resolved' ? 'Resolved: what fixed it, or why it is not a problem? (optional)' : 'On hold: why, and until when? (optional)', '');
+      if (note === null) return;
+      state = { status: v, note: note.trim(), date: todayISO(), by: 'TGM' };
+    }
+    if (src === 'pain') step.painState = state;
+    else if (src === 'flag') { const f = (step.flags || [])[+el.dataset.k]; if (!f) return; f.state = state; }
+    else if (src === 'link') { const fl = flowFlags(proc, E().people, E().tools, E().departments).find((x) => x.stepId === id && x.on === 'link'); step.linkState = state && Object.assign(state, { text: fl ? fl.text : (step.linkState || {}).text || '' }); }
+    touch(proc); save(); render(); toast(v === 'open' ? 'Reopened' : v === 'resolved' ? 'Resolved: it no longer counts' : 'On hold: it no longer counts until reopened');
+  },
+  issueDelete: (el) => {
+    const id = el.dataset.step; const proc = procOfStep(id); const step = proc && (proc.steps || []).find((x) => x.id === id); if (!step || !step.flags || !confirm('Delete this flag? (Use Resolve if it was real but is now fixed.)')) return;
+    step.flags.splice(+el.dataset.k, 1); touch(proc); save(); render();
+  },
   removeFlowFlag: (el) => {
     const proc = procOfStep(ui.stepId); const st = proc && (proc.steps || []).find((x) => x.id === ui.stepId);
     if (!st || !st.flags) return; st.flags.splice(+el.dataset.id, 1); touch(proc); save(); render();
@@ -4520,6 +4559,7 @@ document.addEventListener('change', (ev) => {
     const f = t.dataset.ed; let v = t.value;
     if (f === 'durationMins' || f === 'elapsedDays') { v = v === '' ? '' : num(v); if (!(step.review && ['confirmed', 'corrected'].includes(step.review.status))) step.timeBasis = 'assumed'; }
     if (f === 'automated') v = v === 'yes';
+    if (f === 'painPoint' && v !== step.painPoint) step.painState = null; // a new or changed issue starts open
     step[f] = v; if (f === 'actorLabel') step.actorId = '';
     touch(proc); save(); render(); return;
   }
