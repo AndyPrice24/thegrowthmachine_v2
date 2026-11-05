@@ -16,6 +16,7 @@ function loadDB() {
   if (db.engagements.eng_demo && (!db.engagements.eng_demo.engagement.phases.length || !db.engagements.eng_demo.competitors.length)) db.engagements.eng_demo = demoEngagement(); // refresh old demo with tracking sample
   if (!db.engagements[db.activeId]) db.activeId = Object.keys(db.engagements)[0];
   try { Object.assign(ui, JSON.parse(localStorage.getItem(STORE_KEY + '.ui') || '{}'), { scenario: 'current' }); } catch (err) { /* ignore */ }
+  landProcesses();
 }
 let saveTimer = null;
 function save() {
@@ -30,6 +31,8 @@ function save() {
 function flushSave() { if (!saveTimer) return; clearTimeout(saveTimer); saveTimer = null; try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); } catch (err) { /* ignore */ } }
 window.addEventListener('pagehide', flushSave);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
+/** The Processes page always opens on Department view; Process view starts with just the "Choose process" button. */
+function landProcesses() { ui.pv = Object.assign({}, ui.pv, { mode: 'dept', focus: '', pick: '', hl: '', journey: false }); ui.stepId = ''; ui.editStep = ''; }
 function saveUI() { try { localStorage.setItem(STORE_KEY + '.ui', JSON.stringify({ tab: ui.tab, pv: ui.pv, execView: ui.execView, bpTop: ui.bpTop, lo: ui.lo && { lens: ui.lo.lens, sort: ui.lo.sort, signals: ui.lo.signals, noFix: ui.lo.noFix }, anon: ui.anon, showCost: ui.showCost, ghosts: ui.ghosts, compare: ui.compare, coll: ui.coll, theme: ui.theme })); } catch (err) { /* ignore */ } }
 const E = () => db.engagements[db.activeId];
 function procOfStep(id) { return E().processes.find((p) => (p.steps || []).some((x) => x.id === id)); }
@@ -253,7 +256,9 @@ function toast(t) { const el = document.getElementById('toast'); el.textContent 
 function stripMarks(o) { return JSON.parse(JSON.stringify(o, (k, v) => (k.startsWith('_') ? undefined : v))); }
 
 const actions = {
-  tab: (el) => { ui.tab = el.dataset.id; saveUI(); render(); window.scrollTo(0, 0); },
+  tab: (el) => { if (el.dataset.id === 'processes' && ui.tab !== 'processes') landProcesses(); ui.tab = el.dataset.id; saveUI(); render(); window.scrollTo(0, 0); },
+  pvPick: (el) => { ui.pv = Object.assign({}, ui.pv, { mode: 'proc', focus: '', pick: el.dataset.id || '' }); ui.stepId = ''; saveUI(); render(); },
+  pvBack: (el) => { ui.pv = Object.assign({}, ui.pv, { mode: 'proc', focus: '', hl: '', journey: false, pick: el.dataset.id || 'open' }); ui.stepId = ''; ui.editStep = ''; saveUI(); render(); window.scrollTo(0, 0); },
   setScenario: (el) => { ui.scenario = el.dataset.id; render(); },
   proc: (el) => { ui.pv = Object.assign({}, ui.pv, { mode: 'proc', procs: [el.dataset.id] }); ui.stepId = ''; ui.review = null; ui.reviewSetup = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; saveUI(); render(); },
   flowStep: (el) => {
@@ -291,7 +296,7 @@ const actions = {
   loSet: (el) => { ui.lo = Object.assign({}, ui.lo, { [el.dataset.k]: el.dataset.id, open: '' }); saveUI(); render(); },
   loTick: (el) => { ui.lo = Object.assign({}, ui.lo, { [el.dataset.k]: el.checked }); saveUI(); render(); },
   loOpen: (el) => { ui.lo = Object.assign({}, ui.lo, { open: ui.lo && ui.lo.open === el.dataset.id ? '' : el.dataset.id }); render(); },
-  pvFocus: (el) => { ui.pv = Object.assign({}, ui.pv, { mode: 'proc', focus: el.dataset.id || '', hl: '', journey: false }); ui.stepId = ''; ui.editStep = ''; ui.flagFocus = null; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; ui.reviewSetup = ''; saveUI(); render(); window.scrollTo(0, 0); },
+  pvFocus: (el) => { ui.pv = Object.assign({}, ui.pv, { mode: 'proc', focus: el.dataset.id || '', hl: '', journey: false, pick: '' }); ui.stepId = ''; ui.editStep = ''; ui.flagFocus = null; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; ui.reviewSetup = ''; saveUI(); render(); window.scrollTo(0, 0); },
   pvJourney: (el) => { ui.pv = Object.assign({}, ui.pv, { journey: !!el.checked }); ui.stepId = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; saveUI(); render(); },
   pvHl: (el) => { const t = el.dataset.id || ''; ui.pv = Object.assign({}, ui.pv, { hl: (ui.pv || {}).hl === t ? '' : t }); saveUI(); render(); },
   procMapStart: () => { const e = E(); const p = e.processes.find((x) => x.id === (ui.pv || {}).focus); if (!p) return;
@@ -301,7 +306,7 @@ const actions = {
     const n = prompt('Name of the sub-process (more detail for this step)', step.name); if (!n || !n.trim()) return;
     const sp = { id: uid('pr'), name: n.trim(), group: proc.group || '', team: step.team || '', leadsTo: '', inputs: '', outputs: '', confidence: 'heard', summary: `More detail for step "${step.name}" in ${proc.name}.`, steps: [] };
     e.processes.push(sp); step.subProcessId = sp.id; touch(sp); touch(proc); save(); actions.pvFocus({ dataset: { id: sp.id } }); },
-  pvSet: (el) => { ui.pv = Object.assign({}, ui.pv, { [el.dataset.k]: el.dataset.id }); ui.stepId = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; ui.reviewSetup = ''; saveUI(); render(); },
+  pvSet: (el) => { ui.pv = Object.assign({}, ui.pv, { [el.dataset.k]: el.dataset.id }, el.dataset.k === 'mode' ? { focus: '', pick: '', hl: '', journey: false } : {}); ui.stepId = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; ui.reviewSetup = ''; saveUI(); render(); },
   pvTick: (el) => {
     const P = pvState(stateFor(E(), ui.scenario)); const k = el.dataset.kind, id = el.dataset.id; const V = Object.assign({}, ui.pv);
     const toggle = (list, all) => { let l = list.filter((x) => x !== id); if (el.checked) l.push(id); if (!l.length) { toast('Keep at least one ticked'); return null; } return all.filter((x) => l.includes(x)); };

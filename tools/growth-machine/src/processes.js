@@ -350,7 +350,7 @@ ${ui.execView !== false && list.length ? `<h4>Issues and weaknesses${internal ? 
 }
 
 /* ---------- Process view: index (every process, mapped or not) and the focus header ---------- */
-const JOURNEYS = ['Client lifecycle', 'Product', 'Finance & admin', 'People'];
+const JOURNEYS = ['Client lifecycle', 'Product', 'Admin & finance', 'People'];
 function procTeam(p, st) {
   if (p.team) return p.team;
   const pById = byId(st.people), dById = byId(st.departments); const c = {};
@@ -367,37 +367,35 @@ function procStatus(p) {
 const teamChip = (t) => t ? `<span class="pi-team"><i class="tdot" style="background:${teamInfo(t)[2]}"></i>${esc(teamInfo(t)[1])}</span>` : '<span class="pi-team faint">No owner yet</span>';
 
 function pvIndex(e, st, P, sw) {
-  const all = P.allProcs; const mapped = all.filter((p) => (p.steps || []).length);
-  // break points across everything mapped, so the index shows where the trouble sits
+  const all = P.allProcs; const pick = (ui.pv || {}).pick || '';
+  const head = `<div class="pv-toprow">${sw}<button class="btn ${pick ? 'on' : ''}" data-action="pvPick" data-id="${pick ? '' : 'open'}">Choose process ${pick ? '▴' : '▾'}</button></div>`;
+  if (!pick) return `<section class="card pv-top pv-index">${head}</section>`;
+  // break points across everything mapped, so each list shows where the trouble sits
   const steps = P.procs.flatMap((p) => (p.steps || []).filter((x) => !x._removed));
   const flags = P.procs.flatMap((p) => flowFlags(p, st.people, st.tools, st.departments));
   const BP = breakPoints(steps, flags);
   const info = {}; all.forEach((p) => { const dp = P.procs.find((x) => x.id === p.id) || p; const fl = (dp.steps || []).length ? flowFlags(dp, st.people, st.tools, st.departments) : [];
-    info[p.id] = { st: procStatus(p), iss: fl.filter((f) => f.type === 'issue').length, wk: fl.filter((f) => f.type === 'weakness').length, bp: (dp.steps || []).filter((x) => BP.ranks[x.id]).length, n: (p.steps || []).length }; });
-  const checked = all.filter((p) => info[p.id].st.k === 'ok').length, withBp = all.filter((p) => info[p.id].bp).length;
-  const pct = all.length ? Math.round(mapped.length / all.length * 100) : 0;
-  const groups = {}; all.filter((p) => !P.subOf[p.id]).forEach((p) => { (groups[procGroup(p)] = groups[procGroup(p)] || []).push(p); });
-  const gOrder = [...JOURNEYS.filter((g) => groups[g]), ...Object.keys(groups).filter((g) => !JOURNEYS.includes(g)).sort()];
-  const chainOrder = procChains(P.procs, P.procs.map((p) => p.id)).flat().map((p) => p.id);
-  const ord = (p) => { const i = chainOrder.indexOf(p.id); return i < 0 ? 999 : i; };
-  const row = (p, depth) => { const I = info[p.id];
-    const kids = all.filter((c) => P.subOf[c.id] && P.subOf[c.id].p.id === p.id);
-    return `<button class="pi-row pi-${I.st.k} ${depth ? 'pi-sub' : ''}" data-action="pvFocus" data-id="${esc(p.id)}">
-      <span class="pi-name">${depth ? '<span class="faint">↳</span> ' : ''}${esc(p.name)}${depth ? ' <span class="faint small">sub-process</span>' : ''}</span>
-      ${teamChip(procTeam(p, st))}
-      <span class="pi-st st-${I.st.k}">${I.st.k === 'ok' ? '✓ ' : I.st.k === 'as' ? '○ ' : '– '}${esc(I.st.t)}</span>
-      <span class="pi-n">${I.n ? `${I.n} steps` : ''}</span>
-      <span class="pi-iss">${I.iss ? `<span class="pi-dot"></span>${I.iss} issue${I.iss === 1 ? '' : 's'}` : ''}</span>
-      <span class="pi-bp">${I.bp ? `⚑ ${I.bp}` : I.st.k === 'none' ? '<span class="pi-map">Map it →</span>' : ''}</span>
-    </button>${kids.map((c) => row(c, depth + 1)).join('')}`; };
-  const grp = (g) => { const ps = groups[g].slice().sort((a, b) => ((a.steps || []).length ? 0 : 1) - ((b.steps || []).length ? 0 : 1) || ord(a) - ord(b) || a.name.localeCompare(b.name));
-    const inG = all.filter((p) => procGroup(P.subOf[p.id] ? P.subOf[p.id].p : p) === g); const m = inG.filter((p) => (p.steps || []).length).length;
-    return `<div class="pi-g"><div class="pi-gh"><b>${esc(g)}</b><span class="faint small">${m} of ${inG.length} mapped</span></div>${ps.map((p) => row(p, 0)).join('')}</div>`; };
-  return `<section class="card pv-top pv-index"><div class="pv-toprow">${sw}<span class="pv-what"><b>All processes</b> <span class="faint small">· pick one to look at it closely</span></span></div>
-    <div class="pi-cov"><div class="pi-covt"><b>${mapped.length} of ${all.length}</b> mapped · <b>${checked}</b> checked with the team · <b>${withBp}</b> with top break points</div><div class="pi-bar"><i style="width:${pct}%"></i></div></div>
-    <div class="pi-head"><span>Process</span><span>Owner</span><span>Status</span><span></span><span>Issues</span><span title="How many of the business's top break points (across all mapped processes) sit in this process">Top break points</span></div>
-    ${gOrder.map(grp).join('')}
-    <p class="faint small" style="margin:10px 0 0">Not mapped yet: click to see what we need to ask, or start mapping it. ⊞ sub-processes sit under the step they belong to; map one only where a step is a break point or has a serious issue.</p></section>`;
+    info[p.id] = { st: procStatus(p), iss: fl.filter((f) => f.type === 'issue').length, bp: (dp.steps || []).filter((x) => BP.ranks[x.id]).length, n: (p.steps || []).length }; });
+  const grpOf = (p) => procGroup(P.subOf[p.id] ? P.subOf[p.id].p : p);
+  const names = [...JOURNEYS, ...[...new Set(all.map(grpOf))].filter((g) => !JOURNEYS.includes(g)).sort()];
+  const tiles = names.map((g) => { const inG = all.filter((p) => grpOf(p) === g); const m = inG.filter((p) => (p.steps || []).length).length; const bp = sum(inG, (p) => info[p.id].bp);
+    return `<button class="ps-tile ${pick === g ? 'on' : ''}" data-action="pvPick" data-id="${esc(g)}"><b>${esc(g)}</b><span>${inG.length ? `${m} of ${inG.length} mapped` : 'Nothing listed yet'}</span>${bp ? `<em>⚑ ${bp} break point${bp === 1 ? '' : 's'}</em>` : ''}</button>`; }).join('');
+  let list = '';
+  if (pick !== 'open') {
+    const chainOrder = procChains(P.procs, P.procs.map((p) => p.id)).flat().map((p) => p.id);
+    const ord = (p) => { const k = chainOrder.indexOf(p.id); return k < 0 ? 999 : k; };
+    const row = (p, depth) => { const I = info[p.id]; const kids = all.filter((c) => P.subOf[c.id] && P.subOf[c.id].p.id === p.id);
+      return `<button class="pi-row pi-${I.st.k} ${depth ? 'pi-sub' : ''}" data-action="pvFocus" data-id="${esc(p.id)}">
+        <span class="pi-name">${depth ? '<span class="faint">↳</span> ' : ''}${esc(p.name)}</span>
+        ${teamChip(procTeam(p, st))}
+        <span class="pi-st st-${I.st.k}">${I.st.k === 'ok' ? '✓ ' : I.st.k === 'as' ? '○ ' : ''}${esc(I.st.t)}</span>
+        <span class="pi-bp">${I.bp ? `⚑ ${I.bp}` : I.iss ? `<span class="pi-iss"><span class="pi-dot"></span>${I.iss}</span>` : ''}</span>
+      </button>${kids.map((c) => row(c, depth + 1)).join('')}`; };
+    const ps = all.filter((p) => !P.subOf[p.id] && procGroup(p) === pick).sort((a, b) => ((a.steps || []).length ? 0 : 1) - ((b.steps || []).length ? 0 : 1) || ord(a) - ord(b) || a.name.localeCompare(b.name));
+    list = ps.length ? `<div class="pi-list">${ps.map((p) => row(p, 0)).join('')}</div><p class="faint small" style="margin:8px 2px 0">✓ checked with the team · ○ assumed · dashed = not mapped yet · ⚑ top break points · ● issues</p>`
+      : '<p class="empty">No processes listed in this section yet. Use + New process.</p>';
+  }
+  return `<section class="card pv-top pv-index">${head}<div class="ps-tiles">${tiles}</div>${list}</section>`;
 }
 
 function pvFocusHead(e, st, P, sw, all) {
@@ -410,7 +408,7 @@ function pvFocusHead(e, st, P, sw, all) {
   const counts = {}; all.filter((it) => it.shown).forEach((it) => { counts[it.dept] = (counts[it.dept] || 0) + 1; });
   const who = Object.entries(counts).filter(([t]) => t !== 'system' && t !== 'other').sort((a, b) => b[1] - a[1]);
   const crumb = `<span class="faint">${esc(grpName)}</span> › ${parent ? `<button class="crumb-l" data-action="pvFocus" data-id="${esc(parent.p.id)}">${esc(parent.p.name)}</button> › ` : ''}<b>${esc(p.name)}</b>`;
-  return `<section class="card pv-top pv-focus"><div class="pv-toprow">${sw}<button class="btn sm" data-action="pvFocus" data-id="">◂ All processes</button><span class="pv-crumb">${crumb}</span><span class="pi-st st-${status.k}">${esc(status.t)}</span>${teamChip(procTeam(p, st))}</div>
+  return `<section class="card pv-top pv-focus"><div class="pv-toprow">${sw}<button class="btn sm" data-action="pvBack" data-id="${esc(grpName)}">◂ Choose another process</button><span class="pv-crumb">${crumb}</span><span class="pi-st st-${status.k}">${esc(status.t)}</span>${teamChip(procTeam(p, st))}</div>
     ${P.focusMapped ? `<div class="pv-links">${parent ? `<span><span class="faint small">Part of</span> ${link(parent.p)} <span class="faint small">at step ${parent.i + 1}</span></span>` : ''}
       <span><span class="faint small">← Comes from</span> ${from.length ? from.map(link).join(' ') : '<span class="faint small">nothing linked</span>'}</span>
       <span><span class="faint small">Leads to →</span> ${to.length ? to.map(link).join(' ') : '<span class="faint small">nothing linked</span>'}</span>
@@ -424,5 +422,5 @@ function pvUnmapped(e, P) {
   return card('Not mapped yet', `<p style="margin-top:0">${esc(p.summary || 'We know this process exists, but nobody has walked us through it yet.')}</p>
     ${q ? `<div class="pu-q"><span class="faint small">Question to ask${who ? ` · ${esc(who.name)}${who.title ? ', ' + esc(who.title) : ''}` : ''}</span><div>${esc(q.q)}</div>${q.note ? `<div class="faint small">${esc(q.note)}</div>` : ''}</div>` : ''}
     ${parent ? `<p class="small">Sub-process of <b>${esc(parent.p.name)}</b>, step ${parent.i + 1}: ${esc(parent.s.name)}.</p>` : ''}
-    <div class="btn-row"><button class="btn" data-action="procMapStart">+ Start mapping: add the first step</button><button class="btn ghost" data-action="pvFocus" data-id="">◂ Back to all processes</button></div>`);
+    <div class="btn-row"><button class="btn" data-action="procMapStart">+ Start mapping: add the first step</button><button class="btn ghost" data-action="pvBack" data-id="${esc(procGroup(parent ? parent.p : p))}">◂ Choose another process</button></div>`);
 }

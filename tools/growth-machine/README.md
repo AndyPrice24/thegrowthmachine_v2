@@ -159,9 +159,10 @@ anything set only in the Studio (times, notes, review results) is kept. Flags yo
 severity you chose (your judgement wins over the file's suggestion). Steps the file leaves out are removed.
 
 ### Process view: index, focus and sub-processes
-- **Index first.** Process view opens on a list of every known process, mapped or not, grouped by journey (Client lifecycle,
-  Product, Finance & admin, People). Each row shows its owner, its status (not mapped / assumed / checked with the team),
-  issues and top break points. A coverage line answers "is everything accounted for?".
+- **Step by step.** The page always opens on Department view. In Process view, press **Choose process**, pick a section
+  (Client lifecycle, Product, Admin & finance, People; each shows how many of its processes are mapped and any break
+  points), then pick a process. Each row shows its owner, status (not mapped / assumed / checked with the team), and top
+  break points or issues. "◂ Choose another process" goes back to that section.
 - **One process at a time.** Pick a row to see that process on its own, with links to what it comes from and leads to
   (click to move along), plus "Show the whole journey" when you want the end-to-end chain.
 - **Who touches it.** Department chips with step counts. Click one to highlight its steps and fade the rest. A

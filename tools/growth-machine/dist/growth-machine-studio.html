@@ -381,7 +381,7 @@ tr.lk-total td{font-weight:600;border-top:1px solid var(--line)}
 .flow-wrap.zoomed .jl-stick{box-shadow:6px 0 10px -6px rgba(0,0,0,.18)}
 /* Process view: index and focus */
 .pv-index .pi-cov{margin:12px 0 10px}.pi-covt{font-size:13.5px;margin-bottom:6px}.pi-bar{height:8px;border-radius:5px;background:var(--surface-2);overflow:hidden}.pi-bar i{display:block;height:100%;background:var(--good)}
-.pi-head,.pi-row{display:grid;grid-template-columns:minmax(0,2.4fr) minmax(0,1.3fr) minmax(0,1.3fr) 70px 90px minmax(0,1.1fr);gap:10px;align-items:center}
+.pi-row{display:grid;grid-template-columns:minmax(0,2.6fr) minmax(0,1.3fr) minmax(0,1.3fr) 70px;gap:10px;align-items:center}
 .pi-head{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:6px 10px;border-bottom:1px solid var(--line)}
 .pi-g{margin-top:12px}.pi-gh{display:flex;gap:10px;align-items:baseline;padding:4px 10px;font-size:13px}
 .pi-row{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin:4px 0;font:inherit;color:inherit;text-align:left;cursor:pointer}
@@ -403,6 +403,13 @@ tr.lk-total td{font-weight:600;border-top:1px solid var(--line)}
 .sub-open{margin:6px 0;width:100%;text-align:left;border-color:var(--ink)}
 .pu-q{background:var(--surface-2);border-radius:10px;padding:10px 12px;margin:8px 0 12px}
 @media (max-width:820px){.pi-head{display:none}.pi-row{grid-template-columns:1fr auto;}.pi-row .pi-n,.pi-row .pi-team{display:none}}
+.ps-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
+.ps-tile{display:flex;flex-direction:column;gap:3px;text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;font:inherit;color:var(--ink);cursor:pointer}
+.ps-tile b{font-size:15px}.ps-tile span{font-size:12.5px;color:var(--muted)}.ps-tile em{font-style:normal;font-size:12px;font-weight:700;color:var(--crit-ink)}
+.ps-tile:hover{border-color:var(--ink)}.ps-tile.on{border-color:var(--ink);background:var(--ink);color:var(--surface)}.ps-tile.on span{color:var(--surface);opacity:.8}.ps-tile.on em{color:#ffb4ae}
+.pi-list{margin-top:12px}
+.pv-index .pv-toprow .btn.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+@media (max-width:820px){.ps-tiles{grid-template-columns:1fr 1fr}}
 </style>
 <style id="report-css">/* Founder report styles (also embedded in exported HTML reports) */
 .rpt{background:#fffdf9;color:#171715;border:1px solid #d7cfc3;border-radius:14px;padding:40px 46px;
@@ -629,7 +636,7 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="tip" hidden></div>
 <script>
-const STUDIO_BUILD = '2026-11-05 12:23 UTC';
+const STUDIO_BUILD = '2026-11-05 12:32 UTC';
 /* ---- model.js ---- */
 /* ============================================================
    The Growth Machine — data model, scenario engine, scoring, insights
@@ -2546,7 +2553,7 @@ ${ui.execView !== false && list.length ? `<h4>Issues and weaknesses${internal ? 
 }
 
 /* ---------- Process view: index (every process, mapped or not) and the focus header ---------- */
-const JOURNEYS = ['Client lifecycle', 'Product', 'Finance & admin', 'People'];
+const JOURNEYS = ['Client lifecycle', 'Product', 'Admin & finance', 'People'];
 function procTeam(p, st) {
   if (p.team) return p.team;
   const pById = byId(st.people), dById = byId(st.departments); const c = {};
@@ -2563,37 +2570,35 @@ function procStatus(p) {
 const teamChip = (t) => t ? `<span class="pi-team"><i class="tdot" style="background:${teamInfo(t)[2]}"></i>${esc(teamInfo(t)[1])}</span>` : '<span class="pi-team faint">No owner yet</span>';
 
 function pvIndex(e, st, P, sw) {
-  const all = P.allProcs; const mapped = all.filter((p) => (p.steps || []).length);
-  // break points across everything mapped, so the index shows where the trouble sits
+  const all = P.allProcs; const pick = (ui.pv || {}).pick || '';
+  const head = `<div class="pv-toprow">${sw}<button class="btn ${pick ? 'on' : ''}" data-action="pvPick" data-id="${pick ? '' : 'open'}">Choose process ${pick ? '▴' : '▾'}</button></div>`;
+  if (!pick) return `<section class="card pv-top pv-index">${head}</section>`;
+  // break points across everything mapped, so each list shows where the trouble sits
   const steps = P.procs.flatMap((p) => (p.steps || []).filter((x) => !x._removed));
   const flags = P.procs.flatMap((p) => flowFlags(p, st.people, st.tools, st.departments));
   const BP = breakPoints(steps, flags);
   const info = {}; all.forEach((p) => { const dp = P.procs.find((x) => x.id === p.id) || p; const fl = (dp.steps || []).length ? flowFlags(dp, st.people, st.tools, st.departments) : [];
-    info[p.id] = { st: procStatus(p), iss: fl.filter((f) => f.type === 'issue').length, wk: fl.filter((f) => f.type === 'weakness').length, bp: (dp.steps || []).filter((x) => BP.ranks[x.id]).length, n: (p.steps || []).length }; });
-  const checked = all.filter((p) => info[p.id].st.k === 'ok').length, withBp = all.filter((p) => info[p.id].bp).length;
-  const pct = all.length ? Math.round(mapped.length / all.length * 100) : 0;
-  const groups = {}; all.filter((p) => !P.subOf[p.id]).forEach((p) => { (groups[procGroup(p)] = groups[procGroup(p)] || []).push(p); });
-  const gOrder = [...JOURNEYS.filter((g) => groups[g]), ...Object.keys(groups).filter((g) => !JOURNEYS.includes(g)).sort()];
-  const chainOrder = procChains(P.procs, P.procs.map((p) => p.id)).flat().map((p) => p.id);
-  const ord = (p) => { const i = chainOrder.indexOf(p.id); return i < 0 ? 999 : i; };
-  const row = (p, depth) => { const I = info[p.id];
-    const kids = all.filter((c) => P.subOf[c.id] && P.subOf[c.id].p.id === p.id);
-    return `<button class="pi-row pi-${I.st.k} ${depth ? 'pi-sub' : ''}" data-action="pvFocus" data-id="${esc(p.id)}">
-      <span class="pi-name">${depth ? '<span class="faint">↳</span> ' : ''}${esc(p.name)}${depth ? ' <span class="faint small">sub-process</span>' : ''}</span>
-      ${teamChip(procTeam(p, st))}
-      <span class="pi-st st-${I.st.k}">${I.st.k === 'ok' ? '✓ ' : I.st.k === 'as' ? '○ ' : '– '}${esc(I.st.t)}</span>
-      <span class="pi-n">${I.n ? `${I.n} steps` : ''}</span>
-      <span class="pi-iss">${I.iss ? `<span class="pi-dot"></span>${I.iss} issue${I.iss === 1 ? '' : 's'}` : ''}</span>
-      <span class="pi-bp">${I.bp ? `⚑ ${I.bp}` : I.st.k === 'none' ? '<span class="pi-map">Map it →</span>' : ''}</span>
-    </button>${kids.map((c) => row(c, depth + 1)).join('')}`; };
-  const grp = (g) => { const ps = groups[g].slice().sort((a, b) => ((a.steps || []).length ? 0 : 1) - ((b.steps || []).length ? 0 : 1) || ord(a) - ord(b) || a.name.localeCompare(b.name));
-    const inG = all.filter((p) => procGroup(P.subOf[p.id] ? P.subOf[p.id].p : p) === g); const m = inG.filter((p) => (p.steps || []).length).length;
-    return `<div class="pi-g"><div class="pi-gh"><b>${esc(g)}</b><span class="faint small">${m} of ${inG.length} mapped</span></div>${ps.map((p) => row(p, 0)).join('')}</div>`; };
-  return `<section class="card pv-top pv-index"><div class="pv-toprow">${sw}<span class="pv-what"><b>All processes</b> <span class="faint small">· pick one to look at it closely</span></span></div>
-    <div class="pi-cov"><div class="pi-covt"><b>${mapped.length} of ${all.length}</b> mapped · <b>${checked}</b> checked with the team · <b>${withBp}</b> with top break points</div><div class="pi-bar"><i style="width:${pct}%"></i></div></div>
-    <div class="pi-head"><span>Process</span><span>Owner</span><span>Status</span><span></span><span>Issues</span><span title="How many of the business's top break points (across all mapped processes) sit in this process">Top break points</span></div>
-    ${gOrder.map(grp).join('')}
-    <p class="faint small" style="margin:10px 0 0">Not mapped yet: click to see what we need to ask, or start mapping it. ⊞ sub-processes sit under the step they belong to; map one only where a step is a break point or has a serious issue.</p></section>`;
+    info[p.id] = { st: procStatus(p), iss: fl.filter((f) => f.type === 'issue').length, bp: (dp.steps || []).filter((x) => BP.ranks[x.id]).length, n: (p.steps || []).length }; });
+  const grpOf = (p) => procGroup(P.subOf[p.id] ? P.subOf[p.id].p : p);
+  const names = [...JOURNEYS, ...[...new Set(all.map(grpOf))].filter((g) => !JOURNEYS.includes(g)).sort()];
+  const tiles = names.map((g) => { const inG = all.filter((p) => grpOf(p) === g); const m = inG.filter((p) => (p.steps || []).length).length; const bp = sum(inG, (p) => info[p.id].bp);
+    return `<button class="ps-tile ${pick === g ? 'on' : ''}" data-action="pvPick" data-id="${esc(g)}"><b>${esc(g)}</b><span>${inG.length ? `${m} of ${inG.length} mapped` : 'Nothing listed yet'}</span>${bp ? `<em>⚑ ${bp} break point${bp === 1 ? '' : 's'}</em>` : ''}</button>`; }).join('');
+  let list = '';
+  if (pick !== 'open') {
+    const chainOrder = procChains(P.procs, P.procs.map((p) => p.id)).flat().map((p) => p.id);
+    const ord = (p) => { const k = chainOrder.indexOf(p.id); return k < 0 ? 999 : k; };
+    const row = (p, depth) => { const I = info[p.id]; const kids = all.filter((c) => P.subOf[c.id] && P.subOf[c.id].p.id === p.id);
+      return `<button class="pi-row pi-${I.st.k} ${depth ? 'pi-sub' : ''}" data-action="pvFocus" data-id="${esc(p.id)}">
+        <span class="pi-name">${depth ? '<span class="faint">↳</span> ' : ''}${esc(p.name)}</span>
+        ${teamChip(procTeam(p, st))}
+        <span class="pi-st st-${I.st.k}">${I.st.k === 'ok' ? '✓ ' : I.st.k === 'as' ? '○ ' : ''}${esc(I.st.t)}</span>
+        <span class="pi-bp">${I.bp ? `⚑ ${I.bp}` : I.iss ? `<span class="pi-iss"><span class="pi-dot"></span>${I.iss}</span>` : ''}</span>
+      </button>${kids.map((c) => row(c, depth + 1)).join('')}`; };
+    const ps = all.filter((p) => !P.subOf[p.id] && procGroup(p) === pick).sort((a, b) => ((a.steps || []).length ? 0 : 1) - ((b.steps || []).length ? 0 : 1) || ord(a) - ord(b) || a.name.localeCompare(b.name));
+    list = ps.length ? `<div class="pi-list">${ps.map((p) => row(p, 0)).join('')}</div><p class="faint small" style="margin:8px 2px 0">✓ checked with the team · ○ assumed · dashed = not mapped yet · ⚑ top break points · ● issues</p>`
+      : '<p class="empty">No processes listed in this section yet. Use + New process.</p>';
+  }
+  return `<section class="card pv-top pv-index">${head}<div class="ps-tiles">${tiles}</div>${list}</section>`;
 }
 
 function pvFocusHead(e, st, P, sw, all) {
@@ -2606,7 +2611,7 @@ function pvFocusHead(e, st, P, sw, all) {
   const counts = {}; all.filter((it) => it.shown).forEach((it) => { counts[it.dept] = (counts[it.dept] || 0) + 1; });
   const who = Object.entries(counts).filter(([t]) => t !== 'system' && t !== 'other').sort((a, b) => b[1] - a[1]);
   const crumb = `<span class="faint">${esc(grpName)}</span> › ${parent ? `<button class="crumb-l" data-action="pvFocus" data-id="${esc(parent.p.id)}">${esc(parent.p.name)}</button> › ` : ''}<b>${esc(p.name)}</b>`;
-  return `<section class="card pv-top pv-focus"><div class="pv-toprow">${sw}<button class="btn sm" data-action="pvFocus" data-id="">◂ All processes</button><span class="pv-crumb">${crumb}</span><span class="pi-st st-${status.k}">${esc(status.t)}</span>${teamChip(procTeam(p, st))}</div>
+  return `<section class="card pv-top pv-focus"><div class="pv-toprow">${sw}<button class="btn sm" data-action="pvBack" data-id="${esc(grpName)}">◂ Choose another process</button><span class="pv-crumb">${crumb}</span><span class="pi-st st-${status.k}">${esc(status.t)}</span>${teamChip(procTeam(p, st))}</div>
     ${P.focusMapped ? `<div class="pv-links">${parent ? `<span><span class="faint small">Part of</span> ${link(parent.p)} <span class="faint small">at step ${parent.i + 1}</span></span>` : ''}
       <span><span class="faint small">← Comes from</span> ${from.length ? from.map(link).join(' ') : '<span class="faint small">nothing linked</span>'}</span>
       <span><span class="faint small">Leads to →</span> ${to.length ? to.map(link).join(' ') : '<span class="faint small">nothing linked</span>'}</span>
@@ -2620,7 +2625,7 @@ function pvUnmapped(e, P) {
   return card('Not mapped yet', `<p style="margin-top:0">${esc(p.summary || 'We know this process exists, but nobody has walked us through it yet.')}</p>
     ${q ? `<div class="pu-q"><span class="faint small">Question to ask${who ? ` · ${esc(who.name)}${who.title ? ', ' + esc(who.title) : ''}` : ''}</span><div>${esc(q.q)}</div>${q.note ? `<div class="faint small">${esc(q.note)}</div>` : ''}</div>` : ''}
     ${parent ? `<p class="small">Sub-process of <b>${esc(parent.p.name)}</b>, step ${parent.i + 1}: ${esc(parent.s.name)}.</p>` : ''}
-    <div class="btn-row"><button class="btn" data-action="procMapStart">+ Start mapping: add the first step</button><button class="btn ghost" data-action="pvFocus" data-id="">◂ Back to all processes</button></div>`);
+    <div class="btn-row"><button class="btn" data-action="procMapStart">+ Start mapping: add the first step</button><button class="btn ghost" data-action="pvBack" data-id="${esc(procGroup(parent ? parent.p : p))}">◂ Choose another process</button></div>`);
 }
 
 /* ---- demo.js ---- */
@@ -3860,6 +3865,7 @@ function loadDB() {
   if (db.engagements.eng_demo && (!db.engagements.eng_demo.engagement.phases.length || !db.engagements.eng_demo.competitors.length)) db.engagements.eng_demo = demoEngagement(); // refresh old demo with tracking sample
   if (!db.engagements[db.activeId]) db.activeId = Object.keys(db.engagements)[0];
   try { Object.assign(ui, JSON.parse(localStorage.getItem(STORE_KEY + '.ui') || '{}'), { scenario: 'current' }); } catch (err) { /* ignore */ }
+  landProcesses();
 }
 let saveTimer = null;
 function save() {
@@ -3874,6 +3880,8 @@ function save() {
 function flushSave() { if (!saveTimer) return; clearTimeout(saveTimer); saveTimer = null; try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); } catch (err) { /* ignore */ } }
 window.addEventListener('pagehide', flushSave);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
+/** The Processes page always opens on Department view; Process view starts with just the "Choose process" button. */
+function landProcesses() { ui.pv = Object.assign({}, ui.pv, { mode: 'dept', focus: '', pick: '', hl: '', journey: false }); ui.stepId = ''; ui.editStep = ''; }
 function saveUI() { try { localStorage.setItem(STORE_KEY + '.ui', JSON.stringify({ tab: ui.tab, pv: ui.pv, execView: ui.execView, bpTop: ui.bpTop, lo: ui.lo && { lens: ui.lo.lens, sort: ui.lo.sort, signals: ui.lo.signals, noFix: ui.lo.noFix }, anon: ui.anon, showCost: ui.showCost, ghosts: ui.ghosts, compare: ui.compare, coll: ui.coll, theme: ui.theme })); } catch (err) { /* ignore */ } }
 const E = () => db.engagements[db.activeId];
 function procOfStep(id) { return E().processes.find((p) => (p.steps || []).some((x) => x.id === id)); }
@@ -4097,7 +4105,9 @@ function toast(t) { const el = document.getElementById('toast'); el.textContent 
 function stripMarks(o) { return JSON.parse(JSON.stringify(o, (k, v) => (k.startsWith('_') ? undefined : v))); }
 
 const actions = {
-  tab: (el) => { ui.tab = el.dataset.id; saveUI(); render(); window.scrollTo(0, 0); },
+  tab: (el) => { if (el.dataset.id === 'processes' && ui.tab !== 'processes') landProcesses(); ui.tab = el.dataset.id; saveUI(); render(); window.scrollTo(0, 0); },
+  pvPick: (el) => { ui.pv = Object.assign({}, ui.pv, { mode: 'proc', focus: '', pick: el.dataset.id || '' }); ui.stepId = ''; saveUI(); render(); },
+  pvBack: (el) => { ui.pv = Object.assign({}, ui.pv, { mode: 'proc', focus: '', hl: '', journey: false, pick: el.dataset.id || 'open' }); ui.stepId = ''; ui.editStep = ''; saveUI(); render(); window.scrollTo(0, 0); },
   setScenario: (el) => { ui.scenario = el.dataset.id; render(); },
   proc: (el) => { ui.pv = Object.assign({}, ui.pv, { mode: 'proc', procs: [el.dataset.id] }); ui.stepId = ''; ui.review = null; ui.reviewSetup = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; saveUI(); render(); },
   flowStep: (el) => {
@@ -4135,7 +4145,7 @@ const actions = {
   loSet: (el) => { ui.lo = Object.assign({}, ui.lo, { [el.dataset.k]: el.dataset.id, open: '' }); saveUI(); render(); },
   loTick: (el) => { ui.lo = Object.assign({}, ui.lo, { [el.dataset.k]: el.checked }); saveUI(); render(); },
   loOpen: (el) => { ui.lo = Object.assign({}, ui.lo, { open: ui.lo && ui.lo.open === el.dataset.id ? '' : el.dataset.id }); render(); },
-  pvFocus: (el) => { ui.pv = Object.assign({}, ui.pv, { mode: 'proc', focus: el.dataset.id || '', hl: '', journey: false }); ui.stepId = ''; ui.editStep = ''; ui.flagFocus = null; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; ui.reviewSetup = ''; saveUI(); render(); window.scrollTo(0, 0); },
+  pvFocus: (el) => { ui.pv = Object.assign({}, ui.pv, { mode: 'proc', focus: el.dataset.id || '', hl: '', journey: false, pick: '' }); ui.stepId = ''; ui.editStep = ''; ui.flagFocus = null; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; ui.reviewSetup = ''; saveUI(); render(); window.scrollTo(0, 0); },
   pvJourney: (el) => { ui.pv = Object.assign({}, ui.pv, { journey: !!el.checked }); ui.stepId = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; saveUI(); render(); },
   pvHl: (el) => { const t = el.dataset.id || ''; ui.pv = Object.assign({}, ui.pv, { hl: (ui.pv || {}).hl === t ? '' : t }); saveUI(); render(); },
   procMapStart: () => { const e = E(); const p = e.processes.find((x) => x.id === (ui.pv || {}).focus); if (!p) return;
@@ -4145,7 +4155,7 @@ const actions = {
     const n = prompt('Name of the sub-process (more detail for this step)', step.name); if (!n || !n.trim()) return;
     const sp = { id: uid('pr'), name: n.trim(), group: proc.group || '', team: step.team || '', leadsTo: '', inputs: '', outputs: '', confidence: 'heard', summary: `More detail for step "${step.name}" in ${proc.name}.`, steps: [] };
     e.processes.push(sp); step.subProcessId = sp.id; touch(sp); touch(proc); save(); actions.pvFocus({ dataset: { id: sp.id } }); },
-  pvSet: (el) => { ui.pv = Object.assign({}, ui.pv, { [el.dataset.k]: el.dataset.id }); ui.stepId = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; ui.reviewSetup = ''; saveUI(); render(); },
+  pvSet: (el) => { ui.pv = Object.assign({}, ui.pv, { [el.dataset.k]: el.dataset.id }, el.dataset.k === 'mode' ? { focus: '', pick: '', hl: '', journey: false } : {}); ui.stepId = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; ui.reviewSetup = ''; saveUI(); render(); },
   pvTick: (el) => {
     const P = pvState(stateFor(E(), ui.scenario)); const k = el.dataset.kind, id = el.dataset.id; const V = Object.assign({}, ui.pv);
     const toggle = (list, all) => { let l = list.filter((x) => x !== id); if (el.checked) l.push(id); if (!l.length) { toast('Keep at least one ticked'); return null; } return all.filter((x) => l.includes(x)); };
