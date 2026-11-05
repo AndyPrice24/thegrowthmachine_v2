@@ -656,7 +656,7 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="tip" hidden></div>
 <script>
-const STUDIO_BUILD = '2026-11-05 16:24 UTC';
+const STUDIO_BUILD = '2026-11-05 16:45 UTC';
 /* ---- model.js ---- */
 /* ============================================================
    The Growth Machine — data model, scenario engine, scoring, insights
@@ -3421,7 +3421,7 @@ function viewCapture(e) {
       <label class="fld"><span>Quote worth keeping</span><textarea data-draft="quotes" rows="2">${esc(d.quotes || '')}</textarea></label>
     </aside>
     <div class="card qcol">
-      ${(() => { const cq = (e.customQuestions || []).filter((q) => q.personId && q.personId === d.personId); if (!cq.length) return ''; let sec = '';
+      ${(() => { const cq = (e.customQuestions || []).filter((q) => q.personId && q.personId === d.personId).map((q, i) => [q, i]).sort((a, b) => ((a[0].ord ?? 1e6 + a[1]) - (b[0].ord ?? 1e6 + b[1]))).map((x) => x[0]); if (!cq.length) return ''; let sec = '';
         return `<div class="custom-qs"><h4>Questions for this interview <span class="faint small">(★ = priority; prepared from what we know so far)</span></h4>${cq.map((q) => { const head = q.section && q.section !== sec ? `<h5>${esc((sec = q.section))}</h5>` : ''; return head + `<div class="qa ${String(d.answers[q.id] || '').trim() ? 'qa-done' : ''}"><label><span>${q.p ? '<b class="star">★</b> ' : ''}${esc(q.q)}</span><span class="chip">${esc(critLabel(q.crit))}</span></label>${q.note ? `<div class="faint small">${esc(q.note)}</div>` : ''}<textarea data-draft="answers.${q.id}" rows="2">${esc(d.answers[q.id] || '')}</textarea></div>`; }).join('')}</div>`; })()}
       ${(e.customQuestions || []).some((q) => q.personId && q.personId === d.personId) ? '<details class="std-qs"><summary>Standard question sets (optional)</summary>' : ''}
       ${(() => { const ss = e.staffSurvey.find((x) => x.personId === d.personId && d.personId); return ss ? `<div class="pre"><h4>Their questionnaire answers</h4><dl>${STAFF_SECTIONS.flatMap((sec) => sec.questions).filter((q) => ss.answers[q.id] && !/_name$/.test(q.id)).map((q) => `<dt>${esc(q.q)}</dt><dd>${esc(ss.answers[q.id])}</dd>`).join('')}</dl></div>` : ''; })()}
@@ -4080,7 +4080,7 @@ const FIELD_DEFS = {
   sources: [['id', 'text'], ['name', 'text'], ['type', ['Interview', 'Meeting', 'Voice note', 'Spreadsheet', 'Presentation', 'Document', 'Management accounts', 'Platform export', 'Other']], ['from', 'text'], ['person', 'text'], ['asOf', 'text'], ['received', 'text'], ['via', 'text'], ['link', 'text'], ['notes', 'text']],
   feedback: [['id', 'text'], ['topic', 'text'], ['area', ['Revenue', 'Billing', 'Customers', 'Cost', 'Risk', 'Process', 'Documents']], ['number', 'text'], ['numberLabel', 'text'], ['says', 'long'], ['reality', 'long'], ['soWhat', 'long'], ['suggestion', 'long'], ['priority', ['high', 'medium', 'low']], ['status', ['Draft', 'Confirmed with client', 'Sent']], ['source', 'text'], ['sources', 'json']],
   revenueMovements: [['id', 'text'], ['fy', 'text'], ['client', 'text'], ['kind', ['lost', 'downgrade', 'new', 'growth']], ['cause', 'text'], ['monthly', 'num'], ['from', 'text'], ['reason', 'text'], ['comment', 'text']],
-  customQuestions: [['id', 'text'], ['personId', 'person'], ['section', 'text'], ['q', 'long'], ['note', 'text'], ['crit', CRITERIA.map((c) => c.id)], ['p', 'num']],
+  customQuestions: [['id', 'text'], ['personId', 'person'], ['section', 'text'], ['q', 'long'], ['note', 'text'], ['crit', CRITERIA.map((c) => c.id)], ['p', 'num'], ['ord', 'num']],
   competitors: [['id', 'text'], ['name', 'text'], ['type', ['Direct', 'Indirect', 'Substitute', 'Adjacent']], ['threat', ['High', 'Medium', 'Low']], ['website', 'text'], ['hq', 'text'], ['markets', 'text'], ['segments', 'text'], ['offering', 'long'], ['pricingModel', 'text'], ['pricePoint', 'num'], ['size', 'text'], ['ownership', 'text'], ['strengths', 'long'], ['weaknesses', 'long'], ['whereWeWin', 'long'], ['whereWeLose', 'long'], ['sources', 'long'], ['lastReviewed', 'date']],
   intel: [['id', 'text'], ['competitorId', 'comp'], ['topic', INTEL_TOPICS], ['note', 'long'], ['sourceType', SOURCE_TYPES], ['source', 'text'], ['date', 'date']],
   usps: [['id', 'text'], ['claim', 'text'], ['strength', ['Unique', 'Shared', 'Claimed only']], ['proof', 'long'], ['competitorsWithIt', 'text'], ['notes', 'text']],
