@@ -176,3 +176,4 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 .custom-qs h5{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:12px 0 6px}
 .std-qs summary{cursor:pointer;font-weight:650;margin:8px 0}
 #mergeHist summary{cursor:pointer;padding:4px 0}
+.fr-row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}.fr-row .fld{margin:0;min-width:220px}

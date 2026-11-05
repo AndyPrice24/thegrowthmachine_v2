@@ -176,6 +176,9 @@ function viewData(e) {
       <div class="btn-row"><button class="btn" data-action="mergePaste">Merge into ${esc(e.client.name)}</button><button class="btn ghost" data-action="copyPrompt">Copy Claude prompt</button><button class="btn ghost" data-action="copyContext">Copy client JSON for Claude</button></div>
       <p class="faint small">Merge adds new records and updates records with the same id. Nothing is deleted.</p>`)}
   </div>
+  ${card('Find and replace text', `<div class="fr-row"><label class="fld"><span>Find</span><input id="frFind" placeholder="e.g. a misspelt name"></label><label class="fld"><span>Replace with</span><input id="frRepl"></label>
+      <label class="tog small"><input type="checkbox" id="frCase"> Match case</label><button class="btn" data-action="findReplace">Find and replace…</button></div>
+      <p class="faint small">Searches every text in ${esc(e.client.name)}: findings, recommendations, processes and steps, interviews, questions, notes. It shows how many it found and where before changing anything. IDs and the merge history are never changed.</p>`)}
   ${card('Edit data', `<div class="toolbar">${Object.keys(FIELD_DEFS).map((c) => `<button class="btn sm ${coll === c ? 'on' : ''}" data-action="coll" data-id="${c}">${COLL_LABELS[c]} (${e[c].length})</button>`).join('')}</div>
     <div class="scroll-x">${grid}</div>
     <div class="btn-row"><button class="btn" data-action="addRow" data-coll="${coll}">+ Add ${COLL_LABELS[coll].toLowerCase().replace(/s$/, '')}</button></div>
@@ -251,6 +254,31 @@ const actions = {
     const side = document.querySelector('.flow-side'); if (side && getComputedStyle(side).position !== 'sticky' && el.closest('.flow-svg')) side.scrollIntoView({ behavior: 'smooth', block: 'start' });
   },
   flowClear: () => { ui.stepId = ''; render(); },
+  findReplace: () => {
+    const find = (document.getElementById('frFind').value || ''); const repl = document.getElementById('frRepl').value || ''; const mc = document.getElementById('frCase').checked;
+    if (!find.trim()) return toast('Type the text to find');
+    const re = new RegExp(find.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), mc ? 'g' : 'gi');
+    const e = E(); const SKIP = new Set(['id', 'updatedAt', 'mergeLog', 'deleted', 'lastExported', 'lastUpdated']);
+    const isIdKey = (k) => /Ids?$/.test(k) || k === 'leadsTo';
+    const hits = {}; let total = 0;
+    const walk = (o, area, apply) => {
+      let changed = false;
+      Object.keys(o).forEach((k) => {
+        if (SKIP.has(k) || isIdKey(k) || k.startsWith('_')) return; const v = o[k];
+        if (typeof v === 'string') { const m = v.match(re); if (m) { if (apply) { o[k] = v.replace(re, repl); changed = true; } else { hits[area] = (hits[area] || 0) + m.length; total += m.length; } } }
+        else if (v && typeof v === 'object') { if (walk(v, area, apply)) changed = true; }
+      });
+      return changed;
+    };
+    const areas = Object.keys(e).filter((k) => !['id', 'schema', 'meta'].includes(k));
+    areas.forEach((k) => { const v = e[k]; if (Array.isArray(v)) v.forEach((r) => r && typeof r === 'object' && walk(r, COLL_LABELS[k] || k, false)); else if (v && typeof v === 'object') walk(v, k === 'engagement' ? 'Progress & time' : k, false); });
+    if (!total) return toast(`No matches for "${find}"`);
+    const list = Object.entries(hits).map(([a, n]) => `  ${a}: ${n}`).join('\n');
+    if (!confirm(`Found "${find}" ${total} time${total === 1 ? '' : 's'}:\n${list}\n\nReplace all with "${repl}"?`)) return;
+    areas.forEach((k) => { const v = e[k]; if (Array.isArray(v)) v.forEach((r) => { if (r && typeof r === 'object' && walk(r, '', true)) touch(r); }); else if (v && typeof v === 'object' && walk(v, '', true)) touch(v); });
+    e.meta.replaceLog = [{ find, repl, count: total, at: nowISO() }, ...(e.meta.replaceLog || [])].slice(0, 50);
+    save(); render(); toast(`Replaced ${total} occurrence${total === 1 ? '' : 's'}. Back up when you're ready.`);
+  },
   pvSet: (el) => { ui.pv = Object.assign({}, ui.pv, { [el.dataset.k]: el.dataset.id }); ui.stepId = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; ui.reviewSetup = ''; saveUI(); render(); },
   pvTick: (el) => {
     const P = pvState(stateFor(E(), ui.scenario)); const k = el.dataset.kind, id = el.dataset.id; const V = Object.assign({}, ui.pv);
