@@ -41,12 +41,12 @@ function leakItems(e, { signals = true } = {}) {
   e.findings.forEach((f) => {
     const kind = f.kind || guessLens(f); if (kind === 'context') return;
     items.push({ src: 'finding', id: f.id, kind, kindSet: !!f.kind, sev: f.severity || 'low', title: f.title || f.id, detail: f.evidence || '', area: f.area || '',
-      value: num(f.valueMonthly), basis: f.basis || (num(f.valueMonthly) ? 'Leaking' : ''), partOf: f.partOf || '', fix: recs[f.fixId] || null, rec: f });
+      value: num(f.valueMonthly), basis: f.basis || (num(f.valueMonthly) ? 'Leaking' : ''), partOf: f.partOf || '', fix: recs[f.fixId] || null, next: f.nextStep || '', rec: f });
   });
   e.opportunities.forEach((o) => {
     if (o.status === 'Recommendation' && !o.recommendationId) return;
     items.push({ src: 'opportunity', id: o.id, kind: 'opportunity', kindSet: true, sev: ({ High: 'high', Medium: 'medium', Low: 'low' })[o.impact] || 'low', title: o.title, detail: o.description || '', area: o.area || '',
-      value: num(o.valueMonthly), basis: num(o.valueMonthly) ? 'Upside' : '', partOf: '', fix: recs[o.recommendationId] || null, rec: o });
+      value: num(o.valueMonthly), basis: num(o.valueMonthly) ? 'Upside' : '', partOf: '', fix: recs[o.recommendationId] || null, next: o.nextStep || '', rec: o });
   });
   if (signals) insights(e, fmtMoney, ui.anon).filter((x) => x.severity !== 'low').forEach((x, i) => items.push({ src: 'signal', id: 'sig_' + i, kind: signalLens(x.area), kindSet: true, sev: x.severity, title: x.title, detail: x.detail, area: x.area, value: 0, basis: '', partOf: '', fix: null }));
   const ids = new Set(items.map((x) => x.id)); items.forEach((x) => { if (x.partOf && !ids.has(x.partOf)) x.partOf = ''; });
@@ -71,6 +71,7 @@ function rankItems(items, sort) {
 
 function leakFixChip(x) {
   if (x.fix) return `<span class="lo-fix" title="${esc(x.fix.title)}">→ ${esc(trunc(x.fix.title, 46))} <span class="chip">${esc(x.fix.status || 'Identified')}</span></span>`;
+  if (x.next) return `<span class="lo-next" title="${esc(x.next)}">Next: ${esc(trunc(x.next, 52))}</span>`;
   if (x.src === 'signal') return '<span class="faint small">Spotted automatically</span>';
   return '<span class="chip lo-nofix">No action yet</span>';
 }
@@ -81,9 +82,9 @@ function viewLeaks(e) {
   const tot = leakTotals(all);
   const count = (k) => all.filter((x) => x.kind === k).length;
   let list = all.filter((x) => L.lens === 'all' || x.kind === L.lens);
-  if (L.noFix) list = list.filter((x) => !x.fix && x.src !== 'signal');
+  if (L.noFix) list = list.filter((x) => !x.fix && !x.next && x.src !== 'signal');
   const ranked = rankItems(list, L.sort);
-  const noFix = all.filter((x) => !x.fix && x.src !== 'signal').length, unsized = all.filter((x) => !x.value && x.src !== 'signal').length;
+  const noFix = all.filter((x) => !x.fix && !x.next && x.src !== 'signal').length, unsized = all.filter((x) => !x.value && x.src !== 'signal').length;
   const kp = (label, v, sub) => kpi(label, v ? fmtMoney(v) + '/mo' : '—', `<div class="k-delta">${sub}</div>`);
   const seg = (on, k, v, label) => `<button class="seg ${on ? 'on' : ''}" data-action="loSet" data-k="${k}" data-id="${v}">${label}</button>`;
   const recOpts = (cur) => `<option value="">— none —</option>${e.recommendations.map((r) => `<option value="${esc(r.id)}" ${cur === r.id ? 'selected' : ''}>${esc(trunc(r.title, 70))}</option>`).join('')}`;
@@ -96,6 +97,7 @@ function viewLeaks(e) {
         <label>Basis ${cell(x, 'basis', `<select><option value=""></option>${BASES.map((b) => `<option ${x.basis === b ? 'selected' : ''}>${b}</option>`).join('')}</select>`)}</label>
         <label>Fix ${cell(x, 'fixId', `<select>${recOpts(x.fix && x.fix.id)}</select>`)}</label>
         <label>Part of ${cell(x, 'partOf', `<select>${parentOpts(x)}</select>`)}</label>
+        <label class="lo-wide">Next step (question or data request) <input type="text" data-cell data-coll="findings" data-id="${esc(x.id)}" data-field="nextStep" value="${esc(x.next)}" placeholder="e.g. Ask Natalie: revenue by partner"></label>
       </div>`;
   const row = (x, i) => {
     const open = L.open === x.id;
@@ -107,7 +109,7 @@ function viewLeaks(e) {
         <span class="lo-val">${x.value ? `<b>${fmtMoney(x.value)}</b>/mo<em>${esc((x.basis || '').toLowerCase())}</em>` : '<span class="faint">Not sized</span>'}</span>
         <span class="lo-fixcol">${leakFixChip(x)}</span>
       </button>
-      ${open ? `<div class="lo-detail"><p>${esc(x.detail)}</p><p class="faint small">${esc(x.area)}${x.partOf ? ` · part of: ${esc((all.find((y) => y.id === x.partOf) || {}).title || x.partOf)}` : ''}${x.fix ? ` · fix: ${esc(x.fix.title)} (${esc(x.fix.horizon || '')})` : ''}</p>${editor(x)}</div>` : ''}
+      ${open ? `<div class="lo-detail"><p>${esc(x.detail)}</p><p class="faint small">${esc(x.area)}${x.partOf ? ` · part of: ${esc((all.find((y) => y.id === x.partOf) || {}).title || x.partOf)}` : ''}${x.fix ? ` · fix: ${esc(x.fix.title)} (${esc(x.fix.horizon || '')})` : ''}${x.next ? ` · next: ${esc(x.next)}` : ''}</p>${editor(x)}</div>` : ''}
     </div>`;
   };
   let n = 0;
@@ -129,7 +131,7 @@ function viewLeaks(e) {
   </section>
   <div class="grid-2">
     ${card('Where the money is, by lens', hbars(byLens.filter((x) => x.value > 0), { fmt: (v) => fmtMoney(v) + '/mo', color: 'var(--s1)' }), { sub: 'Sized items only, all bases together. Use it to see where the weight sits, not as a single total.' })}
-    ${card('Gaps in the diagnosis', `<ul class="lk-list"><li><b>${noFix}</b> items have no fix linked yet. Each needs a recommendation, a question for a named role, or a data request.</li><li><b>${unsized}</b> items are not sized. Add a rand figure, even a rough one, so they can be ranked.</li>${reqs.length ? `<li><b>${reqs.length}</b> data requests are still open, e.g. ${reqs.slice(0, 3).map((r) => esc(trunc(r.item, 60))).join('; ')}.</li>` : ''}</ul>`, { sub: 'What the machine still needs to give a full picture.' })}
+    ${card('Gaps in the diagnosis', `<ul class="lk-list"><li><b>${noFix}</b> items have no action yet: no fix and no next step. Each needs a recommendation, a question for a named role, or a data request.</li><li><b>${unsized}</b> items are not sized. Add a rand figure, even a rough one, so they can be ranked.</li>${reqs.length ? `<li><b>${reqs.length}</b> data requests are still open, e.g. ${reqs.slice(0, 3).map((r) => esc(trunc(r.item, 60))).join('; ')}.</li>` : ''}</ul>`, { sub: 'What the machine still needs to give a full picture.' })}
   </div>`;
 }
 
@@ -137,6 +139,6 @@ function viewLeaks(e) {
 function leaksTopCard(e) {
   const items = rankItems(leakItems(e, { signals: false }), 'size').filter((x) => !x.nested).slice(0, 5);
   if (!items.length) return '';
-  return card('Top leaks &amp; opportunities', `<ol class="rank">${items.map((x) => `<li><div><strong>${LENS_ICON[x.kind] || ''} ${esc(x.title)}</strong><div class="muted small">${x.value ? `${fmtMoney(x.value)}/mo ${esc((x.basis || '').toLowerCase())}` : 'Not sized'} · ${x.fix ? 'fix: ' + esc(trunc(x.fix.title, 60)) : '<span class="lo-neg">no action yet</span>'}</div></div></li>`).join('')}</ol>`,
+  return card('Top leaks &amp; opportunities', `<ol class="rank">${items.map((x) => `<li><div><strong>${LENS_ICON[x.kind] || ''} ${esc(x.title)}</strong><div class="muted small">${x.value ? `${fmtMoney(x.value)}/mo ${esc((x.basis || '').toLowerCase())}` : 'Not sized'} · ${x.fix ? 'fix: ' + esc(trunc(x.fix.title, 60)) : x.next ? 'next: ' + esc(trunc(x.next, 60)) : '<span class="lo-neg">no action yet</span>'}</div></div></li>`).join('')}</ol>`,
     { actions: '<button class="btn sm" data-action="tab" data-id="leaks">All →</button>' });
 }

@@ -59,6 +59,20 @@ function normalise(e) {
     - Freshness: a stamped file (_meta.generatedAt) only overwrites records whose updatedAt is older; unstamped files
       can only fill records that were never stamped. Anything edited by hand later than the file is kept.
     - Deleted records (meta.deleted tombstones) are not resurrected by an older file. */
+/** Steps from an update file, merged by id into the Studio's steps: the file sets order and the fields it sends;
+    fields only set in the Studio (severity, review, times, notes) are kept, and flags added in the Studio are kept too. */
+const STUDIO_OWNED = ['painSeverity']; // judgements made in the Studio win over a file's suggestion
+function mergeSteps(old, incoming) {
+  const byOld = {}; old.forEach((s) => { if (s.id) byOld[s.id] = s; });
+  return incoming.map((s) => {
+    const o = s.id && byOld[s.id]; if (!o) return s;
+    const keep = {}; Object.keys(o).forEach((k) => { if (s[k] === undefined || s[k] === '' || s[k] === null || (STUDIO_OWNED.includes(k) && o[k])) keep[k] = o[k]; });
+    const m = Object.assign({}, o, s, keep);
+    if (Array.isArray(o.flags) && o.flags.length) { const key = (f) => f.type + '|' + f.text; const have = new Set((m.flags || []).map(key)); m.flags = (m.flags || []).concat(o.flags.filter((f) => !have.has(key(f)))); }
+    return m;
+  });
+}
+
 function mergeEngagement(base, incoming) {
   const out = clone(base);
   const ts = (incoming._meta && incoming._meta.generatedAt) || '';
@@ -72,7 +86,9 @@ function mergeEngagement(base, incoming) {
       const i = item.id ? arr.findIndex((x) => x.id === item.id) : -1;
       if (i >= 0) {
         if (isNewer(arr[i])) { c.skipped++; skipped.push({ coll, id: item.id, why: 'newer data kept' }); return; }
-        arr[i] = Object.assign({}, arr[i], item, ts ? { updatedAt: ts } : {}); c.updated++;
+        const merged = Object.assign({}, arr[i], item, ts ? { updatedAt: ts } : {});
+        if (coll === 'processes' && Array.isArray(arr[i].steps) && Array.isArray(item.steps)) merged.steps = mergeSteps(arr[i].steps, item.steps);
+        arr[i] = merged; c.updated++;
       } else {
         if (item.id && tomb(coll, item.id)) { c.skipped++; skipped.push({ coll, id: item.id, why: 'deleted after this file was made' }); return; }
         arr.push(Object.assign({ id: uid(prefix) }, item, ts ? { updatedAt: ts } : {})); c.added++;

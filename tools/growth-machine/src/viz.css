@@ -363,3 +363,5 @@ tr.lk-total td{font-weight:600;border-top:1px solid var(--line)}
 .lo-edit label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
 .lo-edit select,.lo-edit input{max-width:320px}
 @media (max-width:820px){.lo-head{display:none}.lo-main{grid-template-columns:26px 26px minmax(0,1fr);}.lo-val,.lo-fixcol{grid-column:3}.lo-val{text-align:left}.lo-detail{padding-left:14px}}
+.lo-next{color:var(--warn-ink)}
+.lo-edit .lo-wide{flex:1 1 100%}.lo-edit .lo-wide input{max-width:none;width:100%}

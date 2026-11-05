@@ -144,6 +144,7 @@ One ranked list of everything found, sorted into five lenses: leaks, weaknesses,
 - Click a row to see the evidence and set its lens, size, basis, fix, or the bigger item it belongs to. A nested item is never
   counted twice in the totals.
 - "Biggest first" ranks by money at stake: leaking counts in full, at risk and upside at half, spend to review at a fifth.
+- An item counts as actioned when it has a fix (a recommendation) or a next step (a question for a named role or a data request).
 - "Gaps in the diagnosis" lists items with no fix, items with no size, and open data requests. The Overview page shows the top 5.
 
 ### Revenue leaks (Business & market)
@@ -151,3 +152,8 @@ Digests a client's own churn and new-business sheets into `revenueMovements` (lo
 The card shows the takeaways first (findings with `lens: 'Revenue leaks'`), then the leak and win per year, where revenue leaks by
 cause, the biggest single leaks and, if `client.locationTrend` is set, a location trend. Figures are estimates until they are
 checked against billing.
+
+### Merging process updates keeps your edits
+When an update file changes a process, its steps are merged by id. The file sets the order and the fields it sends, and
+anything set only in the Studio (times, notes, review results) is kept. Flags you added are kept, and so is an issue
+severity you chose (your judgement wins over the file's suggestion). Steps the file leaves out are removed.

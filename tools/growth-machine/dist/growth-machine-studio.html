@@ -370,6 +370,8 @@ tr.lk-total td{font-weight:600;border-top:1px solid var(--line)}
 .lo-edit label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
 .lo-edit select,.lo-edit input{max-width:320px}
 @media (max-width:820px){.lo-head{display:none}.lo-main{grid-template-columns:26px 26px minmax(0,1fr);}.lo-val,.lo-fixcol{grid-column:3}.lo-val{text-align:left}.lo-detail{padding-left:14px}}
+.lo-next{color:var(--warn-ink)}
+.lo-edit .lo-wide{flex:1 1 100%}.lo-edit .lo-wide input{max-width:none;width:100%}
 </style>
 <style id="report-css">/* Founder report styles (also embedded in exported HTML reports) */
 .rpt{background:#fffdf9;color:#171715;border:1px solid #d7cfc3;border-radius:14px;padding:40px 46px;
@@ -596,7 +598,7 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="tip" hidden></div>
 <script>
-const STUDIO_BUILD = '2026-11-05 09:00 UTC';
+const STUDIO_BUILD = '2026-11-05 10:53 UTC';
 /* ---- model.js ---- */
 /* ============================================================
    The Growth Machine — data model, scenario engine, scoring, insights
@@ -659,6 +661,20 @@ function normalise(e) {
     - Freshness: a stamped file (_meta.generatedAt) only overwrites records whose updatedAt is older; unstamped files
       can only fill records that were never stamped. Anything edited by hand later than the file is kept.
     - Deleted records (meta.deleted tombstones) are not resurrected by an older file. */
+/** Steps from an update file, merged by id into the Studio's steps: the file sets order and the fields it sends;
+    fields only set in the Studio (severity, review, times, notes) are kept, and flags added in the Studio are kept too. */
+const STUDIO_OWNED = ['painSeverity']; // judgements made in the Studio win over a file's suggestion
+function mergeSteps(old, incoming) {
+  const byOld = {}; old.forEach((s) => { if (s.id) byOld[s.id] = s; });
+  return incoming.map((s) => {
+    const o = s.id && byOld[s.id]; if (!o) return s;
+    const keep = {}; Object.keys(o).forEach((k) => { if (s[k] === undefined || s[k] === '' || s[k] === null || (STUDIO_OWNED.includes(k) && o[k])) keep[k] = o[k]; });
+    const m = Object.assign({}, o, s, keep);
+    if (Array.isArray(o.flags) && o.flags.length) { const key = (f) => f.type + '|' + f.text; const have = new Set((m.flags || []).map(key)); m.flags = (m.flags || []).concat(o.flags.filter((f) => !have.has(key(f)))); }
+    return m;
+  });
+}
+
 function mergeEngagement(base, incoming) {
   const out = clone(base);
   const ts = (incoming._meta && incoming._meta.generatedAt) || '';
@@ -672,7 +688,9 @@ function mergeEngagement(base, incoming) {
       const i = item.id ? arr.findIndex((x) => x.id === item.id) : -1;
       if (i >= 0) {
         if (isNewer(arr[i])) { c.skipped++; skipped.push({ coll, id: item.id, why: 'newer data kept' }); return; }
-        arr[i] = Object.assign({}, arr[i], item, ts ? { updatedAt: ts } : {}); c.updated++;
+        const merged = Object.assign({}, arr[i], item, ts ? { updatedAt: ts } : {});
+        if (coll === 'processes' && Array.isArray(arr[i].steps) && Array.isArray(item.steps)) merged.steps = mergeSteps(arr[i].steps, item.steps);
+        arr[i] = merged; c.updated++;
       } else {
         if (item.id && tomb(coll, item.id)) { c.skipped++; skipped.push({ coll, id: item.id, why: 'deleted after this file was made' }); return; }
         arr.push(Object.assign({ id: uid(prefix) }, item, ts ? { updatedAt: ts } : {})); c.added++;
@@ -3474,12 +3492,12 @@ function leakItems(e, { signals = true } = {}) {
   e.findings.forEach((f) => {
     const kind = f.kind || guessLens(f); if (kind === 'context') return;
     items.push({ src: 'finding', id: f.id, kind, kindSet: !!f.kind, sev: f.severity || 'low', title: f.title || f.id, detail: f.evidence || '', area: f.area || '',
-      value: num(f.valueMonthly), basis: f.basis || (num(f.valueMonthly) ? 'Leaking' : ''), partOf: f.partOf || '', fix: recs[f.fixId] || null, rec: f });
+      value: num(f.valueMonthly), basis: f.basis || (num(f.valueMonthly) ? 'Leaking' : ''), partOf: f.partOf || '', fix: recs[f.fixId] || null, next: f.nextStep || '', rec: f });
   });
   e.opportunities.forEach((o) => {
     if (o.status === 'Recommendation' && !o.recommendationId) return;
     items.push({ src: 'opportunity', id: o.id, kind: 'opportunity', kindSet: true, sev: ({ High: 'high', Medium: 'medium', Low: 'low' })[o.impact] || 'low', title: o.title, detail: o.description || '', area: o.area || '',
-      value: num(o.valueMonthly), basis: num(o.valueMonthly) ? 'Upside' : '', partOf: '', fix: recs[o.recommendationId] || null, rec: o });
+      value: num(o.valueMonthly), basis: num(o.valueMonthly) ? 'Upside' : '', partOf: '', fix: recs[o.recommendationId] || null, next: o.nextStep || '', rec: o });
   });
   if (signals) insights(e, fmtMoney, ui.anon).filter((x) => x.severity !== 'low').forEach((x, i) => items.push({ src: 'signal', id: 'sig_' + i, kind: signalLens(x.area), kindSet: true, sev: x.severity, title: x.title, detail: x.detail, area: x.area, value: 0, basis: '', partOf: '', fix: null }));
   const ids = new Set(items.map((x) => x.id)); items.forEach((x) => { if (x.partOf && !ids.has(x.partOf)) x.partOf = ''; });
@@ -3504,6 +3522,7 @@ function rankItems(items, sort) {
 
 function leakFixChip(x) {
   if (x.fix) return `<span class="lo-fix" title="${esc(x.fix.title)}">→ ${esc(trunc(x.fix.title, 46))} <span class="chip">${esc(x.fix.status || 'Identified')}</span></span>`;
+  if (x.next) return `<span class="lo-next" title="${esc(x.next)}">Next: ${esc(trunc(x.next, 52))}</span>`;
   if (x.src === 'signal') return '<span class="faint small">Spotted automatically</span>';
   return '<span class="chip lo-nofix">No action yet</span>';
 }
@@ -3514,9 +3533,9 @@ function viewLeaks(e) {
   const tot = leakTotals(all);
   const count = (k) => all.filter((x) => x.kind === k).length;
   let list = all.filter((x) => L.lens === 'all' || x.kind === L.lens);
-  if (L.noFix) list = list.filter((x) => !x.fix && x.src !== 'signal');
+  if (L.noFix) list = list.filter((x) => !x.fix && !x.next && x.src !== 'signal');
   const ranked = rankItems(list, L.sort);
-  const noFix = all.filter((x) => !x.fix && x.src !== 'signal').length, unsized = all.filter((x) => !x.value && x.src !== 'signal').length;
+  const noFix = all.filter((x) => !x.fix && !x.next && x.src !== 'signal').length, unsized = all.filter((x) => !x.value && x.src !== 'signal').length;
   const kp = (label, v, sub) => kpi(label, v ? fmtMoney(v) + '/mo' : '—', `<div class="k-delta">${sub}</div>`);
   const seg = (on, k, v, label) => `<button class="seg ${on ? 'on' : ''}" data-action="loSet" data-k="${k}" data-id="${v}">${label}</button>`;
   const recOpts = (cur) => `<option value="">— none —</option>${e.recommendations.map((r) => `<option value="${esc(r.id)}" ${cur === r.id ? 'selected' : ''}>${esc(trunc(r.title, 70))}</option>`).join('')}`;
@@ -3529,6 +3548,7 @@ function viewLeaks(e) {
         <label>Basis ${cell(x, 'basis', `<select><option value=""></option>${BASES.map((b) => `<option ${x.basis === b ? 'selected' : ''}>${b}</option>`).join('')}</select>`)}</label>
         <label>Fix ${cell(x, 'fixId', `<select>${recOpts(x.fix && x.fix.id)}</select>`)}</label>
         <label>Part of ${cell(x, 'partOf', `<select>${parentOpts(x)}</select>`)}</label>
+        <label class="lo-wide">Next step (question or data request) <input type="text" data-cell data-coll="findings" data-id="${esc(x.id)}" data-field="nextStep" value="${esc(x.next)}" placeholder="e.g. Ask Natalie: revenue by partner"></label>
       </div>`;
   const row = (x, i) => {
     const open = L.open === x.id;
@@ -3540,7 +3560,7 @@ function viewLeaks(e) {
         <span class="lo-val">${x.value ? `<b>${fmtMoney(x.value)}</b>/mo<em>${esc((x.basis || '').toLowerCase())}</em>` : '<span class="faint">Not sized</span>'}</span>
         <span class="lo-fixcol">${leakFixChip(x)}</span>
       </button>
-      ${open ? `<div class="lo-detail"><p>${esc(x.detail)}</p><p class="faint small">${esc(x.area)}${x.partOf ? ` · part of: ${esc((all.find((y) => y.id === x.partOf) || {}).title || x.partOf)}` : ''}${x.fix ? ` · fix: ${esc(x.fix.title)} (${esc(x.fix.horizon || '')})` : ''}</p>${editor(x)}</div>` : ''}
+      ${open ? `<div class="lo-detail"><p>${esc(x.detail)}</p><p class="faint small">${esc(x.area)}${x.partOf ? ` · part of: ${esc((all.find((y) => y.id === x.partOf) || {}).title || x.partOf)}` : ''}${x.fix ? ` · fix: ${esc(x.fix.title)} (${esc(x.fix.horizon || '')})` : ''}${x.next ? ` · next: ${esc(x.next)}` : ''}</p>${editor(x)}</div>` : ''}
     </div>`;
   };
   let n = 0;
@@ -3562,7 +3582,7 @@ function viewLeaks(e) {
   </section>
   <div class="grid-2">
     ${card('Where the money is, by lens', hbars(byLens.filter((x) => x.value > 0), { fmt: (v) => fmtMoney(v) + '/mo', color: 'var(--s1)' }), { sub: 'Sized items only, all bases together. Use it to see where the weight sits, not as a single total.' })}
-    ${card('Gaps in the diagnosis', `<ul class="lk-list"><li><b>${noFix}</b> items have no fix linked yet. Each needs a recommendation, a question for a named role, or a data request.</li><li><b>${unsized}</b> items are not sized. Add a rand figure, even a rough one, so they can be ranked.</li>${reqs.length ? `<li><b>${reqs.length}</b> data requests are still open, e.g. ${reqs.slice(0, 3).map((r) => esc(trunc(r.item, 60))).join('; ')}.</li>` : ''}</ul>`, { sub: 'What the machine still needs to give a full picture.' })}
+    ${card('Gaps in the diagnosis', `<ul class="lk-list"><li><b>${noFix}</b> items have no action yet: no fix and no next step. Each needs a recommendation, a question for a named role, or a data request.</li><li><b>${unsized}</b> items are not sized. Add a rand figure, even a rough one, so they can be ranked.</li>${reqs.length ? `<li><b>${reqs.length}</b> data requests are still open, e.g. ${reqs.slice(0, 3).map((r) => esc(trunc(r.item, 60))).join('; ')}.</li>` : ''}</ul>`, { sub: 'What the machine still needs to give a full picture.' })}
   </div>`;
 }
 
@@ -3570,7 +3590,7 @@ function viewLeaks(e) {
 function leaksTopCard(e) {
   const items = rankItems(leakItems(e, { signals: false }), 'size').filter((x) => !x.nested).slice(0, 5);
   if (!items.length) return '';
-  return card('Top leaks &amp; opportunities', `<ol class="rank">${items.map((x) => `<li><div><strong>${LENS_ICON[x.kind] || ''} ${esc(x.title)}</strong><div class="muted small">${x.value ? `${fmtMoney(x.value)}/mo ${esc((x.basis || '').toLowerCase())}` : 'Not sized'} · ${x.fix ? 'fix: ' + esc(trunc(x.fix.title, 60)) : '<span class="lo-neg">no action yet</span>'}</div></div></li>`).join('')}</ol>`,
+  return card('Top leaks &amp; opportunities', `<ol class="rank">${items.map((x) => `<li><div><strong>${LENS_ICON[x.kind] || ''} ${esc(x.title)}</strong><div class="muted small">${x.value ? `${fmtMoney(x.value)}/mo ${esc((x.basis || '').toLowerCase())}` : 'Not sized'} · ${x.fix ? 'fix: ' + esc(trunc(x.fix.title, 60)) : x.next ? 'next: ' + esc(trunc(x.next, 60)) : '<span class="lo-neg">no action yet</span>'}</div></div></li>`).join('')}</ol>`,
     { actions: '<button class="btn sm" data-action="tab" data-id="leaks">All →</button>' });
 }
 
@@ -3824,13 +3844,13 @@ const FIELD_DEFS = {
   topClients: [['id', 'text'], ['name', 'text'], ['segment', ['Managed', 'Reseller / self-service', 'Partner / section row']], ['csm', 'text'], ['annualRevenue', 'num'], ['churnRisk', ['Low', 'Medium', 'High']], ['contractStatus', ['In contract', 'Renews within 90 days', 'Out of contract', 'Month to month', 'Unknown']], ['satisfaction', 'text'], ['touchpoint', ['Low', 'Low-Medium', 'Medium', 'Medium-High', 'High']], ['adoption', ['Low', 'Medium', 'High']], ['register', 'json'], ['csScores', 'json'], ['notes', 'text']],
   financePeriods: [['id', 'text'], ['label', 'text'], ['months', 'num'], ['revenue', 'num'], ['cogs', 'num'], ['payroll', 'num'], ['tools', 'num'], ['marketing', 'num'], ['premises', 'num'], ['other', 'num']],
   interviews: [['id', 'text'], ['personId', 'person'], ['date', 'date'], ['interviewer', 'text'], ['summary', 'long'], ['themes', 'text'], ['painPoints', 'long'], ['ideas', 'long'], ['quotes', 'long']],
-  findings: [['id', 'text'], ['title', 'text'], ['area', 'text'], ['severity', ['high', 'medium', 'low']], ['kind', ['leak', 'weakness', 'hole', 'opportunity', 'tool', 'context']], ['valueMonthly', 'num'], ['basis', ['Leaking', 'At risk', 'Spend to review', 'Upside']], ['fixId', 'text'], ['partOf', 'text'], ['lens', 'text'], ['evidence', 'long']],
+  findings: [['id', 'text'], ['title', 'text'], ['area', 'text'], ['severity', ['high', 'medium', 'low']], ['kind', ['leak', 'weakness', 'hole', 'opportunity', 'tool', 'context']], ['valueMonthly', 'num'], ['basis', ['Leaking', 'At risk', 'Spend to review', 'Upside']], ['fixId', 'text'], ['partOf', 'text'], ['nextStep', 'text'], ['lens', 'text'], ['evidence', 'long']],
   revenueMovements: [['id', 'text'], ['fy', 'text'], ['client', 'text'], ['kind', ['lost', 'downgrade', 'new', 'growth']], ['cause', 'text'], ['monthly', 'num'], ['from', 'text'], ['reason', 'text'], ['comment', 'text']],
   customQuestions: [['id', 'text'], ['personId', 'person'], ['section', 'text'], ['q', 'long'], ['note', 'text'], ['crit', CRITERIA.map((c) => c.id)], ['p', 'num']],
   competitors: [['id', 'text'], ['name', 'text'], ['type', ['Direct', 'Indirect', 'Substitute', 'Adjacent']], ['threat', ['High', 'Medium', 'Low']], ['website', 'text'], ['hq', 'text'], ['markets', 'text'], ['segments', 'text'], ['offering', 'long'], ['pricingModel', 'text'], ['pricePoint', 'num'], ['size', 'text'], ['ownership', 'text'], ['strengths', 'long'], ['weaknesses', 'long'], ['whereWeWin', 'long'], ['whereWeLose', 'long'], ['sources', 'long'], ['lastReviewed', 'date']],
   intel: [['id', 'text'], ['competitorId', 'comp'], ['topic', INTEL_TOPICS], ['note', 'long'], ['sourceType', SOURCE_TYPES], ['source', 'text'], ['date', 'date']],
   usps: [['id', 'text'], ['claim', 'text'], ['strength', ['Unique', 'Shared', 'Claimed only']], ['proof', 'long'], ['competitorsWithIt', 'text'], ['notes', 'text']],
-  opportunities: [['id', 'text'], ['title', 'text'], ['area', OPP_AREAS], ['description', 'long'], ['basedOn', 'text'], ['impact', ['High', 'Medium', 'Low']], ['effort', ['High', 'Medium', 'Low']], ['status', ['Idea', 'Proposed', 'Recommendation']], ['valueMonthly', 'num'], ['recommendationId', 'text']],
+  opportunities: [['id', 'text'], ['title', 'text'], ['area', OPP_AREAS], ['description', 'long'], ['basedOn', 'text'], ['impact', ['High', 'Medium', 'Low']], ['effort', ['High', 'Medium', 'Low']], ['status', ['Idea', 'Proposed', 'Recommendation']], ['valueMonthly', 'num'], ['recommendationId', 'text'], ['nextStep', 'text']],
   capabilities: [['id', 'text'], ['name', 'text'], ['importance', ['High', 'Medium', 'Low']], ['client', ['Strong', 'Partial', 'None']], ['notes', 'text'], ['scores', 'json']],
   recommendations: [['id', 'text'], ['title', 'text'], ['type', ['People', 'Process', 'Tool', 'Build', 'Structure', 'Commercial']], ['horizon', ['0-3 months', '3-6 months', '6-12 months', '12+ months']], ['description', 'long'], ['effort', 'num'], ['risk', 'num'], ['confidence', 'num'], ['oneOffCost', 'num'], ['otherAnnualSaving', 'num'], ['oneOffSaving', 'num'], ['revenueUplift', 'num'], ['status', REC_STAGES], ['ops', 'json']],
   scenarios: [['id', 'text'], ['name', 'text'], ['description', 'text'], ['recommendationIds', 'json']]
