@@ -63,6 +63,7 @@ function normalise(e) {
     fields only set in the Studio (severity, review, times, notes) are kept, and flags added in the Studio are kept too. */
 const STUDIO_OWNED = ['painSeverity']; // judgements made in the Studio win over a file's suggestion
 function mergeSteps(old, incoming) {
+  if (!incoming.length && old.length) return old; // an empty list in a file never wipes mapped steps
   const byOld = {}; old.forEach((s) => { if (s.id) byOld[s.id] = s; });
   return incoming.map((s) => {
     const o = s.id && byOld[s.id]; if (!o) return s;

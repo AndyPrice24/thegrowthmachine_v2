@@ -39,9 +39,16 @@ function breakPoints(steps, flags, topN) {
     if (sc > 0) { score[s.id] = sc; why[s.id] = [issues.length && `${issues.length} issue${issues.length > 1 ? 's' : ''}${sev}`, wk && `${wk} weak hand-off${wk > 1 ? 's' : ''}`, hot && 'time hotspot'].filter(Boolean).join(' · '); }
   });
   const order = Object.keys(score).sort((a, c) => score[c] - score[a] || pos[a] - pos[c]);
-  const ranks = {}; const label = {}; const picked = order.slice(0, n ? n : order.length);
+  // A break point must stand out: at least half the top score, never splitting a tie at the cut-off,
+  // and nothing is marked when every scored step scores the same.
+  const max = order.length ? score[order[0]] : 0; const cap = n ? n : order.length;
+  const groups = []; order.forEach((id) => { const g = groups[groups.length - 1]; if (g && g.s === score[id]) g.ids.push(id); else groups.push({ s: score[id], ids: [id] }); });
+  const picked = []; let flat = false; let cut = 0;
+  for (const g of groups) { if (g.s < max * 0.5) break; if (picked.length + g.ids.length > cap) { cut = g.ids.length; break; } picked.push(...g.ids); }
+  if ((groups.length === 1 && order.length >= 3) || (!picked.length && order.length)) { picked.length = 0; flat = true; }
+  const ranks = {}; const label = {};
   picked.forEach((id, i) => { const first = order.findIndex((x) => score[x] === score[id]); const tied = order.filter((x) => score[x] === score[id]).length > 1; ranks[id] = i + 1; label[id] = `#${first + 1}${tied ? '=' : ''}`; });
-  return { ranks, label, order, score, why };
+  return { ranks, label, order, score, why, flat, cut: flat ? 0 : cut };
 }
 const teamInfo = (id) => TEAMS.find((t) => t[0] === id) || ['', 'Unassigned', 'var(--line)'];
 
@@ -71,7 +78,8 @@ function flowFlags(proc, people, tools, departments, clientSafe = false) {
       }
     }
     if (s.painPoint) add({ type: 'issue', on: 'node', stepId: s.id, text: s.painPoint, by: proc.sources || 'Interviews' });
-    if (!clientSafe) (s.flags || []).forEach((f, k) => add({ type: FLAG_TYPES[f.type] ? f.type : 'issue', on: 'node', stepId: s.id, text: f.text, by: f.by || 'Team', date: f.date, idx: k }));
+    if (!clientSafe) (s.flags || []).forEach((f, k) => add({ type: FLAG_TYPES[f.type] ? f.type : 'issue', on: 'node', stepId: s.id, text: f.text, by: f.by || 'Team', date: f.date, idx: k, severity: f.severity }));
+    if (s._sub && s._sub.n) add({ type: 'issue', on: 'node', stepId: s.id, text: `${s._sub.n} issue${s._sub.n === 1 ? '' : 's'} inside the sub-process "${s._sub.name}"`, by: 'Sub-process', idx: 'sub', severity: s._sub.sev });
   });
   return list;
 }
@@ -135,13 +143,13 @@ function flowSchematic(proc, people, tools, departments, { cols = 3, selected = 
     const flagged = exec && flags.some((f) => f.stepId === s.id && f.type !== 'unverified'); const rank = rk[s.id];
     const rv = (s.review && s.review.status) || 'assumed';
     const hot = exec && isHotspot(s);
-    svg += `<g class="fnode ${rank ? 'bp-top' : flagged ? 'bp-lite' : ''} ${s._focus ? 'focus' : ''} ${s.collapsed ? 'collapsed' : ''} ${s.automated ? 'auto' : 'manual'} ${exec && s.kind === 'decision' ? 'decision' : ''} rvs-${rv} ${st} ${selected === s.id ? 'sel' : near && near.has(i) ? 'nbr' : near ? 'dim' : ''} ${interactive ? 'clk' : ''}" transform="translate(${x},${y})" ${interactive ? `data-action="flowStep" data-id="${esc(s.id)}"` : ''} data-tip="${esc([s.name, actor, t ? 'Tool: ' + t.name : 'No system', s.automated ? 'Automated' : 'Manual', stepTimeText(s, true), REVIEW_STATUS[rv][0] + (s.review && s.review.by ? ' by ' + s.review.by : '')].filter(Boolean).join(' · '))}">`;
+    svg += `<g class="fnode ${rank ? 'bp-top' : flagged ? 'bp-lite' : ''} ${s._focus ? 'focus' : ''} ${s._dim ? 'hl-dim' : ''} ${s.collapsed ? 'collapsed' : ''} ${s.automated ? 'auto' : 'manual'} ${exec && s.kind === 'decision' ? 'decision' : ''} rvs-${rv} ${st} ${selected === s.id ? 'sel' : near && near.has(i) ? 'nbr' : near ? 'dim' : ''} ${interactive ? 'clk' : ''}" transform="translate(${x},${y})" ${interactive ? `data-action="flowStep" data-id="${esc(s.id)}"` : ''} data-tip="${esc([s.name, actor, t ? 'Tool: ' + t.name : 'No system', s.automated ? 'Automated' : 'Manual', stepTimeText(s, true), REVIEW_STATUS[rv][0] + (s.review && s.review.by ? ' by ' + s.review.by : '')].filter(Boolean).join(' · '))}">`;
     svg += `<rect class="nb" width="${NW}" height="${NH}" rx="12"/>`;
     if (s._procStart) svg += `<text class="pstart" x="2" y="${rank ? -27 : -9}">▸ triggers: ${esc(trunc(s._procStart, 34))}</text>`;
     if (rank) svg += `<g class="bp-pill"><rect x="${NW / 2 - 56}" y="-12" width="112" height="21" rx="10.5"/><text x="${NW / 2}" y="3" text-anchor="middle">${bpx.label[s.id] || '#' + rank} BREAK POINT</text></g>`;
     svg += `<rect class="band" width="${NW}" height="28" rx="12" style="fill:${tm[2]}"/><rect class="band" y="16" width="${NW}" height="12" style="fill:${tm[2]}"/>`;
     svg += `<circle class="num" cx="18" cy="14" r="10"/><text class="numt" x="18" y="18" text-anchor="middle" ${String(s.displayNum || '').length > 2 ? 'style="font-size:8px"' : ''}>${esc(s.displayNum || i + 1)}</text>`;
-    svg += `<text class="team" x="36" y="18.5">${exec && s.kind === 'decision' ? '◇ DECISION · ' : ''}${esc(s.collapsed ? 'OTHER TEAMS' : tm[1].toUpperCase())}</text>`;
+    svg += `<text class="team" x="36" y="18.5">${exec && s.kind === 'decision' ? '◇ DECISION · ' : ''}${esc(s.collapsed ? 'OTHER TEAMS' : tm[1].toUpperCase())}${s._sub ? ' · ⊞ SUB-PROCESS' : ''}</text>`;
     svg += lines.map((ln, k) => `<text class="nm" x="14" y="${50 + k * 16}">${esc(ln)}</text>`).join('');
     if (actor) svg += `<text class="act" x="14" y="${NH - 48}">${esc(trunc(actor, 40))}</text>`;
     const extra = !exec ? '' : s.kind === 'decision' && s.decisionNo ? `If no: ${s.decisionNo}` : s.involves ? `With: ${s.involves}` : '';
@@ -275,7 +283,8 @@ function stepFields(s, st, attr) {
       <label class="fld"><span>How serious?</span>${sel([['high', 'High: costs money, clients or a lot of time'], ['medium', 'Medium (default)'], ['low', 'Low: an annoyance']], s.painSeverity || 'medium', `${attr}="painSeverity"`, false)}</label></div>
     <label class="fld"><span>Who else gets involved (management approval, escalation, other team)?</span><input ${attr}="involves" value="${esc(s.involves || '')}" placeholder="e.g. CRO approves Tier 1"></label>
     <div class="rv-grid"><label class="fld"><span>Decision point?</span>${sel([['', 'No'], ['decision', 'Yes, a decision']], s.kind || '', `${attr}="kind"`, false)}</label>
-      ${s.kind === 'decision' ? `<label class="fld"><span>If no, what happens?</span><input ${attr}="decisionNo" value="${esc(s.decisionNo || '')}" placeholder="e.g. back to Sales to re-scope"></label>` : '<span></span>'}</div>`;
+      ${s.kind === 'decision' ? `<label class="fld"><span>If no, what happens?</span><input ${attr}="decisionNo" value="${esc(s.decisionNo || '')}" placeholder="e.g. back to Sales to re-scope"></label>` : '<span></span>'}</div>
+    <label class="fld"><span>Opens into a sub-process (more detail mapped separately)</span>${sel([['', 'None'], ...(st.processes || []).filter((p) => !p._removed && !(p.steps || []).some((x) => x.id === s.id)).map((p) => [p.id, p.name])], s.subProcessId || '', `${attr}="subProcessId"`, false)}</label>`;
 }
 
 /* ---------- Sense-check: walk an assumed flow live with a decision maker and record what they confirm or correct ---------- */

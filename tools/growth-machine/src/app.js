@@ -138,7 +138,7 @@ const FIELD_DEFS = {
   departments: [['id', 'text'], ['name', 'text'], ['type', DEPT_TYPES.map((d) => d[0])], ['headId', 'person'], ['notes', 'text']],
   people: [['id', 'text'], ['name', 'text'], ['title', 'text'], ['departmentId', 'dept'], ['managerId', 'person'], ['employmentType', ['Full-time', 'Part-time', 'Contractor', 'Outsourced', 'Vacant']], ['fte', 'num'], ['annualCost', 'num'], ['location', 'text'], ['startDate', 'date'], ['notes', 'text']],
   tools: [['id', 'text'], ['name', 'text'], ['category', 'text'], ['vendor', 'text'], ['monthlyCost', 'num'], ['seats', 'num'], ['activeUsers', 'num'], ['departmentIds', 'text'], ['ownerId', 'person'], ['purpose', 'text'], ['notes', 'text']],
-  processes: [['id', 'text'], ['name', 'text'], ['group', 'text'], ['leadsTo', 'text'], ['departmentId', 'dept'], ['ownerId', 'person'], ['confidence', Object.keys(CONFIDENCE)], ['sources', 'text'], ['summary', 'long'], ['talkingPoints', 'long'], ['findingIds', 'text'], ['frequency', 'text'], ['runsPerMonth', 'num'], ['hoursPerMonth', 'num'], ['inputs', 'text'], ['outputs', 'text'], ['steps', 'json']],
+  processes: [['id', 'text'], ['name', 'text'], ['group', 'text'], ['leadsTo', 'text'], ['departmentId', 'dept'], ['ownerId', 'person'], ['confidence', Object.keys(CONFIDENCE)], ['sources', 'text'], ['summary', 'long'], ['talkingPoints', 'long'], ['findingIds', 'text'], ['frequency', 'text'], ['runsPerMonth', 'num'], ['hoursPerMonth', 'num'], ['inputs', 'text'], ['outputs', 'text'], ['team', 'text'], ['askId', 'text'], ['steps', 'json']],
   segments: [['id', 'text'], ['name', 'text'], ['customers', 'num'], ['annualRevenue', 'num'], ['churnPct', 'num'], ['acquisitionChannel', 'text'], ['notes', 'text']],
   markets: [['id', 'text'], ['name', 'text'], ['region', 'text'], ['revenueShare', 'num'], ['notes', 'text']],
   topClients: [['id', 'text'], ['name', 'text'], ['segment', ['Managed', 'Reseller / self-service', 'Partner / section row']], ['csm', 'text'], ['annualRevenue', 'num'], ['churnRisk', ['Low', 'Medium', 'High']], ['contractStatus', ['In contract', 'Renews within 90 days', 'Out of contract', 'Month to month', 'Unknown']], ['satisfaction', 'text'], ['touchpoint', ['Low', 'Low-Medium', 'Medium', 'Medium-High', 'High']], ['adoption', ['Low', 'Medium', 'High']], ['register', 'json'], ['csScores', 'json'], ['notes', 'text']],
@@ -291,6 +291,16 @@ const actions = {
   loSet: (el) => { ui.lo = Object.assign({}, ui.lo, { [el.dataset.k]: el.dataset.id, open: '' }); saveUI(); render(); },
   loTick: (el) => { ui.lo = Object.assign({}, ui.lo, { [el.dataset.k]: el.checked }); saveUI(); render(); },
   loOpen: (el) => { ui.lo = Object.assign({}, ui.lo, { open: ui.lo && ui.lo.open === el.dataset.id ? '' : el.dataset.id }); render(); },
+  pvFocus: (el) => { ui.pv = Object.assign({}, ui.pv, { mode: 'proc', focus: el.dataset.id || '', hl: '', journey: false }); ui.stepId = ''; ui.editStep = ''; ui.flagFocus = null; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; ui.reviewSetup = ''; saveUI(); render(); window.scrollTo(0, 0); },
+  pvJourney: (el) => { ui.pv = Object.assign({}, ui.pv, { journey: !!el.checked }); ui.stepId = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; saveUI(); render(); },
+  pvHl: (el) => { const t = el.dataset.id || ''; ui.pv = Object.assign({}, ui.pv, { hl: (ui.pv || {}).hl === t ? '' : t }); saveUI(); render(); },
+  procMapStart: () => { const e = E(); const p = e.processes.find((x) => x.id === (ui.pv || {}).focus); if (!p) return;
+    const s = { id: uid('s'), name: 'First step', team: p.team || '', actorLabel: '', toolId: '', automated: false, durationMins: '', elapsedDays: '', painPoint: '', flags: [] };
+    p.steps = [s]; touch(p); save(); ui.stepId = s.id; ui.editStep = s.id; render(); toast('Rename the first step, then add the rest with + Step after.'); },
+  subNew: () => { const e = E(); const proc = procOfStep(ui.stepId); const step = proc && (proc.steps || []).find((x) => x.id === ui.stepId); if (!step) return;
+    const n = prompt('Name of the sub-process (more detail for this step)', step.name); if (!n || !n.trim()) return;
+    const sp = { id: uid('pr'), name: n.trim(), group: proc.group || '', team: step.team || '', leadsTo: '', inputs: '', outputs: '', confidence: 'heard', summary: `More detail for step "${step.name}" in ${proc.name}.`, steps: [] };
+    e.processes.push(sp); step.subProcessId = sp.id; touch(sp); touch(proc); save(); actions.pvFocus({ dataset: { id: sp.id } }); },
   pvSet: (el) => { ui.pv = Object.assign({}, ui.pv, { [el.dataset.k]: el.dataset.id }); ui.stepId = ''; ui.flowZoom = 0; ui.flowColsAuto = 0; ui.flowWhole = false; ui.reviewSetup = ''; saveUI(); render(); },
   pvTick: (el) => {
     const P = pvState(stateFor(E(), ui.scenario)); const k = el.dataset.kind, id = el.dataset.id; const V = Object.assign({}, ui.pv);
@@ -310,7 +320,7 @@ const actions = {
     const P = pvState(stateFor(E(), ui.scenario)); const team = P.mode === 'dept' ? P.dept : '';
     const p = { id: uid('pr'), name: n.trim(), group: '', leadsTo: '', inputs: '', outputs: '', confidence: 'heard', steps: [{ id: uid('s'), name: 'First step', team, actorLabel: '', toolId: '', automated: false, durationMins: '', elapsedDays: '', painPoint: '', flags: [] }] };
     E().processes.push(p); touch(p); save();
-    ui.pv = Object.assign({}, ui.pv, { mode: 'proc', procs: [p.id], depts: [] }); ui.stepId = p.steps[0].id; ui.editStep = p.steps[0].id; saveUI(); render(); toast('Process created. Rename the first step and add the rest with + Step after.');
+    ui.pv = Object.assign({}, ui.pv, { mode: 'proc', procs: [p.id], focus: p.id, hl: '', journey: false, depts: [] }); ui.stepId = p.steps[0].id; ui.editStep = p.steps[0].id; saveUI(); render(); toast('Process created. Rename the first step and add the rest with + Step after.');
   },
   procDelete: () => {
     const e = E(); const i = e.processes.findIndex((x) => x.id === ui.processId); if (i < 0 || !confirm(`Delete the process "${e.processes[i].name}" and all its steps?`)) return;
