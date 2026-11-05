@@ -13,7 +13,9 @@
   --first: 430px;
   --step: 190px;
   --card: 560px;
-  /* How fast the strip turns: keep in step with PACE in Companies.jsx. */
+  /* Speed of the glide and of cards opening and closing: 1 is the original
+     pace, 1.4 is 40% faster. (How long each card stays open is HOLD in
+     Companies.jsx.) */
   --pace: 1.4;
   position: relative;
   isolation: isolate;

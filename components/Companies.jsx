@@ -24,16 +24,7 @@ import styles from './Companies.module.css';
  * Companies live in companies.js.
  */
 
-// How fast the strip turns: 1 is the original pace; 1.4 is 40% faster.
-// Keep in step with --pace in Companies.module.css.
-const PACE = 1.4;
-
-// Seconds each company stays open: scaled to what's on its card (at the
-// original pace, a little under four words a second), divided by PACE.
-const hold = (c) => {
-  const words = `${c.quote?.text || ''} ${c.statement || ''}`.split(/\s+/).filter(Boolean).length;
-  return Math.max(6, 4 + words * 0.22) / PACE;
-};
+const HOLD = 8; // seconds each company stays open, the same for every card
 
 export default function Companies({ companies = COMPANIES }) {
   const n = companies.length;
@@ -130,7 +121,7 @@ export default function Companies({ companies = COMPANIES }) {
 
       <div className={styles.ctrl} aria-hidden="true">
         <span className={styles.prog}>
-          <i key={active} className={inView ? '' : styles.held} style={{ animationDuration: `${hold(companies[active])}s` }} onAnimationEnd={next} />
+          <i key={active} className={inView ? '' : styles.held} style={{ animationDuration: `${HOLD}s` }} onAnimationEnd={next} />
         </span>
       </div>
 
