@@ -85,6 +85,8 @@ applies to, and when and how we received it. Register each source once in the St
   is independent. Confidential remarks about named staff are never recorded as answers.
 - **Founder priorities lead.** When a founder names an objective or a blind spot, pin it (`pinned`) so it sits above the
   money ranking on Home and Plan, add dated next steps, and report progress on it in every status update.
+- **Update the process maps too.** Every interview or meeting that describes how work runs updates the matching maps in
+  the same update: steps, pain points, flags, sources by role. Differing accounts stay side by side as flags.
 - **Hear it first-hand, then compare.** Narrow a question only when the person gave the partial answer to us themselves.
   Before a first interview, or when what we know is second-hand or relayed, keep their questions neutral, with no premises
   about them or their work, and keep what we know in the notes. Afterwards, compare their account with earlier comms by and

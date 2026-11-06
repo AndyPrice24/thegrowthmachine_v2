@@ -43,6 +43,8 @@ The full method is in the `growth-machine` skill (`.claude/skills/growth-machine
   question stays open, narrowed to what is still missing (original kept in `qWas`). Answers to someone else's questions are
   recorded as "(per the <role>)" but that question is not reworded, so it doesn't leak the source or lead the answer.
   Never record confidential remarks about named staff as answers.
+- The same update also brings the process maps up to date with what was described: corrected or new steps, pain points,
+  flags and sources by role. Where accounts differ, keep both as flags rather than overwriting one with the other.
 - Questions are only narrowed when the person told us the partial answer themselves, in a conversation with us. For a first
   interview, or where what we know came second-hand or from a relayed message, keep their questions neutral, as if we
   know nothing, so we hear it from them; afterwards compare with earlier comms by and about them and log inconsistencies.
