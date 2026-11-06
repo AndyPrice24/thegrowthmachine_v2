@@ -208,3 +208,6 @@ details dl{margin:6px 0}details dt{font-weight:600;font-size:12.5px;margin-top:8
 .pv-more{margin-top:6px}.pv-more summary{cursor:pointer}.pv-more .btn{margin:4px 4px 0 0}
 details.card>summary{cursor:pointer}
 @media (max-width:820px){.talk{grid-template-columns:1fr}.talk-list{position:static;max-height:none}}
+.tq-part{opacity:1}
+.tq-p{margin-top:4px;padding:6px 10px;border-left:3px solid var(--warn, #d9a21b);background:var(--surface-2);border-radius:4px}
+.qa .tq-a,.qa .tq-p{margin:4px 0}

@@ -78,4 +78,9 @@ applies to, and when and how we received it. Register each source once in the St
 - Studio updates are stamped JSON files (`_meta.generatedAt`). The user backs up, replaces the Studio if needed, merges the file, then backs up again.
 - **Close the loop on requests.** Whenever new data arrives, the same update file marks the matching data requests received
   (date and what came in), notes what is still missing on partly answered ones, and marks duplicates 'Not needed'.
+- **Offset answers against open questions.** After every interview, meeting, voice note or written reply, check every open
+  question (for that person and for anyone else) and record what was answered against the question id, with source and date.
+  Use "Partly: ..." when only part is known, and narrow the person's own question to what is still missing (keep the
+  original in `qWas`). Don't reword another person's question with someone else's answer: keep it neutral so their answer
+  is independent. Confidential remarks about named staff are never recorded as answers.
 - Stay in scope: do what was asked and don't touch live systems unless asked. Offer bigger ideas instead of building them unasked.

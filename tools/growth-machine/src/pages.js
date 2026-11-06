@@ -115,6 +115,14 @@ function peopleCrossCards(e) {
 }
 
 /* ---------- Conversations ---------- */
+/** An answer that starts with "Partly" records what is known so far; the question stays open until it is fully answered. */
+const isPartly = (v) => /^\s*partly\b/i.test(String(v || ''));
+/** Every recorded answer, by question id, from every interview (an answer can come from someone other than the person the question was set for). */
+function answerIndex(e, skipId) {
+  const ix = {};
+  e.interviews.forEach((iv) => { if (skipId && iv.id === skipId) return; Object.entries(iv.answers || {}).forEach(([k, v]) => { if (String(v || '').trim()) (ix[k] = ix[k] || []).push({ v: String(v), date: iv.date, pid: iv.personId, partly: isPartly(v) }); }); });
+  return ix;
+}
 function viewTalk(e) {
   if (ui.capture || ui.session) return viewDiscovery(e);
   const s = subOf('talk');
@@ -133,19 +141,20 @@ function ownerMatches(owner, p) {
 function talkPeople(e) {
   const pById = byId(e.people); const qs = e.customQuestions || [];
   const nm = (p) => (ui.anon ? p.title || 'Role' : p.name);
-  const answersFor = (pid) => { const a = {}; e.interviews.filter((i) => i.personId === pid).forEach((iv) => Object.entries(iv.answers || {}).forEach(([k, v]) => { if (String(v || '').trim()) a[k] = { v, date: iv.date }; })); return a; };
+  const AX = answerIndex(e);
+  const ansOf = (q) => { let list = AX[q.id] || []; if (ui.share) list = list.filter((a) => a.pid === q.personId); return list.length ? { list, done: list.some((a) => !a.partly) } : null; };
+  const isDone = (q) => !!(ansOf(q) || {}).done;
   const ids = [...new Set([...qs.map((q) => q.personId), ...e.interviews.map((i) => i.personId)])].filter((id) => pById[id]);
-  const stats = ids.map((id) => { const mine = qs.filter((q) => q.personId === id); const ans = answersFor(id); const open = mine.filter((q) => !ans[q.id]);
-    return { p: pById[id], n: mine.length, open: open.length, star: open.filter((q) => q.p).length, ivs: e.interviews.filter((i) => i.personId === id).length }; })
+  const stats = ids.map((id) => { const mine = qs.filter((q) => q.personId === id); const open = mine.filter((q) => !isDone(q));
+    return { p: pById[id], n: mine.length, open: open.length, partly: open.filter((q) => ansOf(q)).length, star: open.filter((q) => q.p).length, ivs: e.interviews.filter((i) => i.personId === id).length }; })
     .sort((a, b) => b.star - a.star || b.open - a.open || (a.p.name || '').localeCompare(b.p.name || ''));
   if (!stats.length) return `<div class="page-h"><div><span class="eyebrow">Conversations</span><h1>Who we ask what next</h1></div></div>${empty('No questions or interviews yet. Prepare questions with Claude (customQuestions) or capture an interview.')}`;
   const sel = stats.some((x) => x.p.id === ui.talkP) ? ui.talkP : stats[0].p.id; const p = pById[sel];
-  const ans = answersFor(sel);
   const mine = qs.filter((q) => q.personId === sel).map((q, i) => [q, i]).sort((a, b) => ((a[0].ord ?? 1e6 + a[1]) - (b[0].ord ?? 1e6 + b[1]))).map((x) => x[0]);
-  const shown = ui.talkOpen ? mine.filter((q) => !ans[q.id]) : mine;
+  const shown = ui.talkOpen ? mine.filter((q) => !isDone(q)) : mine;
   let sec = '';
-  const qList = shown.map((q) => { const h = q.section && q.section !== sec ? `<h5>${esc((sec = q.section))}</h5>` : ''; const a = ans[q.id];
-    return `${h}<div class="tq ${a ? 'tq-done' : ''}"><div>${q.p ? '<b class="star">★</b> ' : ''}${esc(q.q)} <span class="chip">${esc((CRITERIA.find((c) => c.id === q.crit) || {}).label || q.crit || "")}</span></div>${q.note ? `<div class="faint small">${esc(q.note)}</div>` : ''}${a ? `<div class="tq-a small"><b>Answered${a.date ? ' ' + esc(fmtD(a.date)) : ''}:</b> ${esc(trunc(a.v, 400))}</div>` : ''}</div>`; }).join('');
+  const qList = shown.map((q) => { const h = q.section && q.section !== sec ? `<h5>${esc((sec = q.section))}</h5>` : ''; const a = ansOf(q);
+    return `${h}<div class="tq ${a ? (a.done ? 'tq-done' : 'tq-part') : ''}"><div>${q.p ? '<b class="star">★</b> ' : ''}${esc(q.q)} <span class="chip">${esc((CRITERIA.find((c) => c.id === q.crit) || {}).label || q.crit || "")}</span>${q.qWas ? ` <span class="faint small" title="Originally: ${esc(q.qWas)}">· narrowed to what's still missing</span>` : ''}</div>${q.note ? `<div class="faint small">${esc(q.note)}</div>` : ''}${a ? a.list.map((x) => `<div class="${x.partly ? 'tq-p' : 'tq-a'} small"><b>${x.partly ? 'Partly answered' : 'Answered'}${x.pid !== q.personId && pById[x.pid] ? ' by ' + esc(ui.anon ? pById[x.pid].title || 'another person' : pById[x.pid].name + (pById[x.pid].title ? ' (' + pById[x.pid].title + ')' : '')) : ''}${x.date ? ' · ' + esc(fmtD(x.date)) : ''}:</b> ${esc(trunc(x.v.replace(/^\s*partly\b[:\s-]*/i, ''), 600))}</div>`).join('') : ''}</div>`; }).join('');
   const reqs = ((e.engagement || {}).requests || []).filter((r) => !r.receivedDate && ownerMatches(r.owner, p));
   const ivs = e.interviews.filter((i) => i.personId === sel).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   const st = stats.find((x) => x.p.id === sel);
@@ -156,7 +165,7 @@ function talkPeople(e) {
       ${card(`${esc(nm(p))}${!ui.anon && p.title ? ` <span class="faint small">· ${esc(p.title)}</span>` : ''}`, `
         <div class="btn-row"><button class="btn" data-action="startCapture" data-id="${esc(sel)}">▶ Start interview</button>${ivs.map((iv) => `<button class="btn sm ghost" data-action="editInterview" data-id="${esc(iv.id)}">Open interview ${esc(fmtD(iv.date) || '')}</button>`).join('')}
           <label class="small tog"><input type="checkbox" data-ui="talkOpen" ${ui.talkOpen ? 'checked' : ''}> Still to ask only</label></div>
-        <p class="small muted">${st.n} questions · ${st.n - st.open} answered · ${st.open} to ask${st.star ? ` (${st.star} starred)` : ''}</p>
+        <p class="small muted">${st.n} questions · ${st.n - st.open} answered · ${st.open} to ask${st.star ? ` (${st.star} starred)` : ''}${st.partly ? ` · ${st.partly} of those partly answered` : ''}</p>
         ${reqs.length ? `<div class="talk-reqs"><b class="small">Waiting on them (${reqs.length})</b><ul>${reqs.map((r) => `<li class="small">${esc(r.item)}${r.dueDate ? ` <span class="faint">· due ${esc(fmtD(r.dueDate))}</span>` : ''}</li>`).join('')}</ul></div>` : ''}
         <div class="talk-qs">${qList || empty(ui.talkOpen ? 'Everything prepared for them has been answered.' : 'No prepared questions for this person.')}</div>`)}
     </div>

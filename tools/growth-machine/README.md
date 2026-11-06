@@ -27,6 +27,13 @@ Each page answers one question. Older page names still work as links and redirec
 | **Progress & reports** | Are we on track, and who owes whom? | Progress & time; Reports (status report, founder report, feedback cheatsheet). |
 | **Sources & data** | Where did every number come from? | Source register, back up / restore / merge, paste from Claude, find and replace, edit data. |
 
+**Answers and open questions.** An answer counts wherever it was given (an interview's `answers`, keyed by question id),
+so one person can answer another's question; By person shows who answered and when. An answer that starts with
+"Partly" records what is known and leaves the question open; the question is then narrowed to what is still missing
+(`qWas` keeps the original). The interview form shows the person's earlier answers under each question. Answers given
+by someone else are hidden in screen-share mode. Founder questionnaire answers that start with "Partly" stay outstanding.
+Merging an update adds answers to an interview; it never wipes answers captured in the Studio.
+
 **View as** (current state or a scenario) appears only on Plan, Processes and Evidence. Empty sections fold away (no delays
 logged, no staff survey responses).
 

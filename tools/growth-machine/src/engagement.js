@@ -253,7 +253,7 @@ const importIntakeCSV = (e, text) => importFormCSV(e, text, 'intake');
 
 /** Founder questionnaire completeness: which questions nobody has answered yet. */
 function intakeOutstanding(e) {
-  const answered = new Set(); e.intake.forEach((r) => Object.entries(r.answers || {}).forEach(([q, v]) => { if (String(v || '').trim()) answered.add(q); }));
+  const answered = new Set(); e.intake.forEach((r) => Object.entries(r.answers || {}).forEach(([q, v]) => { if (String(v || '').trim() && !/^\s*partly\b/i.test(String(v))) answered.add(q); }));
   const all = INTAKE_SECTIONS.filter((s) => s.id !== 'about').flatMap((s) => s.questions.map((q) => Object.assign({ section: s.title }, q)));
   const open = all.filter((q) => !answered.has(q.id));
   return { total: all.length, open, openPriority: open.filter((q) => q.p), answered: all.length - open.length };

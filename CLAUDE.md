@@ -36,6 +36,11 @@ The full method is in the `growth-machine` skill (`.claude/skills/growth-machine
 - Report interviews by role. Never attribute confidential remarks to the person who made them.
 - Studio updates are stamped JSON files (`_meta.generatedAt`) that the user merges in the Studio, then backs up.
 - When new data arrives, the same update closes the matching data requests (received date, what came in, what is still missing).
+- Every interview, meeting, voice note or written answer is offset against ALL open questions in the same update: answers go
+  on the speaker's interview, keyed by question id, with the source and date. "Partly: ..." records what is known and the
+  question stays open, narrowed to what is still missing (original kept in `qWas`). Answers to someone else's questions are
+  recorded as "(per the <role>)" but that question is not reworded, so it doesn't leak the source or lead the answer.
+  Never record confidential remarks about named staff as answers.
 
 ## Code
 - Studio source: `tools/growth-machine/src/`. Build: `node tools/growth-machine/build.mjs` → `dist/growth-machine-studio.html`.
