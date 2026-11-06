@@ -65,14 +65,14 @@ function viewPlan(e) {
   const stageOf = (r) => (REC_STAGES.includes(r.rec.status) ? r.rec.status : 'Identified');
   const groups = [['Identified', 'Identified: our suggestions, for the client to decide'], ['Approved', 'Approved by the client'], ['In progress', 'In progress'], ['Realised', 'Realised: saving or gain confirmed']];
   const head = '<thead><tr><th>#</th><th>Recommendation</th><th>Score</th><th class="r">Value / yr</th><th class="r">Hours freed / mo</th><th class="r">One-off</th><th class="r">Payback</th><th>Stage</th></tr></thead>';
-  const row = (r, i) => `<tr class="${r.rec.status === 'Rejected' ? 'row-removed' : ''}"><td>${i + 1}</td><td><strong>${esc(r.rec.title)}</strong> <span class="chip">${esc(r.rec.type || '—')}</span> <span class="chip">${esc(r.rec.horizon || '—')}</span>
+  const row = (r, i) => `<tr class="${r.rec.status === 'Rejected' ? 'row-removed' : ''}"><td>${i + 1}</td><td>${r.rec.pinned ? '<span class="chip pin-chip">★ Founder priority</span> ' : ''}<strong>${esc(r.rec.title)}</strong> <span class="chip">${esc(r.rec.type || '—')}</span> <span class="chip">${esc(r.rec.horizon || '—')}</span>
       <div class="muted small">${esc(trunc(r.rec.description || '', 260))}</div>
       <div class="small plan-stick">${r.rec.stick ? `<b>How it sticks:</b> ${esc(r.rec.stick)}` : '<span class="chip lo-nofix">How it sticks: not set</span> <span class="faint">system, ease, visibility, incentive, owner</span>'}${r.rec.owner ? ` · <b>Owner:</b> ${esc(r.rec.owner)}` : ''}</div></td>
     <td><div class="score-bar"><span style="width:${r.score}%"></span></div><span class="small">${r.score}</span></td>
     <td class="r">${fmtMoney(r.cash + r.revenue)}</td><td class="r">${Math.round(r.hoursSaved)}</td><td class="r">${fmtMoney(r.oneOff)}</td><td class="r">${r.payback == null ? '—' : r.payback.toFixed(1) + ' mo'}</td>
     <td><select data-cell data-coll="recommendations" data-id="${r.rec.id}" data-field="status">${REC_STAGES.map((s) => `<option ${r.rec.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select></td></tr>`;
   const block = ([stage, title]) => {
-    const list = rows.filter((r) => stageOf(r) === stage); if (!list.length) return '';
+    const list = rows.filter((r) => stageOf(r) === stage).sort((a, b) => (b.rec.pinned ? 1 : 0) - (a.rec.pinned ? 1 : 0)); if (!list.length) return '';
     const key = 'plan_' + stage;
     return card(`${title} (${list.length})`, `<table class="tbl recs">${head}<tbody>${topN(key, list).map(row).join('')}</tbody></table>${showAllBtn(key, list.length)}`, { cls: 'scroll-x' });
   };

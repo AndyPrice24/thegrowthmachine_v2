@@ -30,7 +30,7 @@ Each page answers one question. Older page names still work as links and redirec
 **Answers and open questions.** An answer counts wherever it was given (an interview's `answers`, keyed by question id),
 so one person can answer another's question; By person shows who answered and when. An answer that starts with
 "Partly" records what is known and leaves the question open; the question is then narrowed to what is still missing
-(`qWas` keeps the original). The interview form shows the person's earlier answers under each question. Answers given
+(`qWas` keeps the original). The interview form keeps the person's earlier answers folded under each question (open to see), so they don't lead the conversation. Answers given
 by someone else are hidden in screen-share mode. Founder questionnaire answers that start with "Partly" stay outstanding.
 Merging an update adds answers to an interview; it never wipes answers captured in the Studio.
 

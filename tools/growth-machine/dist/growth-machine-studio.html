@@ -676,6 +676,8 @@ details.card>summary{cursor:pointer}
 .tq-part{opacity:1}
 .tq-p{margin-top:4px;padding:6px 10px;border-left:3px solid var(--warn, #d9a21b);background:var(--surface-2);border-radius:4px}
 .qa .tq-a,.qa .tq-p{margin:4px 0}
+.prior{margin:4px 0;color:var(--muted)}.prior summary{cursor:pointer}
+.pin-chip{background:var(--red);color:#fff;border-color:var(--red)}
 </style>
 </head>
 <body>
@@ -688,7 +690,7 @@ details.card>summary{cursor:pointer}
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="tip" hidden></div>
 <script>
-const STUDIO_BUILD = '2026-11-06 06:33 UTC';
+const STUDIO_BUILD = '2026-11-06 07:02 UTC';
 /* ---- model.js ---- */
 /* ============================================================
    The Growth Machine — data model, scenario engine, scoring, insights
@@ -3373,7 +3375,7 @@ function viewCapture(e) {
     </aside>
     <div class="card qcol">
       ${(() => { const AX = answerIndex(e, d.editingId); const cq = (e.customQuestions || []).filter((q) => q.personId && q.personId === d.personId).map((q, i) => [q, i]).sort((a, b) => ((a[0].ord ?? 1e6 + a[1]) - (b[0].ord ?? 1e6 + b[1]))).map((x) => x[0]); if (!cq.length) return ''; let sec = '';
-        return `<div class="custom-qs"><h4>Questions for this interview <span class="faint small">(★ = priority; prepared from what we know so far)</span></h4>${cq.map((q) => { const head = q.section && q.section !== sec ? `<h5>${esc((sec = q.section))}</h5>` : ''; return head + `<div class="qa ${String(d.answers[q.id] || '').trim() ? 'qa-done' : ''}"><label><span>${q.p ? '<b class="star">★</b> ' : ''}${esc(q.q)}</span><span class="chip">${esc(critLabel(q.crit))}</span></label>${q.note ? `<div class="faint small">${esc(q.note)}</div>` : ''}${(AX[q.id] || []).filter((x) => x.pid === d.personId).map((x) => `<div class="${x.partly ? 'tq-p' : 'tq-a'} small"><b>${x.partly ? 'Partly answered' : 'Already answered'}${x.date ? ' ' + esc(fmtD(x.date)) : ''}:</b> ${esc(trunc(x.v.replace(/^\s*partly\b[:\s-]*/i, ''), 400))}</div>`).join('')}<textarea data-draft="answers.${q.id}" rows="2">${esc(d.answers[q.id] || '')}</textarea></div>`; }).join('')}</div>`; })()}
+        return `<div class="custom-qs"><h4>Questions for this interview <span class="faint small">(★ = priority; prepared from what we know so far)</span></h4>${cq.map((q) => { const head = q.section && q.section !== sec ? `<h5>${esc((sec = q.section))}</h5>` : ''; return head + `<div class="qa ${String(d.answers[q.id] || '').trim() ? 'qa-done' : ''}"><label><span>${q.p ? '<b class="star">★</b> ' : ''}${esc(q.q)}</span><span class="chip">${esc(critLabel(q.crit))}</span></label>${q.note ? `<div class="faint small">${esc(q.note)}</div>` : ''}${(() => { const pr = (AX[q.id] || []).filter((x) => x.pid === d.personId); return pr.length ? `<details class="prior small"><summary>${pr.some((x) => !x.partly) ? 'Answered before' : 'Partly answered before'} (${esc(pr.map((x) => fmtD(x.date)).join(', '))}): open to see</summary>${pr.map((x) => `<div class="${x.partly ? 'tq-p' : 'tq-a'}">${esc(trunc(x.v.replace(/^\s*partly\b[:\s-]*/i, ''), 400))}</div>`).join('')}</details>` : ''; })()}<textarea data-draft="answers.${q.id}" rows="2">${esc(d.answers[q.id] || '')}</textarea></div>`; }).join('')}</div>`; })()}
       ${(e.customQuestions || []).some((q) => q.personId && q.personId === d.personId) ? '<details class="std-qs"><summary>Standard question sets (optional)</summary>' : ''}
       ${(() => { const ss = e.staffSurvey.find((x) => x.personId === d.personId && d.personId); return ss ? `<div class="pre"><h4>Their questionnaire answers</h4><dl>${STAFF_SECTIONS.flatMap((sec) => sec.questions).filter((q) => ss.answers[q.id] && !/_name$/.test(q.id)).map((q) => `<dt>${esc(q.q)}</dt><dd>${esc(ss.answers[q.id])}</dd>`).join('')}</dl></div>` : ''; })()}
       ${qBlock('Core questions (everyone)', set.core)}
@@ -3645,7 +3647,7 @@ function leakItems(e, { signals = true } = {}) {
   const items = [];
   e.findings.forEach((f) => {
     const kind = f.kind || guessLens(f); if (kind === 'context') return;
-    items.push({ src: 'finding', id: f.id, kind, kindSet: !!f.kind, sev: f.severity || 'low', title: f.title || f.id, detail: f.evidence || '', area: f.area || '',
+    items.push({ src: 'finding', pinned: !!f.pinned, id: f.id, kind, kindSet: !!f.kind, sev: f.severity || 'low', title: f.title || f.id, detail: f.evidence || '', area: f.area || '',
       value: num(f.valueMonthly), basis: f.basis || (num(f.valueMonthly) ? 'Leaking' : ''), partOf: f.partOf || '', fix: recs[f.fixId] || null, next: f.nextStep || '', rec: f });
   });
   e.opportunities.forEach((o) => {
@@ -3667,7 +3669,7 @@ function leakTotals(items) {
 function rankItems(items, sort) {
   const cmp = sort === 'severity' ? (a, b) => (SEV_W[b.sev] || 0) - (SEV_W[a.sev] || 0) || b.value - a.value
     : (a, b) => stake(b) - stake(a) || (SEV_W[b.sev] || 0) - (SEV_W[a.sev] || 0);
-  const top = items.filter((x) => !x.partOf).sort(cmp);
+  const top = items.filter((x) => !x.partOf).sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || cmp(a, b));
   const kids = (id) => items.filter((x) => x.partOf === id).sort(cmp);
   const out = []; top.forEach((x) => { out.push(x); kids(x.id).forEach((k) => out.push(Object.assign(k, { nested: true }))); });
   items.filter((x) => x.partOf && !out.includes(x)).forEach((x) => out.push(x));
@@ -3714,7 +3716,7 @@ function viewLeaks(e) {
       <button class="lo-main" data-action="loOpen" data-id="${esc(x.id)}">
         <span class="lo-rank">${x.nested ? '↳' : i}</span>
         <span class="lo-lens lo-${x.kind}" title="${esc((LENSES.find((l) => l[0] === x.kind) || [])[1] || '')}">${LENS_ICON[x.kind] || ''}</span>
-        <span class="lo-title">${sevChip(x.sev)} ${esc(x.title)}${x.src === 'signal' ? ' <span class="chip lo-auto">auto</span>' : ''}${x.kindSet ? '' : ' <span class="chip lo-auto" title="Lens guessed from the area. Open to set it.">lens?</span>'}</span>
+        <span class="lo-title">${x.pinned ? '<span class="chip pin-chip" title="Pinned above the money ranking because the client named it a priority">★ Founder priority</span> ' : ''}${sevChip(x.sev)} ${esc(x.title)}${x.src === 'signal' ? ' <span class="chip lo-auto">auto</span>' : ''}${x.kindSet ? '' : ' <span class="chip lo-auto" title="Lens guessed from the area. Open to set it.">lens?</span>'}</span>
         <span class="lo-val">${x.value ? `<b>${fmtMoney(x.value)}</b>/mo<em>${esc((x.basis || '').toLowerCase())}</em>` : '<span class="faint">Not sized</span>'}</span>
         <span class="lo-fixcol">${leakFixChip(x)}</span>
       </button>
@@ -3724,7 +3726,7 @@ function viewLeaks(e) {
   let n = 0;
   const byLens = LENSES.map(([k, name]) => ({ label: name, value: sum(all.filter((x) => x.kind === k && !x.partOf), (x) => x.value), tip: `${count(k)} items` }));
   return `<div class="page-h"><div><span class="eyebrow">${esc(e.client.name)}</span><h1>Leaks &amp; opportunities</h1><p class="muted">What's leaking, what it's worth, and what needs you today. Ranked by money at stake; each item says what fixes it.</p></div></div>
-  <div class="kpis">${kp('Leaking now', tot['Leaking'], 'revenue or spend being lost')}${kp('At risk', tot['At risk'], 'could be lost')}${kp('Spend to review', tot['Spend to review'], 'cost base where savings sit')}${kp('Upside', tot['Upside'], 'revenue not yet taken')}${sv.target ? kpi('Savings approved', fmtMoney(sv.approved) + '/mo', `<div class="k-delta">of ${fmtMoney(sv.target)} target · ${fmtMoney(sv.identified)} identified (estimates)</div>`) : ''}</div>
+  <div class="kpis">${e.client.nrr && e.client.nrr.value ? kpi('NRR (indicative)', e.client.nrr.value + '%', `<div class="k-delta ${num(e.client.nrr.value) < num(e.client.nrr.target) ? 'delta-bad' : ''}">target ${esc(e.client.nrr.target)}% · ${esc(e.client.nrr.note || '')}</div>`) : ''}${kp('Leaking now', tot['Leaking'], 'revenue or spend being lost')}${kp('At risk', tot['At risk'], 'could be lost')}${kp('Spend to review', tot['Spend to review'], 'cost base where savings sit')}${kp('Upside', tot['Upside'], 'revenue not yet taken')}${sv.target ? kpi('Savings approved', fmtMoney(sv.approved) + '/mo', `<div class="k-delta">of ${fmtMoney(sv.target)} target · ${fmtMoney(sv.identified)} identified (estimates)</div>`) : ''}</div>
   ${needsInput(e, all)}
   <section class="card">
     <div class="lo-bar">
@@ -3810,14 +3812,14 @@ function viewPlan(e) {
   const stageOf = (r) => (REC_STAGES.includes(r.rec.status) ? r.rec.status : 'Identified');
   const groups = [['Identified', 'Identified: our suggestions, for the client to decide'], ['Approved', 'Approved by the client'], ['In progress', 'In progress'], ['Realised', 'Realised: saving or gain confirmed']];
   const head = '<thead><tr><th>#</th><th>Recommendation</th><th>Score</th><th class="r">Value / yr</th><th class="r">Hours freed / mo</th><th class="r">One-off</th><th class="r">Payback</th><th>Stage</th></tr></thead>';
-  const row = (r, i) => `<tr class="${r.rec.status === 'Rejected' ? 'row-removed' : ''}"><td>${i + 1}</td><td><strong>${esc(r.rec.title)}</strong> <span class="chip">${esc(r.rec.type || '—')}</span> <span class="chip">${esc(r.rec.horizon || '—')}</span>
+  const row = (r, i) => `<tr class="${r.rec.status === 'Rejected' ? 'row-removed' : ''}"><td>${i + 1}</td><td>${r.rec.pinned ? '<span class="chip pin-chip">★ Founder priority</span> ' : ''}<strong>${esc(r.rec.title)}</strong> <span class="chip">${esc(r.rec.type || '—')}</span> <span class="chip">${esc(r.rec.horizon || '—')}</span>
       <div class="muted small">${esc(trunc(r.rec.description || '', 260))}</div>
       <div class="small plan-stick">${r.rec.stick ? `<b>How it sticks:</b> ${esc(r.rec.stick)}` : '<span class="chip lo-nofix">How it sticks: not set</span> <span class="faint">system, ease, visibility, incentive, owner</span>'}${r.rec.owner ? ` · <b>Owner:</b> ${esc(r.rec.owner)}` : ''}</div></td>
     <td><div class="score-bar"><span style="width:${r.score}%"></span></div><span class="small">${r.score}</span></td>
     <td class="r">${fmtMoney(r.cash + r.revenue)}</td><td class="r">${Math.round(r.hoursSaved)}</td><td class="r">${fmtMoney(r.oneOff)}</td><td class="r">${r.payback == null ? '—' : r.payback.toFixed(1) + ' mo'}</td>
     <td><select data-cell data-coll="recommendations" data-id="${r.rec.id}" data-field="status">${REC_STAGES.map((s) => `<option ${r.rec.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select></td></tr>`;
   const block = ([stage, title]) => {
-    const list = rows.filter((r) => stageOf(r) === stage); if (!list.length) return '';
+    const list = rows.filter((r) => stageOf(r) === stage).sort((a, b) => (b.rec.pinned ? 1 : 0) - (a.rec.pinned ? 1 : 0)); if (!list.length) return '';
     const key = 'plan_' + stage;
     return card(`${title} (${list.length})`, `<table class="tbl recs">${head}<tbody>${topN(key, list).map(row).join('')}</tbody></table>${showAllBtn(key, list.length)}`, { cls: 'scroll-x' });
   };
@@ -4213,7 +4215,7 @@ const FIELD_DEFS = {
   topClients: [['id', 'text'], ['name', 'text'], ['segment', ['Managed', 'Reseller / self-service', 'Partner / section row']], ['csm', 'text'], ['annualRevenue', 'num'], ['churnRisk', ['Low', 'Medium', 'High']], ['contractStatus', ['In contract', 'Renews within 90 days', 'Out of contract', 'Month to month', 'Unknown']], ['satisfaction', 'text'], ['touchpoint', ['Low', 'Low-Medium', 'Medium', 'Medium-High', 'High']], ['adoption', ['Low', 'Medium', 'High']], ['register', 'json'], ['csScores', 'json'], ['notes', 'text']],
   financePeriods: [['id', 'text'], ['label', 'text'], ['months', 'num'], ['revenue', 'num'], ['cogs', 'num'], ['payroll', 'num'], ['tools', 'num'], ['marketing', 'num'], ['premises', 'num'], ['other', 'num']],
   interviews: [['id', 'text'], ['personId', 'person'], ['date', 'date'], ['interviewer', 'text'], ['summary', 'long'], ['themes', 'text'], ['painPoints', 'long'], ['ideas', 'long'], ['quotes', 'long']],
-  findings: [['id', 'text'], ['title', 'text'], ['area', 'text'], ['severity', ['high', 'medium', 'low']], ['kind', ['leak', 'weakness', 'hole', 'opportunity', 'tool', 'context']], ['valueMonthly', 'num'], ['basis', ['Leaking', 'At risk', 'Spend to review', 'Upside']], ['fixId', 'text'], ['partOf', 'text'], ['nextStep', 'text'], ['lens', 'text'], ['evidence', 'long'], ['sources', 'json']],
+  findings: [['id', 'text'], ['title', 'text'], ['area', 'text'], ['severity', ['high', 'medium', 'low']], ['kind', ['leak', 'weakness', 'hole', 'opportunity', 'tool', 'context']], ['valueMonthly', 'num'], ['basis', ['Leaking', 'At risk', 'Spend to review', 'Upside']], ['fixId', 'text'], ['partOf', 'text'], ['nextStep', 'text'], ['lens', 'text'], ['pinned', ['', 'true']], ['evidence', 'long'], ['sources', 'json']],
   sources: [['id', 'text'], ['name', 'text'], ['type', ['Interview', 'Meeting', 'Voice note', 'Spreadsheet', 'Presentation', 'Document', 'Management accounts', 'Platform export', 'Other']], ['from', 'text'], ['person', 'text'], ['asOf', 'text'], ['received', 'text'], ['via', 'text'], ['link', 'text'], ['notes', 'text']],
   feedback: [['id', 'text'], ['topic', 'text'], ['area', ['Revenue', 'Billing', 'Customers', 'Cost', 'Risk', 'Process', 'Documents']], ['number', 'text'], ['numberLabel', 'text'], ['says', 'long'], ['reality', 'long'], ['soWhat', 'long'], ['suggestion', 'long'], ['priority', ['high', 'medium', 'low']], ['status', ['Draft', 'Confirmed with client', 'Sent']], ['source', 'text'], ['sources', 'json']],
   revenueMovements: [['id', 'text'], ['fy', 'text'], ['client', 'text'], ['kind', ['lost', 'downgrade', 'new', 'growth']], ['cause', 'text'], ['monthly', 'num'], ['from', 'text'], ['reason', 'text'], ['comment', 'text']],
@@ -4223,7 +4225,7 @@ const FIELD_DEFS = {
   usps: [['id', 'text'], ['claim', 'text'], ['strength', ['Unique', 'Shared', 'Claimed only']], ['proof', 'long'], ['competitorsWithIt', 'text'], ['notes', 'text']],
   opportunities: [['id', 'text'], ['title', 'text'], ['area', OPP_AREAS], ['description', 'long'], ['basedOn', 'text'], ['impact', ['High', 'Medium', 'Low']], ['effort', ['High', 'Medium', 'Low']], ['status', ['Idea', 'Proposed', 'Recommendation']], ['valueMonthly', 'num'], ['recommendationId', 'text'], ['nextStep', 'text']],
   capabilities: [['id', 'text'], ['name', 'text'], ['importance', ['High', 'Medium', 'Low']], ['client', ['Strong', 'Partial', 'None']], ['notes', 'text'], ['scores', 'json']],
-  recommendations: [['id', 'text'], ['title', 'text'], ['type', ['People', 'Process', 'Tool', 'Build', 'Structure', 'Commercial']], ['horizon', ['0-3 months', '3-6 months', '6-12 months', '12+ months']], ['description', 'long'], ['effort', 'num'], ['risk', 'num'], ['confidence', 'num'], ['oneOffCost', 'num'], ['otherAnnualSaving', 'num'], ['oneOffSaving', 'num'], ['revenueUplift', 'num'], ['status', REC_STAGES], ['stick', 'long'], ['owner', 'text'], ['ops', 'json']],
+  recommendations: [['id', 'text'], ['title', 'text'], ['type', ['People', 'Process', 'Tool', 'Build', 'Structure', 'Commercial']], ['horizon', ['0-3 months', '3-6 months', '6-12 months', '12+ months']], ['description', 'long'], ['effort', 'num'], ['risk', 'num'], ['confidence', 'num'], ['oneOffCost', 'num'], ['otherAnnualSaving', 'num'], ['oneOffSaving', 'num'], ['revenueUplift', 'num'], ['status', REC_STAGES], ['stick', 'long'], ['owner', 'text'], ['pinned', ['', 'true']], ['ops', 'json']],
   scenarios: [['id', 'text'], ['name', 'text'], ['description', 'text'], ['recommendationIds', 'json']]
 };
 const COLL_LABELS = { customQuestions: 'Custom interview questions', competitors: 'Competitors', capabilities: 'Capabilities', intel: 'Competitor intelligence', usps: 'USPs', opportunities: 'Opportunities', intake: 'Founder answers', departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Clients', revenueMovements: 'Revenue movements', feedback: 'Client feedback (written vs practice)', sources: 'Sources (where every number comes from)', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };

@@ -40,7 +40,7 @@ function leakItems(e, { signals = true } = {}) {
   const items = [];
   e.findings.forEach((f) => {
     const kind = f.kind || guessLens(f); if (kind === 'context') return;
-    items.push({ src: 'finding', id: f.id, kind, kindSet: !!f.kind, sev: f.severity || 'low', title: f.title || f.id, detail: f.evidence || '', area: f.area || '',
+    items.push({ src: 'finding', pinned: !!f.pinned, id: f.id, kind, kindSet: !!f.kind, sev: f.severity || 'low', title: f.title || f.id, detail: f.evidence || '', area: f.area || '',
       value: num(f.valueMonthly), basis: f.basis || (num(f.valueMonthly) ? 'Leaking' : ''), partOf: f.partOf || '', fix: recs[f.fixId] || null, next: f.nextStep || '', rec: f });
   });
   e.opportunities.forEach((o) => {
@@ -62,7 +62,7 @@ function leakTotals(items) {
 function rankItems(items, sort) {
   const cmp = sort === 'severity' ? (a, b) => (SEV_W[b.sev] || 0) - (SEV_W[a.sev] || 0) || b.value - a.value
     : (a, b) => stake(b) - stake(a) || (SEV_W[b.sev] || 0) - (SEV_W[a.sev] || 0);
-  const top = items.filter((x) => !x.partOf).sort(cmp);
+  const top = items.filter((x) => !x.partOf).sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || cmp(a, b));
   const kids = (id) => items.filter((x) => x.partOf === id).sort(cmp);
   const out = []; top.forEach((x) => { out.push(x); kids(x.id).forEach((k) => out.push(Object.assign(k, { nested: true }))); });
   items.filter((x) => x.partOf && !out.includes(x)).forEach((x) => out.push(x));
@@ -109,7 +109,7 @@ function viewLeaks(e) {
       <button class="lo-main" data-action="loOpen" data-id="${esc(x.id)}">
         <span class="lo-rank">${x.nested ? '↳' : i}</span>
         <span class="lo-lens lo-${x.kind}" title="${esc((LENSES.find((l) => l[0] === x.kind) || [])[1] || '')}">${LENS_ICON[x.kind] || ''}</span>
-        <span class="lo-title">${sevChip(x.sev)} ${esc(x.title)}${x.src === 'signal' ? ' <span class="chip lo-auto">auto</span>' : ''}${x.kindSet ? '' : ' <span class="chip lo-auto" title="Lens guessed from the area. Open to set it.">lens?</span>'}</span>
+        <span class="lo-title">${x.pinned ? '<span class="chip pin-chip" title="Pinned above the money ranking because the client named it a priority">★ Founder priority</span> ' : ''}${sevChip(x.sev)} ${esc(x.title)}${x.src === 'signal' ? ' <span class="chip lo-auto">auto</span>' : ''}${x.kindSet ? '' : ' <span class="chip lo-auto" title="Lens guessed from the area. Open to set it.">lens?</span>'}</span>
         <span class="lo-val">${x.value ? `<b>${fmtMoney(x.value)}</b>/mo<em>${esc((x.basis || '').toLowerCase())}</em>` : '<span class="faint">Not sized</span>'}</span>
         <span class="lo-fixcol">${leakFixChip(x)}</span>
       </button>
@@ -119,7 +119,7 @@ function viewLeaks(e) {
   let n = 0;
   const byLens = LENSES.map(([k, name]) => ({ label: name, value: sum(all.filter((x) => x.kind === k && !x.partOf), (x) => x.value), tip: `${count(k)} items` }));
   return `<div class="page-h"><div><span class="eyebrow">${esc(e.client.name)}</span><h1>Leaks &amp; opportunities</h1><p class="muted">What's leaking, what it's worth, and what needs you today. Ranked by money at stake; each item says what fixes it.</p></div></div>
-  <div class="kpis">${kp('Leaking now', tot['Leaking'], 'revenue or spend being lost')}${kp('At risk', tot['At risk'], 'could be lost')}${kp('Spend to review', tot['Spend to review'], 'cost base where savings sit')}${kp('Upside', tot['Upside'], 'revenue not yet taken')}${sv.target ? kpi('Savings approved', fmtMoney(sv.approved) + '/mo', `<div class="k-delta">of ${fmtMoney(sv.target)} target · ${fmtMoney(sv.identified)} identified (estimates)</div>`) : ''}</div>
+  <div class="kpis">${e.client.nrr && e.client.nrr.value ? kpi('NRR (indicative)', e.client.nrr.value + '%', `<div class="k-delta ${num(e.client.nrr.value) < num(e.client.nrr.target) ? 'delta-bad' : ''}">target ${esc(e.client.nrr.target)}% · ${esc(e.client.nrr.note || '')}</div>`) : ''}${kp('Leaking now', tot['Leaking'], 'revenue or spend being lost')}${kp('At risk', tot['At risk'], 'could be lost')}${kp('Spend to review', tot['Spend to review'], 'cost base where savings sit')}${kp('Upside', tot['Upside'], 'revenue not yet taken')}${sv.target ? kpi('Savings approved', fmtMoney(sv.approved) + '/mo', `<div class="k-delta">of ${fmtMoney(sv.target)} target · ${fmtMoney(sv.identified)} identified (estimates)</div>`) : ''}</div>
   ${needsInput(e, all)}
   <section class="card">
     <div class="lo-bar">

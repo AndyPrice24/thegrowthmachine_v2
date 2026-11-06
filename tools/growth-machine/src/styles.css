@@ -211,3 +211,5 @@ details.card>summary{cursor:pointer}
 .tq-part{opacity:1}
 .tq-p{margin-top:4px;padding:6px 10px;border-left:3px solid var(--warn, #d9a21b);background:var(--surface-2);border-radius:4px}
 .qa .tq-a,.qa .tq-p{margin:4px 0}
+.prior{margin:4px 0;color:var(--muted)}.prior summary{cursor:pointer}
+.pin-chip{background:var(--red);color:#fff;border-color:var(--red)}
