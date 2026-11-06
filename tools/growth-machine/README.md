@@ -173,6 +173,14 @@ One ranked list of everything found, sorted into five lenses: leaks, weaknesses,
 - An item counts as actioned when it has a fix (a recommendation) or a next step (a question for a named role or a data request).
 - The "Needs your input" strip counts items with no action and items not sized; click a count to filter the list.
 
+### Client growth (NRR) (Evidence → Client growth; also Reports → Client growth)
+Answers "are clients and resellers growing or shrinking?" for an NRR objective (`client.nrr.target`). Version 1 is built
+from `revenueMovements` (New & Lost), monthly revenue in `financePeriods` and the client register: NRR and gross retention
+for the last 12 months of revenue data, expansion vs contraction and churn by month and by financial year, managed vs
+resellers, locations by channel, accounts growing, shrinking or lost, upsell candidates (adoption of 63% or more, no
+PercepXion, no warning signs) and shrink risk at renewal. A client that left and re-signed counts as a downgrade or
+growth. Every figure is an estimate until billing per account arrives (version 2). Home's NRR tile uses the same figure.
+
 ### Revenue leaks (Evidence → Clients)
 Digests a client's own churn and new-business sheets into `revenueMovements` (lost, downgrade, new, growth; cause; rand per month).
 The card shows the takeaways first (findings with `lens: 'Revenue leaks'`), then the leak and win per year, where revenue leaks by
