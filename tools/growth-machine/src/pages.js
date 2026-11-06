@@ -12,7 +12,7 @@ const TAB_ALIAS = {
   report: ['progress', 'report']
 };
 const SUBTABS = {
-  evidence: [['money', 'Money'], ['clients', 'Clients'], ['people', 'People'], ['tools', 'Tools'], ['market', 'Market']],
+  evidence: [['growth', 'Client growth (NRR)'], ['money', 'Money'], ['clients', 'Clients'], ['people', 'People'], ['tools', 'Tools'], ['market', 'Market']],
   talk: [['people', 'By person'], ['interviews', 'Interviews'], ['discovery', 'Discovery']],
   progress: [['progress', 'Progress & time'], ['report', 'Reports']]
 };
@@ -97,7 +97,7 @@ function viewPlan(e) {
 /* ---------- Evidence: the detail behind findings ---------- */
 function viewEvidence(e) {
   const s = subOf('evidence');
-  const body = s === 'money' ? viewFinance(e) : s === 'clients' ? viewBusiness(e) : s === 'people' ? viewOrg(e) + peopleCrossCards(e) : s === 'tools' ? viewTools(e) : viewCompetitors(e) + profileCard(e);
+  const body = s === 'growth' ? viewNRR(e) : s === 'money' ? viewFinance(e) : s === 'clients' ? viewBusiness(e) : s === 'people' ? viewOrg(e) + peopleCrossCards(e) : s === 'tools' ? viewTools(e) : viewCompetitors(e) + profileCard(e);
   return subBar('evidence') + body;
 }
 
