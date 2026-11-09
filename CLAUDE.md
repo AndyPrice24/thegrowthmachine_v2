@@ -36,7 +36,9 @@ The full method is in the `growth-machine` skill (`.claude/skills/growth-machine
 - Client data lives only in `clients/<client>/` (gitignored). Never commit it; this repo is public.
 - Exclude personal data of clients' contacts (names, birthdays, phone numbers).
 - Report interviews by role. Never attribute confidential remarks to the person who made them.
-- Studio updates are stamped JSON files (`_meta.generatedAt`) that the user merges in the Studio, then backs up.
+- Studio updates are stamped JSON files (`_meta.generatedAt`, `_meta.client`). Upload each one to the private Google Drive folder
+  **TGM Studio updates** (never shared); the user clicks ⟳ Updates in the Studio, which merges new files oldest first and saves a
+  backup into the folder's `backups/`. Also send the file in chat if asked.
 - When new data arrives, the same update closes the matching data requests (received date, what came in, what is still missing).
 - Every interview, meeting, voice note or written answer is offset against ALL open questions in the same update: answers go
   on the speaker's interview, keyed by question id, with the source and date. "Partly: ..." records what is known and the

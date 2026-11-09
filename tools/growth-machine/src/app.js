@@ -44,17 +44,17 @@ const nowISO = () => new Date().toISOString();
 const touch = (o) => { if (o && typeof o === 'object') o.updatedAt = nowISO(); };
 function hashStr(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
 /** Merge with history, duplicate warning and freshness protection. Returns false if cancelled. */
-function doMerge(obj, label) {
+function doMerge(obj, label, quiet) {
   const e = E(); e.meta.mergeLog = Array.isArray(e.meta.mergeLog) ? e.meta.mergeLog : [];
   const fp = (obj._meta && obj._meta.fileId) || hashStr(JSON.stringify(obj));
   const prior = e.meta.mergeLog.find((l) => l.fp === fp);
-  if (prior && !confirm(`You already merged "${prior.label}" on ${new Date(prior.mergedAt).toLocaleString('en-GB')}.\n\nMerge it again? (Nothing will be duplicated, and newer data is protected.)`)) return false;
-  if (!obj._meta && !confirm(`"${label}" has no date stamp (it was made before freshness tracking).\n\nIt can ADD new records but will NOT overwrite anything already in the Studio. Continue?`)) return false;
+  if (prior && !quiet && !confirm(`You already merged "${prior.label}" on ${new Date(prior.mergedAt).toLocaleString('en-GB')}.\n\nMerge it again? (Nothing will be duplicated, and newer data is protected.)`)) return false;
+  if (!obj._meta && !quiet && !confirm(`"${label}" has no date stamp (it was made before freshness tracking).\n\nIt can ADD new records but will NOT overwrite anything already in the Studio. Continue?`)) return false;
   const { engagement, counts, skipped } = mergeEngagement(e, obj);
   engagement.id = db.activeId; db.engagements[db.activeId] = engagement;
   const sum = Object.entries(counts).filter(([, v]) => v.added || v.updated || v.skipped).map(([k, v]) => `${k} +${v.added}/~${v.updated}${v.skipped ? `/✕${v.skipped}` : ''}`).join(', ');
   engagement.meta.mergeLog = [{ fp, label, generatedAt: (obj._meta && obj._meta.generatedAt) || '', mergedAt: nowISO(), summary: sum || 'profile fields', skipped: skipped.slice(0, 50) }, ...(e.meta.mergeLog || [])].slice(0, 100);
-  save(); render();
+  save(); if (quiet) return true; render();
   toast(`Merged: ${sum || 'profile fields'}${skipped.length ? ` · ${skipped.length} skipped (newer data kept)` : ''}`);
   return true;
 }
@@ -110,7 +110,7 @@ function renderHeader() {
     <label class="hsel"><span>Client</span><select id="engSel">${engOpts}</select></label>
     ${SCENARIO_TABS.includes(ui.tab) || ui.scenario !== 'current' ? `<label class="hsel"><span>View as</span><select id="scSel">${scOpts}</select></label>` : ''}
     ${flagBadge(e)}
-    <div class="hbtns"><button class="btn sm ${ui.share ? 'on share-on' : 'ghost'}" data-action="share" title="Screen-share mode: names become roles, and TGM-only notes (🔒 reminders, the work diary, confidential interview points) are hidden">${ui.share ? '● Screen share on' : 'Screen share'}</button><button class="btn sm" data-action="newEng">+ New client</button><button class="btn sm" data-action="exportJSON" title="Download everything saved for ${esc(e.client.name)}: data, interviews, findings, progress, diary and merge history">Back up</button><button class="btn sm ghost" data-action="theme" title="Toggle light/dark">◐</button></div>`;
+    <div class="hbtns"><button class="btn sm ${ui.share ? 'on share-on' : 'ghost'}" data-action="share" title="Screen-share mode: names become roles, and TGM-only notes (🔒 reminders, the work diary, confidential interview points) are hidden">${ui.share ? '● Screen share on' : 'Screen share'}</button>${syncTopBtn()}<button class="btn sm" data-action="newEng">+ New client</button><button class="btn sm" data-action="exportJSON" title="Download everything saved for ${esc(e.client.name)}: data, interviews, findings, progress, diary and merge history">Back up</button><button class="btn sm ghost" data-action="theme" title="Toggle light/dark">◐</button></div>`;
   const st = e.engagement.phases.length ? engagementStatus(e) : null;
   const badge = (id) => id === 'progress' && st && (st.openDelays.length || st.overdue.length) ? `<span class="nav-badge" title="Open delays / overdue client items">⚑ ${st.openDelays.length + st.overdue.length}</span>` : '';
   document.getElementById('nav').innerHTML = TABS.map(([id, n]) => `<button class="nav-btn ${ui.tab === id ? 'on' : ''}" data-action="tab" data-id="${id}">${n}${badge(id)}</button>`).join('')
@@ -194,6 +194,7 @@ function viewData(e) {
       <div class="btn-row"><button class="btn" data-action="mergePaste">Merge into ${esc(e.client.name)}</button><button class="btn ghost" data-action="copyPrompt">Copy Claude prompt</button><button class="btn ghost" data-action="copyContext">Copy client JSON for Claude</button></div>
       <p class="faint small">Merge adds new records and updates records with the same id. Nothing is deleted.</p>`)}
   </div>
+  ${syncCard()}
   ${sourcesCard(e)}
   ${card('Find and replace text', `<div class="fr-row"><label class="fld"><span>Find</span><input id="frFind" placeholder="e.g. a misspelt name"></label><label class="fld"><span>Replace with</span><input id="frRepl"></label>
       <label class="tog small"><input type="checkbox" id="frCase"> Match case</label><button class="btn" data-action="findReplace">Find and replace…</button></div>
@@ -262,6 +263,9 @@ function toast(t) { const el = document.getElementById('toast'); el.textContent 
 function stripMarks(o) { return JSON.parse(JSON.stringify(o, (k, v) => (k.startsWith('_') ? undefined : v))); }
 
 const actions = {
+  syncConnect: () => syncConnect(),
+  syncCheck: () => syncCheck(false),
+  syncBackup: () => syncBackup(false),
   tab: (el) => { if (el.dataset.id === 'processes' && ui.tab !== 'processes') landProcesses(); ui.tab = el.dataset.id; ui.capture = false; ui.session = false; if (el.dataset.sub) { normaliseTab(); ui.sub[ui.tab] = el.dataset.sub; } saveUI(); render(); window.scrollTo(0, 0); },
   sub: (el) => { ui.sub = Object.assign({}, ui.sub, { [el.dataset.tab]: el.dataset.id }); ui.capture = false; ui.session = false; saveUI(); render(); },
   showAll: (el) => { ui.all = Object.assign({}, ui.all, { [el.dataset.id]: !(ui.all || {})[el.dataset.id] }); render(); },
@@ -763,4 +767,5 @@ document.addEventListener('input', (ev) => {
 })();
 
 loadDB();
+syncLoad();
 render();

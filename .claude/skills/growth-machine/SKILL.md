@@ -75,7 +75,9 @@ applies to, and when and how we received it. Register each source once in the St
 - Findings tie to the engagement target (for example, recurring cost savings) or to revenue protected or grown. Size them in rand per month or per year.
 - Interviews are reported by role. Never attribute a confidential remark to the person who made it.
 - Leave out client contacts' personal data (names, birthdays, phone numbers). Client data stays in the gitignored `clients/` folder.
-- Studio updates are stamped JSON files (`_meta.generatedAt`). The user backs up, replaces the Studio if needed, merges the file, then backs up again.
+- Studio updates are stamped JSON files (`_meta.generatedAt`, `_meta.client`). Upload each to the private Google Drive folder **TGM Studio
+  updates** (never shared). In the Studio (Chrome or Edge), ⟳ Updates merges new files oldest first, skips ones already merged and saves a
+  backup to the folder's `backups/`. Files can still be merged by hand from Sources & data.
 - **Close the loop on requests.** Whenever new data arrives, the same update file marks the matching data requests received
   (date and what came in), notes what is still missing on partly answered ones, and marks duplicates 'Not needed'.
 - **Offset answers against open questions.** After every interview, meeting, voice note or written reply, check every open
