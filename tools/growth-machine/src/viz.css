@@ -456,3 +456,13 @@ tr.flash td{background:var(--surface-2)}
 .cite-none{margin:6px 0}.cite-fold{margin-top:4px}.cite-fold summary{cursor:pointer;color:var(--muted)}
 .rpt-cite sup{font-size:11px;margin-left:2px}.rpt-cite sup a{color:inherit}.rpt-cite-parts{display:block;font-size:11px;color:var(--muted)}
 .rpt-sources{font-size:12px;padding-left:22px}.rpt-sources li{margin:3px 0}
+/* Live report (Reports → Live report) */
+.lr-list{display:grid;gap:2px;max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:6px;margin-top:8px}
+.lr-pick{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:start;padding:6px 8px;border-radius:8px;font-size:13px;cursor:pointer}
+.lr-pick:hover{background:var(--surface-2)}.lr-pick.on{background:var(--surface-2)}
+.lr-fb{display:grid;grid-template-columns:26px minmax(0,1fr);gap:8px;padding:10px 0;border-bottom:1px solid var(--line)}
+.lr-fb.seen{opacity:.7}.lr-fb-i{font-size:16px;line-height:1.4}
+.lr-fb-flag .lr-fb-b>.small b:last-of-type{color:var(--red,#c8221c)}
+.lr-fb-t{margin:4px 0 6px;white-space:pre-wrap;font-size:14px}
+.lr-hot{margin:4px 0 12px;padding-left:20px}.lr-hot li{margin:3px 0}
+.lr-setup ol{padding-left:20px}.lr-setup li{margin:6px 0}

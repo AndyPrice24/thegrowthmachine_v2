@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Report</title>
+<style>
+/* Layout: one reading column. A sticky bar holds the filters and the PDF; each item is a row that opens in place
+   to show the detail, its sources and the discussion. Brand: cream paper, ink, TGM red, Georgia headings. */
+:root {
+  --bg: #f6f1e9; --paper: #fffdf9; --ink: #171715; --muted: #665f57; --faint: #8a8074; --line: #d7cfc3; --line-2: #ebe4d9;
+  --red: #c8221c; --red-soft: #fbe9e7; --chip: #eee7dd; --focus: #2a78d6;
+  --t-leak: #b02a2a; --t-weakness: #8a5a00; --t-hole: #6250d6; --t-opportunity: #0a7a0a; --t-tool: #2a5fa8; --t-rec: #171715;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+button { font: inherit; color: inherit; }
+button:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 0 16px; }
+
+.top { background: var(--paper); border-bottom: 2px solid var(--red); padding: 28px 0 22px; }
+.brand { font-size: 11px; letter-spacing: .22em; }
+.brand b { color: var(--red); font-weight: 700; }
+h1 { font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: clamp(30px, 6vw, 44px); line-height: 1.05; letter-spacing: -.02em; margin: 18px 0 4px; text-wrap: balance; }
+.client { font-family: Georgia, serif; font-size: 21px; color: var(--red); margin: 0; }
+.meta { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+.who { display: inline-block; margin-top: 12px; font-size: 13px; background: var(--chip); border-radius: 999px; padding: 3px 12px; }
+.owner-note { margin-top: 10px; font-size: 13px; color: var(--muted); }
+
+.bar { position: sticky; top: 0; z-index: 5; background: rgba(246, 241, 233, .96); border-bottom: 1px solid var(--line); backdrop-filter: blur(6px); }
+.bar .wrap { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding-top: 10px; padding-bottom: 10px; }
+.pill { border: 1px solid var(--line); background: var(--paper); border-radius: 999px; padding: 5px 12px; font-size: 13px; cursor: pointer; white-space: nowrap; }
+.pill[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.spacer { flex: 1 1 0; }
+.ghost { border: 0; background: none; padding: 5px 6px; font-size: 13px; color: var(--muted); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+/* Summary builder: a full-screen panel. Left, what goes in (the baseline is everything); right, a live preview. */
+.sum { position: fixed; inset: 0; z-index: 30; background: var(--bg); display: grid; grid-template-rows: auto minmax(0, 1fr); }
+.sum[hidden] { display: none; }
+.sum-h { background: var(--paper); border-bottom: 1px solid var(--line); }
+.sum-h .wrap { max-width: 1180px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding-top: 12px; padding-bottom: 12px; }
+.sum-h h2 { margin: 0; font-size: 22px; }
+.sum-body { max-width: 1180px; width: 100%; margin: 0 auto; padding: 16px; display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 18px; min-height: 0; }
+.sum-pick { overflow: auto; min-height: 0; display: grid; gap: 10px; align-content: start; padding-right: 4px; }
+.sum-pick .fld { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+.sum-pick input[type=text], .sum-pick textarea { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; font: inherit; font-size: 14px; background: #fff; color: var(--ink); }
+.sum-quick { display: flex; flex-wrap: wrap; gap: 6px; }
+.sum-sec { border: 1px solid var(--line-2); background: var(--paper); border-radius: 10px; padding: 8px 10px; }
+.sum-sec > label { font-weight: 600; font-size: 13.5px; }
+.sum-sec ul { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; }
+.sum-sec li label { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; font-size: 13px; align-items: start; cursor: pointer; }
+.sum-sec li .fl { color: var(--red); font-weight: 600; }
+.sum-prev { min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 6px; }
+.sum-prev iframe { width: 100%; height: 100%; min-height: 420px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+.sum-count { font-size: 13px; color: var(--muted); }
+@media (max-width: 820px) { .sum { display: block; overflow: auto; } .sum-h { position: sticky; top: 0; z-index: 1; } .sum-body { display: block; } .sum-pick { overflow: visible; margin-bottom: 18px; } .sum-prev { display: block; } .sum-prev iframe { height: 75vh; margin-top: 6px; } }
+.btn { border: 1px solid var(--ink); background: var(--ink); color: var(--paper); border-radius: 8px; padding: 7px 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.btn.sec { background: var(--paper); color: var(--ink); border-color: var(--line); }
+.btn[disabled] { opacity: .55; cursor: progress; }
+
+main { padding: 22px 0 64px; }
+.how { font-size: 13.5px; color: var(--muted); background: var(--paper); border: 1px solid var(--line-2); border-radius: 12px; padding: 12px 14px; margin-bottom: 22px; }
+.how b { color: var(--ink); font-weight: 600; }
+h2 { font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 26px; margin: 34px 0 4px; text-wrap: balance; }
+.sec-intro { color: var(--muted); font-size: 14px; margin: 0 0 12px; max-width: 65ch; }
+h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin: 20px 0 8px; font-weight: 600; }
+
+.el { background: var(--paper); border: 1px solid var(--line-2); border-left: 4px solid var(--line); border-radius: 12px; margin: 0 0 10px; scroll-margin-top: 70px; transition: box-shadow .2s; }
+.el.flagged { border-left-color: var(--red); }
+.el.hl { box-shadow: 0 0 0 3px rgba(200, 34, 28, .35); }
+.el-h { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: start; }
+.el-toggle { display: grid; gap: 4px; text-align: left; background: none; border: 0; padding: 14px 4px 14px 16px; cursor: pointer; min-width: 0; }
+.el-line { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tag { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; }
+.tag.leak { color: var(--t-leak); } .tag.weakness { color: var(--t-weakness); } .tag.hole { color: var(--t-hole); }
+.tag.opportunity { color: var(--t-opportunity); } .tag.tool { color: var(--t-tool); } .tag.rec, .tag.step, .tag.summary { color: var(--t-rec); }
+.prio { font-size: 11px; font-weight: 600; color: var(--red); }
+.status { font-size: 12px; color: var(--muted); }
+.el-title { font-size: 16px; font-weight: 600; line-height: 1.35; }
+.el-val { font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.el-sum { font-size: 14px; color: var(--muted); }
+.chev { color: var(--faint); font-size: 12px; }
+.el-acts { display: flex; gap: 4px; padding: 10px 10px 0 0; }
+.act { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--line); background: var(--paper); border-radius: 999px; padding: 4px 10px; font-size: 13px; cursor: pointer; min-height: 32px; }
+.act svg { width: 15px; height: 15px; flex: none; }
+.act.flag[aria-pressed="true"] { background: var(--red); border-color: var(--red); color: #fff; }
+.act.flag.others { color: var(--red); border-color: var(--red); }
+.el-b { padding: 0 16px 16px; border-top: 1px dashed var(--line-2); }
+.el-b > p { margin: 12px 0 0; max-width: 70ch; }
+.rows { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 6px 14px; margin: 14px 0 0; font-size: 14px; }
+.rows dt { font-size: 11.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding-top: 2px; }
+.rows dd { margin: 0; }
+.link { border: 0; background: none; padding: 0; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; text-align: left; }
+.cites { margin: 14px 0 0; font-size: 12.5px; color: var(--muted); }
+.cites ol { margin: 4px 0 0; padding-left: 20px; }
+.flagged-by { margin: 12px 0 0; font-size: 13px; color: var(--red); font-weight: 600; }
+
+.thread { margin: 16px 0 0; display: grid; gap: 10px; }
+.thread-h { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+.cmt { border-left: 3px solid var(--line); padding: 2px 0 2px 12px; }
+.cmt.mine { border-left-color: var(--ink); }
+.cmt.tgm { border-left-color: var(--red); }
+.cmt .by { font-size: 13px; }
+.cmt .by span { color: var(--faint); }
+.cmt .tx { margin: 2px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.cmt .replies { margin: 8px 0 0 4px; display: grid; gap: 8px; }
+.compose { margin-top: 12px; display: grid; gap: 8px; }
+.compose textarea { width: 100%; min-height: 76px; resize: vertical; border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; font: inherit; font-size: 14px; background: #fff; color: var(--ink); }
+.compose-f { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; font-size: 12px; color: var(--faint); }
+.replying { font-size: 12.5px; color: var(--muted); }
+
+.sources { margin-top: 40px; font-size: 13px; color: var(--muted); }
+.sources ol { padding-left: 22px; }
+.sources li { margin: 4px 0; scroll-margin-top: 80px; }
+.sources li.hl { color: var(--ink); background: var(--red-soft); }
+.empty { color: var(--muted); padding: 18px 0; }
+.foot { margin-top: 30px; font-size: 12px; color: var(--faint); }
+
+#toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 10px 16px; border-radius: 10px; font-size: 14px; max-width: calc(100vw - 32px); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 20; }
+#toast.show { opacity: 1; pointer-events: auto; }
+#toast a { color: #fff; }
+
+@media (max-width: 620px) {
+  .el-h { grid-template-columns: 1fr; }
+  .el-toggle { padding: 14px 16px 6px; }
+  .el-acts { padding: 0 16px 12px; }
+  .rows { grid-template-columns: 1fr; } .rows dt { padding-top: 6px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+@media print {
+  body { background: #fff; font-size: 11pt; }
+  .bar, .el-acts, .compose, .how, .reply-btn, #toast, .chev { display: none !important; }
+  .top { border-bottom-width: 1px; }
+  .el { break-inside: avoid; border: 0; border-left: 3px solid var(--line); border-radius: 0; }
+  .el-b { display: block !important; border: 0; }
+  .el-sum { display: none; }
+}
+</style>
+</head>
+<body>
+<div id="app"><p class="wrap empty">Loading the report…</p></div>
+<div id="sum" class="sum" role="dialog" aria-modal="true" aria-labelledby="sumH" hidden></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script>
+var STATE = "__TGM_STATE__";
+(function () {
+  'use strict';
+  var R = STATE.report, ME = STATE.me, EV = STATE.events || [];
+  var openSet = {}, filter = 'all', drafts = {}, replyTo = {}, busy = {};
+  try { filter = localStorage.getItem('tgm.lr.filter.' + R.reportId) || 'all'; } catch (e) {}
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var paras = function (t) { return String(t || '').split(/\n{2,}/).filter(Boolean).map(function (p) { return '<p>' + esc(p).replace(/\n/g, '<br>') + '</p>'; }).join(''); };
+  var when = function (iso) { try { return new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch (e) { return iso; } };
+  var ICON_FLAG = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 1.5v13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M3.8 2.3h8.4l-2 3.2 2 3.2H3.8z" fill="currentColor"/></svg>';
+  var ICON_TALK = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3.2c0-.9.7-1.6 1.6-1.6h8.8c.9 0 1.6.7 1.6 1.6v6c0 .9-.7 1.6-1.6 1.6H7l-3.2 2.8v-2.8h-.2c-.9 0-1.6-.7-1.6-1.6z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>';
+
+  /* ---------- server ---------- */
+  function call(req) {
+    req.r = STATE.r; req.t = STATE.t;
+    return new Promise(function (ok, fail) {
+      if (!window.google || !google.script || !google.script.run) return fail(new Error('Not connected. Reload the page and try again.'));
+      google.script.run.withSuccessHandler(ok).withFailureHandler(fail).api(req);
+    });
+  }
+  function toast(html, ms) { var t = $('toast'); t.innerHTML = html; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(function () { t.classList.remove('show'); }, ms || 3200); }
+  function errMsg(e) { return esc((e && e.message) || 'Something went wrong. Please try again.'); }
+
+  /* ---------- derived state ---------- */
+  function derive() {
+    var last = {}, comments = {}, byId = {};
+    EV.forEach(function (ev) {
+      if (ev.type === 'flag' || ev.type === 'unflag') last[ev.elementId + '|' + ev.by] = ev;
+      if (ev.type === 'comment') { (comments[ev.elementId] = comments[ev.elementId] || []).push(ev); byId[ev.id] = ev; }
+    });
+    var flags = {};
+    Object.keys(last).forEach(function (k) { var ev = last[k]; if (ev.type === 'flag') (flags[ev.elementId] = flags[ev.elementId] || []).push(ev); });
+    return { flags: flags, comments: comments, byId: byId };
+  }
+  var D = derive();
+  var allEls = [];
+  if (R.intro) { allEls.push({ id: 'summary', kind: 'summary', tag: '', title: 'Our summary', detail: R.intro, section: 'Summary' }); openSet.summary = true; }
+  (R.sections || []).forEach(function (s) { (s.groups || []).forEach(function (g) { (g.items || []).forEach(function (el) { allEls.push(el); }); }); });
+  var shown = function (el) {
+    if (filter === 'flagged') return !!D.flags[el.id];
+    if (filter === 'discussed') return !!D.comments[el.id];
+    return true;
+  };
+
+  /* ---------- rendering ---------- */
+  function itemHTML(el) {
+    var f = D.flags[el.id] || [], cs = D.comments[el.id] || [];
+    var mine = f.some(function (x) { return x.by === ME.id; });
+    var open = !!openSet[el.id];
+    var tagCls = el.lens || (el.kind === 'recommendation' ? 'rec' : el.kind === 'step' ? 'step' : el.kind === 'summary' ? 'summary' : 'weakness');
+    var h = '<article class="el' + (f.length ? ' flagged' : '') + '" id="el-' + esc(el.id) + '" data-el="' + esc(el.id) + '">';
+    h += '<div class="el-h"><button class="el-toggle" data-do="toggle" aria-expanded="' + open + '" aria-controls="b-' + esc(el.id) + '">';
+    h += '<span class="el-line">' + (el.tag ? '<span class="tag ' + tagCls + '">' + esc(el.tag) + '</span>' : '') + (el.pinned ? '<span class="prio">★ Founder priority</span>' : '') + (el.status ? '<span class="status">' + esc(el.status) + (el.horizon ? ' · ' + esc(el.horizon) : '') + '</span>' : '') + '</span>';
+    h += '<span class="el-title">' + esc(el.title) + '</span>';
+    if (el.value) h += '<span class="el-val">' + esc(el.value) + '</span>';
+    if (!open && el.summary) h += '<span class="el-sum">' + esc(el.summary) + '</span>';
+    h += '<span class="chev">' + (open ? 'Hide detail ▲' : 'Show detail, sources and comments ▼') + '</span></button>';
+    h += '<div class="el-acts"><button class="act flag' + (!mine && f.length ? ' others' : '') + '" data-do="flag" aria-pressed="' + mine + '" title="' + (mine ? 'Remove your red flag' : 'Red-flag this as very important') + '">' + ICON_FLAG + '<span>' + (f.length || '') + '</span><span class="vh" style="position:absolute;left:-9999px">' + (mine ? 'Remove red flag' : 'Red flag') + '</span></button>';
+    h += '<button class="act talk" data-do="talk" title="Comment on this">' + ICON_TALK + '<span>' + (cs.length || '') + '</span><span style="position:absolute;left:-9999px">Comments</span></button></div></div>';
+    h += '<div class="el-b" id="b-' + esc(el.id) + '"' + (open ? '' : ' hidden') + '>';
+    h += paras(el.detail || el.summary || '');
+    var rows = [];
+    if (el.fix) rows.push(['Suggested fix', el.fix.inReport ? '<button class="link" data-do="go" data-id="' + esc(el.fix.id) + '">' + esc(el.fix.title) + ' →</button>' : esc(el.fix.title)]);
+    if (el.solves && el.solves.length) rows.push(['Fixes', el.solves.map(function (s) { return '<button class="link" data-do="go" data-id="' + esc(s.id) + '">' + esc(s.title) + '</button>'; }).join('<br>')]);
+    if (el.autos && el.autos.length) rows.push(['Runs itself', el.autos.map(function (a) { return esc(a.title) + ' <span class="status">(' + esc(a.status) + ')</span>'; }).join('<br>')]);
+    if (el.stick) rows.push(['How it sticks', esc(el.stick)]);
+    if (el.owner) rows.push(['Owner', esc(el.owner)]);
+    if (el.next) rows.push(['Next step', esc(el.next)]);
+    if (rows.length) h += '<dl class="rows">' + rows.map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>'; }).join('') + '</dl>';
+    if (el.cites && el.cites.length) h += '<div class="cites">Where this comes from<ol>' + el.cites.map(function (c) { return '<li><button class="link" data-do="src" data-n="' + c.n + '">Source ' + c.n + '</button>' + (c.part ? ': ' + esc(c.part) : '') + '</li>'; }).join('') + '</ol></div>';
+    if (f.length) h += '<p class="flagged-by">Red-flagged by ' + esc(f.map(function (x) { return x.byLabel; }).join(', ')) + '</p>';
+    h += threadHTML(el, cs);
+    return h + '</div></article>';
+  }
+  function cmtHTML(c, kids) {
+    var cls = 'cmt' + (c.by === ME.id ? ' mine' : '') + (c.by === 'owner' ? ' tgm' : '');
+    var h = '<div class="' + cls + '"><div class="by"><b>' + esc(c.byLabel) + '</b> <span>· ' + esc(when(c.at)) + '</span></div><p class="tx">' + esc(c.text) + '</p>';
+    if (!c.parentId) h += '<button class="ghost reply-btn" data-do="reply" data-id="' + esc(c.id) + '">Reply</button>';
+    if (kids && kids.length) h += '<div class="replies">' + kids.map(function (k) { return cmtHTML(k); }).join('') + '</div>';
+    return h + '</div>';
+  }
+  function threadHTML(el, cs) {
+    var tops = cs.filter(function (c) { return !c.parentId || !D.byId[c.parentId]; });
+    var h = '<div class="thread">';
+    if (cs.length) h += '<div class="thread-h">Discussion (' + cs.length + ')</div>' + tops.map(function (c) { return cmtHTML(c, cs.filter(function (k) { return k.parentId === c.id; })); }).join('');
+    var rp = replyTo[el.id] && D.byId[replyTo[el.id]];
+    h += '<div class="compose">' + (rp ? '<div class="replying">Replying to ' + esc(rp.byLabel) + ' · <button class="ghost" data-do="noreply">cancel</button></div>' : '');
+    h += '<label style="position:absolute;left:-9999px" for="tx-' + esc(el.id) + '">Your comment</label><textarea id="tx-' + esc(el.id) + '" data-draft="' + esc(el.id) + '" placeholder="' + (rp ? 'Write a reply' : 'Add a comment, question or correction') + '" maxlength="4000">' + esc(drafts[el.id] || '') + '</textarea>';
+    h += '<div class="compose-f"><span>Everyone this report was shared with can see comments.</span><button class="btn" data-do="post"' + (busy[el.id] ? ' disabled' : '') + '>' + (busy[el.id] ? 'Posting…' : rp ? 'Post reply' : 'Post comment') + '</button></div></div>';
+    return h + '</div>';
+  }
+  function render() {
+    var nFlag = allEls.filter(function (el) { return D.flags[el.id]; }).length;
+    var nTalk = allEls.filter(function (el) { return D.comments[el.id]; }).length;
+    var date = R.publishedAt ? new Date(R.publishedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+    var h = '<header class="top"><div class="wrap"><div class="brand">THE <b>GROWTH</b> MACHINE</div><h1>' + esc(R.title) + '</h1><p class="client">' + esc(R.client) + '</p>';
+    h += '<p class="meta">' + (R.preparedFor ? 'Prepared for ' + esc(R.preparedFor) + ' · ' : '') + (date ? 'Updated ' + esc(date) + ' · ' : '') + 'Confidential</p>';
+    h += '<div class="who">Viewing as <b>' + esc(ME.label) + '</b></div>';
+    if (ME.owner) h += '<p class="owner-note">Your owner link: your visits aren’t counted as views, and your comments show as The Growth Machine.</p>';
+    h += '</div></header>';
+    h += '<nav class="bar" aria-label="Report tools"><div class="wrap">';
+    h += '<button class="pill" data-do="filter" data-f="all" aria-pressed="' + (filter === 'all') + '">Everything (' + allEls.length + ')</button>';
+    h += '<button class="pill" data-do="filter" data-f="flagged" aria-pressed="' + (filter === 'flagged') + '">Red-flagged (' + nFlag + ')</button>';
+    h += '<button class="pill" data-do="filter" data-f="discussed" aria-pressed="' + (filter === 'discussed') + '">With comments (' + nTalk + ')</button>';
+    h += '<span class="spacer"></span><button class="ghost" data-do="expand">Expand all</button><button class="ghost" data-do="collapse">Collapse all</button>';
+    h += '<button class="btn sec" data-do="sumOpen">Summary PDF for your team</button>';
+    h += '</div></nav><main class="wrap">';
+    h += '<p class="how"><b>How this works.</b> Click any item to see the detail and where each figure comes from. Use <b>' + 'Comment</b> to ask a question or correct us, and the <b>red flag</b> to mark what matters most to you. Everyone this report was shared with sees comments and flags, so it works as one conversation.</p>';
+    var any = false;
+    if (R.intro && shown(allEls[0])) { any = true; h += '<h2>Summary</h2>' + itemHTML(allEls[0]); }
+    (R.sections || []).forEach(function (s) {
+      var gs = (s.groups || []).map(function (g) { return { g: g, items: (g.items || []).filter(shown) }; }).filter(function (x) { return x.items.length; });
+      if (!gs.length) return; any = true;
+      h += '<h2 id="sec-' + esc(s.id) + '">' + esc(s.title) + '</h2>' + (s.intro ? '<p class="sec-intro">' + esc(s.intro) + '</p>' : '');
+      gs.forEach(function (x) { if (x.g.title) h += '<h3>' + esc(x.g.title) + '</h3>'; h += x.items.map(itemHTML).join(''); });
+    });
+    if (!any) h += '<p class="empty">' + (filter === 'flagged' ? 'Nothing has been red-flagged yet.' : 'No comments yet.') + ' <button class="link" data-do="filter" data-f="all">Show everything</button></p>';
+    if (filter === 'all') {
+      h += '<h2>Anything else?</h2>' + itemHTML({ id: 'report', kind: 'summary', title: 'Comments on the report as a whole', summary: 'Something missing, wrong, or worth discussing that doesn’t belong to one item.', detail: 'Something missing, wrong, or worth discussing that doesn’t belong to one item? Add it here.' });
+    }
+    if ((R.sources || []).length) h += '<section class="sources" aria-labelledby="srcH"><h2 id="srcH">Where the figures come from</h2><p>Each source with what it is, who supplied it, the date the information relates to, and when we received it.</p><ol>' + R.sources.map(function (s) { return '<li id="src-' + s.n + '">' + esc(s.line) + '</li>'; }).join('') + '</ol></section>';
+    h += '<p class="foot">The Growth Machine · thegrowthmachine.co · Confidential. Prepared for ' + esc(R.client) + '. Version ' + esc(R.version || 1) + '.</p></main>';
+    var y = window.scrollY, act = document.activeElement && document.activeElement.id;
+    $('app').innerHTML = h;
+    window.scrollTo(0, y);
+    if (act && $(act) && /^tx-/.test(act)) { var ta = $(act); ta.focus(); ta.selectionStart = ta.selectionEnd = ta.value.length; }
+  }
+
+  function focusEl(id, flash) {
+    var node = $('el-' + id); if (!node) return;
+    node.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    if (flash) { node.classList.add('hl'); setTimeout(function () { node.classList.remove('hl'); }, 2200); }
+  }
+  function setEvents(list) { if (Array.isArray(list)) { EV = list; D = derive(); } }
+
+  /* ---------- actions ---------- */
+  document.addEventListener('input', function (ev) { var t = ev.target; if (t.dataset && t.dataset.draft) drafts[t.dataset.draft] = t.value; });
+  document.addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-do]'); if (!b) return;
+    var art = b.closest('[data-el]'); var id = art ? art.dataset.el : b.dataset.id;
+    var d = b.dataset.do;
+    if (d === 'toggle') { openSet[id] = !openSet[id]; render(); return; }
+    if (d === 'talk') { openSet[id] = true; render(); var ta = $('tx-' + id); if (ta) { ta.focus(); ta.scrollIntoView({ block: 'center', behavior: 'smooth' }); } return; }
+    if (d === 'reply') { openSet[id] = true; replyTo[id] = b.dataset.id; render(); var t2 = $('tx-' + id); if (t2) t2.focus(); return; }
+    if (d === 'noreply') { delete replyTo[id]; render(); return; }
+    if (d === 'go') { openSet[b.dataset.id] = true; if (filter !== 'all') filter = 'all'; render(); focusEl(b.dataset.id, true); return; }
+    if (d === 'src') { var li = $('src-' + b.dataset.n); if (li) { li.scrollIntoView({ block: 'center', behavior: 'smooth' }); li.classList.add('hl'); setTimeout(function () { li.classList.remove('hl'); }, 2200); } return; }
+    if (d === 'filter') { filter = b.dataset.f; try { localStorage.setItem('tgm.lr.filter.' + R.reportId, filter); } catch (e) {} render(); return; }
+    if (d === 'expand') { allEls.forEach(function (el) { openSet[el.id] = true; }); render(); return; }
+    if (d === 'collapse') { openSet = {}; render(); return; }
+    if (d === 'flag') {
+      var mine = (D.flags[id] || []).some(function (x) { return x.by === ME.id; });
+      b.disabled = true;
+      call({ op: 'flag', el: id, on: !mine }).then(function (res) { setEvents(res.events); render(); toast(mine ? 'Red flag removed' : 'Red-flagged. Thank you: we’ll make sure this gets attention.'); })
+        .catch(function (e) { b.disabled = false; toast(errMsg(e), 5000); });
+      return;
+    }
+    if (d === 'post') {
+      var text = (drafts[id] || '').trim();
+      if (!text) { toast('Write a comment first'); var t3 = $('tx-' + id); if (t3) t3.focus(); return; }
+      busy[id] = true; render();
+      call({ op: 'comment', el: id, text: text, parent: replyTo[id] || '' }).then(function (res) {
+        busy[id] = false; drafts[id] = ''; delete replyTo[id]; setEvents(res.events); render(); toast('Comment posted');
+      }).catch(function (e) { busy[id] = false; render(); toast(errMsg(e), 5000); });
+      return;
+    }
+  });
+  window.addEventListener('beforeprint', function () { var ch = false; allEls.forEach(function (el) { if (!openSet[el.id]) { openSet[el.id] = true; ch = true; } }); if (ch) render(); });
+
+
+  /* ---------- summary for your team: start from the baseline (everything), untick what this week's or month's
+     download doesn't need, add a title and a note, preview it, then download a PDF or print. The choice is remembered. ---------- */
+  var SKEY = 'tgm.lr.sum.' + R.reportId + '.' + ME.id;
+  var monthYear = new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+  var SUM = { ids: null, title: R.title + ': summary for the team, ' + monthYear, note: '', comments: false };
+  try { var saved = JSON.parse(localStorage.getItem(SKEY) || 'null'); if (saved) { SUM.ids = saved.ids; SUM.note = saved.note || ''; SUM.comments = !!saved.comments; if (saved.title) SUM.title = saved.title; } } catch (e) {}
+  var sumIds = function () { var all = allEls.map(function (el) { return el.id; }); var ok = {}; all.forEach(function (i) { ok[i] = 1; }); return SUM.ids ? SUM.ids.filter(function (i) { return ok[i]; }) : all; };
+  var sumSave = function () { try { localStorage.setItem(SKEY, JSON.stringify({ ids: SUM.ids, title: SUM.title, note: SUM.note, comments: SUM.comments })); } catch (e) {} };
+  function sumGroups() {
+    var out = [];
+    if (R.intro) out.push({ title: 'Summary', items: [allEls[0]] });
+    (R.sections || []).forEach(function (s) { var items = []; (s.groups || []).forEach(function (g) { items = items.concat(g.items || []); }); if (items.length) out.push({ title: s.title, items: items }); });
+    return out;
+  }
+  function sumDoc() {
+    var pick = {}; sumIds().forEach(function (i) { pick[i] = 1; });
+    var date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    var h = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + esc(SUM.title) + '</title><style>'
+      + 'body{font-family:Arial,Helvetica,sans-serif;color:#171715;font-size:10.5pt;line-height:1.45;margin:28px 34px;background:#fff}'
+      + 'h1{font-family:Georgia,serif;font-weight:normal;font-size:22pt;line-height:1.1;margin:8pt 0 3pt}h2{font-family:Georgia,serif;font-weight:normal;font-size:14pt;margin:16pt 0 6pt;border-bottom:1px solid #d7cfc3;padding-bottom:3pt}'
+      + '.brand{font-size:8pt;letter-spacing:2pt}.brand b{color:#c8221c}.client{font-family:Georgia,serif;color:#c8221c;font-size:13pt;margin:0}.meta{color:#665f57;font-size:9pt;margin:4pt 0 0}'
+      + '.note{background:#f6f1e9;border-left:3px solid #c8221c;padding:8pt 10pt;margin:12pt 0 0}.note b{display:block;font-size:8.5pt;color:#665f57;text-transform:uppercase;letter-spacing:.5pt;margin-bottom:2pt}'
+      + '.it{margin:0 0 9pt;page-break-inside:avoid}.t{font-weight:bold}.tag{color:#665f57;font-size:8pt;text-transform:uppercase;letter-spacing:.5pt}.s{color:#444;margin:2pt 0 0}'
+      + '.flag{color:#c8221c;font-weight:bold;font-size:9pt;margin-top:2pt}.c{border-left:2px solid #d7cfc3;padding-left:6pt;margin:3pt 0 0 4pt;color:#333;font-size:9pt}.foot{color:#8a8074;font-size:8pt;margin-top:18pt}'
+      + '</style></head><body>';
+    h += '<div class="brand">THE <b>GROWTH</b> MACHINE</div><h1>' + esc(SUM.title) + '</h1><p class="client">' + esc(R.client) + '</p>';
+    h += '<p class="meta">' + esc(date) + (ME.owner ? '' : ' · Shared by ' + esc(ME.label)) + ' · From the report by The Growth Machine · Confidential</p>';
+    if (SUM.note.trim()) h += '<div class="note"><b>' + (ME.owner ? 'Note' : 'Note from ' + esc(ME.label)) + '</b>' + esc(SUM.note.trim()).replace(/\n/g, '<br>') + '</div>';
+    var n = 0;
+    sumGroups().forEach(function (g) {
+      var items = g.items.filter(function (el) { return pick[el.id]; }); if (!items.length) return;
+      h += '<h2>' + esc(g.title) + '</h2>';
+      items.forEach(function (el) {
+        n++;
+        var f = D.flags[el.id] || [];
+        h += '<div class="it">' + (el.tag && el.kind !== 'summary' ? '<div class="tag">' + esc(el.tag) + (el.status ? ' · ' + esc(el.status) : '') + '</div>' : '');
+        h += el.kind === 'summary' ? '<div>' + esc(el.detail).replace(/\n{2,}/g, '</div><div style="margin-top:6pt">').replace(/\n/g, '<br>') + '</div>' : '<div class="t">' + esc(el.title) + '</div>';
+        if (el.value) h += '<div>' + esc(el.value) + '</div>';
+        if (el.summary && el.kind !== 'summary') h += '<div class="s">' + esc(el.summary) + '</div>';
+        if (f.length) h += '<div class="flag">Red-flagged by ' + esc(f.map(function (x) { return x.byLabel; }).join(', ')) + '</div>';
+        if (SUM.comments) (D.comments[el.id] || []).forEach(function (c) { h += '<div class="c"><b>' + esc(c.byLabel) + ':</b> ' + esc(c.text) + '</div>'; });
+        h += '</div>';
+      });
+    });
+    if (!n) h += '<p style="color:#665f57">Nothing selected yet.</p>';
+    h += '<p class="foot">From “' + esc(R.title) + '” (version ' + esc(R.version || 1) + '). The full report shows where every figure comes from.</p></body></html>';
+    return h;
+  }
+  function sumRender() {
+    var box = $('sum'); var pick = {}; var ids = sumIds(); ids.forEach(function (i) { pick[i] = 1; });
+    var total = allEls.length;
+    var h = '<div class="sum-h"><div class="wrap"><h2 id="sumH">Summary for your team</h2><span class="sum-count">' + ids.length + ' of ' + total + ' items</span><span class="spacer"></span>';
+    h += '<button class="btn" data-s="pdf" id="sumPdf">Download PDF</button><button class="btn sec" data-s="print">Print</button><button class="btn sec" data-s="close">Close</button></div></div>';
+    h += '<div class="sum-body"><div class="sum-pick">';
+    h += '<p class="sum-count" style="margin:0">This starts from the full report (the baseline). Untick anything this week’s or month’s summary doesn’t need. Your choice is remembered for next time.</p>';
+    h += '<label class="fld">Title<input type="text" data-s="title" value="' + esc(SUM.title) + '" maxlength="140"></label>';
+    h += '<label class="fld">Note to your team (optional, shown at the top)<textarea data-s="note" rows="3" maxlength="1500">' + esc(SUM.note) + '</textarea></label>';
+    h += '<label><input type="checkbox" data-s="comments"' + (SUM.comments ? ' checked' : '') + '> Include comments</label>';
+    h += '<div class="sum-quick"><button class="pill" data-s="all">Everything</button><button class="pill" data-s="flagged">Only red-flagged</button><button class="pill" data-s="prio">Founder priorities</button><button class="pill" data-s="none">None</button></div>';
+    sumGroups().forEach(function (g, gi) {
+      var on = g.items.filter(function (el) { return pick[el.id]; }).length;
+      h += '<div class="sum-sec"><label><input type="checkbox" data-s="grp" data-g="' + gi + '"' + (on === g.items.length ? ' checked' : '') + '> ' + esc(g.title) + ' <span class="sum-count">(' + on + '/' + g.items.length + ')</span></label><ul>';
+      g.items.forEach(function (el) { h += '<li><label><input type="checkbox" data-s="it" data-id="' + esc(el.id) + '"' + (pick[el.id] ? ' checked' : '') + '><span>' + esc(el.title) + (D.flags[el.id] ? ' <span class="fl">⚑ ' + D.flags[el.id].length + '</span>' : '') + '</span></label></li>'; });
+      h += '</ul></div>';
+    });
+    h += '</div><div class="sum-prev"><span class="sum-count">Preview (the PDF follows this closely)</span><iframe id="sumFrame" title="Summary preview"></iframe></div></div>';
+    box.innerHTML = h; sumPreview();
+  }
+  var sumTimer = null;
+  function sumPreview() { clearTimeout(sumTimer); sumTimer = setTimeout(function () { var f = $('sumFrame'); if (f) f.srcdoc = sumDoc(); }, 120); }
+  function sumSet(ids) { SUM.ids = ids; sumSave(); sumRender(); }
+  document.addEventListener('input', function (ev) {
+    var t = ev.target; if (!t.dataset || !t.dataset.s) return;
+    if (t.dataset.s === 'title') { SUM.title = t.value; sumSave(); sumPreview(); }
+    if (t.dataset.s === 'note') { SUM.note = t.value; sumSave(); sumPreview(); }
+  });
+  document.addEventListener('change', function (ev) {
+    var t = ev.target; if (!t.dataset || !t.dataset.s) return;
+    var cur = sumIds();
+    if (t.dataset.s === 'comments') { SUM.comments = t.checked; sumSave(); sumPreview(); }
+    if (t.dataset.s === 'it') { sumSet(t.checked ? cur.concat([t.dataset.id]) : cur.filter(function (i) { return i !== t.dataset.id; })); }
+    if (t.dataset.s === 'grp') { var g = sumGroups()[+t.dataset.g]; var gids = g.items.map(function (el) { return el.id; }); var rest = cur.filter(function (i) { return gids.indexOf(i) < 0; }); sumSet(t.checked ? rest.concat(gids) : rest); }
+  });
+  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && !$('sum').hidden) { $('sum').hidden = true; } });
+  document.addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-do="sumOpen"],[data-s]'); if (!b || b.tagName === 'INPUT' || b.tagName === 'TEXTAREA') return;
+    if (b.dataset.do === 'sumOpen') { $('sum').hidden = false; sumRender(); var c = $('sum').querySelector('[data-s="close"]'); if (c) c.focus(); return; }
+    var s = b.dataset.s;
+    if (s === 'close') { $('sum').hidden = true; return; }
+    if (s === 'all') return sumSet(null);
+    if (s === 'none') return sumSet([]);
+    if (s === 'flagged') return sumSet(allEls.filter(function (el) { return D.flags[el.id]; }).map(function (el) { return el.id; }));
+    if (s === 'prio') return sumSet(allEls.filter(function (el) { return el.pinned; }).map(function (el) { return el.id; }));
+    if (s === 'print') { var f = $('sumFrame'); f.srcdoc = sumDoc(); setTimeout(function () { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { toast('Printing isn’t available here; use Download PDF.'); } }, 300); return; }
+    if (s === 'pdf') {
+      var ids = sumIds(); if (!ids.length) return toast('Tick at least one item');
+      var btn = $('sumPdf'); btn.disabled = true; btn.textContent = 'Preparing the PDF…';
+      call({ op: 'pdf', html: sumDoc(), items: ids, summaryTitle: SUM.title, comments: SUM.comments }).then(function (res) {
+        var bin = atob(res.pdf), arr = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+        var url = URL.createObjectURL(new Blob([arr], { type: 'application/pdf' }));
+        var a = document.createElement('a'); a.href = url; a.download = res.name; document.body.appendChild(a); a.click(); a.remove();
+        btn.disabled = false; btn.textContent = 'Download PDF';
+        toast('Your PDF is downloading. <a href="' + url + '" target="_blank" rel="noopener" download="' + esc(res.name) + '">Open it</a> if it doesn’t start.', 8000);
+      }).catch(function (e) { btn.disabled = false; btn.textContent = 'Download PDF'; toast(errMsg(e) + ' You can use Print instead.', 6000); });
+    }
+  });
+
+  /* ---------- keep the conversation current ---------- */
+  setInterval(function () {
+    if (document.hidden) return;
+    var a = document.activeElement; if (a && a.tagName === 'TEXTAREA') return;
+    call({ op: 'refresh' }).then(function (res) { var before = EV.length; setEvents(res.events); if (EV.length !== before) render(); }).catch(function () {});
+  }, 60000);
+
+  render();
+  if (STATE.focus) { openSet[STATE.focus] = true; filter = 'all'; render(); setTimeout(function () { focusEl(STATE.focus, true); }, 80); }
+})();
+</script>
+</body>
+</html>

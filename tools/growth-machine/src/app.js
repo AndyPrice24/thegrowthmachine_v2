@@ -142,7 +142,7 @@ function render() {
 /* ---------- Sources & data view (lives here because it is tied to the editor) ---------- */
 const FIELD_DEFS = {
   departments: [['id', 'text'], ['name', 'text'], ['type', DEPT_TYPES.map((d) => d[0])], ['headId', 'person'], ['notes', 'text']],
-  people: [['id', 'text'], ['name', 'text'], ['title', 'text'], ['departmentId', 'dept'], ['managerId', 'person'], ['employmentType', ['Full-time', 'Part-time', 'Contractor', 'Outsourced', 'Vacant']], ['fte', 'num'], ['annualCost', 'num'], ['location', 'text'], ['startDate', 'date'], ['notes', 'text']],
+  people: [['id', 'text'], ['name', 'text'], ['aka', 'text'], ['title', 'text'], ['departmentId', 'dept'], ['managerId', 'person'], ['employmentType', ['Full-time', 'Part-time', 'Contractor', 'Outsourced', 'Vacant']], ['fte', 'num'], ['annualCost', 'num'], ['location', 'text'], ['startDate', 'date'], ['notes', 'text']],
   tools: [['id', 'text'], ['name', 'text'], ['category', 'text'], ['vendor', 'text'], ['monthlyCost', 'num'], ['seats', 'num'], ['activeUsers', 'num'], ['departmentIds', 'text'], ['ownerId', 'person'], ['purpose', 'text'], ['notes', 'text']],
   processes: [['id', 'text'], ['name', 'text'], ['group', 'text'], ['leadsTo', 'text'], ['departmentId', 'dept'], ['ownerId', 'person'], ['confidence', Object.keys(CONFIDENCE)], ['sources', 'text'], ['summary', 'long'], ['talkingPoints', 'long'], ['findingIds', 'text'], ['frequency', 'text'], ['runsPerMonth', 'num'], ['hoursPerMonth', 'num'], ['inputs', 'text'], ['outputs', 'text'], ['team', 'text'], ['askId', 'text'], ['steps', 'json']],
   segments: [['id', 'text'], ['name', 'text'], ['customers', 'num'], ['annualRevenue', 'num'], ['churnPct', 'num'], ['acquisitionChannel', 'text'], ['notes', 'text']],
@@ -271,6 +271,19 @@ const actions = {
   syncConnect: () => syncConnect(),
   syncCheck: () => syncCheck(false),
   syncBackup: () => syncBackup(false),
+  lrNew: () => lrNew(),
+  lrOpen: () => { ui.tab = 'progress'; ui.sub = Object.assign({}, ui.sub, { progress: 'report' }); ui.reportType = 'live'; ui.lrFb = 'new'; saveUI(); render(); window.scrollTo(0, 0); },
+  lrItem: (el) => lrToggleItem(el.dataset.id, el.checked),
+  lrQuick: (el) => lrQuick(el.dataset.id),
+  lrPick: (el) => { ui.lrPick = el.dataset.id; render(); },
+  lrFb: (el) => { ui.lrFb = el.dataset.id; render(); },
+  lrAddRcp: () => lrAddRecipient(),
+  lrRevoke: (el) => { const lr = lrCur(E()); const r = lr && (lr.recipients || []).find((x) => x.id === el.dataset.id); if (!r) return; r.revoked = !r.revoked; touch(lr); save(); render(); toast(r.revoked ? 'Link stops working when you publish again' : 'Link works again when you publish again'); },
+  lrCopy: (el) => { const e = E(); const lr = lrCur(e); if (!lr) return; const r = el.dataset.id === 'owner' ? { token: lr.ownerToken } : (lr.recipients || []).find((x) => x.id === el.dataset.id); if (r) copyText(lrLink(e, lr, r.token), el.dataset.id === 'owner' ? 'Your owner link is copied' : 'Link copied'); },
+  lrPublish: () => lrPublish(),
+  lrDl: (el) => lrDownload(el.dataset.id),
+  lrSeen: (el) => { const x = (E().reportFeedback || []).find((y) => y.id === el.dataset.id); if (!x) return; x.seen = !x.seen; touch(x); save(); render(); },
+  lrSeenAll: () => { const lr = lrCur(E()); lrEvents(E(), lr).forEach((x) => { if (!x.seen) { x.seen = true; touch(x); } }); save(); render(); },
   tab: (el) => { if (el.dataset.id === 'processes' && ui.tab !== 'processes') landProcesses(); ui.tab = el.dataset.id; ui.capture = false; ui.session = false; if (el.dataset.sub) { normaliseTab(); ui.sub[ui.tab] = el.dataset.sub; } saveUI(); render(); window.scrollTo(0, 0); },
   sub: (el) => { ui.sub = Object.assign({}, ui.sub, { [el.dataset.tab]: el.dataset.id }); ui.capture = false; ui.session = false; saveUI(); render(); },
   showAll: (el) => { ui.all = Object.assign({}, ui.all, { [el.dataset.id]: !(ui.all || {})[el.dataset.id] }); render(); },
@@ -668,6 +681,9 @@ document.addEventListener('change', (ev) => {
   const t = ev.target;
   if (t.id === 'engSel') { db.activeId = t.value; ui.scenario = 'current'; ui.processId = ''; save(); render(); return; }
   if (t.id === 'scSel') { ui.scenario = t.value; render(); return; }
+  if (t.id === 'lrSel') { ui.lrId = t.value; render(); return; }
+  if (t.dataset.lr) { const lr = lrCur(E()); if (!lr) return; lr[t.dataset.lr] = t.type === 'checkbox' ? t.checked : t.value; touch(lr); save(); render(); return; }
+  if (t.dataset.lrrcp) { const lr = lrCur(E()); const [rid, f] = t.dataset.lrrcp.split('|'); const r = lr && (lr.recipients || []).find((x) => x.id === rid); if (!r) return; r[f] = t.value.trim(); touch(lr); save(); render(); return; }
   if (t.id === 'importFile' && t.files[0]) {
     const fr = new FileReader();
     fr.onload = () => {
@@ -748,6 +764,8 @@ document.addEventListener('change', (ev) => {
 });
 document.addEventListener('input', (ev) => {
   const t = ev.target;
+  if (t.tagName === 'TEXTAREA' && t.dataset.lr) { const lr = lrCur(E()); if (lr) { lr[t.dataset.lr] = t.value; touch(lr); save(); } return; }
+  if (t.id === 'lrQ') { ui.lrQ = t.value; clearTimeout(ui._lrq); ui._lrq = setTimeout(() => { render(); const q = document.getElementById('lrQ'); if (q) { q.focus(); q.selectionStart = q.selectionEnd = q.value.length; } }, 250); return; }
   if (t.tagName === 'TEXTAREA' && t.dataset.bind) { setPath(E(), t.dataset.bind, t.value); touch(E()[t.dataset.bind.split('.')[0]]); save(); }
   if (t.dataset.intake || t.dataset.intakeother) { intakeWrite(t); return; }
   if (t.dataset.draft && ui.draft) { setPath(ui.draft, t.dataset.draft, t.type === 'number' ? t.value : t.value); saveDraft(ui.draft); }

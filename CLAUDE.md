@@ -47,6 +47,8 @@ The full method is in the `growth-machine` skill (`.claude/skills/growth-machine
 - Studio updates are stamped JSON files (`_meta.generatedAt`, `_meta.client`). Upload each one to the private Google Drive folder
   **TGM Studio updates** (never shared); the user clicks ⟳ Updates in the Studio, which merges new files oldest first and saves a
   backup into the folder's `backups/`. Also send the file in chat if asked.
+- Live reports (Reports → Live report) serve only the items you tick, through TGM's Apps Script web app; the folder stays private.
+  Their views, comments and red flags come back as an update file; log comments against open questions and act on red flags.
 - When new data arrives, the same update closes the matching data requests (received date, what came in, what is still missing).
 - Every interview, meeting, voice note or written answer is offset against ALL open questions in the same update: answers go
   on the speaker's interview, keyed by question id, with the source and date. "Partly: ..." records what is known and the

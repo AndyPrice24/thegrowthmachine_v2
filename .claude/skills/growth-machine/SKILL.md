@@ -9,6 +9,11 @@ description: The Growth Machine's diagnostic method. Use it for any work on a TG
 time carries `sources` ([{id, part, side}]) pointing to the source register, with the exact part (tab, section, meeting, date).
 Recommendations and automations inherit their findings' sources; add their own only for figures the findings don't cover.
 
+**Live reports are curated.** Only items you choose go to a client's live report; never tick anything marked "check before sharing"
+(pay, commission, related parties, personal accounts, confidential remarks) without reading it, and keep confidential remarks out.
+People show by role; give nicknames as the person's `aka` so free text converts. Recipient feedback arrives as an update file; treat
+comments as answers to log (offset them against open questions like any other conversation) and red flags as priorities to address.
+
 **Automation lens (always on).** For every process, system and hand-off you touch, ask what could run itself. Prefer the client's
 existing or planned systems first (native features, their APIs, built-in automations), then AI. Record each as an automation
 opportunity with what it removes, the system it uses, rough value, effort and the questions that decide whether it works here.

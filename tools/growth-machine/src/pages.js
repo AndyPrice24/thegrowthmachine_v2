@@ -56,6 +56,7 @@ function needsInput(e, all) {
     chip(unsized, 'not sized', 'data-action="loNeed" data-k="unsized"', 'Add a rand figure, even a rough one, so they can be ranked. Click to filter the list.', L.unsized),
     chip(noSrcCount(e), 'figures with no source', 'data-action="loNeed" data-k="nosrc"', 'Items that state a number, rand value or time with no source behind it. Click to filter the leaks; recommendations and automations show "No source yet".', L.nosrc),
     chip(unlinkedAutos(e).length, 'automations not linked to a fix', `data-action="goAuto" data-id="${esc((unlinkedAutos(e)[0] || {}).id || '')}"`, unlinkedAutos(e).slice(0, 4).map((a) => a.title).join(' · ')),
+    chip(lrUnseen(e), 'new report comments and flags', 'data-action="lrOpen"', 'From recipients of the live report. Click to read them.'),
     chip(stale.length, 'to-dos past their date', 'data-action="tab" data-id="progress"', stale.slice(0, 4).map((a) => a.title).join(' · '))
   ].filter(Boolean);
   return `<div class="needs"><span class="needs-h">Needs your input</span>${chips.length ? chips.join('') : '<span class="faint small">Nothing right now.</span>'}</div>`;

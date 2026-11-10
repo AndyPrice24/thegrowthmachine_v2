@@ -7,7 +7,10 @@ import { fileURLToPath } from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url));
 const src = (f) => readFileSync(join(here, 'src', f), 'utf8');
 const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
-const js = `const STUDIO_BUILD = '${stamp}';\n` + ['model.js', 'questions.js', 'engagement.js', 'charts.js', 'flows.js', 'processes.js', 'demo.js', 'views.js', 'views2.js', 'leaks.js', 'cite.js', 'automations.js', 'nrr.js', 'pages.js', 'report.js', 'sync.js', 'app.js'].map((f) => `/* ---- ${f} ---- */\n${src(f)}`).join('\n');
+const lrFile = (f) => readFileSync(join(here, 'live-report', f), 'utf8');
+// The web app's two files, embedded so the Studio can hand them over ("</" is escaped so they can't close the script tag).
+const LR = `const LIVE_REPORT_FILES = ${JSON.stringify({ code: lrFile('Code.gs'), html: lrFile('Report.html') }).replace(/<\//g, '<\\/')};\n`;
+const js = `const STUDIO_BUILD = '${stamp}';\n` + LR + ['model.js', 'questions.js', 'engagement.js', 'charts.js', 'flows.js', 'processes.js', 'demo.js', 'views.js', 'views2.js', 'leaks.js', 'cite.js', 'automations.js', 'nrr.js', 'pages.js', 'report.js', 'sync.js', 'livereport.js', 'app.js'].map((f) => `/* ---- ${f} ---- */\n${src(f)}`).join('\n');
 const html = src('index.html')
   .replace('/*VIZ_CSS*/', () => src('viz.css'))
   .replace('/*REPORT_CSS*/', () => src('report.css'))

@@ -228,6 +228,26 @@ only), the date the information applies to, when and how it was received, and a 
 and `part` is the exact tab, section or point. The cheatsheet prints both sides under "Where this comes from" (roles only),
 and the Leaks & opportunities detail lists them (with names).
 
+### Live report (Reports → Live report)
+A curated report each recipient opens in the browser from their own link, served by a small Google Apps Script web app on
+TGM's Google account (`live-report/Code.gs` and `live-report/Report.html`; the Studio hands both over with the folder ID filled in).
+- **What goes in:** only the findings, opportunities and recommendations you tick, plus a summary and next steps. Founder priorities
+  lead; findings are grouped by kind and ranked by size; recommendations by score, with their automations. Anything whose text
+  mentions pay, commission, related parties, personal accounts or a confidential remark is marked "check before sharing" and is
+  never added by the quick-add buttons. People are shown by role (full names, the person's `aka` nicknames and unambiguous first
+  names); the title and "prepared for" are left as typed.
+- **Publish** writes `reports/<id>.json` into the updates folder (Drive for desktop syncs it). Links always show the latest version.
+- **Recipients** can open any item (detail, fix, what runs itself, numbered sources), comment and reply, red-flag what matters,
+  filter to red-flagged or discussed items, and build a **summary for their team**: it starts from the full report (the baseline),
+  they untick what this week's or month's summary doesn't need, add a title and a note, preview it and download a PDF or print.
+  Their choice is remembered. Comments and flags are visible to everyone the report is shared with.
+- **Feedback** (views, comments, flags, unflags, summaries downloaded and which items they included) is written by the web app as one
+  stamped update file, `<client>-report-feedback-<id>.json`, in the updates folder; ⟳ Updates merges it into `reportFeedback`.
+  Reports → Live report shows who opened it and when, what they care about most, and every comment and flag with what it was attached
+  to (item, section, version). "Open in live report" opens your owner link at that item. Home shows new comments and flags.
+- **Limits:** a forwarded link shows as the original recipient; Google may show a "created by another user" banner on the page;
+  "Stop link" takes effect when you publish again.
+
 ### Retiring records from an update file
 An update file can remove an obsolete or duplicate record by sending `{"id": "...", "_delete": true}` in its collection.
 The record is removed and a tombstone is kept, so an older file can't bring it back. Records edited in the Studio after
