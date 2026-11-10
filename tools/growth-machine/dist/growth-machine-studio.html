@@ -436,6 +436,24 @@ tr.lk-total td{font-weight:600;border-top:1px solid var(--line)}
 .nrr-note{margin-top:18px;padding:10px 14px;border:1px dashed var(--line,#ddd5c8);border-radius:8px;font-size:12.5px;color:var(--muted,#6b6459)}
 .nrr-head{margin-bottom:14px}
 @media (max-width:900px){.nrr-2,.nrr-3{grid-template-columns:1fr}}
+
+/* automation opportunities (Home) */
+.au-legend{display:flex;flex-wrap:wrap;gap:14px;margin:0 0 6px}
+.au-head,.au-main{display:grid;grid-template-columns:34px 28px minmax(0,1fr) 120px 190px;gap:10px;align-items:center}
+.au-head{padding:6px 10px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.au-row{border-bottom:1px solid var(--line)}
+.au-row[open]{background:var(--surface-2)}
+.au-main{padding:10px;cursor:pointer;list-style:none}
+.au-main::-webkit-details-marker{display:none}
+.au-rank{color:var(--muted);font-variant-numeric:tabular-nums}
+.au-ap{font-size:16px;text-align:center}
+.au-title{display:flex;flex-direction:column;gap:2px}
+.au-sys{font-size:12px;color:var(--muted)}
+.au-detail{padding:0 10px 12px 72px}
+.au-detail p{margin:6px 0}
+.au-s-live{background:var(--good-bg,#e6f4ea)}
+.au-s-in-progress,.au-s-agreed{background:var(--s1-bg,#e8eefc)}
+@media (max-width:760px){.au-head{display:none}.au-main{grid-template-columns:28px 24px minmax(0,1fr)}.au-val,.au-st{grid-column:3}.au-detail{padding-left:10px}}
 </style>
 <style id="report-css">/* Founder report styles (also embedded in exported HTML reports) */
 .rpt{background:#fffdf9;color:#171715;border:1px solid #d7cfc3;border-radius:14px;padding:40px 46px;
@@ -710,7 +728,7 @@ details.card>summary{cursor:pointer}
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="tip" hidden></div>
 <script>
-const STUDIO_BUILD = '2026-11-09 14:43 UTC';
+const STUDIO_BUILD = '2026-11-10 13:17 UTC';
 /* ---- model.js ---- */
 /* ============================================================
    The Growth Machine — data model, scenario engine, scoring, insights
@@ -728,7 +746,7 @@ const byId = (arr) => Object.fromEntries((arr || []).map((x) => [x.id, x]));
 const splitList = (v) => Array.isArray(v) ? v : String(v || '').split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
 
 const COLLECTIONS = ['intake', 'customQuestions', 'competitors', 'capabilities', 'intel', 'usps', 'opportunities', 'departments', 'people', 'tools', 'processes', 'segments', 'markets', 'topClients', 'revenueMovements', 'feedback', 'sources',
-  'financePeriods', 'interviews', 'findings', 'recommendations', 'scenarios'];
+  'financePeriods', 'interviews', 'findings', 'recommendations', 'scenarios', 'automations'];
 
 function blankEngagement(name) {
   const today = todayISO();
@@ -3766,7 +3784,56 @@ function viewLeaks(e) {
     ${L.noFix || L.unsized ? `<p class="small" style="margin:8px 0 0">Filtered: ${L.noFix ? 'no action yet' : 'not sized'}. <button class="link" data-action="loNeed" data-k="clear">Show everything</button></p>` : ''}
     <p class="faint small" style="margin:10px 0 0">Totals count each item once (parts nested under a bigger item are not added again). Sizes are estimates from the sources named in each item. “Biggest first” counts leaking in full, at risk and upside at half, spend to review at a fifth.</p>
   </section>
+  ${automationCard(e)}
   ${card('Where the money is, by lens', hbars(byLens.filter((x) => x.value > 0), { fmt: (v) => fmtMoney(v) + '/mo', color: 'var(--s1)' }), { sub: 'Sized items only, all bases together. Use it to see where the weight sits, not as a single total.' })}`;
+}
+
+/* ---- automations.js ---- */
+/* ============================================================
+   Automation opportunities: where work could run itself.
+   First prize is automating inside the systems the client already uses or is moving to; AI where it does the job better.
+   Record: { id, title, removes, system, usesExisting: 'Yes'|'No', approach: 'native'|'connect'|'ai', processId, findingIds,
+             recommendationId, valueMonthly, hoursMonthly, basis, effort: 'Low'|'Medium'|'High', status, owner, nextStep,
+             description, private }
+   ============================================================ */
+const AUTO_APPROACH = { native: ['⚙', 'Built into a system they already use'], connect: ['⇄', 'Connect systems they already use'], ai: ['✦', 'AI'] };
+const AUTO_STATUS = ['Idea', 'Proposed', 'Agreed', 'In progress', 'Live'];
+const AUTO_STATUS_ORDER = ['In progress', 'Agreed', 'Proposed', 'Idea', 'Live'];
+function autoKey(a) {
+  return [a.usesExisting === 'No' ? 1 : 0, Math.max(0, AUTO_STATUS_ORDER.indexOf(a.status || 'Idea')), -(num(a.valueMonthly) || 0), -(num(a.hoursMonthly) || 0), Math.max(0, ['Low', 'Medium', 'High'].indexOf(a.effort || 'Medium'))];
+}
+function autoCmp(a, b) { const x = autoKey(a), y = autoKey(b); for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) return x[i] < y[i] ? -1 : 1; return 0; }
+function automationCard(e) {
+  const all = (e.automations || []).filter((a) => !(ui.share && a.private));
+  if (!all.length) return '';
+  const list = all.slice().sort(autoCmp);
+  const shown = topN('auto', list);
+  const existing = list.filter((a) => a.usesExisting !== 'No').length;
+  const sized = sum(list, (a) => num(a.valueMonthly));
+  const hours = sum(list, (a) => num(a.hoursMonthly));
+  const proc = (id) => (e.processes.find((p) => p.id === id) || {}).name || '';
+  const val = (a) => num(a.valueMonthly) ? `<b>${fmtMoney(num(a.valueMonthly))}</b>/mo` : num(a.hoursMonthly) ? `<b>~${Math.round(num(a.hoursMonthly))} h</b>/mo` : '<span class="faint">Not sized</span>';
+  const row = (a, i) => {
+    const ap = AUTO_APPROACH[a.approach] || AUTO_APPROACH.native;
+    return `<details class="au-row"><summary class="au-main">
+      <span class="au-rank">${i + 1}</span>
+      <span class="au-ap au-${esc(a.approach || 'native')}" title="${esc(ap[1])}">${ap[0]}</span>
+      <span class="au-title">${esc(a.title)}${a.usesExisting === 'No' ? ' <span class="chip">new tool</span>' : ''}<span class="au-sys">${esc(a.system || '')}</span></span>
+      <span class="au-val">${val(a)}</span>
+      <span class="au-st"><span class="chip au-s-${esc((a.status || 'Idea').toLowerCase().replace(/\s+/g, '-'))}">${esc(a.status || 'Idea')}</span> <span class="faint small">${esc(a.effort || 'Medium')} effort</span></span>
+    </summary><div class="au-detail">
+      ${a.removes ? `<p><b>Takes away:</b> ${esc(a.removes)}</p>` : ''}
+      ${a.description ? `<p>${esc(a.description)}</p>` : ''}
+      ${a.nextStep ? `<p><b>Next step:</b> ${esc(a.nextStep)}</p>` : ''}
+      <p class="faint small">${[ap[1], proc(a.processId) && 'Process: ' + proc(a.processId), a.owner && 'Owner: ' + a.owner, a.basis && 'Size: ' + a.basis].filter(Boolean).map(esc).join(' · ')}</p>
+    </div></details>`;
+  };
+  return card('Automation opportunities', `
+    <p class="small muted" style="margin:0 0 8px">Where work could run itself. First prize is the systems ${esc(e.client.name)} already uses or is moving to; AI where it does the job better. ${existing} of ${list.length} use current systems${sized ? ` · ${fmtMoney(sized)}/mo sized` : ''}${hours ? ` · ~${Math.round(hours)} hours a month` : ''}.</p>
+    <div class="au-legend small faint">${Object.values(AUTO_APPROACH).map(([i, n]) => `<span>${i} ${esc(n)}</span>`).join('')}</div>
+    <div class="au-head"><span>#</span><span></span><span>What could run itself</span><span>Worth</span><span>Status</span></div>
+    ${shown.map(row).join('')}
+    ${showAllBtn('auto', list.length)}`, { sub: 'Ranked: current systems first, then work already under way, then size. Click a row for the detail.' });
 }
 
 /* ---- nrr.js ---- */
@@ -4498,12 +4565,13 @@ const FIELD_DEFS = {
   competitors: [['id', 'text'], ['name', 'text'], ['type', ['Direct', 'Indirect', 'Substitute', 'Adjacent']], ['threat', ['High', 'Medium', 'Low']], ['website', 'text'], ['hq', 'text'], ['markets', 'text'], ['segments', 'text'], ['offering', 'long'], ['pricingModel', 'text'], ['pricePoint', 'num'], ['size', 'text'], ['ownership', 'text'], ['strengths', 'long'], ['weaknesses', 'long'], ['whereWeWin', 'long'], ['whereWeLose', 'long'], ['sources', 'long'], ['lastReviewed', 'date']],
   intel: [['id', 'text'], ['competitorId', 'comp'], ['topic', INTEL_TOPICS], ['note', 'long'], ['sourceType', SOURCE_TYPES], ['source', 'text'], ['date', 'date']],
   usps: [['id', 'text'], ['claim', 'text'], ['strength', ['Unique', 'Shared', 'Claimed only']], ['proof', 'long'], ['competitorsWithIt', 'text'], ['notes', 'text']],
+  automations: [['id', 'text'], ['title', 'text'], ['removes', 'long'], ['system', 'text'], ['usesExisting', ['Yes', 'No']], ['approach', ['native', 'connect', 'ai']], ['status', AUTO_STATUS], ['effort', ['Low', 'Medium', 'High']], ['valueMonthly', 'num'], ['hoursMonthly', 'num'], ['basis', 'text'], ['processId', 'text'], ['owner', 'text'], ['nextStep', 'text'], ['description', 'long']],
   opportunities: [['id', 'text'], ['title', 'text'], ['area', OPP_AREAS], ['description', 'long'], ['basedOn', 'text'], ['impact', ['High', 'Medium', 'Low']], ['effort', ['High', 'Medium', 'Low']], ['status', ['Idea', 'Proposed', 'Recommendation']], ['valueMonthly', 'num'], ['recommendationId', 'text'], ['nextStep', 'text']],
   capabilities: [['id', 'text'], ['name', 'text'], ['importance', ['High', 'Medium', 'Low']], ['client', ['Strong', 'Partial', 'None']], ['notes', 'text'], ['scores', 'json']],
   recommendations: [['id', 'text'], ['title', 'text'], ['type', ['People', 'Process', 'Tool', 'Build', 'Structure', 'Commercial']], ['horizon', ['0-3 months', '3-6 months', '6-12 months', '12+ months']], ['description', 'long'], ['effort', 'num'], ['risk', 'num'], ['confidence', 'num'], ['oneOffCost', 'num'], ['otherAnnualSaving', 'num'], ['oneOffSaving', 'num'], ['revenueUplift', 'num'], ['status', REC_STAGES], ['stick', 'long'], ['owner', 'text'], ['pinned', ['', 'true']], ['ops', 'json']],
   scenarios: [['id', 'text'], ['name', 'text'], ['description', 'text'], ['recommendationIds', 'json']]
 };
-const COLL_LABELS = { customQuestions: 'Custom interview questions', competitors: 'Competitors', capabilities: 'Capabilities', intel: 'Competitor intelligence', usps: 'USPs', opportunities: 'Opportunities', intake: 'Founder answers', departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Clients', revenueMovements: 'Revenue movements', feedback: 'Client feedback (written vs practice)', sources: 'Sources (where every number comes from)', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };
+const COLL_LABELS = { customQuestions: 'Custom interview questions', competitors: 'Competitors', capabilities: 'Capabilities', intel: 'Competitor intelligence', usps: 'USPs', opportunities: 'Opportunities', automations: 'Automation opportunities', intake: 'Founder answers', departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Clients', revenueMovements: 'Revenue movements', feedback: 'Client feedback (written vs practice)', sources: 'Sources (where every number comes from)', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };
 
 function cellInput(e, coll, row, [f, type]) {
   const v = row[f]; const base = `data-cell data-coll="${coll}" data-id="${esc(row.id)}" data-field="${f}"`;
@@ -4576,6 +4644,7 @@ Schema "tgm.engagement/1". Include only the collections you have data for. Every
   "competitors": [{ "id","name","type":"Direct|Indirect|Substitute|Adjacent","threat":"High|Medium|Low","website","hq","markets","segments","offering","pricingModel","pricePoint":0,"size","ownership","strengths","weaknesses","whereWeWin","whereWeLose","sources":"URLs, one per line (required)","lastReviewed":"YYYY-MM-DD" }],
   "intel": [{ "id","competitorId","topic":"Pricing|Product|Marketing|Customers|Team|Technology|Partnerships|News|Other","note":"one fact per entry","sourceType":"Online research|Founder|Staff|Client / customer|Other","source":"URL or who said it","date":"YYYY-MM-DD" }],
   "usps": [{ "id","claim","strength":"Unique|Shared|Claimed only","proof","competitorsWithIt" }],
+  "automations": [{ "id","title","removes":"the manual work it takes away","system":"the system it runs in","usesExisting":"Yes|No (Yes = a system the client already uses or is moving to)","approach":"native|connect|ai","status":"Idea|Proposed|Agreed|In progress|Live","effort":"Low|Medium|High","valueMonthly":0,"hoursMonthly":0,"basis","processId","owner","nextStep","description" }],
   "opportunities": [{ "id","title","area":"Positioning|Marketing|Product|Pricing|Sales|Systems & operations","description","basedOn","impact":"High|Medium|Low","effort":"High|Medium|Low","status":"Idea" }],
   "capabilities": [{ "id","name","importance":"High|Medium|Low","client":"Strong|Partial|None","scores":{ "<competitor id>":"Strong|Partial|None" } }],
   "engagement": { "timeLog": [{ "id":"day_YYYY-MM-DD","date":"YYYY-MM-DD","dayType":"Full|Half","items":"one output per line" }] }
