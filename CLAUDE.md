@@ -12,7 +12,9 @@ Always be looking for:
 - **Better tools:** what to replace, consolidate or automate, and what it saves.
 - **Automation, always:** every process, system and hand-off is a candidate. First prize is automating inside the systems the
   client already uses or is moving to (e.g. Paper-trail, the platform, the CRM, Google Workspace); AI where it does the job better.
-  Log each one as an automation opportunity: what it removes, the system it uses, rough value and effort.
+  Log each one as an automation opportunity: what it removes, the system it uses, rough value and effort, and the questions
+  that decide whether it works here. Keep one chain: finding (what's wrong) → recommendation (the fix) → automation (which
+  parts of the fix run themselves). Every automation names its recommendation; if no fix fits, add the recommendation first.
 
 Always ask what new data says when it is **combined** with what we already know (e.g. contract status × revenue ×
 adoption = revenue at risk). Joined-up insights are the most valuable ones.

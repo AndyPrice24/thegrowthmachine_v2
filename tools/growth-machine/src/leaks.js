@@ -70,7 +70,7 @@ function rankItems(items, sort) {
 }
 
 function leakFixChip(x) {
-  if (x.fix) return `<span class="lo-fix" title="${esc(x.fix.title)}">→ ${esc(trunc(x.fix.title, 46))} <span class="chip">${esc(x.fix.status || 'Identified')}</span></span>`;
+  if (x.fix) { const n = autosFor(E(), x.fix.id).length; return `<span class="lo-fix" title="${esc(x.fix.title)}">→ ${esc(trunc(x.fix.title, 46))} <span class="chip">${esc(x.fix.status || 'Identified')}</span>${n ? ` <span class="chip" title="${n} part${n > 1 ? 's' : ''} of this fix can run itself: see Automation opportunities">⚙ ${n}</span>` : ''}</span>`; }
   if (x.next) return `<span class="lo-next" title="${esc(x.next)}">Next: ${esc(trunc(x.next, 52))}</span>`;
   if (x.src === 'signal') return '<span class="faint small">Spotted automatically</span>';
   return '<span class="chip lo-nofix">No action yet</span>';

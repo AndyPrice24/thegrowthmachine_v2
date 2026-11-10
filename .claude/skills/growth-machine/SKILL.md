@@ -7,7 +7,10 @@ description: The Growth Machine's diagnostic method. Use it for any work on a TG
 
 **Automation lens (always on).** For every process, system and hand-off you touch, ask what could run itself. Prefer the client's
 existing or planned systems first (native features, their APIs, built-in automations), then AI. Record each as an automation
-opportunity with what it removes, the system it uses, rough value and effort.
+opportunity with what it removes, the system it uses, rough value, effort and the questions that decide whether it works here.
+Every automation sits under the recommendation it belongs to (finding → recommendation → automation); add the recommendation first
+if none fits, and never let an automation repeat a recommendation's wording (the recommendation holds the what and why, the
+automation the how).
 
 ## Who we are (from thegrowthmachine.co)
 The Growth Machine is a senior, hands-on fractional growth office run by Andrew and Tarren.
