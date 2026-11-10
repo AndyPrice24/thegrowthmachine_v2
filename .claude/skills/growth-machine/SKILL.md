@@ -5,6 +5,10 @@ description: The Growth Machine's diagnostic method. Use it for any work on a TG
 
 # The Growth Machine method
 
+**Automation lens (always on).** For every process, system and hand-off you touch, ask what could run itself. Prefer the client's
+existing or planned systems first (native features, their APIs, built-in automations), then AI. Record each as an automation
+opportunity with what it removes, the system it uses, rough value and effort.
+
 ## Who we are (from thegrowthmachine.co)
 The Growth Machine is a senior, hands-on fractional growth office run by Andrew and Tarren.
 - Start one level above the job title: what does the business actually need to grow?
