@@ -14,7 +14,7 @@ function renderReport(e) {
   const inScope = hasScenario ? scored.filter((x) => scenarioRecIds(e, scId).includes(x.rec.id)) : scored.filter((x) => x.rec.status !== 'Rejected');
   const ins = insights(e, fmtMoney, anon).filter((x) => x.severity !== 'low').slice(0, 8);
   const para = (t) => String(t || '').split(/\n{2,}/).map((p) => `<p>${esc(p)}</p>`).join('');
-  let h = '';
+  let h = ''; const citer = makeCiter(e);
 
   h += `<header class="rpt-cover"><div class="rpt-brand">THE <strong>GROWTH</strong> MACHINE</div>
     <h1>${esc(r.title || 'Operational Diagnostic')}</h1>
@@ -42,7 +42,7 @@ function renderReport(e) {
     <p class="small muted">Competitor information comes from public sources and interviews, reviewed ${esc([...new Set(e.competitors.map((c) => c.lastReviewed).filter(Boolean))].sort().slice(-1)[0] || 'recently')}. Indicative prices are estimates.</p></section>`;
 
   if (sec.findings && (e.findings.length || ins.length)) h += `<section class="rpt-sec"><h2>Key findings</h2>
-    ${e.findings.length ? `<ol class="rpt-findings">${e.findings.map((f) => `<li>${sevChip(f.severity || 'medium')} <strong>${esc(f.title)}</strong><p>${esc(f.evidence || '')}</p></li>`).join('')}</ol>` : ''}
+    ${e.findings.length ? `<ol class="rpt-findings">${e.findings.map((f) => `<li>${sevChip(f.severity || 'medium')} <strong>${esc(f.title)}</strong><p>${esc(f.evidence || '')}${citer.mark(refsFor(e, 'finding', f))}</p></li>`).join('')}</ol>` : ''}
     ${ins.length ? `<h3>What the data shows</h3><ul class="insights">${ins.map((x) => `<li>${sevChip(x.severity)} <strong>${esc(x.title)}</strong><div class="muted small">${esc(x.detail)}</div></li>`).join('')}</ul>` : ''}</section>`;
 
   if (sec.org && cur.people.length) h += `<section class="rpt-sec rpt-break"><h2>Organisation${hasScenario ? ': current vs proposed' : ''}</h2>${orgLegend(e.departments)}
@@ -69,7 +69,7 @@ function renderReport(e) {
       const items = inScope.filter((x) => (x.rec.horizon || '') === hz || (!hz && !horizons.includes(x.rec.horizon || '')));
       if (!items.length) return;
       h += `<h3>${hz || 'Unscheduled'}</h3><table class="tbl"><thead><tr><th>Recommendation</th><th class="r">Cash / yr</th><th class="r">Revenue / yr</th><th class="r">Hours freed / mo</th><th class="r">One-off</th><th class="r">Payback</th></tr></thead><tbody>
-        ${items.map((x) => `<tr><td><strong>${esc(x.rec.title)}</strong> <span class="chip">${esc(x.rec.type || '')}</span><div class="muted small">${esc(x.rec.description || '')}</div></td><td class="r">${fmtMoney(x.cash)}</td><td class="r">${fmtMoney(x.revenue)}</td><td class="r">${Math.round(x.hoursSaved)}</td><td class="r">${fmtMoney(x.oneOff)}</td><td class="r">${x.payback == null ? '—' : x.payback.toFixed(1) + ' mo'}</td></tr>`).join('')}</tbody></table>`;
+        ${items.map((x) => `<tr><td><strong>${esc(x.rec.title)}</strong> <span class="chip">${esc(x.rec.type || '')}</span><div class="muted small">${esc(x.rec.description || '')}${citer.mark(refsFor(e, 'recommendation', x.rec))}</div></td><td class="r">${fmtMoney(x.cash)}</td><td class="r">${fmtMoney(x.revenue)}</td><td class="r">${Math.round(x.hoursSaved)}</td><td class="r">${fmtMoney(x.oneOff)}</td><td class="r">${x.payback == null ? '—' : x.payback.toFixed(1) + ' mo'}</td></tr>`).join('')}</tbody></table>`;
     });
     h += '</section>';
   }
@@ -84,6 +84,7 @@ function renderReport(e) {
   }
 
   if (sec.nextSteps && r.nextSteps) h += `<section class="rpt-sec"><h2>Next steps</h2><ol>${splitList(r.nextSteps.replace(/^\s*\d+[.)]\s*/gm, '')).map((x) => `<li>${esc(x)}</li>`).join('')}</ol></section>`;
+  h += citer.appendix();
   h += `<footer class="rpt-foot">The Growth Machine · thegrowthmachine.co · ${date} · Confidential. Prepared for ${esc(e.client.name)}.</footer>`;
   return h;
 }

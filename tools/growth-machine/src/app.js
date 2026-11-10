@@ -266,6 +266,7 @@ function stripMarks(o) { return JSON.parse(JSON.stringify(o, (k, v) => (k.starts
 
 const actions = {
   goRec: (el) => goRec(el.dataset.id),
+  goSrc: (el) => goSrc(el.dataset.id),
   goAuto: (el) => { if (el.dataset.id) goAuto(el.dataset.id); },
   syncConnect: () => syncConnect(),
   syncCheck: () => syncCheck(false),
@@ -273,7 +274,7 @@ const actions = {
   tab: (el) => { if (el.dataset.id === 'processes' && ui.tab !== 'processes') landProcesses(); ui.tab = el.dataset.id; ui.capture = false; ui.session = false; if (el.dataset.sub) { normaliseTab(); ui.sub[ui.tab] = el.dataset.sub; } saveUI(); render(); window.scrollTo(0, 0); },
   sub: (el) => { ui.sub = Object.assign({}, ui.sub, { [el.dataset.tab]: el.dataset.id }); ui.capture = false; ui.session = false; saveUI(); render(); },
   showAll: (el) => { ui.all = Object.assign({}, ui.all, { [el.dataset.id]: !(ui.all || {})[el.dataset.id] }); render(); },
-  loNeed: (el) => { const k = el.dataset.k; const L = ui.lo || {}; ui.lo = Object.assign({}, L, k === 'clear' ? { noFix: false, unsized: false } : { noFix: k === 'noFix' ? !L.noFix : false, unsized: k === 'unsized' ? !L.unsized : false }, { open: '' }); ui.all = Object.assign({}, ui.all, { home: !!(ui.lo.noFix || ui.lo.unsized) }); saveUI(); render(); },
+  loNeed: (el) => { const k = el.dataset.k; const L = ui.lo || {}; ui.lo = Object.assign({}, L, k === 'clear' ? { noFix: false, unsized: false, nosrc: false } : { noFix: k === 'noFix' ? !L.noFix : false, unsized: k === 'unsized' ? !L.unsized : false, nosrc: k === 'nosrc' ? !L.nosrc : false }, { open: '' }); ui.all = Object.assign({}, ui.all, { home: !!(ui.lo.noFix || ui.lo.unsized) }); saveUI(); render(); },
   nrrReport: () => { ui.tab = 'progress'; ui.sub = Object.assign({}, ui.sub, { progress: 'report' }); ui.reportType = 'nrr'; saveUI(); render(); window.scrollTo(0, 0); },
   talkP: (el) => { ui.talkP = el.dataset.id; render(); },
   share: () => { if (!ui.share) { ui.anonBefore = !!ui.anon; ui.anon = true; ui.share = true; } else { ui.share = false; ui.anon = !!ui.anonBefore; } saveUI(); render(); toast(ui.share ? 'Screen share on: names show as roles; TGM-only notes are hidden' : 'Screen share off'); },

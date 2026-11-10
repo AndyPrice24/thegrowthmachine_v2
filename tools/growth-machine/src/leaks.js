@@ -84,6 +84,7 @@ function viewLeaks(e) {
   let list = all.filter((x) => L.lens === 'all' || x.kind === L.lens);
   if (L.noFix) list = list.filter((x) => !x.fix && !x.next && x.src !== 'signal');
   if (L.unsized) list = list.filter((x) => !x.value && x.src !== 'signal');
+  if (L.nosrc) list = list.filter((x) => x.src !== 'signal' && x.rec && unsourced(e, x.src === 'opportunity' ? 'opportunity' : 'finding', x.rec));
   const rankedAll = rankItems(list, L.sort);
   const tops = rankedAll.filter((x) => !x.nested); const keep = new Set(topN('home', tops).map((x) => x.id));
   const ranked = rankedAll.filter((x) => keep.has(x.nested ? x.partOf : x.id));
@@ -113,7 +114,7 @@ function viewLeaks(e) {
         <span class="lo-val">${x.value ? `<b>${fmtMoney(x.value)}</b>/mo<em>${esc((x.basis || '').toLowerCase())}</em>` : '<span class="faint">Not sized</span>'}</span>
         <span class="lo-fixcol">${leakFixChip(x)}</span>
       </button>
-      ${open ? `<div class="lo-detail"><p>${esc(x.detail)}</p>${x.rec && Array.isArray(x.rec.sources) && x.rec.sources.length ? `<div class="lo-srcs"><b class="small">Sources</b><ol>${x.rec.sources.map((r) => `<li class="small">${r.side === 'says' ? '<span class="chip">documents say</span> ' : r.side === 'seen' ? '<span class="chip">evidence</span> ' : ''}${esc(sourceLine(e, r, true))}</li>`).join('')}</ol></div>` : ''}<p class="faint small">${esc(x.area)}${x.partOf ? ` · part of: ${esc((all.find((y) => y.id === x.partOf) || {}).title || x.partOf)}` : ''}${x.fix ? ` · fix: ${esc(x.fix.title)} (${esc(x.fix.horizon || '')})` : ''}${x.next ? ` · next: ${esc(x.next)}` : ''}</p>${editor(x)}</div>` : ''}
+      ${open ? `<div class="lo-detail"><p>${esc(x.detail)}</p>${x.src !== 'signal' && x.rec ? citeBlock(e, x.src === 'opportunity' ? 'opportunity' : 'finding', x.rec) : ''}<p class="faint small">${esc(x.area)}${x.partOf ? ` · part of: ${esc((all.find((y) => y.id === x.partOf) || {}).title || x.partOf)}` : ''}${x.fix ? ` · fix: ${esc(x.fix.title)} (${esc(x.fix.horizon || '')})` : ''}${x.next ? ` · next: ${esc(x.next)}` : ''}</p>${editor(x)}</div>` : ''}
     </div>`;
   };
   let n = 0;
@@ -131,7 +132,7 @@ function viewLeaks(e) {
     <div class="lo-head"><span>#</span><span></span><span>What</span><span>At stake</span><span>Fix</span></div>
     <div class="lo-list">${ranked.length ? ranked.map((x) => row(x, x.nested ? 0 : ++n)).join('') : empty('Nothing here yet.')}</div>
     ${showAllBtn('home', tops.length)}
-    ${L.noFix || L.unsized ? `<p class="small" style="margin:8px 0 0">Filtered: ${L.noFix ? 'no action yet' : 'not sized'}. <button class="link" data-action="loNeed" data-k="clear">Show everything</button></p>` : ''}
+    ${L.noFix || L.unsized || L.nosrc ? `<p class="small" style="margin:8px 0 0">Filtered: ${L.noFix ? 'no action yet' : L.unsized ? 'not sized' : 'figures with no source'}. <button class="link" data-action="loNeed" data-k="clear">Show everything</button></p>` : ''}
     <p class="faint small" style="margin:10px 0 0">Totals count each item once (parts nested under a bigger item are not added again). Sizes are estimates from the sources named in each item. “Biggest first” counts leaking in full, at risk and upside at half, spend to review at a fifth.</p>
   </section>
   ${automationCard(e)}

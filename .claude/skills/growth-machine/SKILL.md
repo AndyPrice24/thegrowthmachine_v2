@@ -5,6 +5,10 @@ description: The Growth Machine's diagnostic method. Use it for any work on a TG
 
 # The Growth Machine method
 
+**Every figure cites its source.** Any finding, recommendation, automation or opportunity that states a number, rand value or
+time carries `sources` ([{id, part, side}]) pointing to the source register, with the exact part (tab, section, meeting, date).
+Recommendations and automations inherit their findings' sources; add their own only for figures the findings don't cover.
+
 **Automation lens (always on).** For every process, system and hand-off you touch, ask what could run itself. Prefer the client's
 existing or planned systems first (native features, their APIs, built-in automations), then AI. Record each as an automation
 opportunity with what it removes, the system it uses, rough value, effort and the questions that decide whether it works here.

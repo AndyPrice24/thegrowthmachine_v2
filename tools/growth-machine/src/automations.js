@@ -55,6 +55,7 @@ function automationCard(e) {
       ${a.description ? `<p>${esc(a.description)}</p>` : ''}
       ${autoQs(a).length ? `<div class="au-qs"><b>To check first (does it work here?)</b><ol>${autoQs(a).map((q) => `<li>${esc(q)}</li>`).join('')}</ol></div>` : ''}
       ${a.nextStep ? `<p><b>Next step:</b> ${esc(a.nextStep)}</p>` : ''}
+      ${citeBlock(e, 'automation', a)}
       <p class="faint small">${[ap[1], proc(a.processId) && 'Process: ' + proc(a.processId), a.owner && 'Owner: ' + a.owner, a.basis && 'Size: ' + a.basis].filter(Boolean).map(esc).join(' · ')}</p>
     </div></details>`;
   };

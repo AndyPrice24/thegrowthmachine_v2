@@ -54,6 +54,7 @@ function needsInput(e, all) {
     chip(overdue.length, `overdue from the client`, 'data-action="tab" data-id="progress"', overdue.slice(0, 4).map((r) => r.item).join(' · ')),
     chip(noFix, 'with no action yet', 'data-action="loNeed" data-k="noFix"', 'Each needs a recommendation, a question for a named role, or a data request. Click to filter the list.', L.noFix),
     chip(unsized, 'not sized', 'data-action="loNeed" data-k="unsized"', 'Add a rand figure, even a rough one, so they can be ranked. Click to filter the list.', L.unsized),
+    chip(noSrcCount(e), 'figures with no source', 'data-action="loNeed" data-k="nosrc"', 'Items that state a number, rand value or time with no source behind it. Click to filter the leaks; recommendations and automations show "No source yet".', L.nosrc),
     chip(unlinkedAutos(e).length, 'automations not linked to a fix', `data-action="goAuto" data-id="${esc((unlinkedAutos(e)[0] || {}).id || '')}"`, unlinkedAutos(e).slice(0, 4).map((a) => a.title).join(' · ')),
     chip(stale.length, 'to-dos past their date', 'data-action="tab" data-id="progress"', stale.slice(0, 4).map((a) => a.title).join(' · '))
   ].filter(Boolean);
@@ -69,7 +70,7 @@ function viewPlan(e) {
   const autoLine = (rec) => { const au = autosFor(e, rec.id); return au.length ? `<div class="small plan-auto"><b>Runs itself:</b> ${au.map((a) => `<button class="link" data-action="goAuto" data-id="${esc(a.id)}">${(AUTO_APPROACH[a.approach] || AUTO_APPROACH.native)[0]} ${esc(trunc(a.title, 70))}</button> <span class="faint">(${esc(a.status || 'Idea')}${autoQs(a).length ? `, ${autoQs(a).length} to check` : ''})</span>`).join(' · ')}</div>` : ''; };
   const row = (r, i) => `<tr id="rec-${esc(r.rec.id)}" class="${r.rec.status === 'Rejected' ? 'row-removed' : ''}"><td>${i + 1}</td><td>${r.rec.pinned ? '<span class="chip pin-chip">★ Founder priority</span> ' : ''}<strong>${esc(r.rec.title)}</strong> <span class="chip">${esc(r.rec.type || '—')}</span> <span class="chip">${esc(r.rec.horizon || '—')}</span>
       <div class="muted small">${esc(trunc(r.rec.description || '', 260))}</div>
-      <div class="small plan-stick">${r.rec.stick ? `<b>How it sticks:</b> ${esc(r.rec.stick)}` : '<span class="chip lo-nofix">How it sticks: not set</span> <span class="faint">system, ease, visibility, incentive, owner</span>'}${r.rec.owner ? ` · <b>Owner:</b> ${esc(r.rec.owner)}` : ''}</div>${autoLine(r.rec)}</td>
+      <div class="small plan-stick">${r.rec.stick ? `<b>How it sticks:</b> ${esc(r.rec.stick)}` : '<span class="chip lo-nofix">How it sticks: not set</span> <span class="faint">system, ease, visibility, incentive, owner</span>'}${r.rec.owner ? ` · <b>Owner:</b> ${esc(r.rec.owner)}` : ''}</div>${autoLine(r.rec)}${citeFold(e, 'recommendation', r.rec)}</td>
     <td><div class="score-bar"><span style="width:${r.score}%"></span></div><span class="small">${r.score}</span></td>
     <td class="r">${fmtMoney(r.cash + r.revenue)}</td><td class="r">${Math.round(r.hoursSaved)}</td><td class="r">${fmtMoney(r.oneOff)}</td><td class="r">${r.payback == null ? '—' : r.payback.toFixed(1) + ' mo'}</td>
     <td><select data-cell data-coll="recommendations" data-id="${r.rec.id}" data-field="status">${REC_STAGES.map((s) => `<option ${r.rec.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select></td></tr>`;
@@ -183,7 +184,8 @@ function viewProgressReports(e) {
 function sourcesCard(e) {
   const src = (e.sources || []).slice().sort((a, b) => String(b.received || '').localeCompare(String(a.received || '')));
   if (!src.length) return '';
-  return card(`Source register (${src.length})`, `<div class="scroll-x"><table class="tbl"><thead><tr><th>Source</th><th>Type</th><th>From</th><th>Information as of</th><th>Received</th><th>Via</th></tr></thead><tbody>
-    ${topN('sources', src, 8).map((s) => `<tr><td><strong>${esc(s.name || s.id)}</strong>${s.notes ? `<div class="faint small">${esc(trunc(s.notes, 140))}</div>` : ''}</td><td>${esc(s.type || '')}</td><td>${esc(s.from || '')}${s.person && !ui.anon ? ` <span class="faint small">(${esc(s.person)})</span>` : ''}</td><td>${esc(s.asOf || '')}</td><td>${esc(s.received || '')}</td><td>${esc(s.via || '')}</td></tr>`).join('')}
-    </tbody></table></div>${showAllBtn('sources', src.length, 8)}`, { sub: 'Every finding and feedback item cites these. Edit them under Edit data → Sources.' });
+  const cc = citeCounts(e);
+  return card(`Source register (${src.length})`, `<div class="scroll-x"><table class="tbl"><thead><tr><th>Source</th><th>Type</th><th>From</th><th>Information as of</th><th>Received</th><th>Via</th><th class="r">Cited by</th></tr></thead><tbody>
+    ${topN('sources', src, 8).map((s) => `<tr id="src-${esc(s.id)}"><td><strong>${s.link ? `<a href="${esc(s.link)}" target="_blank" rel="noopener">${esc(s.name || s.id)}</a>` : esc(s.name || s.id)}</strong>${s.notes ? `<div class="faint small">${esc(trunc(s.notes, 140))}</div>` : ''}</td><td>${esc(s.type || '')}</td><td>${esc(s.from || '')}${s.person && !ui.anon ? ` <span class="faint small">(${esc(s.person)})</span>` : ''}</td><td>${esc(s.asOf || '')}</td><td>${esc(s.received || '')}</td><td>${esc(s.via || '')}</td><td class="r">${cc[s.id] || 0}</td></tr>`).join('')}
+    </tbody></table></div>${showAllBtn('sources', src.length, 8)}`, { sub: 'Every figure in findings, recommendations, automations and feedback should point here. "Cited by" counts the items that use each source. Edit them under Edit data → Sources.' });
 }

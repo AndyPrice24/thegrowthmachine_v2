@@ -32,6 +32,9 @@ The full method is in the `growth-machine` skill (`.claude/skills/growth-machine
 - When a founder names a priority (e.g. Daryl's NRR 125% and client visibility), pin it (`pinned` on the finding and
   recommendation) so it leads Home and Plan, give it dated next steps, and make sure TGM's work visibly closes it.
 - Be honest: say when a number is an estimate or a source is messy, and ask rather than guess.
+- Every figure (a number, rand value or time) cites where it came from: `sources` on the finding, recommendation, automation
+  or opportunity, each pointing to the source register with the part (tab, section, meeting) it came from. Recommendations and
+  automations inherit their findings' sources. The Studio flags figures with no source; the report prints a source appendix.
 - Recommendations are suggestions for the client to decide. Each one says how it will stick (system, ease, visibility,
   incentive, owner); see the skill.
 - Where the client's documents disagree with the evidence, keep the evidence and log a feedback item for the client,
