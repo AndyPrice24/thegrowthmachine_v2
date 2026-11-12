@@ -217,7 +217,7 @@ function renderStatusReport(e) {
   const m = Math.max(1, Math.min(3, st.thisMonth));
   const dfmt = (v) => (v % 1 ? v.toFixed(1) : String(v));
   const capacity = `Month ${m}: ${dfmt(num(st.byMonth[m] || 0))} of ${num(g.daysPerMonth)} days used · ${dfmt(Math.max(0, st.remaining))} of ${num(g.daysTotal)} remaining overall`;
-  const bullets = (txt) => { const l = splitList(String(txt || '').replace(/\n/g, ';')); return l.length ? `<ul>${l.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : '<p class="muted">—</p>'; };
+  const bullets = (txt) => { const l = String(txt || '').split('\n').map((x) => x.trim()).filter(Boolean); return l.length ? `<ul>${l.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : '<p class="muted">—</p>'; };
   const groups = interviewsByRole(e); const ivTotal = e.interviews.length; const planned = e.people.length;
   let h = `<header class="rpt-cover"><div class="rpt-brand">THE <strong>GROWTH</strong> MACHINE</div><h1>Status report</h1><p class="rpt-client">${esc(e.client.name)}</p>
     <p class="rpt-meta">${fmtD(since, { day: 'numeric', month: 'short' })} – ${date}${g.contact ? ` · For ${esc(g.contact)}` : ''} · Confidential</p></header>`;

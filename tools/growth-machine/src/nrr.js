@@ -156,7 +156,7 @@ function nrrView(e, { forClient = false } = {}) {
 }
 
 function viewNRR(e) {
-  return `<div class="page-h"><div><span class="eyebrow">Evidence · Client growth</span><h1>Are clients and resellers growing or shrinking?</h1><p class="muted">Company objective 1: NRR ${esc((e.client.nrr || {}).target || 125)}%. Version 1, built from the data we hold today. To send it to Daryl: Progress &amp; reports → Reports → Client growth (NRR).</p></div>
+  return `<div class="page-h"><div><span class="eyebrow">Evidence · Client growth</span><h1>Are clients and resellers growing or shrinking?</h1><p class="muted">Company objective 1: NRR ${esc((e.client.nrr || {}).target || 125)}%. Version 1, built from the data we hold today.${PORTAL_ON ? '' : ' To send it to Daryl: Progress &amp; reports → Reports → Client growth (NRR).'}</p></div>
     <div class="btn-row"><button class="btn" data-action="nrrReport">Open as a report →</button></div></div>
   <section class="card">${nrrView(e)}</section>`;
 }

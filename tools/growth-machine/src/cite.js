@@ -35,7 +35,7 @@ function citeBlock(e, kind, o, label = 'Where this comes from') {
   if (!refs.length) return unsourced(e, kind, o) ? `<p class="cite-none small"><span class="chip lo-nofix">No source yet</span> <span class="faint">This states a figure; add the source it came from.</span></p>` : '';
   return `<div class="cite small"><b>${esc(label)}</b><ol>${refs.map((r) => `<li>${r.side === 'says' ? '<span class="chip">documents say</span> ' : r.side === 'seen' ? '<span class="chip">evidence</span> ' : ''}<button class="link" data-action="goSrc" data-id="${esc(r.id)}" title="Open this source in the source register">${esc(sourceLine(e, r, !ui.share))}</button></li>`).join('')}</ol></div>`;
 }
-function goSrc(id) { ui.tab = 'data'; ui.all = Object.assign({}, ui.all, { sources: true }); saveUI(); render(); focusEl('src-' + id); }
+function goSrc(id) { if (PORTAL_ON) { PT.modal = 'src:' + id; return ptModalRender(); } ui.tab = 'data'; ui.all = Object.assign({}, ui.all, { sources: true }); saveUI(); render(); focusEl('src-' + id); }
 /** How many items cite each source (for the register). */
 function citeCounts(e) {
   const n = {};

@@ -124,6 +124,7 @@ function centreStep(id) {
   const r2 = n.getBoundingClientRect(); if (r2.top < 70 || r2.bottom > window.innerHeight) window.scrollBy({ top: (r2.top + r2.height / 2) - window.innerHeight / 2, behavior: 'smooth' });
 }
 function render() {
+  if (PORTAL_ON) return portalRender();
   const keep = [...document.querySelectorAll('#main .flow-wrap')].map((w) => [w.scrollLeft, w.scrollTop]);
   const e = E();
   renderHeader();
@@ -142,6 +143,7 @@ function render() {
 /* ---------- Sources & data view (lives here because it is tied to the editor) ---------- */
 const FIELD_DEFS = {
   departments: [['id', 'text'], ['name', 'text'], ['type', DEPT_TYPES.map((d) => d[0])], ['headId', 'person'], ['notes', 'text']],
+  kpis: [['id', 'text'], ['label', 'text'], ['value', 'text'], ['sub', 'text'], ['ctx', 'text'], ['trendDir', ['up', 'down', 'flat', 'new']], ['trendTone', ['good', 'bad', 'warn', 'info']], ['trendText', 'text'], ['series', 'text'], ['target', 'num'], ['barPct', 'num'], ['order', 'num']],
   people: [['id', 'text'], ['name', 'text'], ['aka', 'text'], ['title', 'text'], ['departmentId', 'dept'], ['managerId', 'person'], ['employmentType', ['Full-time', 'Part-time', 'Contractor', 'Outsourced', 'Vacant']], ['fte', 'num'], ['annualCost', 'num'], ['location', 'text'], ['startDate', 'date'], ['notes', 'text']],
   tools: [['id', 'text'], ['name', 'text'], ['category', 'text'], ['vendor', 'text'], ['monthlyCost', 'num'], ['seats', 'num'], ['activeUsers', 'num'], ['departmentIds', 'text'], ['ownerId', 'person'], ['purpose', 'text'], ['notes', 'text']],
   processes: [['id', 'text'], ['name', 'text'], ['group', 'text'], ['leadsTo', 'text'], ['departmentId', 'dept'], ['ownerId', 'person'], ['confidence', Object.keys(CONFIDENCE)], ['sources', 'text'], ['summary', 'long'], ['talkingPoints', 'long'], ['findingIds', 'text'], ['frequency', 'text'], ['runsPerMonth', 'num'], ['hoursPerMonth', 'num'], ['inputs', 'text'], ['outputs', 'text'], ['team', 'text'], ['askId', 'text'], ['steps', 'json']],
@@ -164,7 +166,7 @@ const FIELD_DEFS = {
   recommendations: [['id', 'text'], ['title', 'text'], ['type', ['People', 'Process', 'Tool', 'Build', 'Structure', 'Commercial']], ['horizon', ['0-3 months', '3-6 months', '6-12 months', '12+ months']], ['description', 'long'], ['effort', 'num'], ['risk', 'num'], ['confidence', 'num'], ['oneOffCost', 'num'], ['otherAnnualSaving', 'num'], ['oneOffSaving', 'num'], ['revenueUplift', 'num'], ['status', REC_STAGES], ['stick', 'long'], ['owner', 'text'], ['pinned', ['', 'true']], ['ops', 'json']],
   scenarios: [['id', 'text'], ['name', 'text'], ['description', 'text'], ['recommendationIds', 'json']]
 };
-const COLL_LABELS = { customQuestions: 'Custom interview questions', competitors: 'Competitors', capabilities: 'Capabilities', intel: 'Competitor intelligence', usps: 'USPs', opportunities: 'Opportunities', automations: 'Automation opportunities', intake: 'Founder answers', departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Clients', revenueMovements: 'Revenue movements', feedback: 'Client feedback (written vs practice)', sources: 'Sources (where every number comes from)', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };
+const COLL_LABELS = { customQuestions: 'Custom interview questions', competitors: 'Competitors', capabilities: 'Capabilities', intel: 'Competitor intelligence', usps: 'USPs', opportunities: 'Opportunities', automations: 'Automation opportunities', kpis: 'Headline numbers (founder portal)', intake: 'Founder answers', departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Clients', revenueMovements: 'Revenue movements', feedback: 'Client feedback (written vs practice)', sources: 'Sources (where every number comes from)', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };
 
 function cellInput(e, coll, row, [f, type]) {
   const v = row[f]; const base = `data-cell data-coll="${coll}" data-id="${esc(row.id)}" data-field="${f}"`;
@@ -272,6 +274,7 @@ const actions = {
   syncCheck: () => syncCheck(false),
   syncBackup: () => syncBackup(false),
   lrNew: () => lrNew(),
+  lrDelete: () => lrDelete(),
   lrOpen: () => { ui.tab = 'progress'; ui.sub = Object.assign({}, ui.sub, { progress: 'report' }); ui.reportType = 'live'; ui.lrFb = 'new'; saveUI(); render(); window.scrollTo(0, 0); },
   lrItem: (el) => lrToggleItem(el.dataset.id, el.checked),
   lrQuick: (el) => lrQuick(el.dataset.id),
@@ -674,11 +677,13 @@ document.addEventListener('mouseup', () => { if (panning) { panning.wrap.classLi
 document.addEventListener('toggle', (ev) => { if (ev.target.id === 'mergeHist') { ui.mergeOpen = ev.target.open; const sm = ev.target.querySelector('summary b'); if (sm) sm.textContent = ev.target.open ? 'Hide history' : 'Show history'; } }, true);
 document.addEventListener('click', (ev) => {
   const a = ev.target.closest('[data-action]'); if (!a) return;
+  if (PORTAL_ON && !ptActionOK(a)) return; // the founder portal is read only
   if (a.type === 'checkbox') return; // handled on change
   const fn = actions[a.dataset.action]; if (fn) { ev.preventDefault(); fn(a, ev); }
 });
 document.addEventListener('change', (ev) => {
   const t = ev.target;
+  if (PORTAL_ON) { if (!ptChangeOK(t) || t.closest('#pt-sum, #pt-modal')) return; }
   if (t.id === 'engSel') { db.activeId = t.value; ui.scenario = 'current'; ui.processId = ''; save(); render(); return; }
   if (t.id === 'scSel') { ui.scenario = t.value; render(); return; }
   if (t.id === 'lrSel') { ui.lrId = t.value; render(); return; }
@@ -764,6 +769,7 @@ document.addEventListener('change', (ev) => {
 });
 document.addEventListener('input', (ev) => {
   const t = ev.target;
+  if (PORTAL_ON) return;
   if (t.tagName === 'TEXTAREA' && t.dataset.lr) { const lr = lrCur(E()); if (lr) { lr[t.dataset.lr] = t.value; touch(lr); save(); } return; }
   if (t.id === 'lrQ') { ui.lrQ = t.value; clearTimeout(ui._lrq); ui._lrq = setTimeout(() => { render(); const q = document.getElementById('lrQ'); if (q) { q.focus(); q.selectionStart = q.selectionEnd = q.value.length; } }, 250); return; }
   if (t.tagName === 'TEXTAREA' && t.dataset.bind) { setPath(E(), t.dataset.bind, t.value); touch(E()[t.dataset.bind.split('.')[0]]); save(); }
@@ -789,6 +795,4 @@ document.addEventListener('input', (ev) => {
   document.addEventListener('mouseleave', () => { tip.hidden = true; });
 })();
 
-loadDB();
-syncLoad();
-render();
+if (window.PORTAL && typeof window.PORTAL === 'object') portalBoot(window.PORTAL); else { loadDB(); syncLoad(); render(); }

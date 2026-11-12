@@ -9,7 +9,8 @@
  * Deploy: Deploy → New deployment → Web app. Execute as: Me. Who has access: Anyone.
  * The Drive folder itself stays private: this script reads and writes it on your behalf, nobody else gets access.
  *
- * The Studio writes each report to <updates folder>/reports/<reportId>.json (through Google Drive for desktop).
+ * The Studio writes each report to <updates folder>/reports/<reportId>.json (through Google Drive for desktop), and, for a
+ * founder portal, the page itself as reports/<reportId>.html, so the portal's look and features update without redeploying this script.
  * This script writes <updates folder>/<client>-report-feedback-<reportId>.json.
  */
 var FOLDER_ID = '%%FOLDER_ID%%'; // the TGM Studio updates folder (the Studio fills this in when you download the file)
@@ -26,7 +27,7 @@ function doGet(e) {
   if (!who) return notice_('This link is not valid', 'Please ask The Growth Machine for a new link.');
   var events = who.owner ? readEvents_(rep) : (logView_(rep, who) || readEvents_(rep));
   var state = { report: publicReport_(rep), me: who, events: events, focus: String(p.el || ''), r: rep.reportId, t: String(p.t) };
-  var html = HtmlService.createHtmlOutputFromFile('Report').getContent();
+  var html = appHtml_(rep) || HtmlService.createHtmlOutputFromFile('Report').getContent();
   html = html.replace('"__TGM_STATE__"', function () { return JSON.stringify(state).replace(/</g, '\\u003c'); });
   return HtmlService.createHtmlOutput(html)
     .setTitle(rep.title + ' · ' + rep.client)
@@ -79,8 +80,17 @@ function loadReport_(id) {
   var file = newest_(subs.next().getFilesByName(id + '.json'));
   if (!file) return null;
   var rep; try { rep = JSON.parse(file.getBlob().getDataAsString('UTF-8')); } catch (err) { return null; }
-  if (!rep || rep.kind !== 'tgm-live-report' || rep.reportId !== id || rep.revoked) return null;
+  if (!rep || (rep.kind !== 'tgm-live-report' && rep.kind !== 'tgm-founder-portal') || rep.reportId !== id || rep.revoked) return null;
   return rep;
+}
+/** The portal page the Studio published next to the report (reports/<id>.html), or null to use the built-in Report page. */
+function appHtml_(rep) {
+  var name = String(rep.appFile || '');
+  if (!/^[A-Za-z0-9_-]{3,64}\.html$/.test(name)) return null;
+  var subs = folder_().getFoldersByName('reports');
+  if (!subs.hasNext()) return null;
+  var file = newest_(subs.next().getFilesByName(name));
+  return file ? file.getBlob().getDataAsString('UTF-8') : null;
 }
 function feedbackName_(rep) {
   var n = String(rep.feedbackFile || '');

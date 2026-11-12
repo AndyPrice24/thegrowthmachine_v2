@@ -63,57 +63,60 @@ function lrRoleFn(e) {
   }).replace(/\b(the |The )?([A-Z]{2,5}) \(\2, /g, '$1$2 (').replace(/\b(the |The )?([A-Z]{2,5}) \(\2\)/g, '$1$2');
 }
 
-/** What the web app serves: only the ticked items, names as roles (unless turned off), sources as numbered lines. */
+/** The founder portal's data: the engagement minus TGM-only material (interviews, questions, diary, to-dos, merge history),
+    minus anything sensitive that wasn't ticked; the ticked items; the decisions asked of the founders; counts for the overview. */
+function lrPortalEng(e, lr) {
+  const ticked = new Set(lr.itemIds || []);
+  const sens = (o) => lrSensitive(o) && !ticked.has(o.id);
+  const DROP = new Set(['interviews', 'customQuestions', 'intake', 'feedback', 'staffSurvey', 'liveReports', 'reportFeedback', 'report']);
+  const x = JSON.parse(JSON.stringify(e, (k, v) => (k === 'updatedAt' || k === 'mergeLog' || k === 'deleted' || k.startsWith('_') ? undefined : v)));
+  Object.keys(x).forEach((k) => { if (DROP.has(k)) delete x[k]; });
+  x.meta = { currency: e.meta.currency, consultant: e.meta.consultant, engagementStart: e.meta.engagementStart, tsMigrated: true };
+  x.findings = (x.findings || []).filter((f) => !sens(f));
+  x.recommendations = (x.recommendations || []).filter((r) => !sens(r));
+  x.opportunities = (x.opportunities || []).filter((o) => !sens(o));
+  x.automations = (x.automations || []).filter((a) => !a.private && !sens(a));
+  x.people = (x.people || []).map((pp) => (LR_SENSITIVE.test(pp.notes || '') ? Object.assign({}, pp, { notes: '' }) : pp));
+  const g = x.engagement || {};
+  x.engagement = Object.assign({}, g, { timeLog: [], activities: [], requests: (g.requests || []).map((r) => ({ id: r.id, item: r.item, crit: r.crit, owner: r.owner, requestedDate: r.requestedDate, dueDate: r.dueDate, receivedDate: r.receivedDate, status: r.status })) });
+  return x;
+}
+function lrAsks(lr) {
+  return String(lr.asks || '').split('\n').map((l) => l.trim()).filter(Boolean).map((l) => { const [t, ...d] = l.split('|'); return { id: 'ask-' + hashStr(t.trim()), title: t.trim(), detail: d.join('|').trim() }; });
+}
+function lrCapacity(e) {
+  const g = e.engagement; if (!(g.phases || []).length) return '';
+  const st = engagementStatus(e); const m = Math.max(1, Math.min(3, st.thisMonth)); const f = (v) => (v % 1 ? v.toFixed(1) : String(v));
+  return `Month ${m}: ${f(num(st.byMonth[m] || 0))} of ${num(g.daysPerMonth)} days used · ${f(Math.max(0, st.remaining))} of ${num(g.daysTotal)} remaining overall`;
+}
 function lrSnapshot(e, lr) {
-  const R = lr.roles === false ? (s) => String(s || '') : lrRoleFn(e);
   const C = lrCandidates(e); const byC = {}; C.forEach((c) => { byC[c.id] = c; });
   const chosen = (lr.itemIds || []).map((id) => byC[id]).filter(Boolean);
-  const inReport = new Set(chosen.map((c) => c.id));
-  const recById = byId(e.recommendations);
-  const srcIdx = {}; const sources = [];
-  const cite = (refs) => refs.map((r) => {
-    if (!(r.id in srcIdx)) { sources.push({ n: sources.length + 1, line: R(sourceLine(e, { id: r.id }, false)) }); srcIdx[r.id] = sources.length; }
-    return { n: srcIdx[r.id], part: R(r.part || '') };
-  });
-  const el = (c) => {
-    const o = c.o;
-    if (c.src === 'recommendation') {
-      const x = c.x || {};
-      const autos = (e.automations || []).filter((a) => a.recommendationId === o.id && !a.private);
-      return { id: o.id, kind: 'recommendation', tag: o.type || 'Recommendation', title: R(o.title), pinned: !!o.pinned, status: o.status || 'Identified', horizon: o.horizon || '',
-        value: [x.cash ? `${fmtMoney(x.cash)}/yr saving` : '', x.revenue ? `${fmtMoney(x.revenue)}/yr revenue` : '', x.hoursSaved ? `${Math.round(x.hoursSaved)} hours a month freed` : '', x.oneOff ? `${fmtMoney(x.oneOff)} one-off` : ''].filter(Boolean).join(' · '),
-        summary: R(lrFirst(o.description)), detail: R(o.description || ''), stick: R(o.stick || ''), owner: R(o.owner || ''),
-        solves: e.findings.filter((f) => f.fixId === o.id && inReport.has(f.id)).map((f) => ({ id: f.id, title: R(f.title) })),
-        autos: autos.map((a) => ({ title: R(a.title), status: a.status || 'Idea' })), cites: cite(refsFor(e, 'recommendation', o)) };
-    }
-    const fix = recById[o.fixId || o.recommendationId];
-    return { id: o.id, kind: c.src, tag: LR_TAG[c.kind] || 'Finding', lens: c.kind, title: R(o.title), pinned: !!o.pinned,
-      value: c.value ? `${fmtMoney(c.value)}/month${c.basis ? ' · ' + c.basis.toLowerCase() : ''}` : '',
-      summary: R(lrFirst(o.evidence || o.description)), detail: R(o.evidence || o.description || ''), next: R(o.nextStep || ''),
-      fix: fix && fix.status !== 'Rejected' ? { id: fix.id, title: R(fix.title), inReport: inReport.has(fix.id) } : null,
-      cites: cite(refsFor(e, c.src, o)) };
-  };
-  const pri = chosen.filter((c) => c.pinned).sort(lrRank);
-  const found = chosen.filter((c) => !c.pinned && c.src !== 'recommendation');
-  const recs = chosen.filter((c) => !c.pinned && c.src === 'recommendation').sort(lrRank);
-  const sections = [];
-  if (pri.length) sections.push({ id: 'priorities', title: 'Founder priorities', intro: 'What the founders asked us to focus on first.', groups: [{ title: '', items: pri.map(el) }] });
-  if (found.length) sections.push({ id: 'found', title: 'What we found', intro: 'Ranked by size within each kind. Figures are monthly unless stated.',
-    groups: LR_LENS_ORDER.map((k) => ({ title: (LENSES.find((l) => l[0] === k) || [k, k])[1], items: found.filter((c) => c.kind === k).sort(lrRank).map(el) })).filter((g) => g.items.length) });
-  if (recs.length) sections.push({ id: 'suggest', title: 'What we suggest', intro: 'Suggestions for you to decide, ranked by value, effort, risk and confidence. Each says how it will stick.', groups: [{ title: '', items: recs.map(el) }] });
-  const steps = splitList(String(lr.nextSteps || '').replace(/^\s*\d+[.)]\s*/gm, '').replace(/,/g, '‚')).map((s) => s.replace(/‚/g, ','));
-  if (steps.length) sections.push({ id: 'next', title: 'Next steps', intro: '', groups: [{ title: '', items: steps.map((s) => ({ id: 'ns-' + hashStr(s), kind: 'step', tag: 'Next step', title: R(s) })) }] });
-  const elements = [];
-  if (lr.intro) elements.push({ id: 'summary', label: 'Summary', section: 'Summary' });
-  sections.forEach((s) => s.groups.forEach((g) => g.items.forEach((x) => elements.push({ id: x.id, label: x.title, section: s.title }))));
-  elements.push({ id: 'report', label: 'The report as a whole', section: '' });
-  return { kind: 'tgm-live-report', v: 1, reportId: lr.id, client: e.client.name, clientSlug: slugify(e.client.name), feedbackFile: lrFeedbackFile(e, lr),
-    title: lr.title || 'Findings and recommendations', preparedFor: lr.preparedFor || '', intro: R(lr.intro || ''), version: lr.version || 1, publishedAt: lr.publishedAt || nowISO(),
+  const found = chosen.filter((c) => c.src !== 'recommendation'); const recs = chosen.filter((c) => c.src === 'recommendation');
+  const asks = lrAsks(lr);
+  const procs = e.processes || []; const steps = procs.flatMap((pr) => pr.steps || []);
+  const elements = [...asks.map((a) => ({ id: a.id, label: a.title, section: 'Needs your decision' })),
+    ...found.map((c) => ({ id: c.id, label: c.title, section: 'Leaks & opportunities' })), ...recs.map((c) => ({ id: c.id, label: c.title, section: 'What we suggest' })),
+    { id: 'report', label: 'The portal as a whole', section: '' }];
+  return { kind: 'tgm-founder-portal', v: 2, reportId: lr.id, client: e.client.name, clientSlug: slugify(e.client.name), feedbackFile: lrFeedbackFile(e, lr), appFile: lr.id + '.html',
+    title: lr.title || 'Founder portal', preparedFor: lr.preparedFor || '', intro: lr.intro || '', version: lr.version || 1, publishedAt: lr.publishedAt || nowISO(),
     ownerToken: lr.ownerToken, recipients: (lr.recipients || []).filter((r) => !r.revoked).map((r) => ({ id: r.id, label: r.label, token: r.token })),
-    sections, sources, elements };
+    itemIds: found.map((c) => c.id), recIds: recs.map((c) => c.id), asks, prev: lr.lastValues || {},
+    stats: { conversations: (e.interviews || []).length, processes: procs.length, steps: steps.length, flags: steps.reduce((n, st) => n + (st.flags || []).length, 0), sources: (e.sources || []).length, capacity: lrCapacity(e) },
+    elements, eng: lrPortalEng(e, lr) };
+}
+/** The portal page: the Studio's own code and styles, plus a slot the web app fills with the viewer's data. */
+function lrPortalHtml() {
+  const css = ['viz-css', 'report-css', 'app-css', 'portal-css'].map((id) => (document.getElementById(id) || {}).textContent || '').join('\n');
+  const js = (document.getElementById('app-js') || {}).textContent || '';
+  if (!js) throw new Error('This copy of the Studio cannot build the portal (no app script found)');
+  return '<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">'
+    + '<title>Founder portal</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">'
+    + '<style>' + css + '</style></head><body class="portal"><script>window.PORTAL = "__TGM_STATE__";</' + 'script><div id="pt-app"></div><div id="modal" hidden></div><div id="toast" role="status" aria-live="polite"></div><div id="tip" hidden></div>'
+    + '<script>' + js + '</' + 'script></body></html>';
 }
 /** The label of an item in this report, from the data (for summaries that name items nobody commented on). */
-function lrLabel(e, lr, id) { if (id === 'summary') return 'Summary'; if (id === 'report') return 'The report as a whole'; const c = lrCandidates(e).find((x) => x.id === id); return c ? c.title : (String(id).startsWith('ns-') ? 'A next step' : id); }
+function lrLabel(e, lr, id) { if (id === 'summary') return 'Summary'; if (id === 'report') return 'The portal as a whole'; if (String(id).startsWith('ask-')) { const a = lrAsks(lr).find((x) => x.id === id); if (a) return a.title; } const c = lrCandidates(e).find((x) => x.id === id); return c ? c.title : (String(id).startsWith('ns-') ? 'A next step' : id); }
 const lrFeedbackFile = (e, lr) => `${slugify(e.client.name)}-report-feedback-${lr.id}.json`;
 function lrLink(e, lr, token, el) {
   const base = String((e.meta || {}).liveReportUrl || '').trim(); if (!base) return '';
@@ -123,8 +126,8 @@ function lrLink(e, lr, token, el) {
 /* ---------- actions ---------- */
 function lrNew() {
   const e = E(); e.liveReports = e.liveReports || [];
-  const lr = { id: 'lr_' + lrToken().slice(0, 8), title: 'Findings and recommendations', preparedFor: '', intro: '', nextSteps: '', itemIds: [], roles: true, recipients: [], ownerToken: lrToken(), version: 0, publishedAt: '' };
-  touch(lr); e.liveReports.push(lr); ui.lrId = lr.id; save(); render();
+  const lr = { id: 'lr_' + lrToken().slice(0, 8), title: 'Founder portal', preparedFor: '', intro: '', asks: '', itemIds: [], roles: false, recipients: [], ownerToken: lrToken(), version: 0, publishedAt: '', lastValues: {} };
+  touch(lr); e.liveReports.push(lr); ui.lrId = lr.id; save(); render(); window.scrollTo(0, 0); toast('New founder portal created: name it, tick what goes in, add who gets a link');
 }
 function lrToggleItem(id, on) {
   const lr = lrCur(E()); if (!lr) return; const s = new Set(lr.itemIds || []);
@@ -155,10 +158,20 @@ async function lrPublish() {
   const snap = lrSnapshot(e, lr);
   try {
     const dir = await syncState.handle.getDirectoryHandle('reports', { create: true });
-    const fh = await dir.getFileHandle(lr.id + '.json', { create: true });
-    const w = await fh.createWritable(); await w.write(JSON.stringify(snap)); await w.close();
-  } catch (err) { lr.version -= 1; return toast('Could not write the report: ' + err.message); }
+    const put = async (name, body) => { const fh = await dir.getFileHandle(name, { create: true }); const w = await fh.createWritable(); await w.write(body); await w.close(); };
+    await put(lr.id + '.html', lrPortalHtml());
+    await put(lr.id + '.json', JSON.stringify(snap));
+  } catch (err) { lr.version -= 1; return toast('Could not write the portal: ' + err.message); }
+  // Remember this version's values, so the next one can show what went up or down.
+  const rows = {}; savingsTracker(e).rows.forEach((r) => { rows[r.rec.id] = Math.max(0, r.monthlyNet); });
+  lr.lastValues = {}; lrCandidates(e).filter((c) => (lr.itemIds || []).includes(c.id)).forEach((c) => { lr.lastValues[c.id] = c.src === 'recommendation' ? (rows[c.id] || 0) : num(c.value); });
   save(); render(); toast(`Published version ${lr.version} to ${syncState.name}/reports. Links work once Google Drive has synced it (usually under a minute).`);
+}
+function lrDelete() {
+  const e = E(); const lr = lrCur(e); if (!lr) return;
+  if (!confirm(`Delete "${lr.title}" from the Studio?${lr.publishedAt ? ' Its links will keep working until you delete its files from the updates folder (reports/' + lr.id + '.json and .html).' : ''}`)) return;
+  e.liveReports = e.liveReports.filter((x) => x.id !== lr.id); e.meta.deleted = Object.assign({}, e.meta.deleted, { ['liveReports:' + lr.id]: nowISO() });
+  ui.lrId = ''; save(); render(); toast('Deleted');
 }
 function lrDownload(kind) {
   const e = E(); const fid = String((e.meta || {}).liveReportFolderId || '').trim();
@@ -216,9 +229,9 @@ function lrFeedbackCard(e, lr) {
 /* ---------- the page ---------- */
 function viewLiveReport(e, toggle) {
   const lrs = lrList(e); const lr = lrCur(e);
-  const head = `<div class="page-h"><div><span class="eyebrow">Report</span><h1>Live report</h1><p class="muted">A curated report each recipient opens in their browser from their own link. They can open, comment on and red-flag any item, and download a summary PDF. You see who opened it and when, and every comment, below.</p></div>
-    <div class="btn-row">${lrs.length > 1 ? `<select id="lrSel" class="inline">${lrs.map((x) => `<option value="${esc(x.id)}" ${lr && x.id === lr.id ? 'selected' : ''}>${esc(x.title)}</option>`).join('')}</select>` : ''}<button class="btn ${lrs.length ? 'ghost' : ''}" data-action="lrNew">+ New live report</button></div></div>`;
-  if (!lr) return head + toggle + empty('No live report yet. Click “New live report” to choose what goes in it and who gets a link.');
+  const head = `<div class="page-h"><div><span class="eyebrow">Report</span><h1>Founder portal</h1><p class="muted">What each founder sees from their own link: an overview, our work, the leaks and opportunities you tick, and read-only Processes and Evidence. They can comment, red-flag and download a summary for their team. You see who opened it and when, and every comment, below.</p></div>
+    <div class="btn-row">${lrs.length > 1 ? `<select id="lrSel" class="inline">${lrs.map((x) => `<option value="${esc(x.id)}" ${lr && x.id === lr.id ? 'selected' : ''}>${esc(x.title)}</option>`).join('')}</select>` : ''}<button class="btn ${lrs.length ? 'ghost' : ''}" data-action="lrNew">+ New founder portal</button>${lrs.length ? '<button class="btn ghost" data-action="lrDelete" title="Delete this portal from the Studio">Delete</button>' : ''}</div></div>`;
+  if (!lr) return head + toggle + empty('No founder portal yet. Click “New founder portal” to choose what goes in it and who gets a link.');
   const C = lrCandidates(e); const sel = new Set(lr.itemIds || []);
   const evs = lrEvents(e, lr); const flags = lrFlagState(evs); const talk = {}; evs.filter((x) => x.type === 'comment').forEach((x) => { talk[x.elementId] = (talk[x.elementId] || 0) + 1; });
   const tab = ui.lrPick || 'found';
@@ -241,10 +254,10 @@ function viewLiveReport(e, toggle) {
   return `${head}${toggle}
   ${lrFeedbackCard(e, lr)}
   ${card('1. What goes in', `
-    <div class="grid-2"><label class="fld"><span>Report title</span><input data-lr="title" value="${esc(lr.title)}"></label><label class="fld"><span>Prepared for</span><input data-lr="preparedFor" value="${esc(lr.preparedFor || '')}" placeholder="e.g. the founders"></label></div>
-    <label class="fld"><span>Summary (shown first; a short paragraph or two)</span><textarea data-lr="intro" rows="4">${esc(lr.intro || '')}</textarea></label>
-    <label class="fld"><span>Next steps (one per line)</span><textarea data-lr="nextSteps" rows="3">${esc(lr.nextSteps || '')}</textarea></label>
-    <label class="tog"><input type="checkbox" data-lr="roles" ${lr.roles !== false ? 'checked' : ''}> Show people by role, not name (recommended)</label>
+    <div class="grid-2"><label class="fld"><span>Name (shown under the client's name)</span><input data-lr="title" value="${esc(lr.title)}"></label><label class="fld"><span>Prepared for</span><input data-lr="preparedFor" value="${esc(lr.preparedFor || '')}" placeholder="e.g. the founders"></label></div>
+    <label class="fld"><span>Opening line on the overview (two or three sentences; if empty, the status report's headline is used)</span><textarea data-lr="intro" rows="3">${esc(lr.intro || '')}</textarea></label>
+    <label class="fld"><span>Needs your decision (one per line: what you need | a short line of detail)</span><textarea data-lr="asks" rows="4" placeholder="Pulse sign-off criteria | What you and Neil want to see before it runs on a schedule">${esc(lr.asks || '')}</textarea></label>
+    <p class="faint small">The overview also shows: the engagement timeline, savings identified, the headline numbers (Sources &amp; data → Headline numbers), this fortnight from the status report, and links into Processes and Evidence (read only).</p>
     <h5>Items: ${nF} finding${nF === 1 ? '' : 's'} and ${nR} recommendation${nR === 1 ? '' : 's'} ticked${nSens ? ` · <span class="warn-t">${nSens} marked “check before sharing”</span>` : ''}</h5>
     <div class="toolbar"><button class="btn sm ${tab === 'found' ? 'on' : ''}" data-action="lrPick" data-id="found">Findings &amp; opportunities</button><button class="btn sm ${tab === 'recs' ? 'on' : ''}" data-action="lrPick" data-id="recs">Recommendations</button>
       <input class="inline" id="lrQ" placeholder="Filter" value="${esc(ui.lrQ || '')}" style="max-width:180px">

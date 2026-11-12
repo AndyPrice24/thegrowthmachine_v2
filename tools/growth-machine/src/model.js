@@ -14,7 +14,7 @@ const byId = (arr) => Object.fromEntries((arr || []).map((x) => [x.id, x]));
 const splitList = (v) => Array.isArray(v) ? v : String(v || '').split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
 
 const COLLECTIONS = ['intake', 'customQuestions', 'competitors', 'capabilities', 'intel', 'usps', 'opportunities', 'departments', 'people', 'tools', 'processes', 'segments', 'markets', 'topClients', 'revenueMovements', 'feedback', 'sources',
-  'financePeriods', 'interviews', 'findings', 'recommendations', 'scenarios', 'automations', 'liveReports', 'reportFeedback'];
+  'financePeriods', 'interviews', 'findings', 'recommendations', 'scenarios', 'automations', 'liveReports', 'reportFeedback', 'kpis'];
 
 function blankEngagement(name) {
   const today = todayISO();

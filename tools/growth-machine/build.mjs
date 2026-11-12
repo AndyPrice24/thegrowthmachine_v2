@@ -10,11 +10,12 @@ const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
 const lrFile = (f) => readFileSync(join(here, 'live-report', f), 'utf8');
 // The web app's two files, embedded so the Studio can hand them over ("</" is escaped so they can't close the script tag).
 const LR = `const LIVE_REPORT_FILES = ${JSON.stringify({ code: lrFile('Code.gs'), html: lrFile('Report.html') }).replace(/<\//g, '<\\/')};\n`;
-const js = `const STUDIO_BUILD = '${stamp}';\n` + LR + ['model.js', 'questions.js', 'engagement.js', 'charts.js', 'flows.js', 'processes.js', 'demo.js', 'views.js', 'views2.js', 'leaks.js', 'cite.js', 'automations.js', 'nrr.js', 'pages.js', 'report.js', 'sync.js', 'livereport.js', 'app.js'].map((f) => `/* ---- ${f} ---- */\n${src(f)}`).join('\n');
+const js = `const STUDIO_BUILD = '${stamp}';\n` + LR + ['model.js', 'questions.js', 'engagement.js', 'charts.js', 'flows.js', 'processes.js', 'demo.js', 'views.js', 'views2.js', 'leaks.js', 'cite.js', 'automations.js', 'nrr.js', 'pages.js', 'report.js', 'sync.js', 'livereport.js', 'portal.js', 'app.js'].map((f) => `/* ---- ${f} ---- */\n${src(f)}`).join('\n');
 const html = src('index.html')
   .replace('/*VIZ_CSS*/', () => src('viz.css'))
   .replace('/*REPORT_CSS*/', () => src('report.css'))
   .replace('/*APP_CSS*/', () => src('styles.css'))
+  .replace('/*PORTAL_CSS*/', () => src('portal.css'))
   .replace('/*APP_JS*/', () => js);
 mkdirSync(join(here, 'dist'), { recursive: true });
 writeFileSync(join(here, 'dist', 'growth-machine-studio.html'), html);
