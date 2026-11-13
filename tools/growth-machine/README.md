@@ -245,7 +245,8 @@ What each founder sees from their own link, served by TGM's Apps Script web app 
 - Comments, red flags, replies to decisions and the summary PDF for their team work as before; feedback returns via ⟳ Updates.
 - **Publishing** writes `reports/<id>.json` (data) and `reports/<id>.html` (the portal page, built from this Studio's own code), so the
   portal's look and features update with the Studio, with no need to redeploy the web app. Code.gs serves the page if present, else
-  the older Report page.
+  the older Report page. Both the page and the data are written as plain ASCII (non-ASCII characters escaped), because Google's
+  servers can garble emoji in served pages and break the code.
 
 ### Retiring records from an update file
 An update file can remove an obsolete or duplicate record by sending `{"id": "...", "_delete": true}` in its collection.

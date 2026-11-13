@@ -28,7 +28,9 @@ function doGet(e) {
   var events = who.owner ? readEvents_(rep) : (logView_(rep, who) || readEvents_(rep));
   var state = { report: publicReport_(rep), me: who, events: events, focus: String(p.el || ''), r: rep.reportId, t: String(p.t) };
   var html = appHtml_(rep) || HtmlService.createHtmlOutputFromFile('Report').getContent();
-  html = html.replace('"__TGM_STATE__"', function () { return JSON.stringify(state).replace(/</g, '\\u003c'); });
+  // Escape '<' and every non-ASCII character: Google's servers can garble emoji and other characters in served pages.
+  var json = JSON.stringify(state).replace(/[<\u007f-\uffff]/g, function (c) { return '\\u' + ('000' + c.charCodeAt(0).toString(16)).slice(-4); });
+  html = html.replace('"__TGM_STATE__"', function () { return json; });
   return HtmlService.createHtmlOutput(html)
     .setTitle(rep.title + ' · ' + rep.client)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');

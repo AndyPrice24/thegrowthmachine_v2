@@ -795,4 +795,4 @@ document.addEventListener('input', (ev) => {
   document.addEventListener('mouseleave', () => { tip.hidden = true; });
 })();
 
-if (window.PORTAL && typeof window.PORTAL === 'object') portalBoot(window.PORTAL); else { loadDB(); syncLoad(); render(); }
+if (window.PORTAL && typeof window.PORTAL === 'object') { try { portalBoot(window.PORTAL); } catch (err) { console.error(err); const d = document.getElementById('pt-app'); if (d) d.innerHTML = `<div style="font:15px Arial;max-width:560px;margin:60px auto;padding:0 16px"><b>The portal could not start.</b><p>Please send this to The Growth Machine: ${esc(err.message)}</p></div>`; } } else { loadDB(); syncLoad(); render(); }
