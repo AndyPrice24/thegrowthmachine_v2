@@ -26,15 +26,48 @@ function doGet(e) {
   var who = whoIs_(rep, p.t);
   if (!who) return notice_('This link is not valid', 'Please ask The Growth Machine for a new link.');
   var events = who.owner ? readEvents_(rep) : (logView_(rep, who) || readEvents_(rep));
-  var state = { report: publicReport_(rep), me: who, events: events, focus: String(p.el || ''), r: rep.reportId, t: String(p.t) };
-  var html = appHtml_(rep) || HtmlService.createHtmlOutputFromFile('Report').getContent();
-  // Escape '<' and every non-ASCII character: Google's servers can garble emoji and other characters in served pages.
-  var json = JSON.stringify(state).replace(/[<\u007f-\uffff]/g, function (c) { return '\\u' + ('000' + c.charCodeAt(0).toString(16)).slice(-4); });
-  html = html.replace('"__TGM_STATE__"', function () { return json; });
+  // A founder portal is large (the Studio's code plus the client's data). Google can garble or cut large served pages, so
+  // serve a tiny loader instead; it fetches the full page through google.script.run (which carries text untouched) and draws it.
+  if (appHtml_(rep, true)) {
+    var boot = JSON.stringify({ r: rep.reportId, t: String(p.t), el: String(p.el || '') }).replace(/[<\u007f-\uffff]/g, esc16_);
+    return HtmlService.createHtmlOutput(LOADER_.replace('"__BOOT__"', function () { return boot; }))
+      .setTitle(rep.title + ' · ' + rep.client).addMetaTag('viewport', 'width=device-width, initial-scale=1');
+  }
+  var html = pageHtml_(rep, who, events, String(p.el || ''), String(p.t));
   return HtmlService.createHtmlOutput(html)
     .setTitle(rep.title + ' · ' + rep.client)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
+function esc16_(c) { return '\\u' + ('000' + c.charCodeAt(0).toString(16)).slice(-4); }
+/** The full page: the portal (or the older Report page) with this viewer's data in its slot. */
+function pageHtml_(rep, who, events, focus, token) {
+  var state = { report: publicReport_(rep), me: who, events: events, focus: focus, r: rep.reportId, t: token };
+  var html = appHtml_(rep) || HtmlService.createHtmlOutputFromFile('Report').getContent();
+  // Escape '<' and every non-ASCII character, so nothing in the data can break the page.
+  var json = JSON.stringify(state).replace(/[<\u007f-\uffff]/g, esc16_);
+  return html.replace('"__TGM_STATE__"', function () { return json; });
+}
+// The loader draws the fetched page into itself rather than replacing the document, so google.script.run keeps working.
+var LOADER_ = '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style id="ld-css">body{margin:0;background:#f4efe7;color:#171715;font:15px/1.5 Arial,sans-serif}'
+  + '.ld{max-width:560px;margin:80px auto;padding:0 16px}.b{font-size:11px;letter-spacing:.22em}.b b{color:#c8221c}</style></head><body>'
+  + '<div class="ld"><div class="b">THE <b>GROWTH</b> MACHINE</div><p id="msg">Loading your portal&#8230;</p></div><script>'
+  + 'var BOOT = "__BOOT__";'
+  + 'function fail(e) { var m = document.getElementById("msg") || document.body; m.textContent = "The portal could not load. Please send this to The Growth Machine: " + ((e && e.message) || e); }'
+  + 'function draw(html) {'
+  + ' var doc = new DOMParser().parseFromString(html, "text/html"), de = doc.documentElement, i;'
+  + ' for (i = 0; i < de.attributes.length; i++) document.documentElement.setAttribute(de.attributes[i].name, de.attributes[i].value);'
+  + ' if (doc.title) document.title = doc.title;'
+  + ' var css = document.getElementById("ld-css"); if (css) css.parentNode.removeChild(css);'
+  + ' var hs = doc.head.querySelectorAll("style,link"); for (i = 0; i < hs.length; i++) document.head.appendChild(document.importNode(hs[i], true));'
+  + ' document.body.className = doc.body.className; document.body.innerHTML = "";'
+  + ' var ns = Array.prototype.slice.call(doc.body.childNodes);'
+  + ' for (i = 0; i < ns.length; i++) { var n = ns[i];'
+  + '  if (n.nodeName === "SCRIPT") { var sc = document.createElement("script"); sc.text = n.textContent; document.body.appendChild(sc); }'
+  + '  else document.body.appendChild(document.importNode(n, true)); }'
+  + '}'
+  + 'google.script.run.withSuccessHandler(function (res) { try { draw(res.html); } catch (e) { fail(e); } })'
+  + '.withFailureHandler(fail).api({ op: "page", r: BOOT.r, t: BOOT.t, el: BOOT.el });'
+  + '</' + 'script></body></html>';
 
 /** The page's only server call. req = { r, t, op: 'refresh' | 'comment' | 'flag' | 'pdf', el, text, parent, on, comments } */
 function api(req) {
@@ -44,6 +77,7 @@ function api(req) {
   var who = whoIs_(rep, req.t);
   if (!who) throw new Error('This link is not valid.');
   if (req.op === 'refresh') return { events: readEvents_(rep) };
+  if (req.op === 'page') return { html: pageHtml_(rep, who, readEvents_(rep), String(req.el || ''), String(req.t)) };
   if (req.op === 'comment' || req.op === 'flag') {
     var el = elementOf_(rep, req.el);
     if (!el) throw new Error('That part of the report is no longer in it.');
@@ -86,13 +120,14 @@ function loadReport_(id) {
   return rep;
 }
 /** The portal page the Studio published next to the report (reports/<id>.html), or null to use the built-in Report page. */
-function appHtml_(rep) {
+function appHtml_(rep, existsOnly) {
   var name = String(rep.appFile || '');
   if (!/^[A-Za-z0-9_-]{3,64}\.html$/.test(name)) return null;
   var subs = folder_().getFoldersByName('reports');
   if (!subs.hasNext()) return null;
   var file = newest_(subs.next().getFilesByName(name));
-  return file ? file.getBlob().getDataAsString('UTF-8') : null;
+  if (!file) return null;
+  return existsOnly ? true : file.getBlob().getDataAsString('UTF-8');
 }
 function feedbackName_(rep) {
   var n = String(rep.feedbackFile || '');
