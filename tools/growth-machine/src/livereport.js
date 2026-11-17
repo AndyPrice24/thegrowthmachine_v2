@@ -76,6 +76,7 @@ function lrPortalEng(e, lr) {
   x.recommendations = (x.recommendations || []).filter((r) => !sens(r));
   x.opportunities = (x.opportunities || []).filter((o) => !sens(o));
   x.automations = (x.automations || []).filter((a) => !a.private && !sens(a));
+  x.moves = (x.moves || []).filter((m) => String(m.portal) !== 'false').map((m) => { const c = Object.assign({}, m); delete c.private; delete c.days; return c; });
   x.people = (x.people || []).map((pp) => (LR_SENSITIVE.test(pp.notes || '') ? Object.assign({}, pp, { notes: '' }) : pp));
   const g = x.engagement || {};
   x.engagement = Object.assign({}, g, { timeLog: [], activities: [], requests: (g.requests || []).map((r) => ({ id: r.id, item: r.item, crit: r.crit, owner: r.owner, requestedDate: r.requestedDate, dueDate: r.dueDate, receivedDate: r.receivedDate, status: r.status })) });
@@ -96,10 +97,10 @@ function lrSnapshot(e, lr) {
   const asks = lrAsks(lr);
   const procs = e.processes || []; const steps = procs.flatMap((pr) => pr.steps || []);
   const elements = [...asks.map((a) => ({ id: a.id, label: a.title, section: 'Needs your decision' })),
-    ...found.map((c) => ({ id: c.id, label: c.title, section: 'Leaks & opportunities' })), ...recs.map((c) => ({ id: c.id, label: c.title, section: 'What we suggest' })), ...edList(e, { portal: true }).map((x) => ({ id: x.id, label: x.title || ED_KINDS[x.kind], section: 'Insights' })),
+    ...found.map((c) => ({ id: c.id, label: c.title, section: 'Leaks & opportunities' })), ...recs.map((c) => ({ id: c.id, label: c.title, section: 'What we suggest' })), ...edList(e, { portal: true }).map((x) => ({ id: x.id, label: x.title || ED_KINDS[x.kind], section: 'Insights' })), ...mvList(e, { portal: true }).map((m) => ({ id: m.id, label: m.title, section: 'Big moves' })),
     { id: 'report', label: 'The portal as a whole', section: '' }];
   return { kind: 'tgm-founder-portal', v: 2, reportId: lr.id, client: e.client.name, clientSlug: slugify(e.client.name), feedbackFile: lrFeedbackFile(e, lr), appFile: lr.id + '.html',
-    title: lr.title || 'Founder portal', preparedFor: lr.preparedFor || '', intro: lr.intro || '', version: lr.version || 1, publishedAt: lr.publishedAt || nowISO(),
+    title: lr.title || 'Founder portal', preparedFor: lr.preparedFor || '', intro: lr.intro || '', headline: lr.headline || '', version: lr.version || 1, publishedAt: lr.publishedAt || nowISO(),
     ownerToken: lr.ownerToken, recipients: (lr.recipients || []).filter((r) => !r.revoked).map((r) => ({ id: r.id, label: r.label, token: r.token })),
     itemIds: found.map((c) => c.id), recIds: recs.map((c) => c.id), asks, prev: lr.lastValues || {},
     stats: { conversations: (e.interviews || []).length, processes: procs.length, steps: steps.length, flags: steps.reduce((n, st) => n + (st.flags || []).length, 0), sources: (e.sources || []).length, capacity: lrCapacity(e) },
@@ -259,6 +260,7 @@ function viewLiveReport(e, toggle) {
   ${lrFeedbackCard(e, lr)}
   ${card('1. What goes in', `
     <div class="grid-2"><label class="fld"><span>Name (shown under the client's name)</span><input data-lr="title" value="${esc(lr.title)}"></label><label class="fld"><span>Prepared for</span><input data-lr="preparedFor" value="${esc(lr.preparedFor || '')}" placeholder="e.g. the founders"></label></div>
+    <label class="fld"><span>Headline on the overview (one sentence; if empty, a greeting is used)</span><input data-lr="headline" value="${esc(lr.headline || '')}"></label>
     <label class="fld"><span>Opening line on the overview (two or three sentences; if empty, the status report's headline is used)</span><textarea data-lr="intro" rows="3">${esc(lr.intro || '')}</textarea></label>
     <label class="fld"><span>Needs your decision (one per line: what you need | a short line of detail)</span><textarea data-lr="asks" rows="4" placeholder="Pulse sign-off criteria | What you and Neil want to see before it runs on a schedule">${esc(lr.asks || '')}</textarea></label>
     <p class="faint small">The overview also shows: the engagement timeline, savings identified, the headline numbers (Sources &amp; data → Headline numbers), this fortnight from the status report, and links into Processes and Evidence (read only).</p>

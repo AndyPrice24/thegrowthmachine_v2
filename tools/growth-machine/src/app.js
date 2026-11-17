@@ -129,7 +129,7 @@ function render() {
   const e = E();
   renderHeader();
   normaliseTab();
-  const views = { home: viewLeaks, plan: viewPlan, processes: viewProcesses, evidence: viewEvidence, talk: viewTalk, progress: viewProgressReports, data: viewData };
+  const views = { moves: viewMoves, home: viewLeaks, plan: viewPlan, processes: viewProcesses, evidence: viewEvidence, talk: viewTalk, progress: viewProgressReports, data: viewData };
   let html;
   try { html = (views[ui.tab] || viewLeaks)(e); }
   catch (err) { console.error(err); html = `<div class="banner err">Something in this client's data could not be displayed: ${esc(err.message)}. Check Sources &amp; data.</div>`; }
@@ -143,6 +143,7 @@ function render() {
 /* ---------- Sources & data view (lives here because it is tied to the editor) ---------- */
 const FIELD_DEFS = {
   departments: [['id', 'text'], ['name', 'text'], ['type', DEPT_TYPES.map((d) => d[0])], ['headId', 'person'], ['notes', 'text']],
+  moves: [['id', 'text'], ['order', 'num'], ['bucket', Object.keys(MV_BUCKETS)], ['title', 'text'], ['pinned', ['', 'true']], ['stage', ['aligned', 'unblocked', 'live', 'measured', 'done']], ['why', 'long'], ['before', 'long'], ['nowLabel', 'text'], ['now', 'long'], ['impact', 'text'], ['impactTbc', 'text'], ['next', 'text'], ['nextDate', 'text'], ['links', 'text'], ['portal', ['', 'false']], ['private', 'long'], ['days', 'num'], ['stageNotes', 'json'], ['timeline', 'json'], ['impacts', 'json'], ['sources', 'json']],
   enhanced: [['id', 'text'], ['order', 'num'], ['kind', Object.keys(ED_KINDS)], ['title', 'text'], ['eyebrow', 'text'], ['tag', 'text'], ['sub', 'text'], ['sowhat', 'long'], ['coverage', 'text'], ['coveragePct', 'num'], ['portal', ['', 'false']], ['wide', ['', 'true', 'false']], ['params', 'json'], ['data', 'json'], ['sources', 'json']],
   kpis: [['id', 'text'], ['label', 'text'], ['value', 'text'], ['sub', 'text'], ['ctx', 'text'], ['trendDir', ['up', 'down', 'flat', 'new']], ['trendTone', ['good', 'bad', 'warn', 'info']], ['trendText', 'text'], ['series', 'text'], ['target', 'num'], ['barPct', 'num'], ['order', 'num']],
   people: [['id', 'text'], ['name', 'text'], ['aka', 'text'], ['title', 'text'], ['departmentId', 'dept'], ['managerId', 'person'], ['employmentType', ['Full-time', 'Part-time', 'Contractor', 'Outsourced', 'Vacant']], ['fte', 'num'], ['annualCost', 'num'], ['location', 'text'], ['startDate', 'date'], ['notes', 'text']],
@@ -167,7 +168,7 @@ const FIELD_DEFS = {
   recommendations: [['id', 'text'], ['title', 'text'], ['type', ['People', 'Process', 'Tool', 'Build', 'Structure', 'Commercial']], ['horizon', ['0-3 months', '3-6 months', '6-12 months', '12+ months']], ['description', 'long'], ['effort', 'num'], ['risk', 'num'], ['confidence', 'num'], ['oneOffCost', 'num'], ['otherAnnualSaving', 'num'], ['oneOffSaving', 'num'], ['revenueUplift', 'num'], ['status', REC_STAGES], ['stick', 'long'], ['owner', 'text'], ['pinned', ['', 'true']], ['ops', 'json']],
   scenarios: [['id', 'text'], ['name', 'text'], ['description', 'text'], ['recommendationIds', 'json']]
 };
-const COLL_LABELS = { customQuestions: 'Custom interview questions', competitors: 'Competitors', capabilities: 'Capabilities', intel: 'Competitor intelligence', usps: 'USPs', opportunities: 'Opportunities', automations: 'Automation opportunities', kpis: 'Headline numbers (founder portal)', enhanced: 'Enhanced data views (Insights)', intake: 'Founder answers', departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Clients', revenueMovements: 'Revenue movements', feedback: 'Client feedback (written vs practice)', sources: 'Sources (where every number comes from)', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };
+const COLL_LABELS = { customQuestions: 'Custom interview questions', competitors: 'Competitors', capabilities: 'Capabilities', intel: 'Competitor intelligence', usps: 'USPs', opportunities: 'Opportunities', automations: 'Automation opportunities', kpis: 'Headline numbers (founder portal)', enhanced: 'Enhanced data views (Insights)', moves: 'Big moves', intake: 'Founder answers', departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Clients', revenueMovements: 'Revenue movements', feedback: 'Client feedback (written vs practice)', sources: 'Sources (where every number comes from)', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };
 
 function cellInput(e, coll, row, [f, type]) {
   const v = row[f]; const base = `data-cell data-coll="${coll}" data-id="${esc(row.id)}" data-field="${f}"`;
@@ -275,6 +276,9 @@ const actions = {
   syncCheck: () => syncCheck(false),
   syncBackup: () => syncBackup(false),
   lrNew: () => lrNew(),
+  mvOpen: (el) => { ui.moveId = el.dataset.id || ''; saveUI(); render(); window.scrollTo(0, 0); },
+  mvView: (el) => { ui.mvFounder = el.dataset.id === 'founders'; saveUI(); render(); },
+  mvBucket: (el) => { ui.mvBucket = el.dataset.id || ''; saveUI(); render(); },
   lrDelete: () => lrDelete(),
   lrOpen: () => { ui.tab = 'progress'; ui.sub = Object.assign({}, ui.sub, { progress: 'report' }); ui.reportType = 'live'; ui.lrFb = 'new'; saveUI(); render(); window.scrollTo(0, 0); },
   lrItem: (el) => lrToggleItem(el.dataset.id, el.checked),

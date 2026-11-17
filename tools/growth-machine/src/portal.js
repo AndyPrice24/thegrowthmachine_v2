@@ -6,11 +6,11 @@
    TGM-only notes stay hidden (share mode). Views, comments, red flags and summaries go back through the web app.
    ============================================================ */
 let PORTAL_ON = false;
-const PT = { S: null, R: null, me: null, ev: [], sec: 'home', open: {}, drafts: {}, replyTo: {}, busy: {}, lf: 'all', tab: 'found', modal: '', D: null };
+const PT = { move: '', mb: '', S: null, R: null, me: null, ev: [], sec: 'home', open: {}, drafts: {}, replyTo: {}, busy: {}, lf: 'all', tab: 'found', modal: '', D: null };
 /* Studio actions that only change what is shown. Everything else is blocked in the portal. */
 const PT_ACTIONS = new Set(['sub', 'showAll', 'pvPick', 'pvBack', 'pvFocus', 'pvJourney', 'pvHl', 'pvSet', 'pvTick', 'flowStep', 'flowClear', 'zoom', 'setIntelFilter', 'goSrc', 'tab']);
 const PT_UI_OK = new Set(['compare', 'execView', 'ghosts', 'showCost', 'prioOnly']);
-const PT_SECTIONS = [['home', 'Overview', 'i-home'], ['work', 'Our work', 'i-work'], ['leaks', 'Leaks & opportunities', 'i-leak'], ['proc', 'Processes', 'i-proc'], ['evid', 'Evidence', 'i-evid'], ['ins', 'Insights', 'i-ins']];
+const PT_SECTIONS = [['home', 'Overview', 'i-home'], ['moves', 'Big moves', 'i-move'], ['work', 'Our work', 'i-work'], ['leaks', 'Leaks & opportunities', 'i-leak'], ['proc', 'Processes', 'i-proc'], ['evid', 'Evidence', 'i-evid'], ['ins', 'Insights', 'i-ins']];
 /** Short money: R494k, R1.06m. */
 function ptMoney(v) { v = num(v); const sym = fmtShort(0).replace(/[\d.,\s]/g, '') || 'R'; const a = Math.abs(v); const s = a >= 1e6 ? (a / 1e6).toFixed(a >= 1e7 ? 1 : 2).replace(/\.?0+$/, '') + 'm' : a >= 1e3 ? Math.round(a / 1e3) + 'k' : String(Math.round(a)); return (v < 0 ? '-' : '') + sym + s; }
 const ptName = (k) => (PT_SECTIONS.find((s) => s[0] === k) || ['', ''])[1];
@@ -39,13 +39,14 @@ function portalBoot(S) {
   const root = document.getElementById('pt-app') || document.body.appendChild(Object.assign(document.createElement('div'), { id: 'pt-app' }));
   root.innerHTML = ptShell();
   ptDerive();
-  if (S.focus) { const f = S.focus; if (PT.R.itemIds.includes(f) || (PT.R.recIds || []).includes(f)) { PT.sec = 'leaks'; PT.tab = (PT.R.recIds || []).includes(f) ? 'recs' : 'found'; PT.open[f] = true; } else if (f.startsWith('ask-') || f === 'report') { PT.modal = f; } else if (ptIsInsight(f)) { PT.sec = 'ins'; PT.open[f] = true; } }
+  if (S.focus) { const f = S.focus; if (PT.R.itemIds.includes(f) || (PT.R.recIds || []).includes(f)) { PT.sec = 'leaks'; PT.tab = (PT.R.recIds || []).includes(f) ? 'recs' : 'found'; PT.open[f] = true; } else if (f.startsWith('ask-') || f === 'report') { PT.modal = f; } else if (ptIsInsight(f)) { PT.sec = 'ins'; PT.open[f] = true; } else if (ptIsMove(f)) { PT.sec = 'moves'; PT.move = f; } }
   portalRender();
   if (S.focus && PT.open[S.focus]) setTimeout(() => ptFocus(S.focus), 120);
   setInterval(() => { if (document.hidden) return; const a = document.activeElement; if (a && a.tagName === 'TEXTAREA') return;
     ptCall({ op: 'refresh' }).then((res) => { const n = PT.ev.length; ptSetEvents(res.events); if (PT.ev.length !== n) portalRender(); }).catch(() => {}); }, 60000);
 }
 const PT_ICONS = `<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-move" viewBox="0 0 24 24"><path d="M4 18l6-6 4 4 6-8"/><path d="M15 8h5v5"/></symbol>
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></symbol>
   <symbol id="i-work" viewBox="0 0 24 24"><path d="M4 19V9"/><path d="M10 19V5"/><path d="M16 19v-7"/><path d="M22 19H2"/></symbol>
   <symbol id="i-leak" viewBox="0 0 24 24"><path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/></symbol>
@@ -61,7 +62,7 @@ const PT_ICONS = `<svg width="0" height="0" style="position:absolute" aria-hidde
 const ptIcon = (id) => `<svg class="pt-ic" aria-hidden="true"><use href="#${id}"/></svg>`;
 function ptShell() {
   const R = PT.R; const me = PT.me;
-  const nav = (cls) => PT_SECTIONS.map(([k, n, ic], i) => `${cls === 'rail' && i === 3 ? '<div class="pt-nav-h">Your business</div>' : ''}<button type="button" data-pt="go" data-sec="${k}">${ptIcon(ic)}<span>${cls === 'tab' && k === 'leaks' ? 'Leaks' : esc(n)}</span></button>`).join('');
+  const nav = (cls) => PT_SECTIONS.map(([k, n, ic], i) => `${cls === 'rail' && k === 'proc' ? '<div class="pt-nav-h">Your business</div>' : ''}<button type="button" data-pt="go" data-sec="${k}">${ptIcon(ic)}<span>${cls === 'tab' ? esc(({ home: 'Home', moves: 'Moves', work: 'Work', leaks: 'Leaks', proc: 'Process', evid: 'Evidence', ins: 'Insights' })[k] || n) : esc(n)}</span></button>`).join('');
   return `${PT_ICONS}<div class="pt-shell">
     <aside class="pt-rail" aria-label="Portal navigation">
       <div class="pt-brand">THE <b>GROWTH</b> MACHINE</div>
@@ -143,7 +144,7 @@ function portalRender() {
   try {
     if (sec === 'proc') { ui.tab = 'processes'; html = `<div class="pt-studio">${viewProcesses(E())}</div>`; }
     else if (sec === 'evid') { ui.tab = 'evidence'; html = `<div class="pt-studio">${viewEvidence(E())}</div>`; }
-    else html = ({ home: ptHome, work: ptWork, leaks: ptLeaks, ins: ptInsights })[sec]();
+    else html = ({ home: ptHome, moves: ptMovesSec, work: ptWork, leaks: ptLeaks, ins: ptInsights })[sec]();
   } catch (err) { console.error(err); html = `<div class="pt-card"><p>This part of the portal couldn't be shown: ${esc(err.message)}</p></div>`; }
   main.innerHTML = html;
   if (sec === 'proc' || sec === 'evid') { ptLock(main); main.querySelectorAll('.flow-wrap').forEach((w, i) => { if (keep[i]) { w.scrollLeft = keep[i][0]; w.scrollTop = keep[i][1]; } }); }
@@ -206,15 +207,16 @@ function ptTimeline(e, big) {
     <div class="pt-phases" style="grid-template-columns:${ph.map((p) => `${Math.max(1, daysBetween(p.start, p.end) + 1) / tot}fr`).join(' ')}">${ph.map((p) => `<div class="${cls(p)}"><span>${esc(p.name)}</span>${big ? `<small>${esc(fmtD(p.start))} – ${esc(fmtD(p.end))} · ${esc(p.status || '')}</small>` : ''}</div>`).join('')}</div>`;
 }
 function ptWeek(e) { const g = e.engagement; const weeks = Math.max(1, Math.ceil((daysBetween(g.start, g.end) + 1) / 7)); return { cur: Math.max(1, Math.min(weeks, Math.floor(daysBetween(g.start, todayISO()) / 7) + 1)), weeks }; }
-function ptKpis(e) {
+function ptKpis(e, { noSavings = false } = {}) {
   const sv = savingsTracker(e);
   const pct = sv.target ? Math.min(100, sv.identified / sv.target * 100) : 0; const apct = sv.target ? Math.min(100, sv.approved / sv.target * 100) : 0;
   const tiles = [`<div class="pt-card pt-kpi"><span class="pt-kpi-l">Savings identified</span><span class="pt-kpi-v">${esc(ptMoney(sv.identified))}<small>/ mo</small></span>
     <div class="pt-bar" title="Identified and approved against the target"><i style="width:${pct.toFixed(0)}%"></i><b style="width:${apct.toFixed(0)}%"></b></div>
     <span class="pt-kpi-c">${esc(ptMoney(sv.approved))} of ${esc(ptMoney(sv.target))} / mo target approved${sv.realised ? ` · ${esc(ptMoney(sv.realised))} realised` : ''}</span>
     ${ptTrend(sv.approved ? 'up' : '', sv.approved ? 'good' : 'info', sv.approved ? 'Approved savings are counting' : 'Estimates · approval needs finance data')}</div>`];
+  if (noSavings) tiles.length = 0;
   (e.kpis || []).slice().sort((a, b) => num(a.order) - num(b.order)).slice(0, 3).forEach((k) => {
-    tiles.push(`<div class="pt-card pt-kpi"><span class="pt-kpi-l">${esc(k.label)}${ptSrcBtn(k.sources)}</span><span class="pt-kpi-v">${esc(k.value)}${k.sub ? `<small>${esc(k.sub)}</small>` : ''}</span>
+    tiles.push(`<div class="pt-card pt-kpi${noSavings ? ' w4' : ''}"><span class="pt-kpi-l">${esc(k.label)}${ptSrcBtn(k.sources)}</span><span class="pt-kpi-v">${esc(k.value)}${k.sub ? `<small>${esc(k.sub)}</small>` : ''}</span>
       ${k.series ? ptSpark(k.series, k.target, k.trendTone) : num(k.barPct) ? `<div class="pt-bar"><i class="red" style="width:${Math.min(100, num(k.barPct))}%"></i></div>` : ''}
       ${k.ctx ? `<span class="pt-kpi-c">${esc(k.ctx)}</span>` : ''}${ptTrend(k.trendDir, k.trendTone, k.trendText)}</div>`);
   });
@@ -228,6 +230,44 @@ function ptLeakRow(x, compact) {
     <span class="pt-tag pt-${x.tone}">${esc(x.cat)}</span></button>`;
 }
 function ptHome() {
+  const e = E(); const moves = mvList(e, { portal: true }); if (!moves.length) return ptHomeClassic();
+  const R = PT.R; const st = engagementStatus(e); const w = ptWeek(e); const g = e.engagement; const S = g.status || {};
+  const h = new Date().getHours(); const hello = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+  const first = PT.me.owner ? '' : ', ' + String(PT.me.label).split(/[\s(]/)[0];
+  const next = splitList(g.reviewDates).find((d) => d > todayISO()); const waiting = st.overdue.length; const asks = R.asks || [];
+  const sv = savingsTracker(e); const pct = sv.target ? Math.min(100, sv.identified / sv.target * 100) : 0;
+  const lead = `<div class="mv-tile mv-lead"><div class="k">Savings identified</div><div class="v">${esc(ptMoney(sv.identified))}<small> / mo</small></div><div class="s">against the ${esc(ptMoney(sv.target))}/month target · ${sv.approved ? esc(ptMoney(sv.approved)) + ' approved' : 'estimates, awaiting finance detail'}</div><div class="mv-meter"><i style="width:${pct.toFixed(0)}%"></i></div></div>`;
+  const shown = moves.filter((m) => !PT.mb || (m.bucket || 'friction') === PT.mb);
+  const nIns = edList(e, { portal: true }).length;
+  return `<section class="pt-hello"><div class="pt-eyebrow">Week ${w.cur} of ${w.weeks} · ${st.openDelays.length ? `${st.openDelays.length} open delay${st.openDelays.length > 1 ? 's' : ''}` : 'on track'}</div>
+      <h1>${esc(R.headline || `${hello}${first}. Here's where ${e.client.name} stands.`)}</h1>${R.intro || S.headline ? `<p class="pt-lede">${esc(R.intro || S.headline)}</p>` : ''}</section>
+    ${mvHero(moves, lead)}
+    <div class="mv-sh"><h2>The big moves</h2>${mvFilters(moves, PT.mb, (k) => `data-pt="mb" data-id="${k}"`)}</div>
+    <div class="mv-grid">${shown.map((m) => mvCard(e, m, { open: `data-pt="move" data-id="${esc(m.id)}"`, acts: ptActs(m.id) })).join('')}</div>
+    <div class="pt-grid pt-after-moves">
+      ${asks.length ? ptCard('Needs your decision', `<div class="pt-asks pt-asks-row">${asks.map((a, i) => `<div class="pt-ask"><span class="pt-n">${i + 1}</span><div><b>${esc(a.title)}</b>${a.detail ? `<p>${esc(a.detail)}</p>` : ''}${(PT.D.comments[a.id] || []).length ? `<p class="pt-replied">💬 ${(PT.D.comments[a.id] || []).length} repl${(PT.D.comments[a.id] || []).length > 1 ? 'ies' : 'y'}</p>` : ''}</div><button type="button" class="pt-btn" data-pt="discuss" data-id="${esc(a.id)}">Reply</button></div>`).join('')}</div>${waiting ? `<p class="pt-wait-line">Also ${waiting} information request${waiting > 1 ? 's' : ''} past their date. ${ptLinkTo('work', 'See the list')}</p>` : ''}`, { note: `${asks.length} open`, cls: 'c12' }) : ''}
+      ${ptKpis(e, { noSavings: true })}
+      ${ptCard('The engagement', `${ptTimeline(e)}<div class="pt-tl-meta">${next ? `<span>Next review <b>${esc(fmtD(next, { weekday: 'short', day: 'numeric', month: 'short' }))}</b></span>` : ''}<span>Conversations <b>${num(R.stats.conversations)}</b></span><span>Processes mapped <b>${num(R.stats.processes)}</b></span><span>Every figure sourced <b>${num(R.stats.sources)} sources</b></span></div>`,
+        { note: `${esc(fmtD(g.start, { day: 'numeric', month: 'short', year: 'numeric' }))} – ${esc(fmtD(g.end, { day: 'numeric', month: 'short', year: 'numeric' }))}`, link: ptLinkTo('work', 'Our work'), cls: S.delivered || S.next ? 'c7' : 'c12' })}
+      ${S.delivered || S.next ? ptCard('This fortnight', `<div class="pt-two pt-two-stack"><div><p class="pt-sub-h">Delivered</p>${ptList(S.delivered, 'done')}</div><div><p class="pt-sub-h">Next</p>${ptList(S.next, 'next')}</div></div>`, { link: ptLinkTo('work', 'Full status'), cls: 'c5' }) : ''}
+      ${ptCard('Explore your business', `<div class="pt-explore">
+        <button type="button" class="pt-tile" data-pt="go" data-sec="leaks"><span class="pt-ti">${ptIcon('i-leak')}Leaks &amp; opportunities</span><p>The findings and suggestions behind every move, ranked by size, each with its sources.</p><span class="pt-stat">${(R.itemIds || []).length} found · ${(R.recIds || []).length} suggested</span></button>
+        <button type="button" class="pt-tile" data-pt="go" data-sec="ins"><span class="pt-ti">${ptIcon('i-ins')}Insights</span><p>Numbers in context: retention, renewals, adoption, channels and cost.</p><span class="pt-stat">${nIns ? `${nIns} view${nIns === 1 ? '' : 's'}` : 'Coming next'}</span></button>
+        <button type="button" class="pt-tile" data-pt="go" data-sec="proc"><span class="pt-ti">${ptIcon('i-proc')}Processes</span><p>How work flows across the teams, with every pain point and flag we've found.</p><span class="pt-stat">${num(R.stats.processes)} processes · ${num(R.stats.flags)} flags</span></button></div>`, { note: 'read only', cls: 'c12' })}
+    </div>
+    ${PT.me.owner ? '' : `<p class="pt-foot">Anything missing or wrong? <button type="button" class="pt-link" data-pt="discuss" data-id="report">Comment on the portal as a whole</button>.</p>`}`;
+}
+function ptMovesSec() {
+  const e = E(); const moves = mvList(e, { portal: true });
+  const m = PT.move && moves.find((x) => x.id === PT.move);
+  if (m) return mvDetail(e, m, { back: '<button type="button" class="pt-link mv-back" data-pt="move" data-id="">← All big moves</button>', acts: ptActs(m.id),
+    side: `${(m.sources || []).length ? `<div class="mv-srcline">${ptSrcBtn(m.sources, 'Where the figures come from')}</div>` : ''}<div class="mv-box" id="it-${esc(m.id)}"><h3>Discussion</h3>${ptThread(m.id)}</div>` });
+  const shown = moves.filter((x) => !PT.mb || (x.bucket || 'friction') === PT.mb);
+  return `<section class="pt-hello"><div class="pt-eyebrow">Big moves</div><h1>The changes with the biggest knock-on effect</h1><p class="pt-lede">Each move: why it matters, what has changed, the impact so far and what's next. Open one for the full story and the evidence behind it; comment on or red-flag anything.</p></section>
+    ${moves.length ? `<div class="mv-sh"><h2>${shown.length} move${shown.length === 1 ? '' : 's'}</h2>${mvFilters(moves, PT.mb, (k) => `data-pt="mb" data-id="${k}"`)}</div><div class="mv-grid">${shown.map((x) => mvCard(e, x, { open: `data-pt="move" data-id="${esc(x.id)}"`, acts: ptActs(x.id) })).join('')}</div>` : `<div class="pt-grid">${ptCard('', '<p class="pt-muted">The first moves are being written up.</p>', { cls: 'c12' })}</div>`}`;
+}
+const ptIsMove = (id) => mvList(E(), { portal: true }).some((x) => x.id === id);
+function ptHomeClassic() {
   const e = E(); const R = PT.R; const st = engagementStatus(e); const w = ptWeek(e); const g = e.engagement; const S = g.status || {};
   const h = new Date().getHours(); const hello = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
   const first = PT.me.owner ? '' : ', ' + String(PT.me.label).split(/[\s(]/)[0];
@@ -420,11 +460,14 @@ document.addEventListener('click', (ev) => {
   if (!PORTAL_ON) return;
   const b = ev.target.closest('[data-pt]'); if (!b) { if (ev.target.id === 'pt-modal') { PT.modal = ''; ptModalRender(); } return; }
   const d = b.dataset.pt; const id = b.dataset.id;
-  if (d === 'go') return ptGo(b.dataset.sec);
+  if (d === 'go') { if (b.dataset.sec === 'moves') PT.move = ''; return ptGo(b.dataset.sec); }
+  if (d === 'move') { PT.move = id || ''; PT.sec = 'moves'; portalRender(); return window.scrollTo(0, 0); }
+  if (d === 'mb') { PT.mb = id || ''; return portalRender(); }
   if (d === 'tab') { PT.tab = id; return portalRender(); }
   if (d === 'lf') { PT.lf = id; return portalRender(); }
   if (d === 'toggle') { PT.open[id] = !PT.open[id]; return portalRender(); }
   if (d === 'openItem') { PT.modal = ''; PT.sec = 'leaks'; PT.tab = b.dataset.tab || 'found'; PT.lf = 'all'; PT.open[id] = true; portalRender(); return setTimeout(() => ptFocus(id), 60); }
+  if (d === 'discuss' && ptIsMove(id)) { PT.sec = 'moves'; PT.move = id; portalRender(); setTimeout(() => { const t = document.getElementById('tx-' + id); if (t) { t.focus(); t.scrollIntoView({ block: 'center', behavior: 'smooth' }); } }, 40); return; }
   if (d === 'discuss') { if ((PT.R.itemIds || []).includes(id) || (PT.R.recIds || []).includes(id)) { if (PT.sec === 'leaks') { PT.open[id] = true; portalRender(); setTimeout(() => { const t = document.getElementById('tx-' + id); if (t) { t.focus(); t.scrollIntoView({ block: 'center', behavior: 'smooth' }); } }, 40); return; } }
     PT.modal = id; ptModalRender(); const t = document.getElementById('tx-' + id); if (t) t.focus(); return; }
   if (d === 'comments') { PT.modal = 'comments'; return ptModalRender(); }
@@ -433,6 +476,7 @@ document.addEventListener('click', (ev) => {
   if (d === 'goto') {
     PT.modal = '';
     if ((PT.R.itemIds || []).includes(id) || (PT.R.recIds || []).includes(id)) { PT.sec = 'leaks'; PT.tab = (PT.R.recIds || []).includes(id) ? 'recs' : 'found'; PT.lf = 'all'; PT.open[id] = true; portalRender(); return setTimeout(() => ptFocus(id), 60); }
+    if (ptIsMove(id)) { PT.sec = 'moves'; PT.move = id; portalRender(); return window.scrollTo(0, 0); }
     if (ptIsInsight(id)) { PT.sec = 'ins'; portalRender(); return setTimeout(() => ptFocus(id), 60); }
     PT.modal = id; return ptModalRender();
   }

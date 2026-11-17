@@ -251,6 +251,17 @@ What each founder sees from their own link, served by TGM's Apps Script web app 
   it into itself (styles to the head, scripts re-created in order). It does not use `document.write`, which would drop the
   listeners `google.script.run` needs for comments and flags.
 
+### Big moves
+The Studio opens on **Big moves**, and they lead the founder portal's Overview (plus a Big moves section with one page per move).
+A move is a change with the biggest knock-on effect, told as a story: before, what changed (dated timeline), impact, what's next,
+and a stage track (Aligned → Unblocked → Live → Measured). Buckets: `friction` (Remove friction), `light` (Bring light), `empower`
+(Unblock & empower), `leaks` (Stop the leaks). Records live in the `moves` collection: `title`, `bucket`, `pinned`, `stage`
+(`aligned`|`unblocked`|`live`|`measured`|`done`), `stageNotes`, `why`, `before`, `now`, `nowLabel`, `impact`, `impactTbc`, `impacts`
+[{label, value, tbc}], `timeline` [{date, text, next}], `next`, `nextDate`, `links` (ids of the findings, recommendations, automations
+and opportunities behind it), `sources`, `portal` (false = TGM only), and two TGM-only fields that never reach the portal:
+`private` (the people side) and `days` (our time). Founders can comment on and red-flag each move. The portal's Overview headline
+comes from the founder portal's "Headline" field (Studio → Reports → Founder portal).
+
 ### Enhanced data (Insights)
 Evidence → Insights (Studio) and Insights (founder portal) show views that join data the Studio already holds. Each view is a record in
 the `enhanced` collection: `kind` picks the view, and the chart is redrawn from the engagement's data every time, so it stays current.

@@ -24,6 +24,10 @@ Then propose better ways of working: new models, flows, systems and tools, plus 
 The full method is in the `growth-machine` skill (`.claude/skills/growth-machine/SKILL.md`).
 
 ## How to present it
+- Lead with **Big moves** (Studio and founder portal): the few changes with the biggest knock-on effect, told as before → what
+  changed → impact → next, in four buckets (Remove friction, Bring light, Unblock & empower, Stop the leaks). Record TGM's alignment and
+  unblocking work there, not only as findings. Keep people dynamics in the move's `private` note (TGM only); be exact about stage
+  (Aligned, Unblocked, Live, Measured) and mark numbers we don't have yet "to confirm".
 - Clear, actionable insights first. Each one says what it is, roughly what it costs or is worth, and what to do next.
 - Keep the view simple: categorise (leak / weakness / opportunity / tool), rank by size, show the top few.
 - Don't mirror the client's minutiae. Digest source data into categories, totals and the few examples that prove the point.
