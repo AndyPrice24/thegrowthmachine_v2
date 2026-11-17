@@ -39,7 +39,7 @@ function portalBoot(S) {
   const root = document.getElementById('pt-app') || document.body.appendChild(Object.assign(document.createElement('div'), { id: 'pt-app' }));
   root.innerHTML = ptShell();
   ptDerive();
-  if (S.focus) { const f = S.focus; if (PT.R.itemIds.includes(f) || (PT.R.recIds || []).includes(f)) { PT.sec = 'leaks'; PT.tab = (PT.R.recIds || []).includes(f) ? 'recs' : 'found'; PT.open[f] = true; } else if (f.startsWith('ask-') || f === 'report') { PT.modal = f; } }
+  if (S.focus) { const f = S.focus; if (PT.R.itemIds.includes(f) || (PT.R.recIds || []).includes(f)) { PT.sec = 'leaks'; PT.tab = (PT.R.recIds || []).includes(f) ? 'recs' : 'found'; PT.open[f] = true; } else if (f.startsWith('ask-') || f === 'report') { PT.modal = f; } else if (ptIsInsight(f)) { PT.sec = 'ins'; PT.open[f] = true; } }
   portalRender();
   if (S.focus && PT.open[S.focus]) setTimeout(() => ptFocus(S.focus), 120);
   setInterval(() => { if (document.hidden) return; const a = document.activeElement; if (a && a.tagName === 'TEXTAREA') return;
@@ -61,7 +61,7 @@ const PT_ICONS = `<svg width="0" height="0" style="position:absolute" aria-hidde
 const ptIcon = (id) => `<svg class="pt-ic" aria-hidden="true"><use href="#${id}"/></svg>`;
 function ptShell() {
   const R = PT.R; const me = PT.me;
-  const nav = (cls) => PT_SECTIONS.map(([k, n, ic], i) => `${cls === 'rail' && i === 3 ? '<div class="pt-nav-h">Your business</div>' : ''}<button type="button" data-pt="go" data-sec="${k}">${ptIcon(ic)}<span>${cls === 'tab' && k === 'leaks' ? 'Leaks' : esc(n)}</span>${k === 'ins' && cls === 'rail' ? '<span class="pt-soon">soon</span>' : ''}</button>`).join('');
+  const nav = (cls) => PT_SECTIONS.map(([k, n, ic], i) => `${cls === 'rail' && i === 3 ? '<div class="pt-nav-h">Your business</div>' : ''}<button type="button" data-pt="go" data-sec="${k}">${ptIcon(ic)}<span>${cls === 'tab' && k === 'leaks' ? 'Leaks' : esc(n)}</span></button>`).join('');
   return `${PT_ICONS}<div class="pt-shell">
     <aside class="pt-rail" aria-label="Portal navigation">
       <div class="pt-brand">THE <b>GROWTH</b> MACHINE</div>
@@ -80,7 +80,7 @@ function ptShell() {
       </div></header>
       <main id="main" class="pt-main"></main>
     </div></div>
-    <nav class="pt-tabbar" aria-label="Portal navigation">${nav('tab').replace(/<button[^>]*data-sec="ins"[\s\S]*?<\/button>/, '')}</nav>
+    <nav class="pt-tabbar" aria-label="Portal navigation">${nav('tab')}</nav>
     <div id="pt-modal" class="pt-overlay" hidden></div><div id="pt-sum" class="pt-sum" role="dialog" aria-modal="true" hidden></div>`;
 }
 const ptOthers = () => (PT.R.recipients || []).filter((r) => r.id !== PT.me.id).map((r) => String(r.label).split(/[\s(]/)[0]).join(' and ');
@@ -324,12 +324,13 @@ function ptItemBody(x) {
 
 /* ---------- Insights (to design together) ---------- */
 function ptInsights() {
-  return `<section class="pt-hello"><div class="pt-eyebrow">Insights</div><h1>Numbers in context</h1><p class="pt-lede">This section will show the business's numbers against each other, so they explain why something is happening, not just what. We're designing it with you.</p></section>
-  <div class="pt-grid">${ptCard('What it will cover', `<ul class="pt-list next">
-    <li>Revenue at risk: contract status × monthly value × adoption × satisfaction</li><li>Cost to serve per client: effort to serve × revenue</li>
-    <li>Data quality against churn: clients with data problems against who left or downgraded</li><li>Growth by channel: resellers against direct clients, revenue and locations</li>
-    <li>Where the time goes: turnaround by task type and team, and what Pulse takes off the teams</li><li>Net revenue retention, step by step: start of period, upsells, downgrades, losses, end</li></ul>`, { cls: 'c12' })}</div>`;
+  const e = E(); const list = edList(e, { portal: true });
+  const hello = `<section class="pt-hello"><div class="pt-eyebrow">Insights</div><h1>Numbers in context</h1><p class="pt-lede">Each view joins numbers that are usually kept apart, so they explain why something is happening, not just what. Hover any bar, dot or cell for the detail, and comment on or red-flag any view.</p></section>`;
+  if (!list.length) return hello + `<div class="pt-grid">${ptCard('', '<p class="pt-muted">The first views are being prepared with you.</p>', { cls: 'c12' })}</div>`;
+  return hello + `<div class="ed-grid pt-ed">${list.map((x) => `<section class="pt-card ed-card ${edWideCls(x)}" id="it-${esc(x.id)}"><div class="pt-ed-top"><div>${edHead(x)}</div>${ptActs(x.id)}</div>
+    ${edChart(e, x)}${x.sowhat ? `<p class="ed-sowhat"><b>So what:</b> ${esc(x.sowhat)}</p>` : ''}<div class="ed-foot">${ptSrcBtn(x.sources, 'Sources')}${edCoverage(x)}</div></section>`).join('')}</div>`;
 }
+const ptIsInsight = (id) => edList(E(), { portal: true }).some((x) => x.id === id);
 
 /* ---------- modal: discussion, sources, all comments ---------- */
 function ptLabel(id) {
@@ -432,6 +433,7 @@ document.addEventListener('click', (ev) => {
   if (d === 'goto') {
     PT.modal = '';
     if ((PT.R.itemIds || []).includes(id) || (PT.R.recIds || []).includes(id)) { PT.sec = 'leaks'; PT.tab = (PT.R.recIds || []).includes(id) ? 'recs' : 'found'; PT.lf = 'all'; PT.open[id] = true; portalRender(); return setTimeout(() => ptFocus(id), 60); }
+    if (ptIsInsight(id)) { PT.sec = 'ins'; portalRender(); return setTimeout(() => ptFocus(id), 60); }
     PT.modal = id; return ptModalRender();
   }
   if (d === 'reply') { PT.replyTo[id] = b.dataset.c; (PT.modal ? ptModalRender : portalRender)(); const t = document.getElementById('tx-' + id); if (t) t.focus(); return; }

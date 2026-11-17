@@ -251,6 +251,24 @@ What each founder sees from their own link, served by TGM's Apps Script web app 
   it into itself (styles to the head, scripts re-created in order). It does not use `document.write`, which would drop the
   listeners `google.script.run` needs for comments and flags.
 
+### Enhanced data (Insights)
+Evidence → Insights (Studio) and Insights (founder portal) show views that join data the Studio already holds. Each view is a record in
+the `enhanced` collection: `kind` picks the view, and the chart is redrawn from the engagement's data every time, so it stays current.
+The record carries the takeaway (`title`), `sub`, `sowhat`, `eyebrow`, `tag`, `sources`, `coverage` + `coveragePct` (how complete the
+data is), `order`, `wide`, `portal` (false keeps it TGM-only), `params` and, where needed, `data`.
+
+| kind | Built from | params / data |
+|---|---|---|
+| `nrrBridge` | revenue movements (by cause) against a starting revenue | `fy`, `basePeriod` (finance period id) or `base`, `target` |
+| `movementCauses` | revenue movements, added vs lost by cause; "not recorded" is highlighted | `fy` |
+| `adoptionMatrix` | client TouchPoint scores, one score against another (3×3) | `x`, `y`, `xLabel`, `yLabel`, `hot` (e.g. `High|Low`) |
+| `renewalCalendar` | client register: contract end month and status, with warning signs | `segment`, `months`, `highlight`, `statusBuckets` |
+| `concentration` | figures held only in the record | `data.hero`, `data.parts`, `data.total`, `data.unit`, `data.series` |
+| `indexedLines` | finance periods, rolling average indexed to 100 | `roll`, `lines` [{key, label}] (up to 3) |
+
+The takeaway and "so what" are written by hand in the update; recheck them when the data moves. Founders can comment on and red-flag
+each view (they are portal elements); hover detail can name clients, so keep a view TGM-only (`portal: false`) if it shouldn't.
+
 ### Retiring records from an update file
 An update file can remove an obsolete or duplicate record by sending `{"id": "...", "_delete": true}` in its collection.
 The record is removed and a tombstone is kept, so an older file can't bring it back. Records edited in the Studio after
