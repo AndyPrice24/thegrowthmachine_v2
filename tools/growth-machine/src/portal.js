@@ -264,7 +264,7 @@ function ptWork() {
   const late = (d) => d ? Math.max(0, daysBetween(d, todayISO())) : 0;
   return `<section class="pt-hello"><div class="pt-eyebrow">Week ${w.cur} of ${w.weeks}</div><h1>Our work</h1>${S.headline ? `<p class="pt-lede">${esc(S.headline)}</p>` : ''}</section>
   <div class="pt-grid">
-    ${ptCard('Where we are in the plan', `${ptTimeline(e, true)}<div class="pt-tl-meta">${reviews.map((d) => `<span class="${d < todayISO() ? 'pt-past' : ''}">Review <b>${esc(fmtD(d, { day: 'numeric', month: 'short' }))}</b></span>`).join('')}</div>`, { note: `${esc(fmtD(g.start, { day: 'numeric', month: 'short' }))} – ${esc(fmtD(g.end, { day: 'numeric', month: 'short', year: 'numeric' }))}`, cls: 'c12' })}
+    ${ptCard('Where we are in the plan', `<div class="pt-gantt">${phaseGantt(e, { compact: true })}</div><div class="pt-tl-meta">${reviews.map((d) => `<span class="${d < todayISO() ? 'pt-past' : ''}">Review <b>${esc(fmtD(d, { day: 'numeric', month: 'short' }))}</b></span>`).join('')}</div>`, { note: `${esc(fmtD(g.start, { day: 'numeric', month: 'short' }))} – ${esc(fmtD(g.end, { day: 'numeric', month: 'short', year: 'numeric' }))}`, cls: 'c12' })}
     ${ptCard('This fortnight', `<div class="pt-two"><div><p class="pt-sub-h">Delivered</p>${ptList(S.delivered, 'done')}</div><div><p class="pt-sub-h">Next</p>${ptList(S.next, 'next')}</div></div>`, { cls: 'c12' })}
     ${ptCard('Savings against the target', `<div class="pt-sv">
         <div><span class="pt-kpi-l">Identified</span><span class="pt-kpi-v">${esc(ptMoney(sv.identified))}<small>/ mo</small></span></div>

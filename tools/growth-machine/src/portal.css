@@ -256,3 +256,9 @@ body.portal .ed-foot .pt-src { margin-right: 4px; }
   body.portal .pt-ed .ed-card { padding: 16px 16px 14px; }
   body.portal .ed-title { font-size: 19px; }
 }
+
+/* Plan chart: the same Gantt as the status report */
+.pt-gantt { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.pt-gantt .gantt-svg { display: block; width: 100%; min-width: 640px; height: auto; }
+.pt-gantt .legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 12.5px; color: var(--pt-muted); margin-top: 10px; }
+.pt-gantt .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
