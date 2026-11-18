@@ -276,6 +276,7 @@ const actions = {
   syncCheck: () => syncCheck(false),
   syncBackup: () => syncBackup(false),
   lrNew: () => lrNew(),
+  mvGo: (el) => { ui.tab = 'moves'; ui.moveId = el.dataset.id || ''; saveUI(); render(); window.scrollTo(0, 0); },
   mvOpen: (el) => { ui.moveId = el.dataset.id || ''; saveUI(); render(); window.scrollTo(0, 0); },
   mvView: (el) => { ui.mvFounder = el.dataset.id === 'founders'; saveUI(); render(); },
   mvBucket: (el) => { ui.mvBucket = el.dataset.id || ''; saveUI(); render(); },

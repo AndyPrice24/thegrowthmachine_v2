@@ -125,6 +125,29 @@ function contractMonth(g, iso) {
   return k + 1;
 }
 
+/** Capacity against the paid days, with any front-loading agreed with the client (engagement.frontLoad = { by, note }).
+ *  Days above a month's allowance are "brought forward" (shown as such, not as an overrun) when front-loading is agreed. */
+function capacityInfo(e) {
+  const g = e.engagement; const st = engagementStatus(e); const per = num(g.daysPerMonth); const total = num(g.daysTotal);
+  const months = Math.max(1, Math.round(total / (per || total || 1)) || 3); const m = Math.max(1, Math.min(months, st.thisMonth || 1));
+  const fl = g.frontLoad && typeof g.frontLoad === 'object' && (g.frontLoad.by || g.frontLoad.note) ? g.frontLoad : null;
+  const by = {}; for (let i = 1; i <= months; i++) by[i] = num(st.byMonth[i] || 0);
+  const mUsed = by[m]; const over = Math.max(0, mUsed - per); const ahead = Math.max(0, st.used - per * m);
+  const f = (v) => (v % 1 ? v.toFixed(1) : String(v));
+  let line = over ? `Month ${m}: ${f(mUsed)} days worked: ${f(per)} paid + ${f(over)} brought forward` : `Month ${m}: ${f(mUsed)} of ${f(per)} days used`;
+  line += ` · ${f(Math.max(0, st.remaining))} of ${f(total)} remaining overall`;
+  const flNote = fl ? `Front-loading${fl.by ? ` at ${fl.by}'s request` : ''}: ${fl.note || 'invoicing stays the same'}.` : '';
+  return { m, months, per, total, by, mUsed, over, ahead, used: st.used, remaining: st.remaining, fl, flNote, line: line + (fl ? ' · ' + flNote : '') };
+}
+/** Days per contract month as bars: paid days solid, days brought forward hatched. Works from capacityInfo or its published copy. */
+function capacityBars(c) {
+  if (!c || !c.per) return '';
+  const max = Math.max(c.per, ...Object.values(c.by || {})); const f = (v) => (v % 1 ? v.toFixed(1) : String(v));
+  return `<div class="cap-bars">${Object.keys(c.by || {}).map((k) => { const v = num(c.by[k]); const paid = Math.min(v, c.per); const fwd = Math.max(0, v - c.per);
+    return `<div class="cap-row"><span class="cap-l">Month ${k}</span><span class="cap-track" style="--w:${(c.per / max * 100).toFixed(1)}%"><span class="cap-paid" style="width:${(paid / max * 100).toFixed(1)}%"></span>${fwd ? `<span class="cap-fwd" style="width:${(fwd / max * 100).toFixed(1)}%"></span>` : ''}<span class="cap-line" style="left:${(c.per / max * 100).toFixed(1)}%"></span></span><span class="cap-v">${f(v)} of ${f(c.per)}${fwd ? ` <b>+${f(fwd)} brought forward</b>` : ''}</span></div>`; }).join('')}
+    <div class="cap-key"><span><i class="k-paid"></i>Paid days</span><span><i class="k-fwd"></i>Brought forward (front-loaded)</span><span><i class="k-line"></i>${f(c.per)} days a month invoiced</span></div></div>`;
+}
+
 function requestStatus(r, today) {
   if (r.status === 'Not needed' || r.status === 'Not available') return r.status;
   if (r.receivedDate) return 'Received';

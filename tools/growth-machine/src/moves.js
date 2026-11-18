@@ -105,5 +105,49 @@ function viewMoves(e) {
   const extra = (x) => (founders ? '' : `${x.private ? `<div class="mv-private-line"><b>Private</b>${esc(x.private)}</div>` : ''}<div class="mv-meta">Our time: ${num(x.days) ? `<b>${num(x.days)} day${num(x.days) === 1 ? '' : 's'}</b>` : '<span class="mv-tbc">log it</span>'}${mvCounts(e, x) ? ' · ' + esc(mvCounts(e, x)) : ''}${String(x.portal) === 'false' ? ' · <span class="chip">TGM only</span>' : ''}</div>`);
   return head + mvHero(all, lead) + `<div class="mv-sh"><h2>The big moves</h2>${mvFilters(all, ui.mvBucket || '', (k) => `data-action="mvBucket" data-id="${k}"`)}</div>
     <div class="mv-grid">${list.map((x) => mvCard(e, x, { open: `data-action="mvOpen" data-id="${esc(x.id)}"`, extra: extra(x) })).join('')}</div>
+    ${card('The journey so far', journeyHTML(e, { portal: founders, open: (m) => `data-action="mvOpen" data-id="${esc(m.id)}"` }), { sub: 'What has happened, by week; what comes next; and the projects starting next.' })}
     <div class="mv-evid"><span><b>Behind the moves:</b> ${live(e.findings).length} findings, ${live(e.recommendations).length} recommendations and ${live(e.automations).length} automations, each with its sources.</span><button class="link" data-action="tab" data-id="home">Open Leaks &amp; opportunities →</button></div>`;
+}
+
+/* ---------- The journey: what has happened (by week), what's coming, and projects starting next ----------
+   Built from each move's dated timeline plus engagement.milestones [{ id, date (ISO), title, detail }]. Move dates are
+   free text ('12 Nov', 'By 13 Nov', '24/25 Nov', 'Mid-Dec', 'Late Nov', 'Next'); undated ones are listed as coming up. */
+const MV_MON = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+function mvDate(e, s) {
+  const t = String(s || '').toLowerCase(); const st = (e.engagement && e.engagement.start) || todayISO(); const y0 = +st.slice(0, 4), m0 = +st.slice(5, 7) - 1;
+  const iso = (d, mi) => { const y = mi >= m0 ? y0 : y0 + 1; return `${y}-${String(mi + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`; };
+  let m = t.match(/(\d{1,2})(?:\s*[\/–-]\s*\d{1,2})?\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/); if (m) return iso(+m[1], MV_MON[m[2]]);
+  m = t.match(/(early|mid|late)[\s-]*(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/); if (m) return iso(m[1] === 'early' ? 5 : m[1] === 'mid' ? 15 : 25, MV_MON[m[2]]);
+  return null;
+}
+function journey(e, { portal = false } = {}) {
+  const today = todayISO(); const moves = mvList(e, { portal }); const past = [], next = [];
+  moves.forEach((m) => (Array.isArray(m.timeline) ? m.timeline : []).forEach((t, i) => {
+    const d = mvDate(e, t.date); const item = { key: m.id + ':' + i, date: d, label: t.date, text: t.text, move: m };
+    if (mvOn(t.next) || !d || d > today) next.push(item); else past.push(item);
+  }));
+  live((e.engagement || {}).milestones).forEach((x) => { const item = { key: x.id, date: x.date, label: x.date ? fmtD(x.date, { day: 'numeric', month: 'short' }) : '', text: x.title + (x.detail ? ': ' + x.detail : ''), move: null, milestone: true };
+    if (x.date && x.date <= today) past.push(item); else next.push(item); });
+  past.sort((a, b) => (a.date || '').localeCompare(b.date || '') || (a.milestone ? -1 : 0));
+  next.sort((a, b) => (a.date || '9999').localeCompare(b.date || '9999'));
+  const projects = moves.filter((m) => m.nowLabel && m.nowLabel !== 'Now');
+  return { past, next, projects, moves };
+}
+/** open(m) returns the attribute string that opens a move (portal or Studio). */
+function journeyHTML(e, { portal = false, open = () => '', latest = 0 } = {}) {
+  const J = journey(e, { portal }); const g = e.engagement || {};
+  const chip = (it) => (it.move ? `<button type="button" class="jr-chip" style="--c:${mvB(it.move).c}" ${open(it.move)}><i></i>${esc(trunc(it.move.title, 46))}</button>` : '<span class="jr-chip jr-ms"><i></i>Engagement milestone</span>');
+  const row = (it) => `<li class="jr-it ${it.milestone ? 'ms' : ''}" style="--c:${it.move ? mvB(it.move).c : 'var(--ink)'}"><span class="jr-d">${esc(it.label || '')}</span><span class="jr-dot"></span><div class="jr-t"><p>${esc(it.text)}</p>${chip(it)}</div></li>`;
+  if (latest) { const L = J.past.slice(-latest).reverse(); return L.length ? `<ul class="jr-list jr-latest">${L.map(row).join('')}</ul>` : ''; }
+  const wk = (d) => (g.start ? Math.floor(daysBetween(g.start, d) / 7) + 1 : 1);
+  const weeks = {}; J.past.forEach((it) => { const w = it.date ? wk(it.date) : 1; (weeks[w] = weeks[w] || []).push(it); });
+  const wkLabel = (w) => { if (!g.start) return `Week ${w}`; const s = addDaysISO(g.start, (w - 1) * 7), en = addDaysISO(s, 6); return `Week ${w} · ${fmtD(s, { day: 'numeric', month: 'short' })} – ${fmtD(en, { day: 'numeric', month: 'short' })}`; };
+  const past = Object.keys(weeks).sort((a, b) => b - a).map((w) => `<div class="jr-week"><div class="jr-wh"><b>${esc(wkLabel(+w))}</b><span>${weeks[w].length} step${weeks[w].length === 1 ? '' : 's'}</span></div><ul class="jr-list">${weeks[w].map(row).join('')}</ul></div>`).join('');
+  const nextL = J.next.slice(0, 12);
+  const proj = J.projects.map((m) => { const nx = (m.timeline || []).find((t) => mvOn(t.next)); return `<div class="jr-proj" style="--c:${mvB(m).c}"><div class="jr-pt"><span class="mv-bucket">${esc(mvB(m).label)}</span><span class="jr-pl">${esc(m.nowLabel)}</span></div>
+      <button type="button" class="jr-ph" ${open(m)}>${esc(m.title)}</button><p>${esc(m.now || '')}</p>${m.next ? `<p class="jr-first"><b>First step:</b> ${esc(m.next)}${m.nextDate ? ' · ' + esc(m.nextDate) : nx && mvDate(e, nx.date) ? ' · ' + esc(nx.date) : ''}</p>` : ''}</div>`; }).join('');
+  return `<div class="jr">
+    <div class="jr-col"><h3 class="jr-h">What has happened <span>${J.past.length} steps, newest week first</span></h3>${past || '<p class="muted">Nothing recorded yet.</p>'}</div>
+    <div class="jr-col"><h3 class="jr-h">Coming up <span>${J.next.length} dated and planned steps</span></h3><ul class="jr-list jr-next">${nextL.map(row).join('')}</ul>${J.next.length > nextL.length ? `<p class="muted small">and ${J.next.length - nextL.length} more on the moves.</p>` : ''}
+      ${proj ? `<h3 class="jr-h" style="margin-top:18px">Starting next <span>agreed or proposed, not yet under way</span></h3><div class="jr-projs">${proj}</div>` : ''}</div></div>`;
 }

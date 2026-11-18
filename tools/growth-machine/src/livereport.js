@@ -87,8 +87,7 @@ function lrAsks(lr) {
 }
 function lrCapacity(e) {
   const g = e.engagement; if (!(g.phases || []).length) return '';
-  const st = engagementStatus(e); const m = Math.max(1, Math.min(3, st.thisMonth)); const f = (v) => (v % 1 ? v.toFixed(1) : String(v));
-  return `Month ${m}: ${f(num(st.byMonth[m] || 0))} of ${num(g.daysPerMonth)} days used · ${f(Math.max(0, st.remaining))} of ${num(g.daysTotal)} remaining overall`;
+  return capacityInfo(e).line;
 }
 function lrSnapshot(e, lr) {
   const C = lrCandidates(e); const byC = {}; C.forEach((c) => { byC[c.id] = c; });
@@ -103,7 +102,7 @@ function lrSnapshot(e, lr) {
     title: lr.title || 'Founder portal', preparedFor: lr.preparedFor || '', intro: lr.intro || '', headline: lr.headline || '', version: lr.version || 1, publishedAt: lr.publishedAt || nowISO(),
     ownerToken: lr.ownerToken, recipients: (lr.recipients || []).filter((r) => !r.revoked).map((r) => ({ id: r.id, label: r.label, token: r.token })),
     itemIds: found.map((c) => c.id), recIds: recs.map((c) => c.id), asks, prev: lr.lastValues || {},
-    stats: { conversations: (e.interviews || []).length, processes: procs.length, steps: steps.length, flags: steps.reduce((n, st) => n + (st.flags || []).length, 0), sources: (e.sources || []).length, capacity: lrCapacity(e) },
+    stats: { conversations: (e.interviews || []).length, processes: procs.length, steps: steps.length, flags: steps.reduce((n, st) => n + (st.flags || []).length, 0), sources: (e.sources || []).length, capacity: lrCapacity(e), cap: (() => { const c = capacityInfo(e); return { per: c.per, by: c.by, over: c.over, flNote: c.flNote, m: c.m }; })() },
     elements, eng: lrPortalEng(e, lr) };
 }
 /** The portal page: the Studio's own code and styles, plus a slot the web app fills with the viewer's data. */

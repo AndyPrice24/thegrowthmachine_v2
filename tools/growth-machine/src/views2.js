@@ -48,7 +48,7 @@ function viewProgress(e) {
   }
   const st = engagementStatus(e); const sv = savingsTracker(e);
   const monthUsed = num(st.byMonth[st.thisMonth] || 0);
-  const overMonth = monthUsed > num(g.daysPerMonth);
+  const overMonth = monthUsed > num(g.daysPerMonth); const cap = capacityInfo(e);
   const phaseOpts = g.phases.map((p) => [p.id, p.name]);
   const pName = (id) => (g.phases.find((p) => p.id === id) || {}).name || '—';
   const flag = st.openDelays.length || st.totalSlip > 0;
@@ -56,7 +56,7 @@ function viewProgress(e) {
   const kpis = `<div class="kpis">
     ${kpi('Current phase', esc(st.current ? st.current.name : '—'), st.current ? `<div class="k-delta">${fmtD(st.current.start)} – ${fmtD(st.current.end)}</div>` : '')}
     ${kpi('Consulting days used', `${st.used.toFixed(1)} / ${num(g.daysTotal)}`, `<div class="k-delta ${st.remaining < 0 ? 'delta-bad' : ''}">${st.remaining.toFixed(1)} remaining</div>`)}
-    ${kpi(`Contract month ${Math.max(1, st.thisMonth)}`, `${monthUsed.toFixed(1)} / ${num(g.daysPerMonth)}`, `<div class="k-delta ${overMonth ? 'delta-bad' : ''}">${overMonth ? '▲ over the monthly allowance' : 'days this month'}</div>`)}
+    ${kpi(`Contract month ${Math.max(1, st.thisMonth)}`, `${monthUsed.toFixed(1)} / ${num(g.daysPerMonth)}`, `<div class="k-delta ${overMonth && !cap.fl ? 'delta-bad' : ''}">${overMonth ? (cap.fl ? `+${(monthUsed - num(g.daysPerMonth)).toFixed(1)} brought forward (front-loading agreed)` : '▲ over the monthly allowance') : cap.fl ? 'front-loading agreed; invoicing unchanged' : 'days this month'}</div>`)}
     ${kpi('Term elapsed', st.termDays ? pct(st.elapsed / st.termDays * 100) : '—', `<div class="k-delta">${st.daysLeftInTerm} calendar days to ${fmtD(g.end)}</div>`)}
     <div class="kpi ${flag ? 'kpi-flag' : ''}"><div class="k-label">⚑ Delays & changes</div><div class="k-value">${st.openDelays.length} open</div><div class="k-delta ${st.totalSlip > 0 ? 'delta-bad' : ''}">${st.totalSlip > 0 ? `+${st.totalSlip} days total slip` : 'no slip logged'}</div></div>
     <div class="kpi ${st.overdue.length ? 'kpi-flag' : ''}"><div class="k-label">Waiting on client</div><div class="k-value">${st.reqs.filter((r) => r._status === 'Waiting' || r._status === 'Overdue').length}</div><div class="k-delta ${st.overdue.length ? 'delta-bad' : ''}">${st.overdue.length} overdue</div></div>
@@ -81,7 +81,7 @@ function viewProgress(e) {
   const missing = []; if (g.start) { for (let d = g.start, i = 0; d <= st.today && d <= g.end && i < 400; d = addDaysISO(d, 1), i++) { if (!entryDates.has(d) && dayEvents(e, d).length) missing.push(d); } }
   const diaryRows = g.timeLog.slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   const time = card(`Work diary · ${st.used % 1 ? st.used.toFixed(1) : st.used} of ${num(g.daysTotal)} days`, `<div class="grid-2">
-      <div><h4>Days by contract month (allowance ${num(g.daysPerMonth)})</h4>${hbars([1, 2, 3].map((m) => ({ label: `Month ${m}`, value: num(st.byMonth[m] || 0), color: num(st.byMonth[m] || 0) > num(g.daysPerMonth) ? 'var(--crit)' : 'var(--s3)' })), { fmt: (v) => (v % 1 ? v.toFixed(1) : v) + ' d', max: Math.max(num(g.daysPerMonth), ...Object.values(st.byMonth)) })}</div>
+      <div><h4>Days by contract month (${num(g.daysPerMonth)} invoiced each month)</h4>${capacityBars(cap)}</div>
       <div class="small muted"><p><b>Private.</b> Founders see a single capacity line in the status report, never this diary, unless you switch "Include work diary" on.</p><p>Record each working day as a <b>half</b> or <b>full</b> day and list what happened. No durations. Things captured in the Studio that day appear automatically.</p><p class="faint">Unused Month-2 days may carry into Month 3 by written agreement; the total of ${num(g.daysTotal)} cannot increase (clause 3.4).</p></div></div>
     ${missing.length ? `<div class="banner">Studio activity recorded on ${missing.map((d) => `<button class="link" data-action="addDay" data-id="${d}">${fmtD(d, { weekday: 'short', day: 'numeric', month: 'short' })}</button>`).join(' ')} with no diary entry yet. Click a date to add it.</div>` : ''}
     <div class="scroll-x"><table class="tbl grid-edit diary"><thead><tr><th>Date</th><th>Day</th><th>What happened (one item per line)</th><th>Recorded automatically</th><th></th></tr></thead><tbody>
@@ -96,7 +96,7 @@ function viewProgress(e) {
 
   return `<div class="page-h"><div><span class="eyebrow">Progress & time</span><h1>Where the engagement stands</h1><p class="muted">Point of contact: <strong>${esc(g.contact || '—')}</strong>${g.contactRole ? ' · ' + esc(g.contactRole) : ''}. Next review: <strong>${esc(fmtD(splitList(g.reviewDates).find((d) => d >= st.today) || ''))}</strong>.</p></div>
     <div class="btn-row"><button class="btn" data-action="statusReport">Status report →</button></div></div>
-    ${kpis}${card('Timeline', phaseGantt(e))}${delays}<div class="grid-2">${acts}${reqs}</div>${ui.share ? '' : time}${savings}${phases}`;
+    ${kpis}${mvList(e).length ? card('The journey so far', journeyHTML(e, { open: (m) => `data-action="mvGo" data-id="${esc(m.id)}"` }), { sub: 'Everything that has happened, by week, and what comes next. Built from the Big moves and engagement milestones.' }) : ''}${card('Timeline', phaseGantt(e))}${delays}<div class="grid-2">${acts}${reqs}</div>${ui.share ? '' : time}${savings}${phases}`;
 }
 
 function savingsBlock(sv, { rows = true } = {}) {
@@ -220,7 +220,7 @@ function renderStatusReport(e) {
   const onTrack = !st.openDelays.length;
   const m = Math.max(1, Math.min(3, st.thisMonth));
   const dfmt = (v) => (v % 1 ? v.toFixed(1) : String(v));
-  const capacity = `Month ${m}: ${dfmt(num(st.byMonth[m] || 0))} of ${num(g.daysPerMonth)} days used · ${dfmt(Math.max(0, st.remaining))} of ${num(g.daysTotal)} remaining overall`;
+  const capC = capacityInfo(e); const capacity = capC.line;
   const bullets = (txt) => { const l = String(txt || '').split('\n').map((x) => x.trim()).filter(Boolean); return l.length ? `<ul>${l.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : '<p class="muted">—</p>'; };
   const groups = interviewsByRole(e); const ivTotal = e.interviews.length; const planned = e.people.length;
   let h = `<header class="rpt-cover"><div class="rpt-brand">THE <strong>GROWTH</strong> MACHINE</div><h1>Status report</h1><p class="rpt-client">${esc(e.client.name)}</p>
@@ -240,7 +240,7 @@ function renderStatusReport(e) {
     ${g.delays.slice().sort((a, b) => (a.dateRaised || '').localeCompare(b.dateRaised || '')).map((d) => `<tr><td class="nowrap">${fmtD(d.dateRaised)}</td><td>${esc((g.phases.find((p) => p.id === d.phaseId) || {}).name || '—')}</td><td>${esc(d.cause || '')}</td><td>${esc(d.description || '')}</td><td class="r">${num(d.daysImpact) ? '+' + num(d.daysImpact) + ' days' : '—'}</td><td class="nowrap">${d.noticeDate ? fmtD(d.noticeDate) : '—'}</td><td>${d.status === 'Resolved' ? '✓ Resolved' : '⚑ Open'}${d.resolution ? ' · ' + esc(d.resolution) : ''}</td></tr>`).join('')}</tbody></table>
     ${st.totalSlip ? `<p class="small">The end date (${fmtD(g.end, { day: 'numeric', month: 'long', year: 'numeric' })}) is fixed. The ${st.totalSlip} days of slip will be absorbed by reprioritising later work, unless a change is agreed in writing.</p>` : ''}` : '<p>No delays or changes recorded.</p>'}</section>`;
   if (sv.target) h += `<section class="rpt-sec"><h2>Savings tracker</h2>${savingsBlock(sv)}</section>`;
-  h += `<section class="rpt-sec"><h2>Capacity</h2><p>${capacity}</p></section>`;
+  h += `<section class="rpt-sec"><h2>Capacity</h2><p>${esc(capacity)}</p>${capC.over || capC.fl ? capacityBars(capC) : ''}</section>`;
   if (S.includeDiary && g.timeLog.length) h += `<section class="rpt-sec rpt-break"><h2>Appendix: work diary</h2><table class="tbl"><thead><tr><th>Date</th><th>Day</th><th>What happened</th></tr></thead><tbody>${g.timeLog.slice().sort((a, b) => (a.date || '').localeCompare(b.date || '')).map((t) => `<tr><td class="nowrap">${fmtD(t.date, { weekday: 'short', day: 'numeric', month: 'short' })}</td><td>${t.dayType === 'Full' ? 'Full' : 'Half'}</td><td>${esc(String(t.items || '').split('\n').filter(Boolean).join(' · '))}</td></tr>`).join('')}</tbody></table></section>`;
   h += `<footer class="rpt-foot">The Growth Machine · Status report generated ${date}. Figures are working estimates until validated against the agreed baseline.</footer>`;
   return h;

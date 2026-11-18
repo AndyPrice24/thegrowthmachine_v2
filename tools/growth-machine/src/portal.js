@@ -245,6 +245,7 @@ function ptHome() {
     <div class="mv-sh"><h2>The big moves</h2>${mvFilters(moves, PT.mb, (k) => `data-pt="mb" data-id="${k}"`)}</div>
     <div class="mv-grid">${shown.map((m) => mvCard(e, m, { open: `data-pt="move" data-id="${esc(m.id)}"`, acts: ptActs(m.id) })).join('')}</div>
     <div class="pt-grid pt-after-moves">
+      ${ptCard('Latest', journeyHTML(e, { portal: true, latest: 5, open: (m) => `data-pt="move" data-id="${esc(m.id)}"` }), { note: 'the most recent steps', link: ptLinkTo('work', 'Full timeline'), cls: 'c12' })}
       ${asks.length ? ptCard('Needs your decision', `<div class="pt-asks pt-asks-row">${asks.map((a, i) => `<div class="pt-ask"><span class="pt-n">${i + 1}</span><div><b>${esc(a.title)}</b>${a.detail ? `<p>${esc(a.detail)}</p>` : ''}${(PT.D.comments[a.id] || []).length ? `<p class="pt-replied">💬 ${(PT.D.comments[a.id] || []).length} repl${(PT.D.comments[a.id] || []).length > 1 ? 'ies' : 'y'}</p>` : ''}</div><button type="button" class="pt-btn" data-pt="discuss" data-id="${esc(a.id)}">Reply</button></div>`).join('')}</div>${waiting ? `<p class="pt-wait-line">Also ${waiting} information request${waiting > 1 ? 's' : ''} past their date. ${ptLinkTo('work', 'See the list')}</p>` : ''}`, { note: `${asks.length} open`, cls: 'c12' }) : ''}
       ${ptKpis(e, { noSavings: true })}
       ${ptCard('The engagement', `${ptTimeline(e)}<div class="pt-tl-meta">${next ? `<span>Next review <b>${esc(fmtD(next, { weekday: 'short', day: 'numeric', month: 'short' }))}</b></span>` : ''}<span>Conversations <b>${num(R.stats.conversations)}</b></span><span>Processes mapped <b>${num(R.stats.processes)}</b></span><span>Every figure sourced <b>${num(R.stats.sources)} sources</b></span></div>`,
@@ -304,6 +305,7 @@ function ptWork() {
   const late = (d) => d ? Math.max(0, daysBetween(d, todayISO())) : 0;
   return `<section class="pt-hello"><div class="pt-eyebrow">Week ${w.cur} of ${w.weeks}</div><h1>Our work</h1>${S.headline ? `<p class="pt-lede">${esc(S.headline)}</p>` : ''}</section>
   <div class="pt-grid">
+    ${mvList(e, { portal: true }).length ? ptCard('The journey so far', journeyHTML(e, { portal: true, open: (m) => `data-pt="move" data-id="${esc(m.id)}"` }), { note: 'what has happened, what comes next, and what starts next', cls: 'c12' }) : ''}
     ${ptCard('Where we are in the plan', `<div class="pt-gantt">${phaseGantt(e, { compact: true })}</div><div class="pt-tl-meta">${reviews.map((d) => `<span class="${d < todayISO() ? 'pt-past' : ''}">Review <b>${esc(fmtD(d, { day: 'numeric', month: 'short' }))}</b></span>`).join('')}</div>`, { note: `${esc(fmtD(g.start, { day: 'numeric', month: 'short' }))} – ${esc(fmtD(g.end, { day: 'numeric', month: 'short', year: 'numeric' }))}`, cls: 'c12' })}
     ${ptCard('This fortnight', `<div class="pt-two"><div><p class="pt-sub-h">Delivered</p>${ptList(S.delivered, 'done')}</div><div><p class="pt-sub-h">Next</p>${ptList(S.next, 'next')}</div></div>`, { cls: 'c12' })}
     ${ptCard('Savings against the target', `<div class="pt-sv">
@@ -316,7 +318,7 @@ function ptWork() {
     ${ptCard('What we need from you', `${(R.asks || []).length ? `<p class="pt-sub-h">Decisions</p><ul class="pt-list next">${R.asks.map((a) => `<li><button type="button" class="pt-link" data-pt="discuss" data-id="${esc(a.id)}">${esc(a.title)}</button></li>`).join('')}</ul>` : ''}
       ${waiting.length ? `<p class="pt-sub-h" style="margin-top:14px">Information requested (${waiting.length})</p><div class="pt-reqs">${waiting.slice(0, 8).map((r) => `<div class="pt-req"><span>${esc(r.item)}</span><span class="pt-muted pt-small">${esc(r.owner || '')}${r.dueDate ? ` · due ${esc(fmtD(r.dueDate))}` : ''}</span>${r._status === 'Overdue' ? `<span class="pt-trend pt-bad">${late(r.dueDate)} days late</span>` : ''}</div>`).join('')}${waiting.length > 8 ? `<p class="pt-muted pt-small">+ ${waiting.length - 8} more, most of them older requests to the founders and finance.</p>` : ''}</div>` : '<p class="pt-muted">Nothing outstanding.</p>'}`, { cls: 'c5' })}
     ${(g.delays || []).length ? ptCard('Delays and changes', `<table class="pt-tbl"><thead><tr><th>Raised</th><th>What happened</th><th class="r">Days</th><th>Status</th></tr></thead><tbody>${g.delays.map((d) => `<tr><td>${esc(fmtD(d.dateRaised))}</td><td>${esc(d.description || d.cause || '')}</td><td class="r">${num(d.daysImpact)}</td><td>${esc(d.status || '')}</td></tr>`).join('')}</tbody></table>`, { cls: 'c12' }) : ''}
-    ${ptCard('Capacity', `<p>${esc(R.stats.capacity || '')}</p><p class="pt-muted pt-small">One line by agreement: the engagement isn't charged by the hour.</p>`, { cls: 'c12' })}
+    ${ptCard('Capacity', `<p>${esc(R.stats.capacity || '')}</p>${R.stats.cap && (R.stats.cap.over || R.stats.cap.flNote) ? capacityBars(R.stats.cap) : ''}<p class="pt-muted pt-small">By agreement the engagement isn't charged by the hour; days are shown so you can see the time going in.</p>`, { cls: 'c12' })}
   </div>`;
 }
 

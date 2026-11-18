@@ -626,3 +626,47 @@ line.ed-today{stroke:var(--ink);stroke-dasharray:3 3}
 .tv-lv.todo{background:repeating-linear-gradient(135deg,var(--surface) 0 8px,var(--mv-panel-2) 8px 16px)}
 .tv-lv .n{font-family:"Source Serif 4",Georgia,serif;font-weight:600;font-size:22px}.tv-lv b{display:block;font-size:13px;margin-top:4px}.tv-lv p{margin:4px 0 0;font-size:12px;color:var(--muted)}
 @media (max-width:1000px){.tv-kpis,.tv-groups,.tv-levers{grid-template-columns:1fr 1fr}.tv-grid,.tv-decide{grid-template-columns:1fr}}
+
+/* ---- Capacity (days per contract month) ---- */
+.cap-bars{display:grid;gap:8px;margin:6px 0 4px}
+.cap-row{display:grid;grid-template-columns:70px minmax(0,1fr) auto;gap:10px;align-items:center;font-size:13px}
+.cap-l{color:var(--muted)}
+.cap-track{position:relative;height:14px;background:linear-gradient(90deg,var(--grid) var(--w),transparent var(--w));border-radius:4px;display:flex;overflow:visible}
+.cap-paid{display:block;height:100%;background:var(--ink);border-radius:4px 0 0 4px}
+.cap-fwd{display:block;height:100%;background:repeating-linear-gradient(135deg,var(--red) 0 4px,var(--red-soft) 4px 8px);border-radius:0 4px 4px 0}
+.cap-line{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink);opacity:.55}
+.cap-v{white-space:nowrap;color:var(--ink)}.cap-v b{color:var(--red);font-weight:600}
+.cap-key{display:flex;flex-wrap:wrap;gap:12px;font-size:11.5px;color:var(--muted);margin-top:4px}
+.cap-key i{display:inline-block;width:12px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.cap-key .k-paid{background:var(--ink)}.cap-key .k-fwd{background:repeating-linear-gradient(135deg,var(--red) 0 3px,var(--red-soft) 3px 6px)}.cap-key .k-line{width:2px;background:var(--ink);opacity:.55}
+.cap-note{font-size:12.5px;color:var(--ink);margin:6px 0 0}
+
+/* ---- Journey (timeline of the engagement) ---- */
+.jr{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:24px;align-items:start}
+.jr-h{font-family:"Source Serif 4",Georgia,serif;font-weight:600;font-size:17px;margin:0 0 10px;color:var(--ink)}
+.jr-h span{font-family:Inter,ui-sans-serif,sans-serif;font-weight:500;font-size:12px;color:var(--muted);margin-left:6px}
+.jr-week{margin-bottom:14px}
+.jr-wh{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--grid);padding-bottom:4px;margin-bottom:8px}
+.jr-wh b{color:var(--ink);font-weight:600;letter-spacing:.02em}
+.jr-list{list-style:none;margin:0;padding:0}
+.jr-it{display:grid;grid-template-columns:72px 14px minmax(0,1fr);gap:10px;position:relative;padding-bottom:12px}
+.jr-it:not(:last-child)::after{content:"";position:absolute;left:87px;top:14px;bottom:0;width:2px;background:var(--grid)}
+.jr-d{font-size:12px;color:var(--muted);text-align:right;padding-top:1px}
+.jr-dot{width:12px;height:12px;border-radius:50%;background:var(--c);margin-top:4px;position:relative;z-index:1}
+.jr-it.ms .jr-dot{border-radius:3px;transform:rotate(45deg) scale(.85)}
+.jr-next .jr-dot{background:var(--surface);border:2px solid var(--c);box-sizing:border-box}
+.jr-t p{margin:0 0 4px;font-size:13.5px;color:var(--ink);line-height:1.45}
+.jr-chip{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:1px 9px}
+.jr-chip:hover{color:var(--ink);border-color:var(--c)}
+.jr-chip i{width:7px;height:7px;border-radius:50%;background:var(--c,var(--ink))}
+.jr-ms{cursor:default}.jr-ms i{background:var(--ink);border-radius:1px}
+.jr-projs{display:grid;gap:10px}
+.jr-proj{border:1px solid var(--line);border-left:4px solid var(--c);border-radius:12px;padding:12px 14px;background:var(--surface)}
+.jr-pt{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.jr-pt .mv-bucket{--c:inherit}
+.jr-pl{font-size:11px;font-weight:600;border-radius:99px;padding:1px 8px;background:var(--mv-li-soft);color:var(--mv-li)}
+.jr-ph{all:unset;cursor:pointer;display:block;font-family:"Source Serif 4",Georgia,serif;font-weight:600;font-size:15.5px;line-height:1.3;margin:6px 0 4px;color:var(--ink)}
+.jr-ph:hover{text-decoration:underline}
+.jr-proj p{margin:0 0 4px;font-size:12.5px;color:var(--muted)}.jr-proj .jr-first{color:var(--ink)}
+.jr-latest .jr-it{padding-bottom:8px}
+@media (max-width:900px){.jr{grid-template-columns:1fr}.jr-it{grid-template-columns:56px 14px minmax(0,1fr)}.jr-it:not(:last-child)::after{left:71px}}

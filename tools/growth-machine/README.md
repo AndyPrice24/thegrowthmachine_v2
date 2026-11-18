@@ -262,6 +262,15 @@ and opportunities behind it), `sources`, `portal` (false = TGM only), and two TG
 `private` (the people side) and `days` (our time). Founders can comment on and red-flag each move. The portal's Overview headline
 comes from the founder portal's "Headline" field (Studio → Reports → Founder portal).
 
+### The journey, and front-loading
+**The journey** (portal Our work; a "Latest" strip on the portal Overview; the Studio's Big moves and Progress pages) lists everything
+that has happened, newest week first, then what's coming up, then the projects starting next (moves whose `nowLabel` isn't "Now":
+Agreed, Designed, Proposed, Sized). It is built from each move's dated `timeline` plus `engagement.milestones` [{id, date (ISO), title,
+detail}]; free-text dates such as "12 Nov", "24/25 Nov", "Mid-Dec" are read, and undated steps count as coming up.
+**Front-loading:** `engagement.frontLoad` = {by, note} records an agreement to work more days early with invoicing unchanged. Days
+above a month's allowance then show as "brought forward" (hatched bars), not as an overrun, in the Studio, the status report and the
+portal's Capacity card.
+
 ### True value of a client (Evidence → True value, TGM only)
 Two measures, computed from the engagement's data each time. **True value** (rand) = revenue − risk of losing the client
 (revenue × chance of losing it in 12 months, from churn risk rating, contract status and satisfaction). **Effort balance** = share of
