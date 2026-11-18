@@ -178,7 +178,10 @@ function engagementStatus(e) {
 }
 
 /** Contract savings tracker: monthly recurring, net of new recurring costs, by stage. */
+/** Savings tracker. engagement.hideSavings switches it off everywhere (no target, totals or per-item amounts) until savings
+ *  are clearly quantified. */
 function savingsTracker(e) {
+  if (e.engagement.hideSavings === true || e.engagement.hideSavings === 'true') return { rows: [], target: 0, baseline: 0, identified: 0, approved: 0, realised: 0, oneOffSavings: 0, oneOffCosts: 0, hours: 0, hidden: true };
   const rows = scoreRecommendations(e).map((r) => ({ rec: r.rec, monthlyNet: r.cash / 12, oneOffSaving: num(r.rec.oneOffSaving), oneOffCost: r.oneOff, hoursMonth: r.hoursSaved, stage: r.rec.status || 'Identified' }));
   const live = rows.filter((r) => r.stage !== 'Rejected');
   const by = (st) => sum(live.filter((r) => st.includes(r.stage)), (r) => Math.max(0, r.monthlyNet));

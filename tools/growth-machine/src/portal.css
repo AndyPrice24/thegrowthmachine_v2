@@ -271,3 +271,6 @@ body.portal .ed-foot .pt-src { margin-right: 4px; }
 body.portal .mv-detail .pt-thread { margin-top: 0; }
 @media (max-width: 1100px) { .pt-grid > .pt-kpi.w4 { grid-column: span 6; } }
 @media (max-width: 820px) { .pt-tabbar button { font-size: 9.5px; } .pt-tabbar button .pt-ic { width: 19px; height: 19px; } }
+
+.pt-learn { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.pt-learn .pt-link { text-align: left; font-size: 14px; line-height: 1.45; }

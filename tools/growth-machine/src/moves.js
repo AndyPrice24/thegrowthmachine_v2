@@ -128,7 +128,7 @@ function mvDate(e, s) {
 function journey(e, { portal = false } = {}) {
   const today = todayISO(); const moves = mvList(e, { portal }); const past = [], next = [];
   moves.forEach((m) => (Array.isArray(m.timeline) ? m.timeline : []).forEach((t, i) => {
-    const d = mvDate(e, t.date); const item = { key: m.id + ':' + i, date: d, label: t.date, text: t.text, move: m };
+    const d = mvDate(e, t.date); const item = { key: m.id + ':' + i, date: d, label: t.date, text: t.text, move: m, win: mvOn(t.win) };
     if (mvOn(t.next) || !d || d > today) next.push(item); else past.push(item);
   }));
   live((e.engagement || {}).milestones).forEach((x) => { const item = { key: x.id, date: x.date, label: x.date ? fmtD(x.date, { day: 'numeric', month: 'short' }) : '', text: x.title + (x.detail ? ': ' + x.detail : ''), move: null, milestone: true };
@@ -142,7 +142,7 @@ function journey(e, { portal = false } = {}) {
 function journeyHTML(e, { portal = false, open = () => '', latest = 0 } = {}) {
   const J = journey(e, { portal }); const g = e.engagement || {};
   const chip = (it) => (it.move ? `<button type="button" class="jr-chip" style="--c:${mvB(it.move).c}" ${open(it.move)}><i></i>${esc(trunc(it.move.title, 46))}</button>` : '<span class="jr-chip jr-ms"><i></i>Engagement milestone</span>');
-  const row = (it) => `<li class="jr-it ${it.milestone ? 'ms' : ''}" style="--c:${it.move ? mvB(it.move).c : 'var(--ink)'}"><span class="jr-d">${esc(it.label || '')}</span><span class="jr-dot"></span><div class="jr-t"><p>${esc(it.text)}</p>${chip(it)}</div></li>`;
+  const row = (it) => `<li class="jr-it ${it.milestone ? 'ms' : ''} ${it.win ? 'win' : ''}" style="--c:${it.move ? mvB(it.move).c : 'var(--ink)'}"><span class="jr-d">${esc(it.label || '')}</span><span class="jr-dot"></span><div class="jr-t"><p>${it.win ? '<span class="jr-win">★ Win</span> ' : ''}${esc(it.text)}</p>${chip(it)}</div></li>`;
   if (latest) { const L = J.past.slice(-latest).reverse(); return L.length ? `<ul class="jr-list jr-latest">${L.map(row).join('')}</ul>` : ''; }
   const wk = (d) => (g.start ? Math.floor(daysBetween(g.start, d) / 7) + 1 : 1);
   const weeks = {}; J.past.forEach((it) => { const w = it.date ? wk(it.date) : 1; (weeks[w] = weeks[w] || []).push(it); });
@@ -152,7 +152,7 @@ function journeyHTML(e, { portal = false, open = () => '', latest = 0 } = {}) {
   const proj = J.projects.map((m) => { const nx = (m.timeline || []).find((t) => mvOn(t.next)); return `<div class="jr-proj" style="--c:${mvB(m).c}"><div class="jr-pt"><span class="mv-bucket">${esc(mvB(m).label)}</span><span class="jr-pl">${esc(m.nowLabel)}</span></div>
       <button type="button" class="jr-ph" ${open(m)}>${esc(m.title)}</button><p>${esc(m.now || '')}</p>${m.next ? `<p class="jr-first"><b>First step:</b> ${esc(m.next)}${m.nextDate ? ' · ' + esc(m.nextDate) : nx && mvDate(e, nx.date) ? ' · ' + esc(nx.date) : ''}</p>` : ''}</div>`; }).join('');
   return `<div class="jr">
-    <div class="jr-col"><h3 class="jr-h">What has happened <span>${J.past.length} steps, newest week first</span></h3>${past || '<p class="muted">Nothing recorded yet.</p>'}</div>
+    <div class="jr-col"><h3 class="jr-h">What has happened <span>${J.past.length} steps${J.past.some((x) => x.win) ? ` · ${J.past.filter((x) => x.win).length} wins` : ''}, newest week first</span></h3>${past || '<p class="muted">Nothing recorded yet.</p>'}</div>
     <div class="jr-col"><h3 class="jr-h">Coming up <span>${J.next.length} dated and planned steps</span></h3><ul class="jr-list jr-next">${nextL.map(row).join('')}</ul>${J.next.length > nextL.length ? `<p class="muted small">and ${J.next.length - nextL.length} more on the key changes.</p>` : ''}
       ${proj ? `<h3 class="jr-h" style="margin-top:18px">Starting next <span>agreed or proposed, not yet under way</span></h3><div class="jr-projs">${proj}</div>` : ''}</div></div>`;
 }
