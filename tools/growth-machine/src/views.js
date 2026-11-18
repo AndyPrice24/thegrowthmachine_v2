@@ -245,9 +245,9 @@ function revenueLeaksCard(e) {
   return card('Revenue leaks', `<p class="small muted" style="margin-top:0">Recurring revenue lost, cut, won and grown per month, digested from Location Bank's own New &amp; Lost sheets and combined with the register and client health data. Figures are estimates until checked against billing.</p>
     ${insights.length ? `<h5>What it tells us</h5><ul class="lk-list">${insights.map((f) => `<li><span class="chip sev-${esc(f.severity || 'low')}">${esc(f.severity || '')}</span> ${esc(f.title)}</li>`).join('')}</ul>` : ''}
     <div class="grid-2" style="margin-top:14px"><div><h5>The numbers per month</h5>${table}
-      <h5 style="margin-top:14px">Biggest single leaks</h5><p class="small">${big.map((m) => `${esc(m.client.trim())} <span class="lk-neg">−${mo(num(m.monthly))}</span> <span class="faint">(${esc(m.cause.toLowerCase())}, ${esc(m.fy)})</span>`).join(' · ')}</p></div>
+      <h5 style="margin-top:14px">Largest single losses</h5><p class="small">${big.map((m) => `${esc(m.client.trim())} <span class="lk-neg">−${mo(num(m.monthly))}</span> <span class="faint">(${esc(m.cause.toLowerCase())}, ${esc(m.fy)})</span>`).join(' · ')}</p></div>
       <div class="lk-bars">${leakBars}</div></div>
-    ${loc}`, { sub: 'Lost and cut revenue by cause, against what was won. Fixing the biggest cause pays more than chasing new sales.' });
+    ${loc}`, { sub: 'Lost and cut revenue by cause, against what was won. Addressing the largest cause first protects the most revenue.' });
 }
 
 /* ---------- Client register (from the client's own contract register) ---------- */

@@ -60,7 +60,7 @@ function automationCard(e) {
     </div></details>`;
   };
   return card('Automation opportunities', `
-    <p class="small muted" style="margin:0 0 8px">Where work could run itself. First prize is the systems ${esc(e.client.name)} already uses or is moving to; AI where it does the job better. ${existing} of ${list.length} use current systems${sized ? ` · ${fmtMoney(sized)}/mo sized` : ''}${hours ? ` · ~${Math.round(hours)} hours a month` : ''}.</p>
+    <p class="small muted" style="margin:0 0 8px">Where work could run itself. Preferred: the systems ${esc(e.client.name)} already uses or is moving to; AI where it does the job better. ${existing} of ${list.length} use current systems${sized ? ` · ${fmtMoney(sized)}/mo sized` : ''}${hours ? ` · ~${Math.round(hours)} hours a month` : ''}.</p>
     <div class="au-legend small faint">${Object.values(AUTO_APPROACH).map(([i, n]) => `<span>${i} ${esc(n)}</span>`).join('')}</div>
     <div class="au-head"><span>#</span><span></span><span>What could run itself</span><span>Worth</span><span>Status</span></div>
     ${shown.map(row).join('')}
