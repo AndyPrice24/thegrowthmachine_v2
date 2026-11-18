@@ -262,6 +262,15 @@ and opportunities behind it), `sources`, `portal` (false = TGM only), and two TG
 `private` (the people side) and `days` (our time). Founders can comment on and red-flag each move. The portal's Overview headline
 comes from the founder portal's "Headline" field (Studio → Reports → Founder portal).
 
+### True value of a client (Evidence → True value, TGM only)
+Two measures, computed from the engagement's data each time. **True value** (rand) = revenue − risk of losing the client
+(revenue × chance of losing it in 12 months, from churn risk rating, contract status and satisfaction). **Effort balance** = share of
+effort ÷ share of revenue; break-even is average revenue per effort point. No rand cost is put on effort: the team is paid either way;
+the question is where its time goes. Revenue comes from `monthlyRevenue` on the client (billing), else annual revenue, else the latest
+New & Lost value. Effort is the Client Success effort score (TouchPoint `csScores`, else touch level) plus `opsEffort` (0–10) once
+Operations data arrives. Settings live in `engagement.trueValue` (set by update file): `risk` chances, `outPts`, `satPts`, `satMax`,
+`segment`, and `exclude` (clients kept in true value but left out of the balance, e.g. partner accounts). Hidden in the founder portal.
+
 ### Enhanced data (Insights)
 Evidence → Insights (Studio) and Insights (founder portal) show views that join data the Studio already holds. Each view is a record in
 the `enhanced` collection: `kind` picks the view, and the chart is redrawn from the engagement's data every time, so it stays current.

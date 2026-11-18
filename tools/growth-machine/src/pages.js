@@ -12,7 +12,7 @@ const TAB_ALIAS = {
   report: ['progress', 'report']
 };
 const SUBTABS = {
-  evidence: [['insights', 'Insights'], ['growth', 'Client growth (NRR)'], ['money', 'Money'], ['clients', 'Clients'], ['people', 'People'], ['tools', 'Tools'], ['market', 'Market']],
+  evidence: [['insights', 'Insights'], ['value', 'True value'], ['growth', 'Client growth (NRR)'], ['money', 'Money'], ['clients', 'Clients'], ['people', 'People'], ['tools', 'Tools'], ['market', 'Market']],
   talk: [['people', 'By person'], ['interviews', 'Interviews'], ['discovery', 'Discovery']],
   progress: [['progress', 'Progress & time'], ['report', 'Reports']]
 };
@@ -26,9 +26,9 @@ function normaliseTab() {
   if (!TABS.some((t) => t[0] === ui.tab)) ui.tab = 'home';
   Object.keys(SUBTABS).forEach((t) => { if (!SUBTABS[t].some((s) => s[0] === ui.sub[t])) ui.sub[t] = SUBTABS[t][0][0]; });
 }
-const subOf = (t) => { const s = (ui.sub || {})[t] || SUBTABS[t][0][0]; return PORTAL_ON && t === 'evidence' && s === 'insights' ? 'growth' : s; };
+const subOf = (t) => { const s = (ui.sub || {})[t] || SUBTABS[t][0][0]; return PORTAL_ON && t === 'evidence' && (s === 'insights' || s === 'value') ? 'growth' : s; };
 function subBar(t) {
-  return `<nav class="subnav">${SUBTABS[t].filter(([id]) => !(PORTAL_ON && t === 'evidence' && id === 'insights')).map(([id, n]) => `<button class="sub-btn ${subOf(t) === id ? 'on' : ''}" data-action="sub" data-tab="${t}" data-id="${id}">${n}</button>`).join('')}</nav>`;
+  return `<nav class="subnav">${SUBTABS[t].filter(([id]) => !(PORTAL_ON && t === 'evidence' && (id === 'insights' || id === 'value'))).map(([id, n]) => `<button class="sub-btn ${subOf(t) === id ? 'on' : ''}" data-action="sub" data-tab="${t}" data-id="${id}">${n}</button>`).join('')}</nav>`;
 }
 
 /* ---------- "Top 5, then Show all" for long lists ---------- */
@@ -101,7 +101,7 @@ function viewPlan(e) {
 /* ---------- Evidence: the detail behind findings ---------- */
 function viewEvidence(e) {
   const s = subOf('evidence');
-  const body = s === 'insights' ? viewEnhanced(e) : s === 'growth' ? viewNRR(e) : s === 'money' ? viewFinance(e) : s === 'clients' ? viewBusiness(e) : s === 'people' ? viewOrg(e) + peopleCrossCards(e) : s === 'tools' ? viewTools(e) : viewCompetitors(e) + profileCard(e);
+  const body = s === 'insights' ? viewEnhanced(e) : s === 'value' ? viewTrueValue(e) : s === 'growth' ? viewNRR(e) : s === 'money' ? viewFinance(e) : s === 'clients' ? viewBusiness(e) : s === 'people' ? viewOrg(e) + peopleCrossCards(e) : s === 'tools' ? viewTools(e) : viewCompetitors(e) + profileCard(e);
   return subBar('evidence') + body;
 }
 
