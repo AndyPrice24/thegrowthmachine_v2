@@ -96,7 +96,7 @@ function viewProgress(e) {
 
   return `<div class="page-h"><div><span class="eyebrow">Progress & time</span><h1>Where the engagement stands</h1><p class="muted">Point of contact: <strong>${esc(g.contact || '—')}</strong>${g.contactRole ? ' · ' + esc(g.contactRole) : ''}. Next review: <strong>${esc(fmtD(splitList(g.reviewDates).find((d) => d >= st.today) || ''))}</strong>.</p></div>
     <div class="btn-row"><button class="btn" data-action="statusReport">Status report →</button></div></div>
-    ${kpis}${mvList(e).length ? card('The journey so far', journeyHTML(e, { open: (m) => `data-action="mvGo" data-id="${esc(m.id)}"` }), { sub: 'Everything that has happened, by week, and what comes next. Built from the Big moves and engagement milestones.' }) : ''}${card('Timeline', phaseGantt(e))}${delays}<div class="grid-2">${acts}${reqs}</div>${ui.share ? '' : time}${savings}${phases}`;
+    ${kpis}${mvList(e).length ? card('The journey so far', journeyHTML(e, { open: (m) => `data-action="mvGo" data-id="${esc(m.id)}"` }), { sub: 'Everything that has happened, by week, and what comes next. Built from the key changes and engagement milestones.' }) : ''}${card('Timeline', phaseGantt(e))}${delays}<div class="grid-2">${acts}${reqs}</div>${ui.share ? '' : time}${savings}${phases}`;
 }
 
 function savingsBlock(sv, { rows = true } = {}) {

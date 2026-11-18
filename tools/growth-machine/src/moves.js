@@ -12,7 +12,7 @@ const MV_BUCKETS = {
   empower: { label: 'Unblock & empower', sub: 'Stalled projects and people', c: 'var(--mv-em)', soft: 'var(--mv-em-soft)' },
   leaks: { label: 'Stop the leaks', sub: 'Money and risk going out', c: 'var(--mv-lk)', soft: 'var(--mv-lk-soft)' }
 };
-const MV_STAGES = [['aligned', 'Aligned'], ['unblocked', 'Unblocked'], ['live', 'Live'], ['measured', 'Measured']];
+const MV_STAGES = [['aligned', 'Agreed'], ['unblocked', 'Under way'], ['live', 'Live'], ['measured', 'Measured']];
 const mvB = (m) => MV_BUCKETS[m.bucket] || MV_BUCKETS.friction;
 const mvOn = (v) => v === true || v === 'true';
 function mvList(e, { portal = false } = {}) {
@@ -48,7 +48,7 @@ function mvCard(e, m, { open = '', acts = '', extra = '' } = {}) {
 /** Bucket tiles with counts (and a lead tile, e.g. savings identified). */
 function mvHero(moves, lead = '') {
   return `<div class="mv-hero">${lead}${Object.entries(MV_BUCKETS).map(([k, b]) => { const n = moves.filter((m) => (m.bucket || 'friction') === k).length;
-    return `<div class="mv-tile" style="--c:${b.c}"><div class="k">${esc(b.label)}</div><div class="v">${n} move${n === 1 ? '' : 's'}</div><div class="s">${esc(b.sub)}</div></div>`; }).join('')}</div>`;
+    return `<div class="mv-tile" style="--c:${b.c}"><div class="k">${esc(b.label)}</div><div class="v">${n} change${n === 1 ? '' : 's'}</div><div class="s">${esc(b.sub)}</div></div>`; }).join('')}</div>`;
 }
 /** Bucket filter chips; attr(k) returns the attribute string for a chip. */
 function mvFilters(moves, cur, attr) {
@@ -94,19 +94,19 @@ function viewMoves(e) {
   const m = ui.moveId && all.find((x) => x.id === ui.moveId);
   if (m) {
     const priv = !founders && (m.private || m.days) ? `<div class="mv-box mv-private"><h3>TGM only</h3>${m.private ? `<p>${esc(m.private)}</p>` : ''}<p class="muted small">Our time: ${num(m.days) ? `<b>${num(m.days)} day${num(m.days) === 1 ? '' : 's'}</b>` : 'not logged yet'}</p></div>` : '';
-    return mvDetail(e, m, { back: '<button class="link mv-back" data-action="mvOpen" data-id="">← All big moves</button>', side: priv + (refsFor(e, 'finding', m).length ? `<details class="mv-box ed-src"><summary>Sources (${refsFor(e, 'finding', m).length})</summary>${citeBlock(e, 'finding', m, '')}</details>` : '') });
+    return mvDetail(e, m, { back: '<button class="link mv-back" data-action="mvOpen" data-id="">← All key changes</button>', side: priv + (refsFor(e, 'finding', m).length ? `<details class="mv-box ed-src"><summary>Sources (${refsFor(e, 'finding', m).length})</summary>${citeBlock(e, 'finding', m, '')}</details>` : '') });
   }
   const list = all.filter((x) => !ui.mvBucket || (x.bucket || 'friction') === ui.mvBucket);
   const sv = savingsTracker(e);
   const lead = `<div class="mv-tile mv-lead"><div class="k">Savings identified</div><div class="v">${esc(fmtShort(sv.identified))}<small> / mo</small></div><div class="s">against ${esc(fmtShort(sv.target))} / mo target · ${esc(fmtShort(sv.approved))} approved</div></div>`;
-  const head = `<div class="page-h mv-page-h"><div><span class="eyebrow">Big moves${founders ? '' : ' · TGM view'}</span><h1>The changes with the biggest knock-on effect</h1><p class="muted">Each move tells the story: before, what changed, impact and what's next. The findings, recommendations and automations behind it are its evidence.</p></div>
+  const head = `<div class="page-h mv-page-h"><div><span class="eyebrow">Key changes${founders ? '' : ' · TGM view'}</span><h1>What's changing, and where it stands</h1><p class="muted">Each change: before, what has happened, the effect and what's next, with the findings, recommendations and automations behind it.</p></div>
     ${ui.share ? '' : `<div class="mv-seg"><button class="mv-seg-b ${founders ? '' : 'on'}" data-action="mvView" data-id="ours">Our view</button><button class="mv-seg-b ${founders ? 'on' : ''}" data-action="mvView" data-id="founders">As founders see it</button></div>`}</div>`;
-  if (!all.length) return head + card('Big moves', empty('No moves yet. They arrive in an update file (collection "moves") or can be added in Sources & data.'));
+  if (!all.length) return head + card('Key changes', empty('No moves yet. They arrive in an update file (collection "moves") or can be added in Sources & data.'));
   const extra = (x) => (founders ? '' : `${x.private ? `<div class="mv-private-line"><b>Private</b>${esc(x.private)}</div>` : ''}<div class="mv-meta">Our time: ${num(x.days) ? `<b>${num(x.days)} day${num(x.days) === 1 ? '' : 's'}</b>` : '<span class="mv-tbc">log it</span>'}${mvCounts(e, x) ? ' · ' + esc(mvCounts(e, x)) : ''}${String(x.portal) === 'false' ? ' · <span class="chip">TGM only</span>' : ''}</div>`);
-  return head + mvHero(all, lead) + `<div class="mv-sh"><h2>The big moves</h2>${mvFilters(all, ui.mvBucket || '', (k) => `data-action="mvBucket" data-id="${k}"`)}</div>
+  return head + mvHero(all, lead) + `<div class="mv-sh"><h2>The key changes</h2>${mvFilters(all, ui.mvBucket || '', (k) => `data-action="mvBucket" data-id="${k}"`)}</div>
     <div class="mv-grid">${list.map((x) => mvCard(e, x, { open: `data-action="mvOpen" data-id="${esc(x.id)}"`, extra: extra(x) })).join('')}</div>
     ${card('The journey so far', journeyHTML(e, { portal: founders, open: (m) => `data-action="mvOpen" data-id="${esc(m.id)}"` }), { sub: 'What has happened, by week; what comes next; and the projects starting next.' })}
-    <div class="mv-evid"><span><b>Behind the moves:</b> ${live(e.findings).length} findings, ${live(e.recommendations).length} recommendations and ${live(e.automations).length} automations, each with its sources.</span><button class="link" data-action="tab" data-id="home">Open Leaks &amp; opportunities →</button></div>`;
+    <div class="mv-evid"><span><b>Behind these changes:</b> ${live(e.findings).length} findings, ${live(e.recommendations).length} recommendations and ${live(e.automations).length} automations, each with its sources.</span><button class="link" data-action="tab" data-id="home">Open Leaks &amp; opportunities →</button></div>`;
 }
 
 /* ---------- The journey: what has happened (by week), what's coming, and projects starting next ----------
@@ -148,6 +148,6 @@ function journeyHTML(e, { portal = false, open = () => '', latest = 0 } = {}) {
       <button type="button" class="jr-ph" ${open(m)}>${esc(m.title)}</button><p>${esc(m.now || '')}</p>${m.next ? `<p class="jr-first"><b>First step:</b> ${esc(m.next)}${m.nextDate ? ' · ' + esc(m.nextDate) : nx && mvDate(e, nx.date) ? ' · ' + esc(nx.date) : ''}</p>` : ''}</div>`; }).join('');
   return `<div class="jr">
     <div class="jr-col"><h3 class="jr-h">What has happened <span>${J.past.length} steps, newest week first</span></h3>${past || '<p class="muted">Nothing recorded yet.</p>'}</div>
-    <div class="jr-col"><h3 class="jr-h">Coming up <span>${J.next.length} dated and planned steps</span></h3><ul class="jr-list jr-next">${nextL.map(row).join('')}</ul>${J.next.length > nextL.length ? `<p class="muted small">and ${J.next.length - nextL.length} more on the moves.</p>` : ''}
+    <div class="jr-col"><h3 class="jr-h">Coming up <span>${J.next.length} dated and planned steps</span></h3><ul class="jr-list jr-next">${nextL.map(row).join('')}</ul>${J.next.length > nextL.length ? `<p class="muted small">and ${J.next.length - nextL.length} more on the key changes.</p>` : ''}
       ${proj ? `<h3 class="jr-h" style="margin-top:18px">Starting next <span>agreed or proposed, not yet under way</span></h3><div class="jr-projs">${proj}</div>` : ''}</div></div>`;
 }

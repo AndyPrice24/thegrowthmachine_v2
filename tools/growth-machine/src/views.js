@@ -2,7 +2,7 @@
    Views — each returns an HTML string for the main panel
    ============================================================ */
 const TABS = [
-  ['moves', 'Big moves'], ['home', 'Leaks & opportunities'], ['plan', 'Plan'], ['processes', 'Processes'], ['evidence', 'Evidence'],
+  ['moves', 'Key changes'], ['home', 'Leaks & opportunities'], ['plan', 'Plan'], ['processes', 'Processes'], ['evidence', 'Evidence'],
   ['talk', 'Conversations'], ['progress', 'Progress & reports'], ['data', 'Sources & data']
 ];
 

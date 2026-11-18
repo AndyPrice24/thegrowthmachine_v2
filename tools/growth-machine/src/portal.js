@@ -10,7 +10,7 @@ const PT = { move: '', mb: '', S: null, R: null, me: null, ev: [], sec: 'home', 
 /* Studio actions that only change what is shown. Everything else is blocked in the portal. */
 const PT_ACTIONS = new Set(['sub', 'showAll', 'pvPick', 'pvBack', 'pvFocus', 'pvJourney', 'pvHl', 'pvSet', 'pvTick', 'flowStep', 'flowClear', 'zoom', 'setIntelFilter', 'goSrc', 'tab']);
 const PT_UI_OK = new Set(['compare', 'execView', 'ghosts', 'showCost', 'prioOnly']);
-const PT_SECTIONS = [['home', 'Overview', 'i-home'], ['moves', 'Big moves', 'i-move'], ['work', 'Our work', 'i-work'], ['leaks', 'Leaks & opportunities', 'i-leak'], ['proc', 'Processes', 'i-proc'], ['evid', 'Evidence', 'i-evid'], ['ins', 'Insights', 'i-ins']];
+const PT_SECTIONS = [['home', 'Overview', 'i-home'], ['moves', 'Key changes', 'i-move'], ['work', 'Our work', 'i-work'], ['leaks', 'Leaks & opportunities', 'i-leak'], ['proc', 'Processes', 'i-proc'], ['evid', 'Evidence', 'i-evid'], ['ins', 'Insights', 'i-ins']];
 /** Short money: R494k, R1.06m. */
 function ptMoney(v) { v = num(v); const sym = fmtShort(0).replace(/[\d.,\s]/g, '') || 'R'; const a = Math.abs(v); const s = a >= 1e6 ? (a / 1e6).toFixed(a >= 1e7 ? 1 : 2).replace(/\.?0+$/, '') + 'm' : a >= 1e3 ? Math.round(a / 1e3) + 'k' : String(Math.round(a)); return (v < 0 ? '-' : '') + sym + s; }
 const ptName = (k) => (PT_SECTIONS.find((s) => s[0] === k) || ['', ''])[1];
@@ -242,7 +242,7 @@ function ptHome() {
   return `<section class="pt-hello"><div class="pt-eyebrow">Week ${w.cur} of ${w.weeks} · ${st.openDelays.length ? `${st.openDelays.length} open delay${st.openDelays.length > 1 ? 's' : ''}` : 'on track'}</div>
       <h1>${esc(R.headline || `${hello}${first}. Here's where ${e.client.name} stands.`)}</h1>${R.intro || S.headline ? `<p class="pt-lede">${esc(R.intro || S.headline)}</p>` : ''}</section>
     ${mvHero(moves, lead)}
-    <div class="mv-sh"><h2>The big moves</h2>${mvFilters(moves, PT.mb, (k) => `data-pt="mb" data-id="${k}"`)}</div>
+    <div class="mv-sh"><h2>The key changes</h2>${mvFilters(moves, PT.mb, (k) => `data-pt="mb" data-id="${k}"`)}</div>
     <div class="mv-grid">${shown.map((m) => mvCard(e, m, { open: `data-pt="move" data-id="${esc(m.id)}"`, acts: ptActs(m.id) })).join('')}</div>
     <div class="pt-grid pt-after-moves">
       ${ptCard('Latest', journeyHTML(e, { portal: true, latest: 5, open: (m) => `data-pt="move" data-id="${esc(m.id)}"` }), { note: 'the most recent steps', link: ptLinkTo('work', 'Full timeline'), cls: 'c12' })}
@@ -261,11 +261,11 @@ function ptHome() {
 function ptMovesSec() {
   const e = E(); const moves = mvList(e, { portal: true });
   const m = PT.move && moves.find((x) => x.id === PT.move);
-  if (m) return mvDetail(e, m, { back: '<button type="button" class="pt-link mv-back" data-pt="move" data-id="">← All big moves</button>', acts: ptActs(m.id),
+  if (m) return mvDetail(e, m, { back: '<button type="button" class="pt-link mv-back" data-pt="move" data-id="">← All key changes</button>', acts: ptActs(m.id),
     side: `${(m.sources || []).length ? `<div class="mv-srcline">${ptSrcBtn(m.sources, 'Where the figures come from')}</div>` : ''}<div class="mv-box" id="it-${esc(m.id)}"><h3>Discussion</h3>${ptThread(m.id)}</div>` });
   const shown = moves.filter((x) => !PT.mb || (x.bucket || 'friction') === PT.mb);
-  return `<section class="pt-hello"><div class="pt-eyebrow">Big moves</div><h1>The changes with the biggest knock-on effect</h1><p class="pt-lede">Each move: why it matters, what has changed, the impact so far and what's next. Open one for the full story and the evidence behind it; comment on or red-flag anything.</p></section>
-    ${moves.length ? `<div class="mv-sh"><h2>${shown.length} move${shown.length === 1 ? '' : 's'}</h2>${mvFilters(moves, PT.mb, (k) => `data-pt="mb" data-id="${k}"`)}</div><div class="mv-grid">${shown.map((x) => mvCard(e, x, { open: `data-pt="move" data-id="${esc(x.id)}"`, acts: ptActs(x.id) })).join('')}</div>` : `<div class="pt-grid">${ptCard('', '<p class="pt-muted">The first moves are being written up.</p>', { cls: 'c12' })}</div>`}`;
+  return `<section class="pt-hello"><div class="pt-eyebrow">Key changes</div><h1>What's changing, and where it stands</h1><p class="pt-lede">Each change: why it matters, what has happened, the effect so far and what's next. Open one for the detail and the evidence behind it; comment on or flag anything.</p></section>
+    ${moves.length ? `<div class="mv-sh"><h2>${shown.length} change${shown.length === 1 ? '' : 's'}</h2>${mvFilters(moves, PT.mb, (k) => `data-pt="mb" data-id="${k}"`)}</div><div class="mv-grid">${shown.map((x) => mvCard(e, x, { open: `data-pt="move" data-id="${esc(x.id)}"`, acts: ptActs(x.id) })).join('')}</div>` : `<div class="pt-grid">${ptCard('', '<p class="pt-muted">The first moves are being written up.</p>', { cls: 'c12' })}</div>`}`;
 }
 const ptIsMove = (id) => mvList(E(), { portal: true }).some((x) => x.id === id);
 function ptHomeClassic() {
@@ -404,8 +404,8 @@ function ptFocus(id) { const n = document.getElementById('it-' + id); if (n) { n
 const PT_SUM = { ids: null, title: '', note: '', comments: false, fortnight: true, loaded: false };
 function ptSumGroups() {
   const { found, recs } = ptItems(); const out = [];
-  const mv = mvList(E(), { portal: true }); const stg = (m) => (m.stage === 'done' ? 'Measured' : (MV_STAGES.find(([k]) => k === m.stage) || [0, 'Aligned'])[1]);
-  if (mv.length) out.push({ title: 'Big moves', items: mv.map((m) => ({ id: m.id, cat: mvB(m).label, title: m.title, val: 'Stage: ' + stg(m), valSub: m.next ? '· next: ' + m.next + (m.nextDate ? ' (' + m.nextDate + ')' : '') : '', summary: `Before: ${m.before || ''} Now: ${m.now || ''}${m.impact ? ' Impact: ' + m.impact + '.' : ''}` })) });
+  const mv = mvList(E(), { portal: true }); const stg = (m) => (m.stage === 'done' ? 'Measured' : (MV_STAGES.find(([k]) => k === m.stage) || [0, 'Agreed'])[1]);
+  if (mv.length) out.push({ title: 'Key changes', items: mv.map((m) => ({ id: m.id, cat: mvB(m).label, title: m.title, val: 'Stage: ' + stg(m), valSub: m.next ? '· next: ' + m.next + (m.nextDate ? ' (' + m.nextDate + ')' : '') : '', summary: `Before: ${m.before || ''} Now: ${m.now || ''}${m.impact ? ' Impact: ' + m.impact + '.' : ''}` })) });
   if ((PT.R.asks || []).length) out.push({ title: 'Needs a decision', items: PT.R.asks.map((a) => ({ id: a.id, title: a.title, summary: a.detail })) });
   if (found.length) out.push({ title: 'Leaks & opportunities', items: found });
   if (recs.length) out.push({ title: 'What we suggest', items: recs });
