@@ -236,7 +236,7 @@ function ptHome() {
   const first = PT.me.owner ? '' : ', ' + String(PT.me.label).split(/[\s(]/)[0];
   const next = splitList(g.reviewDates).find((d) => d > todayISO()); const waiting = st.overdue.length; const asks = R.asks || [];
   const sv = savingsTracker(e); const pct = sv.target ? Math.min(100, sv.identified / sv.target * 100) : 0;
-  const lead = `<div class="mv-tile mv-lead"><div class="k">Savings identified</div><div class="v">${esc(ptMoney(sv.identified))}<small> / mo</small></div><div class="s">against the ${esc(ptMoney(sv.target))}/month target · ${sv.approved ? esc(ptMoney(sv.approved)) + ' approved' : 'estimates, awaiting finance detail'}</div><div class="mv-meter"><i style="width:${pct.toFixed(0)}%"></i></div></div>`;
+  const lead = mvLeadTile(moves);
   const shown = moves.filter((m) => !PT.mb || (m.bucket || 'friction') === PT.mb);
   const nIns = edList(e, { portal: true }).length;
   return `<section class="pt-hello"><div class="pt-eyebrow">Week ${w.cur} of ${w.weeks} · ${st.openDelays.length ? `${st.openDelays.length} open delay${st.openDelays.length > 1 ? 's' : ''}` : 'on track'}</div>

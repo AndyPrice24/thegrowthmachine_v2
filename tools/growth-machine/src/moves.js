@@ -45,7 +45,13 @@ function mvCard(e, m, { open = '', acts = '', extra = '' } = {}) {
     <div class="mv-foot"><span class="mv-impact">${esc(m.impact || '')}${mvTbc(m.impactTbc)}</span><span>${m.next ? `Next: ${esc(m.next)}${m.nextDate ? ' · ' + esc(m.nextDate) : ''}` : ''}</span></div>
   </article>`;
 }
-/** Bucket tiles with counts (and a lead tile, e.g. savings identified). */
+/** Lead tile: where the changes stand (live, under way, starting next). Factual, no money claims. */
+function mvLeadTile(moves) {
+  const live = moves.filter((m) => m.stage === 'measured' || m.stage === 'done' || (m.stageNotes && m.stageNotes.live)).length;
+  const starting = moves.filter((m) => m.nowLabel && m.nowLabel !== 'Now').length; const under = Math.max(0, moves.length - live - starting);
+  return `<div class="mv-tile mv-lead"><div class="k">Key changes</div><div class="v">${moves.length}</div><div class="s">${live} live · ${under} under way · ${starting} starting next</div></div>`;
+}
+/** Bucket tiles with counts (and a lead tile). */
 function mvHero(moves, lead = '') {
   return `<div class="mv-hero">${lead}${Object.entries(MV_BUCKETS).map(([k, b]) => { const n = moves.filter((m) => (m.bucket || 'friction') === k).length;
     return `<div class="mv-tile" style="--c:${b.c}"><div class="k">${esc(b.label)}</div><div class="v">${n} change${n === 1 ? '' : 's'}</div><div class="s">${esc(b.sub)}</div></div>`; }).join('')}</div>`;
@@ -97,8 +103,7 @@ function viewMoves(e) {
     return mvDetail(e, m, { back: '<button class="link mv-back" data-action="mvOpen" data-id="">← All key changes</button>', side: priv + (refsFor(e, 'finding', m).length ? `<details class="mv-box ed-src"><summary>Sources (${refsFor(e, 'finding', m).length})</summary>${citeBlock(e, 'finding', m, '')}</details>` : '') });
   }
   const list = all.filter((x) => !ui.mvBucket || (x.bucket || 'friction') === ui.mvBucket);
-  const sv = savingsTracker(e);
-  const lead = `<div class="mv-tile mv-lead"><div class="k">Savings identified</div><div class="v">${esc(fmtShort(sv.identified))}<small> / mo</small></div><div class="s">against ${esc(fmtShort(sv.target))} / mo target · ${esc(fmtShort(sv.approved))} approved</div></div>`;
+  const lead = mvLeadTile(all);
   const head = `<div class="page-h mv-page-h"><div><span class="eyebrow">Key changes${founders ? '' : ' · TGM view'}</span><h1>What's changing, and where it stands</h1><p class="muted">Each change: before, what has happened, the effect and what's next, with the findings, recommendations and automations behind it.</p></div>
     ${ui.share ? '' : `<div class="mv-seg"><button class="mv-seg-b ${founders ? '' : 'on'}" data-action="mvView" data-id="ours">Our view</button><button class="mv-seg-b ${founders ? 'on' : ''}" data-action="mvView" data-id="founders">As founders see it</button></div>`}</div>`;
   if (!all.length) return head + card('Key changes', empty('No moves yet. They arrive in an update file (collection "moves") or can be added in Sources & data.'));
