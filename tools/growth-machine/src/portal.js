@@ -199,14 +199,14 @@ const ptLinkTo = (sec, label, extra = '') => `<button type="button" class="pt-mo
 function ptTimeline(e, big) {
   const g = e.engagement; const today = todayISO();
   if (!g.start || !g.end) return '';
-  const weeks = Math.max(1, Math.ceil((daysBetween(g.start, g.end) + 1) / 7)); const cur = Math.max(1, Math.min(weeks, Math.floor(daysBetween(g.start, today) / 7) + 1));
+  const weeks = Math.max(1, Math.round((daysBetween(g.start, g.end) + 1) / 7)); const cur = Math.max(1, Math.min(weeks, Math.floor(daysBetween(g.start, today) / 7) + 1));
   const bars = Array.from({ length: weeks }, (_, i) => `<span class="${i + 1 < cur ? 'done' : i + 1 === cur ? 'now' : ''}"></span>`).join('');
   const ph = g.phases || []; const tot = Math.max(1, sum(ph, (p) => Math.max(1, daysBetween(p.start, p.end) + 1)));
   const cls = (p) => (p.status === 'Done' ? 'done' : (p.status === 'In progress' || (p.start <= today && today <= p.end)) ? 'now' : '');
   return `<div class="pt-tl" style="grid-template-columns:repeat(${weeks},minmax(0,1fr))" aria-label="Week ${cur} of ${weeks}">${bars}</div>
     <div class="pt-phases" style="grid-template-columns:${ph.map((p) => `${Math.max(1, daysBetween(p.start, p.end) + 1) / tot}fr`).join(' ')}">${ph.map((p) => `<div class="${cls(p)}"><span>${esc(p.name)}</span>${big ? `<small>${esc(fmtD(p.start))} – ${esc(fmtD(p.end))} · ${esc(p.status || '')}</small>` : ''}</div>`).join('')}</div>`;
 }
-function ptWeek(e) { const g = e.engagement; const weeks = Math.max(1, Math.ceil((daysBetween(g.start, g.end) + 1) / 7)); return { cur: Math.max(1, Math.min(weeks, Math.floor(daysBetween(g.start, todayISO()) / 7) + 1)), weeks }; }
+function ptWeek(e) { const g = e.engagement; const weeks = Math.max(1, Math.round((daysBetween(g.start, g.end) + 1) / 7)); return { cur: Math.max(1, Math.min(weeks, Math.floor(daysBetween(g.start, todayISO()) / 7) + 1)), weeks }; }
 function ptKpis(e, { noSavings = false } = {}) {
   const sv = savingsTracker(e);
   const pct = sv.target ? Math.min(100, sv.identified / sv.target * 100) : 0; const apct = sv.target ? Math.min(100, sv.approved / sv.target * 100) : 0;
@@ -402,6 +402,8 @@ function ptFocus(id) { const n = document.getElementById('it-' + id); if (n) { n
 const PT_SUM = { ids: null, title: '', note: '', comments: false, fortnight: true, loaded: false };
 function ptSumGroups() {
   const { found, recs } = ptItems(); const out = [];
+  const mv = mvList(E(), { portal: true }); const stg = (m) => (m.stage === 'done' ? 'Measured' : (MV_STAGES.find(([k]) => k === m.stage) || [0, 'Aligned'])[1]);
+  if (mv.length) out.push({ title: 'Big moves', items: mv.map((m) => ({ id: m.id, cat: mvB(m).label, title: m.title, val: 'Stage: ' + stg(m), valSub: m.next ? '· next: ' + m.next + (m.nextDate ? ' (' + m.nextDate + ')' : '') : '', summary: `Before: ${m.before || ''} Now: ${m.now || ''}${m.impact ? ' Impact: ' + m.impact + '.' : ''}` })) });
   if ((PT.R.asks || []).length) out.push({ title: 'Needs a decision', items: PT.R.asks.map((a) => ({ id: a.id, title: a.title, summary: a.detail })) });
   if (found.length) out.push({ title: 'Leaks & opportunities', items: found });
   if (recs.length) out.push({ title: 'What we suggest', items: recs });

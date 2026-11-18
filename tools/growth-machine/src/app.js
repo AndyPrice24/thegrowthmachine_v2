@@ -77,8 +77,8 @@ function intakeWrite(t) {
 function flagBadge(e) {
   if (!e.engagement.phases.length) return '';
   const st = engagementStatus(e); const n = st.openDelays.length, o = st.overdue.length;
-  if (!n && !o && !st.totalSlip) return '<span class="flag-badge ok" title="No open delays or overdue client items">✓ On track</span>';
-  return `<button class="flag-badge" data-action="tab" data-id="progress" title="Open the delays & changes log">⚑ ${n} open delay${n === 1 ? '' : 's'}${st.totalSlip ? ` · +${st.totalSlip}d` : ''}${o ? ` · ${o} overdue from client` : ''}</button>`;
+  if (!n && !st.totalSlip) return `<button class="flag-badge ok" data-action="tab" data-id="progress" title="No open delays. Client items past their date are listed on Progress & time">✓ On track${o ? ` · ${o} client item${o === 1 ? '' : 's'} past date` : ''}</button>`;
+  return `<button class="flag-badge" data-action="tab" data-id="progress" title="Open the delays & changes log">⚑ ${n} open delay${n === 1 ? '' : 's'}${st.totalSlip ? ` · +${st.totalSlip}d` : ''}${o ? ` · ${o} client item${o === 1 ? '' : 's'} past date` : ''}</button>`;
 }
 function setStatus(t) { const el = document.getElementById('status'); if (el) el.textContent = t; }
 
