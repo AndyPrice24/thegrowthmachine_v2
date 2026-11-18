@@ -245,17 +245,17 @@ function ptHome() {
     <div class="mv-sh"><h2>The key changes</h2>${mvFilters(moves, PT.mb, (k) => `data-pt="mb" data-id="${k}"`)}</div>
     <div class="mv-grid">${shown.map((m) => mvCard(e, m, { open: `data-pt="move" data-id="${esc(m.id)}"`, acts: ptActs(m.id) })).join('')}</div>
     <div class="pt-grid pt-after-moves">
-      ${(() => { const L = edList(e, { portal: true }).slice(0, 5); return L.length ? ptCard("What we've learned", `<ul class="pt-learn">${L.map((x) => `<li><button type="button" class="pt-link" data-pt="goto" data-id="${esc(x.id)}">${esc(x.title)}</button></li>`).join('')}</ul>`, { note: 'from the numbers; each opens the view behind it', link: ptLinkTo('ins', 'All insights'), cls: 'c12' }) : ''; })()}
-      ${ptCard('Latest', journeyHTML(e, { portal: true, latest: 5, open: (m) => `data-pt="move" data-id="${esc(m.id)}"` }), { note: 'the most recent steps', link: ptLinkTo('work', 'Full timeline'), cls: 'c12' })}
+      ${(() => { const L = edList(e, { portal: true }).slice(0, 5); return L.length ? ptCard("What we've learned", `<ul class="pt-learn">${L.map((x) => `<li><button type="button" class="pt-link" data-pt="goto" data-id="${esc(x.id)}">${esc(x.title)}</button></li>`).join('')}</ul>`, { link: ptLinkTo('ins', 'All insights'), cls: 'c12' }) : ''; })()}
+      ${ptCard('Latest', journeyHTML(e, { portal: true, latest: 5, open: (m) => `data-pt="move" data-id="${esc(m.id)}"` }), { link: ptLinkTo('work', 'Full timeline'), cls: 'c12' })}
       ${asks.length ? ptCard('Needs your decision', `<div class="pt-asks pt-asks-row">${asks.map((a, i) => `<div class="pt-ask"><span class="pt-n">${i + 1}</span><div><b>${esc(a.title)}</b>${a.detail ? `<p>${esc(a.detail)}</p>` : ''}${(PT.D.comments[a.id] || []).length ? `<p class="pt-replied">💬 ${(PT.D.comments[a.id] || []).length} repl${(PT.D.comments[a.id] || []).length > 1 ? 'ies' : 'y'}</p>` : ''}</div><button type="button" class="pt-btn" data-pt="discuss" data-id="${esc(a.id)}">Reply</button></div>`).join('')}</div>${waiting ? `<p class="pt-wait-line">Also ${waiting} information request${waiting > 1 ? 's' : ''} past their date. ${ptLinkTo('work', 'See the list')}</p>` : ''}`, { note: `${asks.length} open`, cls: 'c12' }) : ''}
       ${ptKpis(e, { noSavings: true })}
       ${ptCard('The engagement', `${ptTimeline(e)}<div class="pt-tl-meta">${next ? `<span>Next review <b>${esc(fmtD(next, { weekday: 'short', day: 'numeric', month: 'short' }))}</b></span>` : ''}<span>Conversations <b>${num(R.stats.conversations)}</b></span><span>Processes mapped <b>${num(R.stats.processes)}</b></span><span>Sources <b>${num(R.stats.sources)}</b></span></div>`,
         { note: `${esc(fmtD(g.start, { day: 'numeric', month: 'short', year: 'numeric' }))} – ${esc(fmtD(g.end, { day: 'numeric', month: 'short', year: 'numeric' }))}`, link: ptLinkTo('work', 'Our work'), cls: S.delivered || S.next ? 'c7' : 'c12' })}
       ${S.delivered || S.next ? ptCard('This fortnight', `<div class="pt-two pt-two-stack"><div><p class="pt-sub-h">Delivered</p>${ptList(S.delivered, 'done')}</div><div><p class="pt-sub-h">Next</p>${ptList(S.next, 'next')}</div></div>`, { link: ptLinkTo('work', 'Full status'), cls: 'c5' }) : ''}
       ${ptCard('Explore your business', `<div class="pt-explore">
-        <button type="button" class="pt-tile" data-pt="go" data-sec="leaks"><span class="pt-ti">${ptIcon('i-leak')}Leaks &amp; opportunities</span><p>The findings and suggestions behind every move, ranked by size, each with its sources.</p><span class="pt-stat">${(R.itemIds || []).length} found · ${(R.recIds || []).length} suggested</span></button>
-        <button type="button" class="pt-tile" data-pt="go" data-sec="ins"><span class="pt-ti">${ptIcon('i-ins')}Insights</span><p>Numbers in context: retention, renewals, adoption, channels and cost.</p><span class="pt-stat">${nIns ? `${nIns} view${nIns === 1 ? '' : 's'}` : 'Coming next'}</span></button>
-        <button type="button" class="pt-tile" data-pt="go" data-sec="proc"><span class="pt-ti">${ptIcon('i-proc')}Processes</span><p>How work flows across the teams, with every pain point and flag we've found.</p><span class="pt-stat">${num(R.stats.processes)} processes · ${num(R.stats.flags)} flags</span></button></div>`, { note: 'read only', cls: 'c12' })}
+        <button type="button" class="pt-tile" data-pt="go" data-sec="leaks"><span class="pt-ti">${ptIcon('i-leak')}Leaks &amp; opportunities</span><p>Ranked by size, with sources.</p><span class="pt-stat">${(R.itemIds || []).length} found · ${(R.recIds || []).length} suggested</span></button>
+        <button type="button" class="pt-tile" data-pt="go" data-sec="ins"><span class="pt-ti">${ptIcon('i-ins')}Insights</span><p>Retention, renewals, adoption, channels, cost.</p><span class="pt-stat">${nIns ? `${nIns} view${nIns === 1 ? '' : 's'}` : 'Coming next'}</span></button>
+        <button type="button" class="pt-tile" data-pt="go" data-sec="proc"><span class="pt-ti">${ptIcon('i-proc')}Processes</span><p>Hand-offs, pain points and flags.</p><span class="pt-stat">${num(R.stats.processes)} processes · ${num(R.stats.flags)} flags</span></button></div>`, { note: 'read only', cls: 'c12' })}
     </div>
     ${PT.me.owner ? '' : `<p class="pt-foot">Anything missing or wrong? <button type="button" class="pt-link" data-pt="discuss" data-id="report">Comment on the portal as a whole</button>.</p>`}`;
 }
@@ -265,7 +265,7 @@ function ptMovesSec() {
   if (m) return mvDetail(e, m, { back: '<button type="button" class="pt-link mv-back" data-pt="move" data-id="">← All key changes</button>', acts: ptActs(m.id),
     side: `${(m.sources || []).length ? `<div class="mv-srcline">${ptSrcBtn(m.sources, 'Where the figures come from')}</div>` : ''}<div class="mv-box" id="it-${esc(m.id)}"><h3>Discussion</h3>${ptThread(m.id)}</div>` });
   const shown = moves.filter((x) => !PT.mb || (x.bucket || 'friction') === PT.mb);
-  return `<section class="pt-hello"><div class="pt-eyebrow">Key changes</div><h1>What's changing, and where it stands</h1><p class="pt-lede">Each change: why it matters, what has happened, the effect so far and what's next. Open one for the detail and the evidence behind it; comment on or flag anything.</p></section>
+  return `<section class="pt-hello"><div class="pt-eyebrow">Key changes</div><h1>What's changing, and where it stands</h1></section>
     ${moves.length ? `<div class="mv-sh"><h2>${shown.length} change${shown.length === 1 ? '' : 's'}</h2>${mvFilters(moves, PT.mb, (k) => `data-pt="mb" data-id="${k}"`)}</div><div class="mv-grid">${shown.map((x) => mvCard(e, x, { open: `data-pt="move" data-id="${esc(x.id)}"`, acts: ptActs(x.id) })).join('')}</div>` : `<div class="pt-grid">${ptCard('', '<p class="pt-muted">The first moves are being written up.</p>', { cls: 'c12' })}</div>`}`;
 }
 const ptIsMove = (id) => mvList(E(), { portal: true }).some((x) => x.id === id);
@@ -306,7 +306,7 @@ function ptWork() {
   const late = (d) => d ? Math.max(0, daysBetween(d, todayISO())) : 0;
   return `<section class="pt-hello"><div class="pt-eyebrow">Week ${w.cur} of ${w.weeks}</div><h1>Our work</h1>${S.headline ? `<p class="pt-lede">${esc(S.headline)}</p>` : ''}</section>
   <div class="pt-grid">
-    ${mvList(e, { portal: true }).length ? ptCard('The journey so far', journeyHTML(e, { portal: true, open: (m) => `data-pt="move" data-id="${esc(m.id)}"` }), { note: 'what has happened, what comes next, and what starts next', cls: 'c12' }) : ''}
+    ${mvList(e, { portal: true }).length ? ptCard('The journey so far', journeyHTML(e, { portal: true, open: (m) => `data-pt="move" data-id="${esc(m.id)}"` }), { cls: 'c12' }) : ''}
     ${ptCard('Where we are in the plan', `<div class="pt-gantt">${phaseGantt(e, { compact: true })}</div><div class="pt-tl-meta">${reviews.map((d) => `<span class="${d < todayISO() ? 'pt-past' : ''}">Review <b>${esc(fmtD(d, { day: 'numeric', month: 'short' }))}</b></span>`).join('')}</div>`, { note: `${esc(fmtD(g.start, { day: 'numeric', month: 'short' }))} – ${esc(fmtD(g.end, { day: 'numeric', month: 'short', year: 'numeric' }))}`, cls: 'c12' })}
     ${ptCard('This fortnight', `<div class="pt-two"><div><p class="pt-sub-h">Delivered</p>${ptList(S.delivered, 'done')}</div><div><p class="pt-sub-h">Next</p>${ptList(S.next, 'next')}</div></div>`, { cls: 'c12' })}
     ${sv.target ? ptCard('Savings against the target', `<div class="pt-sv">
@@ -319,7 +319,7 @@ function ptWork() {
     ${ptCard('What we need from you', `${(R.asks || []).length ? `<p class="pt-sub-h">Decisions</p><ul class="pt-list next">${R.asks.map((a) => `<li><button type="button" class="pt-link" data-pt="discuss" data-id="${esc(a.id)}">${esc(a.title)}</button></li>`).join('')}</ul>` : ''}
       ${waiting.length ? `<p class="pt-sub-h" style="margin-top:14px">Information requested (${waiting.length})</p><div class="pt-reqs">${waiting.slice(0, 8).map((r) => `<div class="pt-req"><span>${esc(r.item)}</span><span class="pt-muted pt-small">${esc(r.owner || '')}${r.dueDate ? ` · due ${esc(fmtD(r.dueDate))}` : ''}</span>${r._status === 'Overdue' ? `<span class="pt-trend pt-bad">${late(r.dueDate)} days late</span>` : ''}</div>`).join('')}${waiting.length > 8 ? `<p class="pt-muted pt-small">+ ${waiting.length - 8} more, most of them older requests to the founders and finance.</p>` : ''}</div>` : '<p class="pt-muted">Nothing outstanding.</p>'}`, { cls: sv.target ? 'c5' : 'c12' })}
     ${(g.delays || []).length ? ptCard('Delays and changes', `<table class="pt-tbl"><thead><tr><th>Raised</th><th>What happened</th><th class="r">Days</th><th>Status</th></tr></thead><tbody>${g.delays.map((d) => `<tr><td>${esc(fmtD(d.dateRaised))}</td><td>${esc(d.description || d.cause || '')}</td><td class="r">${num(d.daysImpact)}</td><td>${esc(d.status || '')}</td></tr>`).join('')}</tbody></table>`, { cls: 'c12' }) : ''}
-    ${ptCard('Capacity', `<p>${esc(R.stats.capacity || '')}</p>${R.stats.cap && (R.stats.cap.over || R.stats.cap.flNote) ? capacityBars(R.stats.cap) : ''}<p class="pt-muted pt-small">By agreement the engagement isn't charged by the hour; days are shown so you can see the time going in.</p>`, { cls: 'c12' })}
+    ${ptCard('Capacity', `<p>${esc(R.stats.capacity || '')}</p>${R.stats.cap && (R.stats.cap.over || R.stats.cap.flNote) ? capacityBars(R.stats.cap) : ''}`, { cls: 'c12' })}
   </div>`;
 }
 
@@ -337,7 +337,7 @@ function ptLeaks() {
         <span class="pt-lv">${esc(x.val || '—')}<small>${esc(x.valSub || 'not sized')}</small>${x.change ? `<span class="pt-chg ${x.change > 0 === (x.tone === 'good' || x.cat === 'Fix') ? 'good' : 'bad'}">${x.change > 0 ? '▲' : '▼'} ${esc(ptMoney(Math.abs(x.change)))} since last update</span>` : ''}</span></button>${ptActs(x.id)}</div>
       ${open ? ptItemBody(x) : ''}</article>`;
   }).join('');
-  return `<section class="pt-hello"><div class="pt-eyebrow">Leaks &amp; opportunities</div><h1>The few things worth the most</h1><p class="pt-lede">Ranked by size. Open any item for the detail, the evidence behind it, the suggested fix and the discussion. Red-flag what matters most.</p></section>
+  return `<section class="pt-hello"><div class="pt-eyebrow">Leaks &amp; opportunities</div><h1>The few things worth the most</h1></section>
     ${tabs}${PT.tab === 'found' && cats.length > 2 ? `<div class="pt-pills">${cats.map(([k, n]) => `<button type="button" data-pt="lf" data-id="${esc(k)}" aria-pressed="${PT.lf === k}">${esc(n)}</button>`).join('')}</div>` : ''}
     <div class="pt-items">${rows || '<p class="pt-muted">Nothing here yet.</p>'}</div>`;
 }
@@ -368,7 +368,7 @@ function ptItemBody(x) {
 /* ---------- Insights (to design together) ---------- */
 function ptInsights() {
   const e = E(); const list = edList(e, { portal: true });
-  const hello = `<section class="pt-hello"><div class="pt-eyebrow">Insights</div><h1>Numbers in context</h1><p class="pt-lede">Each view joins numbers that are usually kept apart, so they explain why something is happening, not just what. Hover any bar, dot or cell for the detail, and comment on or red-flag any view.</p></section>`;
+  const hello = `<section class="pt-hello"><div class="pt-eyebrow">Insights</div><h1>Numbers in context</h1></section>`;
   if (!list.length) return hello + `<div class="pt-grid">${ptCard('', '<p class="pt-muted">The first views are being prepared with you.</p>', { cls: 'c12' })}</div>`;
   return hello + `<div class="ed-grid pt-ed">${list.map((x) => `<section class="pt-card ed-card ${edWideCls(x)}" id="it-${esc(x.id)}"><div class="pt-ed-top"><div>${edHead(x)}</div>${ptActs(x.id)}</div>
     ${edChart(e, x)}${x.sowhat ? `<p class="ed-sowhat"><b>So what:</b> ${esc(x.sowhat)}</p>` : ''}<div class="ed-foot">${ptSrcBtn(x.sources, 'Sources')}${edCoverage(x)}</div></section>`).join('')}</div>`;

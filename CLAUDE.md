@@ -30,6 +30,8 @@ The full method is in the `growth-machine` skill (`.claude/skills/growth-machine
   about stage (Agreed, Under way, Live, Measured) and mark numbers we don't have yet "to confirm".
 - **Tone: plain and factual, never salesy.** Say what happened and what's true, with dates and figures. No drama ("back on track
   after months on hold", "many doubted"), no self-credit, no "surprising" tags; let the facts carry the weight.
+  Don't narrate the page or tell founders how to read it ("each change shows…", "hover for…"); headings and content are enough.
+  Don't claim savings or results TGM doesn't control; aims stay aims until they happen.
 - Clear, actionable insights first. Each one says what it is, roughly what it costs or is worth, and what to do next.
 - Keep the view simple: categorise (leak / weakness / opportunity / tool), rank by size, show the top few.
 - Don't mirror the client's minutiae. Digest source data into categories, totals and the few examples that prove the point.

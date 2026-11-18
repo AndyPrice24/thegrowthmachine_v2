@@ -104,7 +104,7 @@ function viewMoves(e) {
   }
   const list = all.filter((x) => !ui.mvBucket || (x.bucket || 'friction') === ui.mvBucket);
   const lead = mvLeadTile(all);
-  const head = `<div class="page-h mv-page-h"><div><span class="eyebrow">Key changes${founders ? '' : ' · TGM view'}</span><h1>What's changing, and where it stands</h1><p class="muted">Each change: before, what has happened, the effect and what's next, with the findings, recommendations and automations behind it.</p></div>
+  const head = `<div class="page-h mv-page-h"><div><span class="eyebrow">Key changes${founders ? '' : ' · TGM view'}</span><h1>What's changing, and where it stands</h1></div>
     ${ui.share ? '' : `<div class="mv-seg"><button class="mv-seg-b ${founders ? '' : 'on'}" data-action="mvView" data-id="ours">Our view</button><button class="mv-seg-b ${founders ? 'on' : ''}" data-action="mvView" data-id="founders">As founders see it</button></div>`}</div>`;
   if (!all.length) return head + card('Key changes', empty('No moves yet. They arrive in an update file (collection "moves") or can be added in Sources & data.'));
   const extra = (x) => (founders ? '' : `${x.private ? `<div class="mv-private-line"><b>Private</b>${esc(x.private)}</div>` : ''}<div class="mv-meta">Our time: ${num(x.days) ? `<b>${num(x.days)} day${num(x.days) === 1 ? '' : 's'}</b>` : '<span class="mv-tbc">log it</span>'}${mvCounts(e, x) ? ' · ' + esc(mvCounts(e, x)) : ''}${String(x.portal) === 'false' ? ' · <span class="chip">TGM only</span>' : ''}</div>`);
@@ -152,7 +152,7 @@ function journeyHTML(e, { portal = false, open = () => '', latest = 0 } = {}) {
   const proj = J.projects.map((m) => { const nx = (m.timeline || []).find((t) => mvOn(t.next)); return `<div class="jr-proj" style="--c:${mvB(m).c}"><div class="jr-pt"><span class="mv-bucket">${esc(mvB(m).label)}</span><span class="jr-pl">${esc(m.nowLabel)}</span></div>
       <button type="button" class="jr-ph" ${open(m)}>${esc(m.title)}</button><p>${esc(m.now || '')}</p>${m.next ? `<p class="jr-first"><b>First step:</b> ${esc(m.next)}${m.nextDate ? ' · ' + esc(m.nextDate) : nx && mvDate(e, nx.date) ? ' · ' + esc(nx.date) : ''}</p>` : ''}</div>`; }).join('');
   return `<div class="jr">
-    <div class="jr-col"><h3 class="jr-h">What has happened <span>${J.past.length} steps${J.past.some((x) => x.win) ? ` · ${J.past.filter((x) => x.win).length} wins` : ''}, newest week first</span></h3>${past || '<p class="muted">Nothing recorded yet.</p>'}</div>
-    <div class="jr-col"><h3 class="jr-h">Coming up <span>${J.next.length} dated and planned steps</span></h3><ul class="jr-list jr-next">${nextL.map(row).join('')}</ul>${J.next.length > nextL.length ? `<p class="muted small">and ${J.next.length - nextL.length} more on the key changes.</p>` : ''}
-      ${proj ? `<h3 class="jr-h" style="margin-top:18px">Starting next <span>agreed or proposed, not yet under way</span></h3><div class="jr-projs">${proj}</div>` : ''}</div></div>`;
+    <div class="jr-col"><h3 class="jr-h">What has happened <span>${J.past.length} steps${J.past.some((x) => x.win) ? ` · ${J.past.filter((x) => x.win).length} wins` : ''}</span></h3>${past || '<p class="muted">Nothing recorded yet.</p>'}</div>
+    <div class="jr-col"><h3 class="jr-h">Coming up</h3><ul class="jr-list jr-next">${nextL.map(row).join('')}</ul>${J.next.length > nextL.length ? `<p class="muted small">and ${J.next.length - nextL.length} more on the key changes.</p>` : ''}
+      ${proj ? `<h3 class="jr-h" style="margin-top:18px">Starting next</h3><div class="jr-projs">${proj}</div>` : ''}</div></div>`;
 }
