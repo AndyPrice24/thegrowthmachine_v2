@@ -142,6 +142,7 @@ function render() {
 
 /* ---------- Sources & data view (lives here because it is tied to the editor) ---------- */
 const FIELD_DEFS = {
+  items: [['id', 'text'], ['order', 'num'], ['title', 'text'], ['line', 'long'], ['depts', 'text'], ['types', 'text'], ['label', ITEM_LABELS], ['stage', ITEM_STAGES.map((s) => s[0])], ['measured', 'text'], ['next', 'text'], ['nextDate', 'text'], ['owner', 'text'], ['pinned', ['', 'true']], ['portal', ['', 'false']], ['private', 'long'], ['recIds', 'text'], ['findingIds', 'text'], ['automationIds', 'text'], ['opportunityIds', 'text'], ['moveId', 'text'], ['steps', 'json']],
   departments: [['id', 'text'], ['name', 'text'], ['type', DEPT_TYPES.map((d) => d[0])], ['headId', 'person'], ['notes', 'text']],
   moves: [['id', 'text'], ['order', 'num'], ['bucket', Object.keys(MV_BUCKETS)], ['title', 'text'], ['pinned', ['', 'true']], ['stage', ['aligned', 'unblocked', 'live', 'measured', 'done']], ['why', 'long'], ['before', 'long'], ['nowLabel', 'text'], ['now', 'long'], ['impact', 'text'], ['impactTbc', 'text'], ['next', 'text'], ['nextDate', 'text'], ['links', 'text'], ['portal', ['', 'false']], ['private', 'long'], ['days', 'num'], ['stageNotes', 'json'], ['timeline', 'json'], ['impacts', 'json'], ['sources', 'json']],
   enhanced: [['id', 'text'], ['order', 'num'], ['kind', Object.keys(ED_KINDS)], ['title', 'text'], ['eyebrow', 'text'], ['tag', 'text'], ['sub', 'text'], ['sowhat', 'long'], ['coverage', 'text'], ['coveragePct', 'num'], ['portal', ['', 'false']], ['wide', ['', 'true', 'false']], ['params', 'json'], ['data', 'json'], ['sources', 'json']],
@@ -168,7 +169,7 @@ const FIELD_DEFS = {
   recommendations: [['id', 'text'], ['title', 'text'], ['type', ['People', 'Process', 'Tool', 'Build', 'Structure', 'Commercial']], ['horizon', ['0-3 months', '3-6 months', '6-12 months', '12+ months']], ['description', 'long'], ['effort', 'num'], ['risk', 'num'], ['confidence', 'num'], ['oneOffCost', 'num'], ['otherAnnualSaving', 'num'], ['oneOffSaving', 'num'], ['revenueUplift', 'num'], ['status', REC_STAGES], ['stick', 'long'], ['owner', 'text'], ['pinned', ['', 'true']], ['ops', 'json']],
   scenarios: [['id', 'text'], ['name', 'text'], ['description', 'text'], ['recommendationIds', 'json']]
 };
-const COLL_LABELS = { customQuestions: 'Custom interview questions', competitors: 'Competitors', capabilities: 'Capabilities', intel: 'Competitor intelligence', usps: 'USPs', opportunities: 'Opportunities', automations: 'Automation opportunities', kpis: 'Headline numbers (founder portal)', enhanced: 'Enhanced data views (Insights)', moves: 'Key changes (Big moves)', intake: 'Founder answers', departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Clients', revenueMovements: 'Revenue movements', feedback: 'Client feedback (written vs practice)', sources: 'Sources (where every number comes from)', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };
+const COLL_LABELS = { items: 'Items (one per issue or change)', customQuestions: 'Custom interview questions', competitors: 'Competitors', capabilities: 'Capabilities', intel: 'Competitor intelligence', usps: 'USPs', opportunities: 'Opportunities', automations: 'Automation opportunities', kpis: 'Headline numbers (founder portal)', enhanced: 'Enhanced data views (Insights)', moves: 'Key changes (Big moves)', intake: 'Founder answers', departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Clients', revenueMovements: 'Revenue movements', feedback: 'Client feedback (written vs practice)', sources: 'Sources (where every number comes from)', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };
 
 function cellInput(e, coll, row, [f, type]) {
   const v = row[f]; const base = `data-cell data-coll="${coll}" data-id="${esc(row.id)}" data-field="${f}"`;
@@ -200,6 +201,7 @@ function viewData(e) {
       <p class="faint small">Merge adds new records and updates records with the same id. Nothing is deleted.</p>`)}
   </div>
   ${syncCard()}
+  ${itemsCheckCard(e)}
   ${sourcesCard(e)}
   ${card('Find and replace text', `<div class="fr-row"><label class="fld"><span>Find</span><input id="frFind" placeholder="e.g. a misspelt name"></label><label class="fld"><span>Replace with</span><input id="frRepl"></label>
       <label class="tog small"><input type="checkbox" id="frCase"> Match case</label><button class="btn" data-action="findReplace">Find and replace…</button></div>

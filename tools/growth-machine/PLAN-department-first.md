@@ -92,6 +92,39 @@ department stay visible as "Unassigned" until that is resolved.
 
 ---
 
+## Look and feel (agreed 19 Nov 2026)
+
+**Graphite, with raised cards.** One style across the Studio and the founder portal:
+- **Background:** near-black page, with the app sitting on it as one large rounded tray.
+- **Cards:** charcoal cards raised off the tray.
+  - A light rim on the top and left edges, a dark rim on the bottom and right.
+  - A tight shadow plus a long soft shadow falling down and to the right.
+  - Cards lift slightly on hover.
+- **Wells:** lists, charts and stage bars sit in recessed wells inside the cards.
+- **Knobs:** raised round buttons sit on the card edge. They are grey by default, coral and glowing for anything urgent, and blue for progress.
+- **Colour:**
+  - Coral and blue accents.
+  - The six department colours mark department edges and dots.
+  - Glow only on the active or urgent element.
+- **Left menu:** Home, the six departments, Whole business, and Our engagement. On a tablet it shrinks to icons; on a phone it becomes a strip across the top.
+- **Section headings** organise each page.
+- **PDFs and printed reports stay light.**
+
+**Two home pages, each written for its reader.**
+- **Our view** (TGM, per client), with a client switcher in the menu:
+  - At a glance: my overdue to-dos, the next fortnightly review, what we're waiting on from the client, my days.
+  - To do and in motion: what needs me now, and key changes with their next step and date.
+  - Departments.
+  - Ahead: what's coming up; their headline numbers, each dated "as at"; founder portal activity.
+- **Founders' view:**
+  - At a glance: their own target, changes made or under way, decisions for them, information we need.
+  - Progress and decisions: what has changed (before and now), and the decisions waiting for them.
+  - Their business by department, counted as Found, Planned, Fixing and Done.
+  - Ahead: what's coming up, what we need from them, our time with them.
+  - The Leak / Opportunity / Weakness labels appear on the department board, not on Home.
+
+---
+
 ## Build steps
 
 Each step ships on its own, is tested in Playwright at desktop and phone widths, and is sent to Andrew for review

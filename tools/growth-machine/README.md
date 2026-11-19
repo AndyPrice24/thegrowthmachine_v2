@@ -95,6 +95,16 @@ Tip: keep one Claude Project per client, holding the interview transcripts and t
 
 ## The data model (schema `tgm.engagement/1`)
 
+**Items** (`items`, step 1 of the department-first build; see `PLAN-department-first.md`). One record per issue or change, on one
+stage path: `found`, `investigating`, `proposed`, `approved`, `underway`, `live` (plus `parked`). Each item has
+departments (`depts`: `lead`, `sales`, `cs`, `ops`, `prod`, `admin`), types (`types`: `proc`, `auto`, `sys`, `data`,
+`people`, `svc`, `change`, `comm`), a `label` (`leak`, `opportunity`, `weakness` or empty), `next`, `nextDate`, `owner`,
+`pinned`, `private` (never sent to the portal) and `portal` (`false` hides it from founders). It links to the records
+behind it: `recIds`, `findingIds`, `automationIds`, `opportunityIds` and `moveId`. Findings, automations and
+opportunities follow their recommendation into its item, so they only need listing when they have no recommendation.
+Sources & data → **Items** checks that every finding (except context findings), recommendation, automation,
+opportunity and key change sits in exactly one item, with no broken links.
+
 One JSON file per client:
 
 | Section | What it holds |
