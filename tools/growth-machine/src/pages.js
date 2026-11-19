@@ -67,13 +67,14 @@ function viewPlan(e) {
   const sv = savingsTracker(e); const rows = scoreRecommendations(e);
   const stageOf = (r) => (REC_STAGES.includes(r.rec.status) ? r.rec.status : 'Identified');
   const groups = [['Identified', 'Identified: our suggestions, for the client to decide'], ['Approved', 'Approved by the client'], ['In progress', 'In progress'], ['Realised', 'Realised: saving or gain confirmed']];
-  const head = '<thead><tr><th>#</th><th>Recommendation</th><th>Score</th><th class="r">Value / yr</th><th class="r">Hours freed / mo</th><th class="r">One-off</th><th class="r">Payback</th><th>Stage</th></tr></thead>';
+  const money = !sv.hidden;
+  const head = `<thead><tr><th>#</th><th>Recommendation</th>${money ? '<th>Score</th><th class="r">Value / yr</th><th class="r">Hours freed / mo</th><th class="r">One-off</th><th class="r">Payback</th>' : ''}<th>Stage</th></tr></thead>`;
   const autoLine = (rec) => { const au = autosFor(e, rec.id); return au.length ? `<div class="small plan-auto"><b>Runs itself:</b> ${au.map((a) => `<button class="link" data-action="goAuto" data-id="${esc(a.id)}">${(AUTO_APPROACH[a.approach] || AUTO_APPROACH.native)[0]} ${esc(trunc(a.title, 70))}</button> <span class="faint">(${esc(a.status || 'Idea')}${autoQs(a).length ? `, ${autoQs(a).length} to check` : ''})</span>`).join(' · ')}</div>` : ''; };
   const row = (r, i) => `<tr id="rec-${esc(r.rec.id)}" class="${r.rec.status === 'Rejected' ? 'row-removed' : ''}"><td>${i + 1}</td><td>${r.rec.pinned ? '<span class="chip pin-chip">★ Founder priority</span> ' : ''}<strong>${esc(r.rec.title)}</strong> <span class="chip">${esc(r.rec.type || '—')}</span> <span class="chip">${esc(r.rec.horizon || '—')}</span>
       <div class="muted small">${esc(trunc(r.rec.description || '', 260))}</div>
       <div class="small plan-stick">${r.rec.stick ? `<b>How it sticks:</b> ${esc(r.rec.stick)}` : '<span class="chip lo-nofix">How it sticks: not set</span> <span class="faint">system, ease, visibility, incentive, owner</span>'}${r.rec.owner ? ` · <b>Owner:</b> ${esc(r.rec.owner)}` : ''}</div>${autoLine(r.rec)}${citeFold(e, 'recommendation', r.rec)}</td>
-    <td><div class="score-bar"><span style="width:${r.score}%"></span></div><span class="small">${r.score}</span></td>
-    <td class="r">${fmtMoney(r.cash + r.revenue)}</td><td class="r">${Math.round(r.hoursSaved)}</td><td class="r">${fmtMoney(r.oneOff)}</td><td class="r">${r.payback == null ? '—' : r.payback.toFixed(1) + ' mo'}</td>
+    ${money ? `<td><div class="score-bar"><span style="width:${r.score}%"></span></div><span class="small">${r.score}</span></td>
+    <td class="r">${fmtMoney(r.cash + r.revenue)}</td><td class="r">${Math.round(r.hoursSaved)}</td><td class="r">${fmtMoney(r.oneOff)}</td><td class="r">${r.payback == null ? '—' : r.payback.toFixed(1) + ' mo'}</td>` : ''}
     <td><select data-cell data-coll="recommendations" data-id="${r.rec.id}" data-field="status">${REC_STAGES.map((s) => `<option ${r.rec.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select></td></tr>`;
   const block = ([stage, title]) => {
     const list = rows.filter((r) => stageOf(r) === stage).sort((a, b) => (b.rec.pinned ? 1 : 0) - (a.rec.pinned ? 1 : 0)); if (!list.length) return '';
@@ -87,15 +88,16 @@ function viewPlan(e) {
   const builder = e.scenarios.length ? `<table class="tbl"><thead><tr><th>Recommendation</th>${e.scenarios.map((s) => `<th class="c"><input class="inline" data-cell data-coll="scenarios" data-id="${s.id}" data-field="name" value="${esc(s.name)}"></th>`).join('')}</tr></thead><tbody>
     ${rows.map((r) => `<tr><td>${esc(r.rec.title)} <span class="faint small">(score ${r.score})</span></td>${e.scenarios.map((s) => `<td class="c"><input type="checkbox" data-action="toggleRecInScenario" data-scenario="${s.id}" data-rec="${r.rec.id}" ${splitList(s.recommendationIds).includes(r.rec.id) ? 'checked' : ''}></td>`).join('')}</tr>`).join('')}
     <tr><td></td>${e.scenarios.map((s) => `<td class="c"><button class="btn sm ghost" data-action="delScenario" data-id="${s.id}" title="Delete scenario">✕</button></td>`).join('')}</tr></tbody></table>` : '';
-  return `${scenarioBanner(e)}<div class="page-h"><div><span class="eyebrow">Plan</span><h1>What we suggest, and what it saves</h1><p class="muted">Recommendations are suggestions for the client to decide, ordered from identified to realised. Each says how it will stick. Only approved and realised savings count towards the target.</p></div>
+  return `${scenarioBanner(e)}<div class="page-h"><div><span class="eyebrow">Plan</span><h1>${money ? 'What we suggest, and what it saves' : 'What we suggest'}</h1><p class="muted">Recommendations are suggestions for the client to decide, ordered from identified to realised. Each says how it will stick. Only approved and realised savings count towards the target.</p></div>
     <div class="btn-row"><button class="btn" data-action="addRec">+ Add recommendation</button></div></div>
   ${sv.target ? card('Savings against the target', savingsBlock(sv, { rows: false }), { sub: 'Monthly recurring savings, net of new recurring costs. Stage comes from each recommendation.' }) : ''}
   ${groups.map(block).join('')}
+  ${(() => { const parked = rows.filter((r) => r.rec.status === 'Parked'); return parked.length ? `<details class="card"><summary class="small"><b>Parked: the client's decision, not ours to drive (${parked.length})</b></summary><table class="tbl recs">${head}<tbody>${parked.map(row).join('')}</tbody></table></details>` : ''; })()}
   ${rejected.length ? `<details class="card"><summary class="small"><b>Rejected (${rejected.length})</b></summary><table class="tbl recs">${head}<tbody>${rejected.map(row).join('')}</tbody></table></details>` : ''}
-  ${card('Scenarios: bundles of recommendations', `<div class="scroll-x">${scenTable}</div>
+  ${money ? card('Scenarios: bundles of recommendations', `<div class="scroll-x">${scenTable}</div>
     <details class="small"><summary><b>Build or edit scenarios</b></summary><div class="btn-row"><button class="btn sm" data-action="addScenario">+ Add scenario</button></div><div class="scroll-x">${builder}</div></details>`,
-    { sub: 'A scenario is the current state with a set of recommendations applied. "View" switches Processes and Evidence to it.' })}
-  <p class="muted small">Score = 50% value, 20% low effort, 15% low risk, 15% confidence. Value = cash saving + revenue uplift + half the value of freed hours (freed hours are capacity, not cash, unless headcount changes). Edit details, "how it sticks", owner and modelled changes in Sources &amp; data → Recommendations.</p>`;
+    { sub: 'A scenario is the current state with a set of recommendations applied. "View" switches Processes and Evidence to it.' }) : ''}
+  ${money ? `<p class="muted small">Score = 50% value, 20% low effort, 15% low risk, 15% confidence. Value = cash saving + revenue uplift + half the value of freed hours (freed hours are capacity, not cash, unless headcount changes). Edit details, "how it sticks", owner and modelled changes in Sources &amp; data → Recommendations.</p>` : ''}`;
 }
 
 /* ---------- Evidence: the detail behind findings ---------- */

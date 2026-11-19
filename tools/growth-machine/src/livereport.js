@@ -32,7 +32,7 @@ function lrCandidates(e) {
     out.push({ id: f.id, src: 'finding', o: f, kind: k, title: f.title || f.id, value: num(f.valueMonthly), basis: f.basis || (num(f.valueMonthly) ? 'Leaking' : ''), pinned: !!f.pinned, sev: f.severity || 'low', sensitive: lrSensitive(f) });
   });
   e.opportunities.forEach((o) => out.push({ id: o.id, src: 'opportunity', o, kind: 'opportunity', title: o.title, value: num(o.valueMonthly), basis: num(o.valueMonthly) ? 'Upside' : '', pinned: !!o.pinned, sev: ({ High: 'high', Medium: 'medium', Low: 'low' })[o.impact] || 'low', sensitive: lrSensitive(o) }));
-  e.recommendations.filter((r) => r.status !== 'Rejected').forEach((r) => { const x = sc[r.id] || {}; out.push({ id: r.id, src: 'recommendation', o: r, kind: 'rec', title: r.title, value: (x.cash || 0) + (x.revenue || 0), score: x.score || 0, pinned: !!r.pinned, sensitive: lrSensitive(r), x }); });
+  e.recommendations.filter((r) => r.status !== 'Rejected' && r.status !== 'Parked').forEach((r) => { const x = sc[r.id] || {}; out.push({ id: r.id, src: 'recommendation', o: r, kind: 'rec', title: r.title, value: (x.cash || 0) + (x.revenue || 0), score: x.score || 0, pinned: !!r.pinned, sensitive: lrSensitive(r), x }); });
   return out;
 }
 const lrRank = (a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || (a.src === 'recommendation' ? (b.score || 0) - (a.score || 0) : stake(b) - stake(a)) || (SEV_W[b.sev] || 0) - (SEV_W[a.sev] || 0);

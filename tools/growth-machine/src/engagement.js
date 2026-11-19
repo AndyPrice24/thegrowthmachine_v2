@@ -6,7 +6,7 @@ const DELAY_CAUSES = ['Client: information late', 'Client: access not granted', 
   'New information / finding', 'Scope change (agreed)', 'TGM side', 'External / other'];
 const PHASE_STATUSES = ['Not started', 'In progress', 'Done', 'On hold'];
 const ACTIVITY_STATUSES = ['Next', 'In progress', 'Waiting on client', 'Done'];
-const REC_STAGES = ['Identified', 'Approved', 'In progress', 'Realised', 'Rejected'];
+const REC_STAGES = ['Identified', 'Approved', 'In progress', 'Realised', 'Parked', 'Rejected'];
 const LEGACY_STATUS = { Proposed: 'Identified', Agreed: 'Approved', Done: 'Realised' };
 
 /* Dates are calendar days (YYYY-MM-DD). All arithmetic is done in UTC so it is identical in every timezone
@@ -183,7 +183,7 @@ function engagementStatus(e) {
 function savingsTracker(e) {
   if (e.engagement.hideSavings === true || e.engagement.hideSavings === 'true') return { rows: [], target: 0, baseline: 0, identified: 0, approved: 0, realised: 0, oneOffSavings: 0, oneOffCosts: 0, hours: 0, hidden: true };
   const rows = scoreRecommendations(e).map((r) => ({ rec: r.rec, monthlyNet: r.cash / 12, oneOffSaving: num(r.rec.oneOffSaving), oneOffCost: r.oneOff, hoursMonth: r.hoursSaved, stage: r.rec.status || 'Identified' }));
-  const live = rows.filter((r) => r.stage !== 'Rejected');
+  const live = rows.filter((r) => r.stage !== 'Rejected' && r.stage !== 'Parked');
   const by = (st) => sum(live.filter((r) => st.includes(r.stage)), (r) => Math.max(0, r.monthlyNet));
   return { rows, target: num(e.engagement.targetMonthly), baseline: num(e.engagement.baselineMonthly),
     identified: by(['Identified', 'Approved', 'In progress', 'Realised']), approved: by(['Approved', 'In progress', 'Realised']), realised: by(['Realised']),
