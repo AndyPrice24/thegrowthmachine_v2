@@ -2,7 +2,7 @@
  * TGM live report: a Google Apps Script web app.
  *
  * Serves a report published from the Growth Machine Studio. Each recipient opens it from their own link,
- * can expand any item, comment on it and red-flag it. The app records who opened it and when, and keeps
+ * can expand any item, comment on it and red-flag it, and a founder can approve a change ("Go ahead"). The app records who opened it and when, and keeps
  * every comment and flag. All of that is written into ONE stamped update file in the TGM Studio updates
  * folder, so "⟳ Updates" in the Studio pulls it into the Report feedback section.
  *
@@ -69,7 +69,7 @@ var LOADER_ = '<!doctype html><html><head><meta charset="utf-8"><meta name="view
   + '.withFailureHandler(fail).api({ op: "page", r: BOOT.r, t: BOOT.t, el: BOOT.el });'
   + '</' + 'script></body></html>';
 
-/** The page's only server call. req = { r, t, op: 'refresh' | 'comment' | 'flag' | 'pdf', el, text, parent, on, comments } */
+/** The page's only server call. req = { r, t, op: 'refresh' | 'comment' | 'flag' | 'approve' | 'pdf', el, text, parent, on, comments } */
 function api(req) {
   req = req || {};
   var rep = loadReport_(req.r);
@@ -78,10 +78,11 @@ function api(req) {
   if (!who) throw new Error('This link is not valid.');
   if (req.op === 'refresh') return { events: readEvents_(rep) };
   if (req.op === 'page') return { html: pageHtml_(rep, who, readEvents_(rep), String(req.el || ''), String(req.t)) };
-  if (req.op === 'comment' || req.op === 'flag') {
+  if (req.op === 'comment' || req.op === 'flag' || req.op === 'approve') {
     var el = elementOf_(rep, req.el);
     if (!el) throw new Error('That part of the report is no longer in it.');
-    var ev = { type: req.op === 'flag' ? (req.on ? 'flag' : 'unflag') : 'comment', elementId: el.id, elementLabel: el.label, section: el.section || '' };
+    if (req.op === 'approve' && who.owner) throw new Error('Founders approve changes from their own link.');
+    var ev = { type: req.op === 'flag' ? (req.on ? 'flag' : 'unflag') : req.op === 'approve' ? (req.on ? 'approve' : 'unapprove') : 'comment', elementId: el.id, elementLabel: el.label, section: el.section || '' };
     if (req.op === 'comment') {
       var text = String(req.text || '').trim();
       if (!text) throw new Error('Write a comment first.');

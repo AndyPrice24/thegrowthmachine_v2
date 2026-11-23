@@ -6,7 +6,7 @@
 
    Records:  liveReports     { id, title, preparedFor, intro, nextSteps, itemIds[], roles, recipients[{id,label,email,token,revoked}],
                                ownerToken, version, publishedAt }
-             reportFeedback  { id, reportId, type: view|comment|flag|unflag|pdf, by, byLabel, at, elementId, elementLabel,
+             reportFeedback  { id, reportId, type: view|comment|flag|unflag|approve|unapprove|pdf, by, byLabel, at, elementId, elementLabel,
                                section, text, parentId, version, seen (set here) }
    Publishing writes <updates folder>/reports/<id>.json, which the web app reads (Drive for desktop syncs it).
    Only items ticked here go in. Anything that reads as sensitive is never added by the quick-add buttons.
@@ -98,6 +98,8 @@ function lrSnapshot(e, lr) {
   const procs = e.processes || []; const steps = procs.flatMap((pr) => pr.steps || []);
   const elements = [...asks.map((a) => ({ id: a.id, label: a.title, section: 'Needs your decision' })),
     ...found.map((c) => ({ id: c.id, label: c.title, section: 'Leaks & opportunities' })), ...recs.map((c) => ({ id: c.id, label: c.title, section: 'What we suggest' })), ...edList(e, { portal: true }).map((x) => ({ id: x.id, label: x.title || ED_KINDS[x.kind], section: 'Insights' })), ...mvList(e, { portal: true }).map((m) => ({ id: m.id, label: m.title, section: 'Key changes' })),
+    ...live((e.engagement || {}).health || []).map((h) => ({ id: h.id, label: h.label, section: 'Company health' })),
+    ...live(e.items || []).filter((it) => String(it.portal) !== 'false').map((it) => ({ id: it.id, label: it.title, section: ['approved', 'underway', 'live'].includes(it.stage) ? 'Projects' : 'Changes not yet started' })),
     { id: 'report', label: 'The portal as a whole', section: '' }];
   return { kind: 'tgm-founder-portal', v: 2, reportId: lr.id, client: e.client.name, clientSlug: slugify(e.client.name), feedbackFile: lrFeedbackFile(e, lr), appFile: lr.id + '.html',
     title: lr.title || 'Founder portal', preparedFor: lr.preparedFor || '', intro: lr.intro || '', headline: lr.headline || '', version: lr.version || 1, publishedAt: lr.publishedAt || nowISO(),
@@ -192,7 +194,7 @@ function lrMail(e, lr, r) {
 
 /* ---------- feedback ---------- */
 const lrEvents = (e, lr) => (e.reportFeedback || []).filter((x) => !lr || x.reportId === lr.id);
-const lrUnseen = (e) => lrEvents(e).filter((x) => (x.type === 'comment' || x.type === 'flag') && !x.seen).length;
+const lrUnseen = (e) => lrEvents(e).filter((x) => (x.type === 'comment' || x.type === 'flag' || x.type === 'approve') && !x.seen).length;
 function lrFlagState(evs) {
   const last = {}; evs.forEach((x) => { if (x.type === 'flag' || x.type === 'unflag') last[x.elementId + '|' + x.by] = x; });
   const by = {}; Object.values(last).forEach((x) => { if (x.type === 'flag') (by[x.elementId] = by[x.elementId] || []).push(x); }); return by;
@@ -211,21 +213,21 @@ function lrFeedbackCard(e, lr) {
   const hot = [...new Set([...Object.keys(flags), ...Object.keys(talk)])].map((id) => ({ id, f: (flags[id] || []).length, c: talk[id] || 0, label: (evs.find((x) => x.elementId === id) || {}).elementLabel || id }))
     .sort((a, b) => b.f - a.f || b.c - a.c).slice(0, 6);
   const open = (id) => url ? `<a class="btn sm" href="${esc(lrLink(e, lr, lr.ownerToken, id))}" target="_blank" rel="noopener" title="Opens the live report at this item, with your owner link">Open in live report ↗</a>` : '';
-  const items = evs.filter((x) => x.type === 'comment' || x.type === 'flag' || x.type === 'unflag' || x.type === 'pdf');
+  const items = evs.filter((x) => ['comment', 'flag', 'unflag', 'approve', 'unapprove', 'pdf'].includes(x.type));
   const F = ui.lrFb || 'all';
-  const shown = items.filter((x) => F === 'all' || (F === 'new' && !x.seen && x.type !== 'unflag') || (F === 'flags' && (x.type === 'flag' || x.type === 'unflag')) || (F === 'comments' && x.type === 'comment') || (F === 'pdf' && x.type === 'pdf'));
+  const shown = items.filter((x) => F === 'all' || (F === 'new' && !x.seen && x.type !== 'unflag' && x.type !== 'unapprove') || (F === 'flags' && (x.type === 'flag' || x.type === 'unflag')) || (F === 'approve' && (x.type === 'approve' || x.type === 'unapprove')) || (F === 'comments' && x.type === 'comment') || (F === 'pdf' && x.type === 'pdf'));
   const parent = byId(items);
   const row = (x) => `<div class="lr-fb ${x.seen ? 'seen' : ''} lr-fb-${x.type}" id="lrf-${esc(x.id)}">
-      <div class="lr-fb-i" aria-hidden="true">${x.type === 'comment' ? '💬' : x.type === 'flag' ? '🚩' : x.type === 'pdf' ? '📄' : '⚐'}</div>
-      <div class="lr-fb-b"><div class="small"><b>${esc(x.byLabel)}</b> ${x.type === 'pdf' ? `downloaded a summary for their team${(x.items || []).length ? ` (${x.items.length} item${x.items.length === 1 ? '' : 's'})` : ''}` : `${x.type === 'flag' ? 'red-flagged' : x.type === 'unflag' ? 'removed their red flag from' : x.parentId ? 'replied on' : 'commented on'} <b>${esc(x.elementLabel || x.elementId)}</b>${x.section ? ` <span class="faint">in ${esc(x.section)}</span>` : ''}`} <span class="faint">· ${esc(new Date(x.at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }))} · version ${esc(x.version || 1)}</span></div>
+      <div class="lr-fb-i" aria-hidden="true">${x.type === 'comment' ? '💬' : x.type === 'flag' ? '🚩' : x.type === 'pdf' ? '📄' : x.type === 'approve' ? '✓' : '⚐'}</div>
+      <div class="lr-fb-b"><div class="small"><b>${esc(x.byLabel)}</b> ${x.type === 'pdf' ? `downloaded a summary for their team${(x.items || []).length ? ` (${x.items.length} item${x.items.length === 1 ? '' : 's'})` : ''}` : `${x.type === 'flag' ? 'red-flagged' : x.type === 'approve' ? 'gave the go-ahead for' : x.type === 'unapprove' ? 'withdrew their go-ahead for' : x.type === 'unflag' ? 'removed their red flag from' : x.parentId ? 'replied on' : 'commented on'} <b>${esc(x.elementLabel || x.elementId)}</b>${x.section ? ` <span class="faint">in ${esc(x.section)}</span>` : ''}`} <span class="faint">· ${esc(new Date(x.at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }))} · version ${esc(x.version || 1)}</span></div>
         ${x.parentId && parent[x.parentId] ? `<div class="faint small">↳ replying to ${esc(parent[x.parentId].byLabel)}: “${esc(trunc(parent[x.parentId].text, 120))}”</div>` : ''}
         ${x.text ? `<p class="lr-fb-t">${esc(x.text)}</p>` : ''}${x.type === 'pdf' && (x.items || []).length ? `<details class="small"><summary>What they included</summary><ul>${x.items.map((id) => `<li>${esc((lrEvents(e, lr).find((y) => y.elementId === id) || {}).elementLabel || lrLabel(e, lr, id))}</li>`).join('')}</ul></details>` : ''}
-        <div class="btn-row">${x.type === 'pdf' ? '' : open(x.elementId)}${x.type !== 'unflag' ? `<button class="btn sm ghost" data-action="lrSeen" data-id="${esc(x.id)}">${x.seen ? 'Mark as new' : 'Mark seen'}</button>` : ''}</div></div></div>`;
+        <div class="btn-row">${x.type === 'pdf' ? '' : open(x.elementId)}${x.type !== 'unflag' && x.type !== 'unapprove' ? `<button class="btn sm ghost" data-action="lrSeen" data-id="${esc(x.id)}">${x.seen ? 'Mark as new' : 'Mark seen'}</button>` : ''}</div></div></div>`;
   return card(`Report feedback${lrUnseen(e) ? ` <span class="chip lo-nofix">${lrUnseen(e)} new</span>` : ''}`, `
     ${rcps.length ? `<h5>Who opened it, and when</h5><div class="scroll-x"><table class="tbl"><thead><tr><th>Recipient</th><th>Opened</th><th>Last visit</th><th>First visit</th><th class="r">Comments</th><th class="r">Flags</th><th class="r">PDFs</th></tr></thead><tbody>${rcps.map(vrow).join('')}</tbody></table></div>` : '<p class="faint small">Add recipients below to see who opens the report.</p>'}
     ${hot.length ? `<h5>What they care about</h5><ol class="small lr-hot">${hot.map((h) => `<li><b>${esc(h.label)}</b> ${h.f ? `<span class="chip lo-nofix">🚩 ${h.f}</span>` : ''} ${h.c ? `<span class="chip">💬 ${h.c}</span>` : ''} ${url ? `<a class="link" href="${esc(lrLink(e, lr, lr.ownerToken, h.id))}" target="_blank" rel="noopener">open ↗</a>` : ''}</li>`).join('')}</ol>` : ''}
     <h5>Comments and red flags, newest first</h5>
-    <div class="toolbar">${[['all', 'All'], ['new', 'New'], ['flags', 'Red flags'], ['comments', 'Comments'], ['pdf', 'Summaries they sent']].map(([k, n]) => `<button class="btn sm ${F === k ? 'on' : ''}" data-action="lrFb" data-id="${k}">${n}</button>`).join('')}${items.some((x) => !x.seen) ? '<button class="btn sm ghost" data-action="lrSeenAll">Mark all seen</button>' : ''}</div>
+    <div class="toolbar">${[['all', 'All'], ['new', 'New'], ['approve', 'Go-aheads'], ['flags', 'Red flags'], ['comments', 'Comments'], ['pdf', 'Summaries they sent']].map(([k, n]) => `<button class="btn sm ${F === k ? 'on' : ''}" data-action="lrFb" data-id="${k}">${n}</button>`).join('')}${items.some((x) => !x.seen) ? '<button class="btn sm ghost" data-action="lrSeenAll">Mark all seen</button>' : ''}</div>
     ${shown.length ? shown.map(row).join('') : `<p class="faint small">${items.length ? 'Nothing in this filter.' : 'No comments or flags yet. They arrive with ⟳ Updates.'}</p>`}
     ${url ? '' : '<p class="small warn-t">Add the web app address under Set-up to open feedback in the live report.</p>'}`,
     { sub: 'Views, comments and red flags arrive with ⟳ Updates. Each keeps what it was attached to (item, section, version), so the trail survives later edits. “Open in live report” jumps to that item.' });

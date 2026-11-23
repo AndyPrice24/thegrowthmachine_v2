@@ -149,6 +149,8 @@ Then:
    - Baseline: Mar–Sep 2026 where history exists; otherwise the first four full weeks of data.
    - Each department page prints as a one-page PDF for the founders to share with that department's head.
 
+**Built 23 Nov 2026:** pages 1 to 4, in the portal, with founders' approval from page 4 (Code.gs `approve` op).
+
 Kept from the earlier portal: ticks, comments and red flags; the key-change detail page; what we need from the client;
 personal links and the printable summary; "as at" dates and sources on every figure.
 

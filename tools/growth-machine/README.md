@@ -256,19 +256,27 @@ and `part` is the exact tab, section or point. The cheatsheet prints both sides 
 and the Leaks & opportunities detail lists them (with names).
 
 ### Founder portal (Reports → Founder portal)
-What each founder sees from their own link, served by TGM's Apps Script web app (`live-report/Code.gs`): an app with a left menu
-(bottom tabs on phones) and six sections.
-- **Overview:** where the engagement is (week, phases, next review), savings identified against the target, the headline numbers
-  (Sources & data → Headline numbers: value, trend, sparkline or bar, sources), the decisions asked of the founders, the biggest
-  leaks, this fortnight (from the status report) and doorways into Processes and Evidence.
-- **Our work:** the plan by phase and review dates, delivered and next, the savings tracker, what we need from them (decisions and
-  overdue information requests), delays and the capacity line.
-- **Leaks & opportunities:** the ticked findings and recommendations, ranked; each opens to the detail, the fix, what runs itself,
-  sources and the discussion. Values show what changed since the last published version.
-- **Processes and Evidence:** the Studio's own pages, read only. Navigation works; editing controls are hidden and inputs disabled;
-  share mode hides TGM-only notes. The portal data leaves out interviews, questions, the diary, to-dos, merge history and anything
-  sensitive that wasn't ticked.
-- **Insights:** placeholder for the cross-referenced views, still to design.
+What each founder sees from their own link, served by TGM's Apps Script web app (`live-report/Code.gs`), in the graphite style
+(left menu; a scrolling tab bar on phones). The founders' view (agreed 23 Nov 2026; `src/founders.js`), pages 1 to 4:
+- **Company health:** `engagement.health` measures grouped in five areas (Revenue, Clients, Delivery, People, Cost). Each measure:
+  `id, order, area, label, value, unit, asAt, status (green|amber|red|grey), trend (up|down|flat), trendText, target, source, part`.
+  Grey means not tracked yet. Below: decisions asked of the founders, the count of lowest-hanging fruit, the latest wins.
+- **Concerns & wins:** the top five concerns (items labelled leak or weakness, not yet under way, ranked by the severity of their
+  findings, then size; `concern` on an item sets its order, `concern: false` leaves it off), the rest folded away, projects whose
+  next-step date has passed ("Behind schedule"), and every dated win (`win: true` on a key change's timeline step, plus Live items
+  with a `measured` note).
+- **Optimisation projects:** items at Approved, Under way or Live with why, knock-on, was → now → will be (aim), who, departments
+  and next step. "The story so far" opens the key change behind the item.
+- **Lowest-hanging fruit:** items not yet started whose fixes average low effort and whose findings are high or medium impact (or
+  sized); top five as cards, the next five as rows. `fruit` on an item sets its order, `fruit: false` leaves it off. A founder's
+  **Go ahead** (`api` op `approve`, events `approve`/`unapprove`; not from the owner link) moves the item to Approved at the next
+  ⟳ Updates (`itApplyApprovals`, which notes `approvedBy`, `approvedAt` and the stage it came from; withdrawing reverses it if
+  nothing else moved the item).
+- The size shown on an item is its `sizeId` finding, else the main fix's sized findings (at risk, then lost, then spend to review).
+- A department filter (chips) runs across pages 2 to 4. Health measures and items are portal elements, so each can be red-flagged
+  and discussed.
+- Then: **Report** (our work), **Insights**, **Processes** and **Evidence** (read only), as before. Leaks & opportunities opens from
+  Concerns; a key change's story opens from its project. Department efficiency and the rebuilt Report and Processes pages follow.
 - Comments, red flags, replies to decisions and the summary PDF for their team work as before; feedback returns via ⟳ Updates.
 - **Publishing** writes `reports/<id>.json` (data) and `reports/<id>.html` (the portal page, built from this Studio's own code), so the
   portal's look and features update with the Studio, with no need to redeploy the web app. Code.gs serves the page if present, else

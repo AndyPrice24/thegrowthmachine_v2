@@ -1,19 +1,23 @@
 /* ============================================================
    Founder portal: what a founder sees from their personal link. Served by TGM's Apps Script web app from a page the
-   Studio publishes (the Studio's own code plus this portal shell) and a data snapshot. Sections:
-   Overview · Our work · Leaks & opportunities · Processes (read only) · Evidence (read only) · Insights (to come).
+   Studio publishes (the Studio's own code plus this portal shell) and a data snapshot. Pages (founders' view, agreed
+   23 Nov 2026): Company health · Concerns & wins · Projects · Lowest-hanging fruit (founders.js) · Report (our work) ·
+   Processes and Evidence (read only) · Insights. Leaks & opportunities and the key-change story open from those pages.
    Processes and Evidence are the Studio's own pages, locked to read only: navigation works, nothing can be changed,
    TGM-only notes stay hidden (share mode). Views, comments, red flags and summaries go back through the web app.
    ============================================================ */
 let PORTAL_ON = false;
-const PT = { move: '', mb: '', S: null, R: null, me: null, ev: [], sec: 'home', open: {}, drafts: {}, replyTo: {}, busy: {}, lf: 'all', tab: 'found', modal: '', D: null };
+const PT = { move: '', mb: '', S: null, R: null, me: null, ev: [], sec: 'home', open: {}, drafts: {}, replyTo: {}, busy: {}, lf: 'all', tab: 'found', modal: '', D: null, dept: '' };
 /* Studio actions that only change what is shown. Everything else is blocked in the portal. */
 const PT_ACTIONS = new Set(['sub', 'showAll', 'pvPick', 'pvBack', 'pvFocus', 'pvJourney', 'pvHl', 'pvSet', 'pvTick', 'flowStep', 'flowClear', 'zoom', 'setIntelFilter', 'goSrc', 'tab']);
 const PT_UI_OK = new Set(['compare', 'execView', 'ghosts', 'showCost', 'prioOnly']);
-const PT_SECTIONS = [['home', 'Overview', 'i-home'], ['moves', 'Key changes', 'i-move'], ['work', 'Our work', 'i-work'], ['leaks', 'Leaks & opportunities', 'i-leak'], ['proc', 'Processes', 'i-proc'], ['evid', 'Evidence', 'i-evid'], ['ins', 'Insights', 'i-ins']];
+const PT_SECTIONS = [['home', 'Company health', 'i-pulse', 'Health'], ['concerns', 'Concerns & wins', 'i-leak', 'Concerns'], ['projects', 'Optimisation projects', 'i-move', 'Projects'], ['fruit', 'Lowest-hanging fruit', 'i-fruit', 'Quick wins'],
+  ['work', 'Report', 'i-work', 'Report'], ['ins', 'Insights', 'i-ins', 'Insights'], ['proc', 'Processes', 'i-proc', 'Process'], ['evid', 'Evidence', 'i-evid', 'Evidence']];
+/* Pages opened from other pages, not from the menu. */
+const PT_MORE = [['leaks', 'Leaks & opportunities'], ['moves', 'The story so far']];
 /** Short money: R494k, R1.06m. */
 function ptMoney(v) { v = num(v); const sym = fmtShort(0).replace(/[\d.,\s]/g, '') || 'R'; const a = Math.abs(v); const s = a >= 1e6 ? (a / 1e6).toFixed(a >= 1e7 ? 1 : 2).replace(/\.?0+$/, '') + 'm' : a >= 1e3 ? Math.round(a / 1e3) + 'k' : String(Math.round(a)); return (v < 0 ? '-' : '') + sym + s; }
-const ptName = (k) => (PT_SECTIONS.find((s) => s[0] === k) || ['', ''])[1];
+const ptName = (k) => ([...PT_SECTIONS, ...PT_MORE].find((s) => s[0] === k) || ['', ''])[1];
 function ptActionOK(a) {
   const k = a.dataset.action;
   if (!PT_ACTIONS.has(k)) return false;
@@ -33,20 +37,23 @@ function portalBoot(S) {
   const eng = normalise(PT.R.eng); eng.meta.tsMigrated = true;
   db = { activeId: eng.id, engagements: { [eng.id]: eng } };
   save = function () {}; saveUI = function () {}; flushSave = function () {};
-  Object.assign(ui, { tab: 'home', sub: {}, all: {}, share: true, anon: false, scenario: 'current', flowAudience: 'client', theme: 'light' });
-  document.documentElement.dataset.theme = 'light';
+  Object.assign(ui, { tab: 'home', sub: {}, all: {}, share: true, anon: false, scenario: 'current', flowAudience: 'client', theme: 'dark' });
+  document.documentElement.dataset.theme = 'dark'; document.documentElement.dataset.shell = 'g';
   document.body.className = 'portal';
   const root = document.getElementById('pt-app') || document.body.appendChild(Object.assign(document.createElement('div'), { id: 'pt-app' }));
   root.innerHTML = ptShell();
   ptDerive();
-  if (S.focus) { const f = S.focus; if (PT.R.itemIds.includes(f) || (PT.R.recIds || []).includes(f)) { PT.sec = 'leaks'; PT.tab = (PT.R.recIds || []).includes(f) ? 'recs' : 'found'; PT.open[f] = true; } else if (f.startsWith('ask-') || f === 'report') { PT.modal = f; } else if (ptIsInsight(f)) { PT.sec = 'ins'; PT.open[f] = true; } else if (ptIsMove(f)) { PT.sec = 'moves'; PT.move = f; } }
+  if (S.focus && ptPageOf(S.focus)) { PT.sec = ptPageOf(S.focus); }
+  else if (S.focus) { const f = S.focus; if (PT.R.itemIds.includes(f) || (PT.R.recIds || []).includes(f)) { PT.sec = 'leaks'; PT.tab = (PT.R.recIds || []).includes(f) ? 'recs' : 'found'; PT.open[f] = true; } else if (f.startsWith('ask-') || f === 'report') { PT.modal = f; } else if (ptIsInsight(f)) { PT.sec = 'ins'; PT.open[f] = true; } else if (ptIsMove(f)) { PT.sec = 'moves'; PT.move = f; } }
   portalRender();
-  if (S.focus && PT.open[S.focus]) setTimeout(() => ptFocus(S.focus), 120);
+  if (S.focus && (PT.open[S.focus] || ptPageOf(S.focus))) setTimeout(() => ptFocus(S.focus), 120);
   setInterval(() => { if (document.hidden) return; const a = document.activeElement; if (a && a.tagName === 'TEXTAREA') return;
     ptCall({ op: 'refresh' }).then((res) => { const n = PT.ev.length; ptSetEvents(res.events); if (PT.ev.length !== n) portalRender(); }).catch(() => {}); }, 60000);
 }
 const PT_ICONS = `<svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-move" viewBox="0 0 24 24"><path d="M4 18l6-6 4 4 6-8"/><path d="M15 8h5v5"/></symbol>
+  <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M3 12h4l2-5 4 10 2-5h6"/></symbol>
+  <symbol id="i-fruit" viewBox="0 0 24 24"><path d="M12 8c-4-2-8 1-7 6s4 7 7 6c3 1 6-1 7-6s-3-8-7-6z"/><path d="M12 8c0-2 1-4 3-5"/></symbol>
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></symbol>
   <symbol id="i-work" viewBox="0 0 24 24"><path d="M4 19V9"/><path d="M10 19V5"/><path d="M16 19v-7"/><path d="M22 19H2"/></symbol>
   <symbol id="i-leak" viewBox="0 0 24 24"><path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/></symbol>
@@ -62,7 +69,7 @@ const PT_ICONS = `<svg width="0" height="0" style="position:absolute" aria-hidde
 const ptIcon = (id) => `<svg class="pt-ic" aria-hidden="true"><use href="#${id}"/></svg>`;
 function ptShell() {
   const R = PT.R; const me = PT.me;
-  const nav = (cls) => PT_SECTIONS.map(([k, n, ic], i) => `${cls === 'rail' && k === 'proc' ? '<div class="pt-nav-h">Your business</div>' : ''}<button type="button" data-pt="go" data-sec="${k}">${ptIcon(ic)}<span>${cls === 'tab' ? esc(({ home: 'Home', moves: 'Moves', work: 'Work', leaks: 'Leaks', proc: 'Process', evid: 'Evidence', ins: 'Insights' })[k] || n) : esc(n)}</span></button>`).join('');
+  const nav = (cls) => PT_SECTIONS.map(([k, n, ic, short]) => `${cls === 'rail' && k === 'home' ? '<div class="pt-nav-h">At a glance</div>' : ''}${cls === 'rail' && k === 'work' ? '<div class="pt-nav-h">Detail</div>' : ''}<button type="button" data-pt="go" data-sec="${k}">${ptIcon(ic)}<span>${esc(cls === 'tab' ? short : n)}</span></button>`).join('');
   return `${PT_ICONS}<div class="pt-shell">
     <aside class="pt-rail" aria-label="Portal navigation">
       <div class="pt-brand">THE <b>GROWTH</b> MACHINE</div>
@@ -97,13 +104,15 @@ function ptCall(req) {
 }
 function ptSetEvents(list) { if (Array.isArray(list)) { PT.ev = list; ptDerive(); } }
 function ptDerive() {
-  const last = {}, comments = {}, byId = {};
+  const last = {}, lastA = {}, comments = {}, byId = {};
   PT.ev.forEach((x) => {
     if (x.type === 'flag' || x.type === 'unflag') last[x.elementId + '|' + x.by] = x;
+    if (x.type === 'approve' || x.type === 'unapprove') lastA[x.elementId + '|' + x.by] = x;
     if (x.type === 'comment') { (comments[x.elementId] = comments[x.elementId] || []).push(x); byId[x.id] = x; }
   });
   const flags = {}; Object.values(last).forEach((x) => { if (x.type === 'flag') (flags[x.elementId] = flags[x.elementId] || []).push(x); });
-  PT.D = { flags, comments, byId };
+  const approve = {}; Object.values(lastA).forEach((x) => { if (x.type === 'approve') (approve[x.elementId] = approve[x.elementId] || []).push(x); });
+  PT.D = { flags, comments, byId, approve };
 }
 const ptErr = (e) => esc((e && e.message) || 'Something went wrong. Please try again.');
 
@@ -144,7 +153,7 @@ function portalRender() {
   try {
     if (sec === 'proc') { ui.tab = 'processes'; html = `<div class="pt-studio">${viewProcesses(E())}</div>`; }
     else if (sec === 'evid') { ui.tab = 'evidence'; html = `<div class="pt-studio">${viewEvidence(E())}</div>`; }
-    else html = ({ home: ptHome, moves: ptMovesSec, work: ptWork, leaks: ptLeaks, ins: ptInsights })[sec]();
+    else html = ({ home: ftHealth, concerns: ftConcerns, projects: ftProjects, fruit: ftFruitPage, moves: ptMovesSec, work: ptWork, leaks: ptLeaks, ins: ptInsights })[sec]();
   } catch (err) { console.error(err); html = `<div class="pt-card"><p>This part of the portal couldn't be shown: ${esc(err.message)}</p></div>`; }
   main.innerHTML = html;
   if (sec === 'proc' || sec === 'evid') { ptLock(main); main.querySelectorAll('.flow-wrap').forEach((w, i) => { if (keep[i]) { w.scrollLeft = keep[i][0]; w.scrollTop = keep[i][1]; } }); }
@@ -262,11 +271,20 @@ function ptHome() {
 function ptMovesSec() {
   const e = E(); const moves = mvList(e, { portal: true });
   const m = PT.move && moves.find((x) => x.id === PT.move);
-  if (m) return mvDetail(e, m, { back: '<button type="button" class="pt-link mv-back" data-pt="move" data-id="">← All key changes</button>', acts: ptActs(m.id),
+  if (!m) return ftProjects();
+  return mvDetail(e, m, { back: '<button type="button" class="pt-link mv-back" data-pt="go" data-sec="projects">← Projects</button>', acts: ptActs(m.id),
     side: `${(m.sources || []).length ? `<div class="mv-srcline">${ptSrcBtn(m.sources, 'Where the figures come from')}</div>` : ''}<div class="mv-box" id="it-${esc(m.id)}"><h3>Discussion</h3>${ptThread(m.id)}</div>` });
   const shown = moves.filter((x) => !PT.mb || (x.bucket || 'friction') === PT.mb);
   return `<section class="pt-hello"><div class="pt-eyebrow">Key changes</div><h1>What's changing, and where it stands</h1></section>
     ${moves.length ? `<div class="mv-sh"><h2>${shown.length} change${shown.length === 1 ? '' : 's'}</h2>${mvFilters(moves, PT.mb, (k) => `data-pt="mb" data-id="${k}"`)}</div><div class="mv-grid">${shown.map((x) => mvCard(e, x, { open: `data-pt="move" data-id="${esc(x.id)}"`, acts: ptActs(x.id) })).join('')}</div>` : `<div class="pt-grid">${ptCard('', '<p class="pt-muted">The first moves are being written up.</p>', { cls: 'c12' })}</div>`}`;
+}
+/** The founders' page an item or health measure lives on (for links, comments and the owner's "open at" links). */
+function ptPageOf(id) {
+  if (ftHealthList().some((h) => h.id === id)) return 'home';
+  const it = ftItems().find((x) => x.id === id); if (!it) return '';
+  if (FT_PROJECT.includes(it.stage)) return 'projects';
+  if (ftFruit(true).some((x) => x.it.id === id)) return 'fruit';
+  return 'concerns';
 }
 const ptIsMove = (id) => mvList(E(), { portal: true }).some((x) => x.id === id);
 function ptHomeClassic() {
@@ -406,7 +424,10 @@ const PT_SUM = { ids: null, title: '', note: '', comments: false, fortnight: tru
 function ptSumGroups() {
   const { found, recs } = ptItems(); const out = [];
   const mv = mvList(E(), { portal: true }); const stg = (m) => (m.stage === 'done' ? 'Measured' : (MV_STAGES.find(([k]) => k === m.stage) || [0, 'Agreed'])[1]);
-  if (mv.length) out.push({ title: 'Key changes', items: mv.map((m) => ({ id: m.id, cat: mvB(m).label, title: m.title, val: 'Stage: ' + stg(m), valSub: m.next ? '· next: ' + m.next + (m.nextDate ? ' (' + m.nextDate + ')' : '') : '', summary: `Before: ${m.before || ''} Now: ${m.now || ''}${m.impact ? ' Impact: ' + m.impact + '.' : ''}` })) });
+  const H = ftHealthList(); if (H.length) out.push({ title: 'Company health', items: H.map((h) => ({ id: h.id, cat: h.area + ' · ' + (FT_STATUS[h.status] || FT_STATUS.grey), title: h.label, val: h.value + (h.unit ? ' ' + h.unit : ''), valSub: h.asAt ? '(as at ' + h.asAt + ')' : '', summary: h.trendText || '' })) });
+  const P = ftProjectList(true); if (P.length) out.push({ title: 'Optimisation projects', items: P.map((it) => ({ id: it.id, cat: ITEM_STAGE_NAME[it.stage], title: it.title, val: it.owner ? 'Who: ' + it.owner : '', valSub: it.next ? '· next: ' + it.next + (it.nextDate ? ' (' + it.nextDate + ')' : '') : '', summary: [it.why ? 'Why: ' + it.why : '', it.willBe ? 'Aim: ' + it.willBe : ''].filter(Boolean).join(' ') })) });
+  const Fr = ftFruit(true); if (Fr.length) out.push({ title: 'Lowest-hanging fruit', items: Fr.map((x) => ({ id: x.it.id, cat: ftEffTxt(x.b.eff), title: x.it.title, val: x.b.big ? ptMoney(x.b.big.valueMonthly) : '', valSub: x.b.big ? FT_BASIS[x.b.big.basis] : '', summary: x.it.line || '' })) });
+  if (!P.length && mv.length) out.push({ title: 'Key changes', items: mv.map((m) => ({ id: m.id, cat: mvB(m).label, title: m.title, val: 'Stage: ' + stg(m), valSub: m.next ? '· next: ' + m.next + (m.nextDate ? ' (' + m.nextDate + ')' : '') : '', summary: `Before: ${m.before || ''} Now: ${m.now || ''}${m.impact ? ' Impact: ' + m.impact + '.' : ''}` })) });
   if ((PT.R.asks || []).length) out.push({ title: 'Needs a decision', items: PT.R.asks.map((a) => ({ id: a.id, title: a.title, summary: a.detail })) });
   if (found.length) out.push({ title: 'Leaks & opportunities', items: found });
   if (recs.length) out.push({ title: 'What we suggest', items: recs });
@@ -468,6 +489,14 @@ document.addEventListener('click', (ev) => {
   if (d === 'go') { if (b.dataset.sec === 'moves') PT.move = ''; return ptGo(b.dataset.sec); }
   if (d === 'move') { PT.move = id || ''; PT.sec = 'moves'; portalRender(); return window.scrollTo(0, 0); }
   if (d === 'mb') { PT.mb = id || ''; return portalRender(); }
+  if (d === 'dept') { PT.dept = id || ''; return portalRender(); }
+  if (d === 'proj') { PT.modal = ''; PT.dept = ''; PT.sec = ptPageOf(id) || 'projects'; portalRender(); return setTimeout(() => ptFocus(id), 60); }
+  if (d === 'approve') {
+    const mine = (PT.D.approve[id] || []).some((x) => x.by === PT.me.id); b.disabled = true;
+    ptCall({ op: 'approve', el: id, on: !mine }).then((res) => { ptSetEvents(res.events); portalRender(); toast(mine ? 'Approval withdrawn' : 'Approved. It moves to Approved at our next update.'); })
+      .catch((e) => { b.disabled = false; toast(ptErr(e)); });
+    return;
+  }
   if (d === 'tab') { PT.tab = id; return portalRender(); }
   if (d === 'lf') { PT.lf = id; return portalRender(); }
   if (d === 'toggle') { PT.open[id] = !PT.open[id]; return portalRender(); }
@@ -482,6 +511,7 @@ document.addEventListener('click', (ev) => {
     PT.modal = '';
     if ((PT.R.itemIds || []).includes(id) || (PT.R.recIds || []).includes(id)) { PT.sec = 'leaks'; PT.tab = (PT.R.recIds || []).includes(id) ? 'recs' : 'found'; PT.lf = 'all'; PT.open[id] = true; portalRender(); return setTimeout(() => ptFocus(id), 60); }
     if (ptIsMove(id)) { PT.sec = 'moves'; PT.move = id; portalRender(); return window.scrollTo(0, 0); }
+    if (ptPageOf(id)) { PT.dept = ''; PT.sec = ptPageOf(id); portalRender(); return setTimeout(() => ptFocus(id), 60); }
     if (ptIsInsight(id)) { PT.sec = 'ins'; portalRender(); return setTimeout(() => ptFocus(id), 60); }
     PT.modal = id; return ptModalRender();
   }

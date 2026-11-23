@@ -53,10 +53,11 @@ function doMerge(obj, label, quiet) {
   if (!obj._meta && !quiet && !confirm(`"${label}" has no date stamp (it was made before freshness tracking).\n\nIt can ADD new records but will NOT overwrite anything already in the Studio. Continue?`)) return false;
   const { engagement, counts, skipped } = mergeEngagement(e, obj);
   engagement.id = db.activeId; db.engagements[db.activeId] = engagement;
+  const approved = itApplyApprovals(engagement);
   const sum = Object.entries(counts).filter(([, v]) => v.added || v.updated || v.skipped).map(([k, v]) => `${k} +${v.added}/~${v.updated}${v.skipped ? `/✕${v.skipped}` : ''}`).join(', ');
   engagement.meta.mergeLog = [{ fp, label, generatedAt: (obj._meta && obj._meta.generatedAt) || '', mergedAt: nowISO(), summary: sum || 'profile fields', skipped: skipped.slice(0, 50) }, ...(e.meta.mergeLog || [])].slice(0, 100);
   save(); if (quiet) return true; render();
-  toast(`Merged: ${sum || 'profile fields'}${skipped.length ? ` · ${skipped.length} skipped (newer data kept)` : ''}`);
+  toast(`Merged: ${sum || 'profile fields'}${skipped.length ? ` · ${skipped.length} skipped (newer data kept)` : ''}${approved.length ? ` · founders' go-ahead: ${approved.map((x) => `${x.title} → ${ITEM_STAGE_NAME[x.stage]}`).join('; ')}` : ''}`);
   return true;
 }
 /** Live founder session: write one answer straight into the respondent's record (no re-render, so typing is never interrupted). */
@@ -145,7 +146,7 @@ function render() {
 
 /* ---------- Sources & data view (lives here because it is tied to the editor) ---------- */
 const FIELD_DEFS = {
-  items: [['id', 'text'], ['order', 'num'], ['title', 'text'], ['line', 'long'], ['depts', 'text'], ['types', 'text'], ['label', ITEM_LABELS], ['stage', ITEM_STAGES.map((s) => s[0])], ['measured', 'text'], ['next', 'text'], ['nextDate', 'text'], ['owner', 'text'], ['pinned', ['', 'true']], ['portal', ['', 'false']], ['private', 'long'], ['recIds', 'text'], ['findingIds', 'text'], ['automationIds', 'text'], ['opportunityIds', 'text'], ['moveId', 'text'], ['steps', 'json']],
+  items: [['id', 'text'], ['order', 'num'], ['title', 'text'], ['line', 'long'], ['depts', 'text'], ['types', 'text'], ['label', ITEM_LABELS], ['stage', ITEM_STAGES.map((s) => s[0])], ['measured', 'text'], ['next', 'text'], ['nextDate', 'text'], ['owner', 'text'], ['why', 'long'], ['knockOn', 'long'], ['willBe', 'long'], ['concern', 'text'], ['fruit', 'text'], ['approvedBy', 'text'], ['approvedAt', 'text'], ['pinned', ['', 'true']], ['portal', ['', 'false']], ['private', 'long'], ['recIds', 'text'], ['findingIds', 'text'], ['automationIds', 'text'], ['opportunityIds', 'text'], ['moveId', 'text'], ['sizeId', 'text'], ['steps', 'json']],
   departments: [['id', 'text'], ['name', 'text'], ['type', DEPT_TYPES.map((d) => d[0])], ['headId', 'person'], ['notes', 'text']],
   moves: [['id', 'text'], ['order', 'num'], ['bucket', Object.keys(MV_BUCKETS)], ['title', 'text'], ['pinned', ['', 'true']], ['stage', ['aligned', 'unblocked', 'live', 'measured', 'done']], ['why', 'long'], ['before', 'long'], ['nowLabel', 'text'], ['now', 'long'], ['impact', 'text'], ['impactTbc', 'text'], ['next', 'text'], ['nextDate', 'text'], ['links', 'text'], ['portal', ['', 'false']], ['private', 'long'], ['days', 'num'], ['stageNotes', 'json'], ['timeline', 'json'], ['impacts', 'json'], ['sources', 'json']],
   enhanced: [['id', 'text'], ['order', 'num'], ['kind', Object.keys(ED_KINDS)], ['title', 'text'], ['eyebrow', 'text'], ['tag', 'text'], ['sub', 'text'], ['sowhat', 'long'], ['coverage', 'text'], ['coveragePct', 'num'], ['portal', ['', 'false']], ['wide', ['', 'true', 'false']], ['params', 'json'], ['data', 'json'], ['sources', 'json']],
