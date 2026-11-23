@@ -23,7 +23,7 @@ function normaliseTab() {
   ui.sub = ui.sub || {};
   const a = TAB_ALIAS[ui.tab];
   if (a) { ui.tab = a[0]; if (a[1]) ui.sub[a[0]] = a[1]; }
-  if (!TABS.some((t) => t[0] === ui.tab)) ui.tab = 'home';
+  if (!TABS.some((t) => t[0] === ui.tab) && !(shellOn() && SHELL_TABS.includes(ui.tab))) ui.tab = shellOn() ? 'hub' : 'home';
   Object.keys(SUBTABS).forEach((t) => { if (!SUBTABS[t].some((s) => s[0] === ui.sub[t])) ui.sub[t] = SUBTABS[t][0][0]; });
 }
 const subOf = (t) => { const s = (ui.sub || {})[t] || SUBTABS[t][0][0]; return PORTAL_ON && t === 'evidence' && (s === 'insights' || s === 'value') ? 'growth' : s; };

@@ -17,6 +17,23 @@ The Growth Machine's internal diagnostic tool, built for use across every client
 - **Scenarios** (Plan). A scenario is a set of recommendations applied to the current state. Plan, Processes and Evidence can switch between "current" and any scenario, with changes flagged as New / Changed / Removed.
 - **A founder report.** Print it to PDF or download it as one self-contained HTML file. It holds no raw data and needs neither this tool nor Claude to open.
 
+## Layout: department-first (graphite)
+
+The Studio opens on **Home**, in a graphite shell with a left menu: Home; the six departments (with item counts);
+Whole business (How work flows, Insights & value); Our engagement (Our work, Conversations, Reports, Sources & data).
+The client switcher sits at the top of the menu; Updates, Screen share, Back up, New client and **Classic view** at the
+bottom. Classic view brings back the earlier layout (the seven pages below) until the department-first build is
+finished; **New layout** in its top bar switches back.
+
+- **Home** (for TGM): at a glance (my to-dos past their date, the next fortnightly review and the decisions for it,
+  what we're waiting on from the client, my days), Needs you now (overdue and due in two days, oldest first), Key
+  changes in motion (items approved or under way, with their next step and date), the six departments, every item by
+  stage, and Ahead (the next three weeks, the client's headline numbers, the founder portal).
+- **A department** shows its items as a board, one column per stage, with parked items in a strip underneath. Filters,
+  the item detail panel, headline numbers and the other tabs follow in steps 3 to 5 of `PLAN-department-first.md`.
+- **Every item at one stage**, across departments: open it from a stage count on Home. It replaces Key changes.
+- Pages not rebuilt yet open inside the same shell, in graphite colours.
+
 ## The seven pages
 Each page answers one question. Older page names still work as links and redirect.
 
