@@ -123,6 +123,35 @@ department stay visible as "Unassigned" until that is resolved.
   - Ahead: what's coming up, what we need from them, our time with them.
   - The Leak / Opportunity / Weakness labels appear on the department board, not on Home.
 
+**Founders' view: eight pages, by topic (agreed 23 Nov 2026; replaces the department-first founders' Home).**
+Departments become a filter on every page. The pages, in build order:
+1. **Company health:** five areas (revenue, clients, delivery, people, cost). Each has one or two numbers with an
+   "as at" date, green/amber/red, and a trend arrow.
+2. **Concerns and wins:** the top five concerns (biggest leaks and risks, stuck or late projects) and the latest
+   dated wins.
+3. **Optimisation projects:** every item at Approved, Under way or Live, showing:
+   - why it matters, and its knock-on effects in words until measured;
+   - its stage;
+   - the owner by name, and the departments involved;
+   - was → now → will be. Each item gains a `willBe` field, written as an aim, not a promised result.
+4. **Lowest-hanging fruit:** the top five low-effort, clear-benefit items. Founders can approve one from the portal,
+   and it moves to Approved on the next update.
+
+Then:
+
+6. **Report:** TGM's weekly timeline, wins, finished tasks in plain words, the plan, days used. No private to-dos.
+8. **Processes and systems:** client-safe flows, a systems map (owner, cost, users, overlap), and automation
+   opportunities shown on the steps they would remove.
+5. **Insights:** joined-up views.
+7. **Department efficiency:** for each department, 4–6 measures at team level, never per person.
+   - Each measure is green/amber/red with a trend.
+   - The score is measures on target out of measures tracked, shown next to the measures not tracked yet.
+   - Baseline: Mar–Sep 2026 where history exists; otherwise the first four full weeks of data.
+   - Each department page prints as a one-page PDF for the founders to share with that department's head.
+
+Kept from the earlier portal: ticks, comments and red flags; the key-change detail page; what we need from the client;
+personal links and the printable summary; "as at" dates and sources on every figure.
+
 ---
 
 ## Build steps
