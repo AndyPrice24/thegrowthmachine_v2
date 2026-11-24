@@ -289,10 +289,18 @@ What each founder sees from their own link, served by TGM's Apps Script web app 
   nothing else moved the item).
 - **Report** (page 6; the portal's `work` section, `ftReport`): the plan chart across the top, then days used by calendar month (needed against used, with any days banked
   ahead; from `stats.days`, built by `lrDays`, with no diary text and no reasons for days off; `daysOff` never reaches the portal),
-  next to what is coming up, then **week by week**: `engagement.weeks` [{id, start, end, done, next?}], newest first,
+  next to what is coming up, then **week by week**: `engagement.weeks` [{id, start, end, done, next?}], left to right, the latest four (earlier weeks folded),
   one plain-words line per finished task, the days worked that week, and for this week what's next (`next`, else the status `next`).
   Below: wins, and what we need from the founders (decisions, then information requested, with days late).
   Write `done` lines for the founders: roles not names, no TGM-only work or internal tooling.
+- **Processes & systems** (page 8; the portal's `proc` section, `ftProc`): four tiles (processes mapped, steps that run themselves,
+  steps with a pain point, automation ideas by status), then each mapped process as a card with a step strip (automatic, pain point,
+  could be automated) and a team filter. A card opens the process step by step: actor, system, pain point, up to two issue or
+  weakness flags (more folded; `unverified` flags are TGM's questions and never shown; no `by`), and each automation on the steps it
+  would remove (`stepIds` on the automation; the rest show "For the whole process"). "Open the full process map" shows the
+  read-only Studio map. Below: automations as a board (Idea, Proposed, Agreed or under way, Live; four per column, low effort first),
+  and systems by `family` on each tool (platform, work, ai, sales, comms, listings, finance; `service` = a cost line that is not a
+  system, left off), with a spend bar, data health (owner, users, cost known) and overlaps (`overlapsWith`, `overlapNote`).
 - The size shown on an item is its `sizeId` finding, else the main fix's sized findings (at risk, then lost, then spend to review).
 - A department filter (chips) runs across pages 2 to 4. Health measures and items are portal elements, so each can be red-flagged
   and discussed.

@@ -227,7 +227,7 @@ function itApplyApprovals(e) {
 function ftReport() {
   const e = E(); const g = e.engagement; const today = todayISO(); const w = ptWeek(e); const D = (PT.R.stats || {}).days; const S = g.status || {};
   const J = journey(e, { portal: true }); const wins = J.past.filter((x) => x.win);
-  const W = live(g.weeks || []).slice().sort((a, b) => String(b.start).localeCompare(String(a.start)));
+  const W = live(g.weeks || []).slice().sort((a, b) => String(a.start).localeCompare(String(b.start))); const Wn = W.slice(-4), Wold = W.slice(0, -4);
   // days: needed against used by calendar month
   const daysCard = D ? `<section class="gs-panel ft-rd"><div class="gs-ph"><h2>Days used</h2><span class="s">${hxF1(D.used)} of ${D.total}</span></div>
       <div class="ft-rdm">${D.months.map((m) => { const mx = Math.max(m.needed * 1.5, m.used, 1); const cur = today >= m.a && today <= m.b; return `<div class="ft-rdr ${cur ? 'cur' : ''}"><span>${esc(m.name.split(' ')[0])}${cur ? ' <em>now</em>' : ''}</span><span class="ft-rdb"><i style="width:${Math.min(100, m.used / mx * 100)}%" class="${m.used > m.needed ? 'over' : ''}"></i><b style="left:${m.needed / mx * 100}%"></b></span><span><b>${hxF1(m.used)}</b> of ${m.needed}${m.used > m.needed ? ` <em class="ft-bank">+${hxF1(m.used - m.needed)}</em>` : ''}</span></div>`; }).join('')}</div>
@@ -247,11 +247,98 @@ function ftReport() {
     ${planCard}
     <div class="ft-rtop">${daysCard}${comingCard}</div>
     ${ftSh('Week by week', `${W.length} week${W.length === 1 ? '' : 's'}`)}
-    ${W.length ? `<div class="ft-wks">${W.map(weekCard).join('')}</div>` : ftEmpty('The weekly report starts with the next update.')}
+    ${W.length ? `<div class="ft-wks">${Wn.map(weekCard).join('')}</div>${Wold.length ? `<details class="ft-wold"><summary>Earlier weeks (${Wold.length})</summary><div class="ft-wks">${Wold.map(weekCard).join('')}</div></details>` : ''}` : ftEmpty('The weekly report starts with the next update.')}
     <div class="ft-rbot"><div class="ft-rcol">
       ${winsCard}</div>
       <section class="gs-panel"><div class="gs-ph"><h2>What we need from you</h2><span class="s">${waiting.length} open</span></div><div class="ft-need">
         ${(PT.R.asks || []).length ? `<p class="pt-sub-h">Decisions</p>${PT.R.asks.map((a) => `<button type="button" class="ft-ask2" data-pt="discuss" data-id="${esc(a.id)}">${esc(a.title)}</button>`).join('')}` : ''}
         ${waiting.length ? `<p class="pt-sub-h">Information requested</p>${waiting.slice(0, 8).map((r) => `<div class="ft-req"><span>${esc(r.item)}</span><span class="pt-muted">${esc(r.owner || '')}${r.dueDate ? ` · due ${esc(fmtD(r.dueDate))}` : ''}</span>${r._status === 'Overdue' ? `<em>${Math.max(0, daysBetween(r.dueDate, today))}d late</em>` : ''}</div>`).join('')}${waiting.length > 8 ? `<p class="pt-muted pt-small">and ${waiting.length - 8} more</p>` : ''}` : '<p class="pt-muted">Nothing outstanding.</p>'}</div></section></div>
     ${(g.delays || []).length ? `${ftSh('Delays and changes')}<section class="gs-panel"><table class="pt-tbl" style="margin:0 16px 16px;width:calc(100% - 32px)"><thead><tr><th>Raised</th><th>What happened</th><th class="r">Days</th><th>Status</th></tr></thead><tbody>${g.delays.map((d) => `<tr><td>${esc(fmtD(d.dateRaised))}</td><td>${esc(d.description || d.cause || '')}</td><td class="r">${num(d.daysImpact)}</td><td>${esc(d.status || '')}</td></tr>`).join('')}</tbody></table></section>` : ''}`;
+}
+
+/* ---------- 8. Processes & systems ---------- */
+const FT_TEAM = { sales: ['Sales', 'var(--gd-sales)'], marketing: ['Marketing', '#facc15'], cs: ['Client Success', 'var(--gd-cs)'], ops_onb: ['Ops: onboarding', 'var(--gd-ops)'],
+  ops_tech: ['Ops: tech teams', '#fb923c'], ops: ['Operations', 'var(--gd-ops)'], product: ['Product', 'var(--gd-prod)'], leadership: ['Leadership', 'var(--gd-lead)'], finance: ['Finance', 'var(--gd-admin)'] };
+const ftTeam = (k) => FT_TEAM[k] || [k || 'Other', '#94a3b8'];
+const FT_FAMILY = [['platform', 'The platform', '#22d3ee'], ['work', 'Work management', '#ffa23a'], ['ai', 'AI & automation', '#a78bfa'], ['sales', 'Sales & marketing', '#4f9cff'],
+  ['comms', 'Communication', '#34d399'], ['listings', 'Listing networks', '#f472b6'], ['finance', 'Finance', '#facc15'], ['', 'Not grouped yet', '#94a3b8']];
+const FT_AU_COLS = [['Idea', ['Idea', '']], ['Proposed', ['Proposed']], ['Agreed or under way', ['Agreed', 'In progress']], ['Live', ['Live']]];
+function ftProcData() {
+  const e = E(); const procs = live(e.processes || []); const tools = live(e.tools || []); const tById = {}; tools.forEach((t) => { tById[t.id] = t; });
+  const autos = live(e.automations || []); const auStep = {}; autos.forEach((a) => splitList(a.stepIds).forEach((s) => { (auStep[s] = auStep[s] || []).push(a); }));
+  const flags = (s) => (s.flags || []).filter((f) => f.type === 'issue' || f.type === 'weakness');
+  const pain = (s) => !!(s.painPoint || flags(s).length);
+  return { e, procs, tools, tById, autos, auStep, flags, pain, mapped: procs.filter((p) => (p.steps || []).length) };
+}
+function ftStrip(p, D) {
+  return `<span class="ft-strip">${(p.steps || []).map((s) => `<i class="${s.automated ? 'auto' : D.pain(s) ? 'pain' : ''}${D.auStep[s.id] && !s.automated ? ' opp' : ''}"></i>`).join('')}</span>`;
+}
+function ftProcCard(p, D) {
+  const [tn, tc] = ftTeam(p.team); const st = p.steps || []; const pains = st.filter(D.pain).length; const auto = st.filter((s) => s.automated).length;
+  const opps = D.autos.filter((a) => a.processId === p.id && a.status !== 'Live').length; const tl = [...new Set(st.map((s) => s.toolId).filter((t) => D.tById[t]))];
+  return `<button type="button" class="gs-panel ft-pc" data-pt="proc" data-id="${esc(p.id)}" style="--tc:${tc}"><span class="ft-pct"><i></i>${esc(tn)}</span><b>${esc(p.name)}</b>${ftStrip(p, D)}
+    <span class="ft-pcm"><span>${st.length} steps</span>${auto ? `<span class="ok">${auto} automatic</span>` : ''}${pains ? `<span class="bad">${pains} pain point${pains === 1 ? '' : 's'}</span>` : ''}${opps ? `<span class="amb">${opps} to automate</span>` : ''}</span>
+    ${tl.length ? `<span class="ft-pctl">${tl.slice(0, 4).map((t) => `<em>${esc(D.tById[t].name.replace(/ \(.*$/, ''))}</em>`).join('')}${tl.length > 4 ? `<em>+${tl.length - 4}</em>` : ''}</span>` : ''}</button>`;
+}
+function ftAuCard(a, D, withProc = true) {
+  const p = D.procs.find((x) => x.id === a.processId); const n = splitList(a.stepIds).length;
+  return `<div class="ft-au"><b>${esc(a.title)}</b>${withProc && p ? `<button type="button" class="pt-link" data-pt="proc" data-id="${esc(p.id)}">${esc(p.name)}${n ? ` · ${n} step${n === 1 ? '' : 's'}` : ''}</button>` : ''}
+    <span class="ft-aum">${a.system ? `<span>${esc(trunc(a.system, 60))}</span>` : ''}${a.effort ? `<em>${esc(a.effort)} effort</em>` : ''}${!withProc ? `<em class="st">${esc(a.status || 'Idea')}</em>` : ''}</span></div>`;
+}
+function ftProcDetail(p, D) {
+  const [tn, tc] = ftTeam(p.team); const st = p.steps || []; const tl = [...new Set(st.map((s) => s.toolId).filter((t) => D.tById[t]))];
+  const inSteps = new Set(st.map((s) => s.id)); const whole = D.autos.filter((a) => a.processId === p.id && !splitList(a.stepIds).some((x) => inSteps.has(x)));
+  const step = (s, i) => { const au = (D.auStep[s.id] || []); const t = D.tById[s.toolId];
+    return `<li class="${s.automated ? 'auto' : D.pain(s) ? 'pain' : ''}"><span class="ft-fk">${i + 1}</span><div class="ft-fb"><b>${esc(s.name)}</b>
+      <span class="ft-fm">${s.actorLabel ? `<span>${esc(s.actorLabel)}</span>` : ''}${t ? `<em>${esc(t.name.replace(/ \(.*$/, ''))}</em>` : ''}${s.automated ? '<em class="ok">Automatic</em>' : ''}${s.kind === 'decision' ? '<em>Decision</em>' : ''}</span>
+      ${s.painPoint ? `<p class="ft-fp">${esc(s.painPoint)}</p>` : ''}${(() => { const fl = D.flags(s).map((f) => `<p class="ft-ff"><em>${esc((FLAG_TYPES[f.type] || [f.type])[0])}</em> ${esc(f.text)}</p>`); return fl.slice(0, 2).join('') + (fl.length > 2 ? `<details class="ft-fmore"><summary>${fl.length - 2} more note${fl.length === 3 ? '' : 's'}</summary>${fl.slice(2).join('')}</details>` : ''); })()}
+      ${au.map((a) => `<div class="ft-fa"><span>${a.status === 'Live' ? 'Automated' : 'Could be automated'}</span><b>${esc(a.title)}</b><span class="pt-muted">${esc(a.status || 'Idea')}${a.effort ? ` · ${esc(a.effort)} effort` : ''}</span></div>`).join('')}</div></li>`; };
+  return `<button type="button" class="ft-back" data-pt="proc" data-id="">◂ All processes and systems</button>
+    <section class="pt-hello ft-hello" style="--tc:${tc}"><div class="pt-eyebrow"><span class="ft-pct"><i></i>${esc(tn)}</span></div><h1>${esc(p.name)}</h1>${p.summary ? `<p class="pt-lede">${esc((String(p.summary).match(/[^.!?]+[.!?]+(\s|$)/g) || [p.summary]).slice(0, 2).join('').trim())}</p>` : ''}
+      <p class="ft-io">${p.inputs ? `<span>${esc(p.inputs)}</span>` : ''}${p.inputs && p.outputs ? '<b>→</b>' : ''}${p.outputs ? `<span>${esc(p.outputs)}</span>` : ''}${p.frequency ? `<em>${esc(p.frequency)}</em>` : ''}</p></section>
+    <div class="ft-pd"><section class="gs-panel"><div class="gs-ph"><h2>How it works today</h2><span class="s">${st.length} steps</span></div><ol class="ft-flow">${st.map(step).join('')}</ol>
+        <p class="ft-key"><span class="auto">Automatic</span><span class="pain">Pain point</span><span class="opp">Could be automated</span></p></section>
+      <div class="ft-rcol"><section class="gs-panel"><div class="gs-ph"><h2>Systems used</h2><span class="s">${tl.length}</span></div><ul class="ft-tl">${tl.map((t) => { const x = D.tById[t]; return `<li><span>${esc(x.name)}</span><b>${num(x.monthlyCost) ? esc(fmtMoney(x.monthlyCost)) + '/mo' : ''}</b></li>`; }).join('') || '<li class="pt-muted">None recorded.</li>'}</ul></section>
+        ${whole.length ? `<section class="gs-panel"><div class="gs-ph"><h2>For the whole process</h2><span class="s">${whole.length}</span></div><div class="ft-aul">${whole.map((a) => ftAuCard(a, D, false)).join('')}</div></section>` : ''}
+        <button type="button" class="gs-panel ft-full" data-pt="procfull" data-id="${esc(p.id)}"><b>Open the full process map</b><span>Every hand-off, time and source, read only</span></button></div></div>`;
+}
+function ftProc() {
+  const D = ftProcData();
+  if (PT.proc && PT.procFull) return `<button type="button" class="ft-back" data-pt="procfull" data-id="">◂ Back to ${esc((D.procs.find((p) => p.id === PT.proc) || {}).name || 'the process')}</button><div class="pt-studio">${viewProcesses(E())}</div>`;
+  const P = PT.proc && D.procs.find((p) => p.id === PT.proc); if (P) return ftProcDetail(P, D);
+  const teams = [...new Set(D.mapped.map((p) => p.team))]; const tk = PT.pteam && teams.includes(PT.pteam) ? PT.pteam : '';
+  const mp = D.mapped.filter((p) => !tk || p.team === tk).sort((a, b) => b.steps.filter(D.pain).length - a.steps.filter(D.pain).length);
+  const steps = D.mapped.flatMap((p) => p.steps); const auto = steps.filter((s) => s.automated).length; const pains = steps.filter(D.pain).length;
+  const sys = D.tools.filter((t) => t.family !== 'service'); const spend = sys.reduce((a, t) => a + num(t.monthlyCost), 0); const costed = sys.filter((t) => num(t.monthlyCost)).length;
+  const fams = FT_FAMILY.map(([k, n, c]) => ({ k, n, c, list: sys.filter((t) => (t.family || '') === k).sort((a, b) => num(b.monthlyCost) - num(a.monthlyCost)) })).filter((f) => f.list.length);
+  fams.forEach((f) => { f.cost = f.list.reduce((a, t) => a + num(t.monthlyCost), 0); });
+  const owners = sys.filter((t) => t.ownerId || t.owner).length, users = sys.filter((t) => num(t.activeUsers) || num(t.seats)).length;
+  const reg = live(E().items || []).find((it) => /^Software/i.test(it.title || ''));
+  const au = D.autos.filter((a) => { const p = D.procs.find((x) => x.id === a.processId); return !tk || (p && p.team === tk); });
+  const unm = D.procs.filter((p) => !(p.steps || []).length);
+  const chip = (k, n, c, cnt) => `<button type="button" class="ft-chip ${tk === k ? 'on' : ''}" data-pt="pteam" data-id="${k}" ${c ? `style="--dc:${c}"` : ''}>${c ? '<i></i>' : ''}${esc(n)} <b>${cnt}</b></button>`;
+  const srcBtn = ptSrcBtn([{ id: 'src_mgmt', part: 'P&L by month, Mar to Sep 2026' }, { id: 'src_subs_2611', part: "'Monthly costs' tab, Jan to Oct 2026" }, { id: 'src_invoices_2611', part: 'Supplier invoices' }], 'Sources');
+  return `${ftHead('Processes &amp; systems', 'How the work flows, and what it runs on', '')}
+    <div class="ft-ps">
+      <div class="gs-panel ft-st"><span>Processes mapped</span><b>${D.mapped.length}<small> of ${D.procs.length}</small></b><span class="ft-bar"><i style="width:${D.mapped.length / Math.max(1, D.procs.length) * 100}%"></i></span></div>
+      <div class="gs-panel ft-st"><span>Steps that run themselves</span><b>${auto}<small> of ${steps.length}</small></b><span class="ft-bar"><i class="ok" style="width:${auto / Math.max(1, steps.length) * 100}%"></i></span></div>
+      <div class="gs-panel ft-st"><span>Steps with a pain point</span><b>${pains}<small> of ${steps.length}</small></b><span class="ft-bar"><i class="bad" style="width:${pains / Math.max(1, steps.length) * 100}%"></i></span></div>
+      <div class="gs-panel ft-st"><span>Automation ideas</span><b>${D.autos.length}</b><span class="ft-sts">${FT_AU_COLS.map(([n, s]) => `<em>${D.autos.filter((a) => s.includes(a.status || '')).length} ${esc(n.split(' ')[0].toLowerCase())}</em>`).join('')}</span></div>
+    </div>
+    ${ftSh('Processes', `${mp.length} mapped`)}
+    <div class="ft-filter" role="group" aria-label="Team">${chip('', 'All', '', D.mapped.length)}${teams.map((k) => chip(k, ftTeam(k)[0], ftTeam(k)[1], D.mapped.filter((p) => p.team === k).length)).join('')}</div>
+    <div class="ft-pcs">${mp.map((p) => ftProcCard(p, D)).join('')}</div>
+    <p class="ft-key"><span class="auto">Automatic</span><span class="pain">Pain point</span><span class="opp">Could be automated</span><span class="plain">Done by hand</span></p>
+    ${unm.length && !tk ? `<div class="ft-unm"><span>Not mapped yet</span>${unm.map((p) => `<em>${esc(p.name)}</em>`).join('')}</div>` : ''}
+    ${ftSh('Automation', `${au.length} ideas${tk ? ' for ' + esc(ftTeam(tk)[0]) : ''}`)}
+    <div class="ft-kb">${FT_AU_COLS.map(([n, s]) => { const EF = { Low: 0, Medium: 1, High: 2 }; const l = au.filter((a) => s.includes(a.status || '')).sort((x, y) => (EF[x.effort] ?? 1) - (EF[y.effort] ?? 1)); return `<div class="ft-kbc"><div class="ft-kbh"><b>${esc(n)}</b><span>${l.length}</span></div>${l.slice(0, 4).map((a) => ftAuCard(a, D)).join('') || '<p class="pt-muted pt-small">None yet.</p>'}${l.length > 4 ? `<details class="ft-kbm"><summary>${l.length - 4} more</summary><div>${l.slice(4).map((a) => ftAuCard(a, D)).join('')}</div></details>` : ''}</div>`; }).join('')}</div>
+    ${ftSh('Systems', `${sys.length} systems`)}
+    <section class="gs-panel ft-sysw"><div class="gs-ph"><h2>Monthly spend on systems</h2><span class="s">${esc(fmtMoney(spend))} a month · ${costed} of ${sys.length} costed ${srcBtn}</span></div>
+      <div class="ft-spend">${fams.filter((f) => f.cost).map((f) => `<i style="width:${f.cost / Math.max(1, spend) * 100}%;--fc:${f.c}" title="${esc(f.n)}: ${esc(fmtMoney(f.cost))}"></i>`).join('')}</div>
+      <div class="ft-spk">${fams.filter((f) => f.cost).map((f) => `<span style="--fc:${f.c}"><i></i>${esc(f.n)} <b>${esc(fmtMoney(f.cost))}</b></span>`).join('')}</div>
+      <p class="ft-dh"><span class="${owners ? '' : 'bad'}">Owner named for ${owners} of ${sys.length}</span><span class="${users ? '' : 'bad'}">Users counted for ${users} of ${sys.length}</span><span>Cost known for ${costed} of ${sys.length}</span>${reg ? `<button type="button" class="pt-link" data-pt="proj" data-id="${esc(reg.id)}">${esc(reg.title)} →</button>` : ''}</p></section>
+    <div class="ft-fams">${fams.map((f) => `<section class="gs-panel ft-fam" style="--fc:${f.c}"><div class="gs-ph"><h2><i></i>${esc(f.n)}</h2><span class="s">${f.cost ? esc(fmtMoney(f.cost)) + '/mo · ' : ''}${f.list.length}</span></div>
+      <ul class="ft-tl">${f.list.map((t) => `<li><span>${esc(t.name)}${t.overlapNote ? `<em class="ft-ov" title="${esc(t.overlapNote)}">Overlap</em>` : ''}</span><b>${num(t.monthlyCost) ? esc(fmtMoney(t.monthlyCost)) : '<span class="pt-muted">cost to confirm</span>'}</b></li>`).join('')}</ul>
+      ${[...new Set(f.list.map((t) => t.overlapNote).filter(Boolean))].map((n) => `<p class="ft-ovn">${esc(n)}</p>`).join('')}</section>`).join('')}</div>
+    <p class="pt-muted pt-small ft-note">Consulting fees, outsourced sales support and general computer expenses are services, not systems, so they are not shown here.</p>`;
 }
