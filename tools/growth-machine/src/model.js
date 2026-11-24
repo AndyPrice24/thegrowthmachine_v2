@@ -101,6 +101,7 @@ function mergeEngagement(base, incoming) {
       if (i >= 0) {
         if (isNewer(arr[i])) { c.skipped++; skipped.push({ coll, id: item.id, why: 'newer data kept' }); return; }
         const merged = Object.assign({}, arr[i], item, ts ? { updatedAt: ts } : {});
+        if (coll === 'items' && item.stage && item.stage !== arr[i].stage && !item.stageSince) { merged.stageSince = (ts || nowISO()).slice(0, 10); merged.stageSinceSure = 'true'; merged.stageSinceNote = ''; } // an item's stage date follows its stage
         if (coll === 'processes' && Array.isArray(arr[i].steps) && Array.isArray(item.steps)) merged.steps = mergeSteps(arr[i].steps, item.steps);
         if ((coll === 'interviews' || coll === 'intake') && arr[i].answers && item.answers) merged.answers = Object.assign({}, arr[i].answers, item.answers); // an update adds answers; it never wipes ones captured in the Studio
         arr[i] = merged; c.updated++;

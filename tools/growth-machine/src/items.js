@@ -1,7 +1,9 @@
 /* Items: one record per issue or change, moving along one stage path (the department-first board).
    An item owns its stage, departments, types, label and next step. It links to the records that hold the evidence:
    findings (what's wrong), recommendations (the fix), automations, opportunities and the key-change story.
-   Step 1 of the department-first build: the data and a coverage check. Nothing here changes the other pages yet. */
+   Step 1 of the department-first build: the data and a coverage check. Nothing here changes the other pages yet.
+   stageSince (ISO date) records when an item reached its stage; it is set whenever the stage changes in the Studio, by
+   an update file or by a founder's go-ahead. stageSinceSure is empty where the date is only a floor ("at least since"). */
 
 const ITEM_DEPTS = [['lead', 'Leadership & direction'], ['sales', 'Sales'], ['cs', 'Client Success'], ['ops', 'Operations'],
   ['prod', 'Product & platform'], ['admin', 'Admin, finance & people']];

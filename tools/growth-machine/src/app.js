@@ -146,7 +146,7 @@ function render() {
 
 /* ---------- Sources & data view (lives here because it is tied to the editor) ---------- */
 const FIELD_DEFS = {
-  items: [['id', 'text'], ['order', 'num'], ['title', 'text'], ['line', 'long'], ['depts', 'text'], ['types', 'text'], ['label', ITEM_LABELS], ['stage', ITEM_STAGES.map((s) => s[0])], ['measured', 'text'], ['next', 'text'], ['nextDate', 'text'], ['owner', 'text'], ['why', 'long'], ['knockOn', 'long'], ['willBe', 'long'], ['concern', 'text'], ['fruit', 'text'], ['approvedBy', 'text'], ['approvedAt', 'text'], ['pinned', ['', 'true']], ['portal', ['', 'false']], ['private', 'long'], ['recIds', 'text'], ['findingIds', 'text'], ['automationIds', 'text'], ['opportunityIds', 'text'], ['moveId', 'text'], ['sizeId', 'text'], ['steps', 'json']],
+  items: [['id', 'text'], ['order', 'num'], ['title', 'text'], ['line', 'long'], ['depts', 'text'], ['types', 'text'], ['label', ITEM_LABELS], ['stage', ITEM_STAGES.map((s) => s[0])], ['stageSince', 'text'], ['measured', 'text'], ['next', 'text'], ['nextDate', 'text'], ['owner', 'text'], ['why', 'long'], ['knockOn', 'long'], ['willBe', 'long'], ['concern', 'text'], ['fruit', 'text'], ['approvedBy', 'text'], ['approvedAt', 'text'], ['pinned', ['', 'true']], ['portal', ['', 'false']], ['private', 'long'], ['recIds', 'text'], ['findingIds', 'text'], ['automationIds', 'text'], ['opportunityIds', 'text'], ['moveId', 'text'], ['sizeId', 'text'], ['steps', 'json']],
   departments: [['id', 'text'], ['name', 'text'], ['type', DEPT_TYPES.map((d) => d[0])], ['headId', 'person'], ['notes', 'text']],
   moves: [['id', 'text'], ['order', 'num'], ['bucket', Object.keys(MV_BUCKETS)], ['title', 'text'], ['pinned', ['', 'true']], ['stage', ['aligned', 'unblocked', 'live', 'measured', 'done']], ['why', 'long'], ['before', 'long'], ['nowLabel', 'text'], ['now', 'long'], ['impact', 'text'], ['impactTbc', 'text'], ['next', 'text'], ['nextDate', 'text'], ['links', 'text'], ['portal', ['', 'false']], ['private', 'long'], ['days', 'num'], ['stageNotes', 'json'], ['timeline', 'json'], ['impacts', 'json'], ['sources', 'json']],
   enhanced: [['id', 'text'], ['order', 'num'], ['kind', Object.keys(ED_KINDS)], ['title', 'text'], ['eyebrow', 'text'], ['tag', 'text'], ['sub', 'text'], ['sowhat', 'long'], ['coverage', 'text'], ['coveragePct', 'num'], ['portal', ['', 'false']], ['wide', ['', 'true', 'false']], ['params', 'json'], ['data', 'json'], ['sources', 'json']],
@@ -776,6 +776,7 @@ document.addEventListener('change', (ev) => {
     row[field] = v; touch(row);
     if (coll === 'engagement.timeLog' && field === 'dayType') row.days = v === 'Full' ? 1 : 0.5;
     if (coll === 'engagement.timeLog' && field === 'date') row.phaseId = phaseForDate(E().engagement, v);
+    if (coll === 'items' && field === 'stage') { row.stageSince = todayISO(); row.stageSinceSure = 'true'; row.stageSinceNote = ''; }
     if (coll === 'engagement.activities' && field === 'status') row.doneDate = v === 'Done' ? (row.doneDate || todayISO()) : '';
     if (coll === 'engagement.phases' && field === 'status' && v === 'Done') { const ps = E().engagement.phases; const i = ps.indexOf(row); if (ps[i + 1] && ps[i + 1].status === 'Not started') ps[i + 1].status = 'In progress'; }
     save();

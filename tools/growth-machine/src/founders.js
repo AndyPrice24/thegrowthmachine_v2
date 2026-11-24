@@ -212,7 +212,7 @@ function itApplyApprovals(e) {
     const a = A[it.id];
     if (a && FT_OPEN.includes(it.stage)) {
       const first = a.slice().sort((x, y) => String(x.at).localeCompare(String(y.at)))[0];
-      it.stageWas = it.stage; it.stage = 'approved'; it.approvedVia = 'portal'; it.approvedBy = a.map((x) => x.byLabel).join(', '); it.approvedAt = String(first.at || '').slice(0, 10); touch(it); moved.push(it);
+      it.stageWas = it.stage; it.stage = 'approved'; it.stageSince = todayISO(); it.stageSinceSure = 'true'; it.stageSinceNote = ''; it.approvedVia = 'portal'; it.approvedBy = a.map((x) => x.byLabel).join(', '); it.approvedAt = String(first.at || '').slice(0, 10); touch(it); moved.push(it);
     } else if (!a && it.approvedVia === 'portal' && it.stage === 'approved' && it.stageWas) {
       it.stage = it.stageWas; delete it.stageWas; delete it.approvedVia; delete it.approvedBy; delete it.approvedAt; touch(it); moved.push(it);
     }
