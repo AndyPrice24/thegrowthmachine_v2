@@ -48,11 +48,19 @@ const edWarn = (c) => { const s = parseFloat((c.register || {}).satisfaction); r
 
 /* ---------- 1. NRR bridge ---------- */
 function edNrrBridge(e, x) {
-  const p = edP(x); const base = edBase(e, p); const mv = edMoves(e, p.fy);
-  if (!base.v || !mv.length) return { html: empty('Needs revenue movements and a starting revenue.') };
-  const grow = edGroup(mv.filter((m) => m.kind === 'growth'), (m) => m.cause || 'Growth').sort((a, b) => b.v - a.v);
-  const down = edGroup(mv.filter((m) => m.kind === 'downgrade'), () => 'Downgrades');
-  const lost = edGroup(mv.filter((m) => m.kind === 'lost'), () => 'Lost clients');
+  const p = edP(x); const BL = p.source !== 'register' && nrrBillingOn(e) ? nrrBill(e) : null;
+  let base, grow, down, lost, endLabel;
+  if (BL) { // billing per account: the same accounts now against a year earlier, split by channel
+    const a = BL.all; base = { v: a.B, label: `Billed in ${BL.winWas}` }; endLabel = `NRR, ${BL.winNow}`;
+    const by = (key, nKey, lab) => BL.ch.map(({ c, x: y }) => ({ k: `${lab} (${NRR_CH[c].split(' ')[0].toLowerCase()})`, v: y[key], n: y[nKey] })).filter((g) => g.v > 0.5);
+    grow = [{ k: 'Billed more', v: a.up, n: a.nUp }]; down = by('down', 'nDown', 'Billed less'); lost = by('lost', 'nLost', 'Stopped');
+  } else {
+    base = edBase(e, p); const mv = edMoves(e, p.fy); endLabel = `NRR ${p.fy || ''}`.trim();
+    if (!base.v || !mv.length) return { html: empty('Needs revenue movements and a starting revenue.') };
+    grow = edGroup(mv.filter((m) => m.kind === 'growth'), (m) => m.cause || 'Growth').sort((a, b) => b.v - a.v);
+    down = edGroup(mv.filter((m) => m.kind === 'downgrade'), () => 'Downgrades');
+    lost = edGroup(mv.filter((m) => m.kind === 'lost'), () => 'Lost clients');
+  }
   const target = edTarget(e, p); const pt = (v) => v / base.v * 100;
   const steps = [{ k: 'start', l: 'Start of period', v: 100, tip: `${base.label}: ${edMoney(base.v)}/month (= 100%)` }];
   grow.forEach((g) => steps.push({ k: 'up', l: g.k, v: pt(g.v), r: g.v, n: g.n }));
@@ -60,7 +68,7 @@ function edNrrBridge(e, x) {
   lost.forEach((g) => steps.push({ k: 'down', l: g.k, v: -pt(g.v), r: g.v, n: g.n }));
   const end = 100 + sum(steps.slice(1), (s) => s.v); const expansion = sum(grow, (g) => g.v); const losses = sum(down, (g) => g.v) + sum(lost, (g) => g.v);
   const need = (target - 100) / 100 * base.v + losses;
-  steps.push({ k: 'end', l: `NRR ${p.fy || ''}`.trim(), v: end, tip: `NRR ${p.fy || ''} ≈ ${end.toFixed(1)}%: net ${edSigned(expansion - losses)}/month from existing clients` });
+  steps.push({ k: 'end', l: endLabel, v: end, tip: `${endLabel} ≈ ${end.toFixed(1)}%: net ${edSigned(expansion - losses)}/month from existing ${BL ? 'accounts' : 'clients'}` });
   if (target > end) steps.push({ k: 'gap', l: `Needed for ${target}%`, v: target - end, tip: `Gap to ${target}%: ${(target - end).toFixed(1)} points ≈ ${edMoney((target - end) / 100 * base.v)}/month. At this loss rate, expansion of about ${edMoney(need)}/month a year is needed (this period: ${edMoney(expansion)}).` });
   steps.push({ k: 'target', l: 'Target', v: target, tip: `Target: ${target}%` });
   const vals = steps.map((s) => s.v); let run = 100; const tops = [100];

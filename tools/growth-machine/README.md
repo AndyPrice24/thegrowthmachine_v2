@@ -255,6 +255,16 @@ only), the date the information applies to, when and how it was received, and a 
 and `part` is the exact tab, section or point. The cheatsheet prints both sides under "Where this comes from" (roles only),
 and the Leaks & opportunities detail lists them (with names).
 
+### Client growth (NRR), version 2: billing per account
+When the `billing` collection holds data, Evidence → Client growth, the NRR report, the NRR bridge (Insights) and the NRR headline
+all come from one calculation (`nrrBill` in `src/nrr.js`). Record: `{ id, account, channel: direct|reseller|self, billedAs, months:
+{ '2026-10': 123 } }`. NRR compares the same accounts' average monthly billing over the latest 3 months with the same months a year
+earlier (6 months shown alongside); accounts with nothing billed a year earlier count as new and sit outside NRR. The page shows
+NRR, GRR, expansion, contraction, stopped and new by channel, NRR by month, billed revenue by channel, the accounts behind each,
+and the register's upsell and shrink-risk lists. `client.nrr { target, source, part, method, caveats }` supplies the target, the
+cited source and the method notes. Without billing, version 1 (the register's New & Lost tabs) still runs. The bridge uses billing
+unless its params say `source: 'register'`.
+
 ### Founder portal (Reports → Founder portal)
 What each founder sees from their own link, served by TGM's Apps Script web app (`live-report/Code.gs`), in the graphite style
 (left menu; a scrolling tab bar on phones). The founders' view (agreed 23 Nov 2026; `src/founders.js`), pages 1 to 4:

@@ -673,3 +673,10 @@ line.ed-today{stroke:var(--ink);stroke-dasharray:3 3}
 
 .jr-it.win .jr-t p{font-weight:600}
 .jr-win{display:inline-block;font-size:11px;font-weight:700;color:var(--mv-em);background:var(--mv-em-soft);border-radius:99px;padding:0 7px;margin-right:2px;vertical-align:1px}
+:root{--nrr-res:#e08a2b;--nrr-self:#7c6fd6}
+.nrr-grid{stroke:var(--line,#e4ddd2);stroke-width:1}
+.nrr-target{stroke:var(--nrr-down);stroke-width:1.5;stroke-dasharray:5 4;fill:none}
+.nrr-l-all{stroke:var(--nrr-ink)} .nrr-l-direct{stroke:var(--nrr-up)} .nrr-l-reseller{stroke:var(--nrr-res)} .nrr-l-self{stroke:var(--nrr-self)}
+.nrr-dot{fill:var(--nrr-ink)}
+.nrr-key i.ln{width:16px;height:0;border-top:3px solid;border-radius:0;background:none!important;display:inline-block;vertical-align:middle}
+.nrr-key i.ln.nrr-l-all{border-color:var(--nrr-ink)} .nrr-key i.ln.nrr-l-direct{border-color:var(--nrr-up)} .nrr-key i.ln.nrr-l-reseller{border-color:var(--nrr-res)} .nrr-key i.ln.nrr-target{border-top:2px dashed var(--nrr-down)}
