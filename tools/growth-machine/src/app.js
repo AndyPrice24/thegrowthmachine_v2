@@ -34,7 +34,7 @@ window.addEventListener('pagehide', flushSave);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
 /** The Processes page always opens on Department view; Process view starts with just the "Choose process" button. */
 function landProcesses() { ui.pv = Object.assign({}, ui.pv, { mode: 'dept', focus: '', pick: '', hl: '', journey: false }); ui.stepId = ''; ui.editStep = ''; }
-function saveUI() { try { localStorage.setItem(STORE_KEY + '.ui', JSON.stringify({ tab: ui.tab, sub: ui.sub, share: ui.share, anonBefore: ui.anonBefore, talkP: ui.talkP, pv: ui.pv, execView: ui.execView, bpTop: ui.bpTop, lo: ui.lo && { lens: ui.lo.lens, sort: ui.lo.sort, signals: ui.lo.signals, noFix: ui.lo.noFix, unsized: ui.lo.unsized }, anon: ui.anon, showCost: ui.showCost, ghosts: ui.ghosts, compare: ui.compare, coll: ui.coll, theme: ui.theme, classic: ui.classic, dept: ui.dept, stage: ui.stage })); } catch (err) { /* ignore */ } }
+function saveUI() { try { localStorage.setItem(STORE_KEY + '.ui', JSON.stringify({ hxMini: ui.hxMini, tab: ui.tab, sub: ui.sub, share: ui.share, anonBefore: ui.anonBefore, talkP: ui.talkP, pv: ui.pv, execView: ui.execView, bpTop: ui.bpTop, lo: ui.lo && { lens: ui.lo.lens, sort: ui.lo.sort, signals: ui.lo.signals, noFix: ui.lo.noFix, unsized: ui.lo.unsized }, anon: ui.anon, showCost: ui.showCost, ghosts: ui.ghosts, compare: ui.compare, coll: ui.coll, theme: ui.theme, classic: ui.classic, dept: ui.dept, stage: ui.stage })); } catch (err) { /* ignore */ } }
 const E = () => db.engagements[db.activeId];
 function procOfStep(id) { return E().processes.find((p) => (p.steps || []).some((x) => x.id === id)); }
 function reviewCtx() {
@@ -132,7 +132,7 @@ function render() {
   const e = E();
   renderHeader();
   normaliseTab();
-  const views = { hub: viewHub, dept: viewDept, stage: viewStage, moves: viewMoves, home: viewLeaks, plan: viewPlan, processes: viewProcesses, evidence: viewEvidence, talk: viewTalk, progress: viewProgressReports, data: viewData };
+  const views = { hub: viewHome, dept: viewDept, stage: viewStage, moves: viewMoves, home: viewLeaks, plan: viewPlan, processes: viewProcesses, evidence: viewEvidence, talk: viewTalk, progress: viewProgressReports, data: viewData };
   let html;
   try { html = (views[ui.tab] || viewLeaks)(e); }
   catch (err) { console.error(err); html = `<div class="banner err">Something in this client's data could not be displayed: ${esc(err.message)}. Check Sources &amp; data.</div>`; }
@@ -142,10 +142,12 @@ function render() {
   document.documentElement.dataset.theme = shellOn() ? 'dark' : ui.theme || '';
   if (!shellOn() && !ui.theme) delete document.documentElement.dataset.theme;
   if (shellOn()) document.documentElement.dataset.shell = 'g'; else delete document.documentElement.dataset.shell;
+  if (shellOn() && ui.hxMini) document.documentElement.dataset.rail = 'mini'; else delete document.documentElement.dataset.rail;
 }
 
 /* ---------- Sources & data view (lives here because it is tied to the editor) ---------- */
 const FIELD_DEFS = {
+  measures: [['id', 'text'], ['order', 'num'], ['dept', ITEM_DEPTS.map((d) => d[0])], ['name', 'text'], ['why', 'long'], ['source', 'text'], ['rhythm', ['Daily', 'Weekly', 'Fortnightly', 'Monthly', 'Quarterly', 'Per sprint']], ['status', ['have', 'partly', 'missing']], ['note', 'text'], ['value', 'text'], ['target', 'text'], ['better', ['higher', 'lower']], ['asAt', 'text'], ['points', 'text'], ['trend', 'text'], ['broken', ['', 'true']], ['baseline', 'text']],
   items: [['id', 'text'], ['order', 'num'], ['title', 'text'], ['line', 'long'], ['depts', 'text'], ['types', 'text'], ['label', ITEM_LABELS], ['stage', ITEM_STAGES.map((s) => s[0])], ['stageSince', 'text'], ['measured', 'text'], ['next', 'text'], ['nextDate', 'text'], ['owner', 'text'], ['why', 'long'], ['knockOn', 'long'], ['willBe', 'long'], ['concern', 'text'], ['fruit', 'text'], ['approvedBy', 'text'], ['approvedAt', 'text'], ['pinned', ['', 'true']], ['portal', ['', 'false']], ['private', 'long'], ['recIds', 'text'], ['findingIds', 'text'], ['automationIds', 'text'], ['opportunityIds', 'text'], ['moveId', 'text'], ['sizeId', 'text'], ['steps', 'json']],
   departments: [['id', 'text'], ['name', 'text'], ['type', DEPT_TYPES.map((d) => d[0])], ['headId', 'person'], ['notes', 'text']],
   moves: [['id', 'text'], ['order', 'num'], ['bucket', Object.keys(MV_BUCKETS)], ['title', 'text'], ['pinned', ['', 'true']], ['stage', ['aligned', 'unblocked', 'live', 'measured', 'done']], ['why', 'long'], ['before', 'long'], ['nowLabel', 'text'], ['now', 'long'], ['impact', 'text'], ['impactTbc', 'text'], ['next', 'text'], ['nextDate', 'text'], ['links', 'text'], ['portal', ['', 'false']], ['private', 'long'], ['days', 'num'], ['stageNotes', 'json'], ['timeline', 'json'], ['impacts', 'json'], ['sources', 'json']],
@@ -173,7 +175,7 @@ const FIELD_DEFS = {
   recommendations: [['id', 'text'], ['title', 'text'], ['type', ['People', 'Process', 'Tool', 'Build', 'Structure', 'Commercial']], ['horizon', ['0-3 months', '3-6 months', '6-12 months', '12+ months']], ['description', 'long'], ['effort', 'num'], ['risk', 'num'], ['confidence', 'num'], ['oneOffCost', 'num'], ['otherAnnualSaving', 'num'], ['oneOffSaving', 'num'], ['revenueUplift', 'num'], ['status', REC_STAGES], ['stick', 'long'], ['owner', 'text'], ['pinned', ['', 'true']], ['ops', 'json']],
   scenarios: [['id', 'text'], ['name', 'text'], ['description', 'text'], ['recommendationIds', 'json']]
 };
-const COLL_LABELS = { items: 'Items (one per issue or change)', customQuestions: 'Custom interview questions', competitors: 'Competitors', capabilities: 'Capabilities', intel: 'Competitor intelligence', usps: 'USPs', opportunities: 'Opportunities', automations: 'Automation opportunities', kpis: 'Headline numbers (founder portal)', enhanced: 'Enhanced data views (Insights)', moves: 'Key changes (Big moves)', intake: 'Founder answers', departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Clients', revenueMovements: 'Revenue movements', feedback: 'Client feedback (written vs practice)', sources: 'Sources (where every number comes from)', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };
+const COLL_LABELS = { items: 'Items (one per issue or change)', measures: 'Department efficiency measures', customQuestions: 'Custom interview questions', competitors: 'Competitors', capabilities: 'Capabilities', intel: 'Competitor intelligence', usps: 'USPs', opportunities: 'Opportunities', automations: 'Automation opportunities', kpis: 'Headline numbers (founder portal)', enhanced: 'Enhanced data views (Insights)', moves: 'Key changes (Big moves)', intake: 'Founder answers', departments: 'Departments', people: 'People', tools: 'Tools', processes: 'Processes', segments: 'Customer segments', markets: 'Markets', topClients: 'Clients', revenueMovements: 'Revenue movements', feedback: 'Client feedback (written vs practice)', sources: 'Sources (where every number comes from)', financePeriods: 'Finance periods', interviews: 'Interviews', findings: 'Findings', recommendations: 'Recommendations', scenarios: 'Scenarios' };
 
 function cellInput(e, coll, row, [f, type]) {
   const v = row[f]; const base = `data-cell data-coll="${coll}" data-id="${esc(row.id)}" data-field="${f}"`;

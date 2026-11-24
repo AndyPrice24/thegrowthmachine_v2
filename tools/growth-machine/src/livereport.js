@@ -80,7 +80,7 @@ function lrPortalEng(e, lr) {
   x.items = (x.items || []).filter((m) => String(m.portal) !== 'false').map((m) => { const c = Object.assign({}, m); delete c.private; return c; });
   x.people = (x.people || []).map((pp) => (LR_SENSITIVE.test(pp.notes || '') ? Object.assign({}, pp, { notes: '' }) : pp));
   const g = x.engagement || {};
-  x.engagement = Object.assign({}, g, { timeLog: [], activities: [], requests: (g.requests || []).map((r) => ({ id: r.id, item: r.item, crit: r.crit, owner: r.owner, requestedDate: r.requestedDate, dueDate: r.dueDate, receivedDate: r.receivedDate, status: r.status })) });
+  x.engagement = Object.assign({}, g, { timeLog: [], activities: [], daysOff: [], requests: (g.requests || []).map((r) => ({ id: r.id, item: r.item, crit: r.crit, owner: r.owner, requestedDate: r.requestedDate, dueDate: r.dueDate, receivedDate: r.receivedDate, status: r.status })) });
   return x;
 }
 function lrAsks(lr) {

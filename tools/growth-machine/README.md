@@ -255,6 +255,19 @@ only), the date the information applies to, when and how it was received, and a 
 and `part` is the exact tab, section or point. The cheatsheet prints both sides under "Where this comes from" (roles only),
 and the Leaks & opportunities detail lists them (with names).
 
+### Home (graphite, agreed 24 Nov 2026)
+`src/home.js`. Home opens on: My days (a dial: left half the contract, right half this calendar month; one line per side
+is days logged, a labelled notch is what's needed, gold past the notch is banked, dashed red is still needed; working days
+exclude weekends, South African public holidays and `engagement.daysOff` {id, date, kind: holiday|off, why}); the next
+review countdown; founder portal activity; "Needs you now and waiting on" (what I owe against what's owed to me, by how
+late, with Founders / Client / Ours / Private filters; an activity's `group` overrides the rule); Waiting on, by person
+(people matched to the people list); NRR by channel with trend and a data-freshness light (`client.nrr.nextDue`); the work
+at a glance (department × stage, next steps due within 7 days, decisions waiting by `stageSince`, lowest-hanging fruit);
+Ahead; Studio controls; and one widget per department (items by stage, efficiency from the `measures` collection: status
+have|partly|missing, value, target, better, points, trend, broken). Every widget opens a detail view with its sources, and
+every view goes back one step (Back, breadcrumb, browser back, Esc). The left menu collapses to icons. Board, departments,
+My days and Waiting on open inside Home. `engagement.daysOff` is stripped from the founder portal.
+
 ### Client growth (NRR), version 2: billing per account
 When the `billing` collection holds data, Evidence → Client growth, the NRR report, the NRR bridge (Insights) and the NRR headline
 all come from one calculation (`nrrBill` in `src/nrr.js`). Record: `{ id, account, channel: direct|reseller|self, billedAs, months:

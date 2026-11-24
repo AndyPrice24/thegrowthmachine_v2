@@ -35,13 +35,14 @@ function railHTML(e) {
   return `<div class="gs-brand"><b></b><span>The Growth Machine</span></div>
     <label class="gs-client"><span class="lg">${esc(initials)}</span><span class="cn"><select id="engSel" aria-label="Client">${engOpts}</select><span class="s">${st ? `Week ${Math.max(1, Math.ceil(st.elapsed / 7))} of ${Math.max(1, Math.round(st.termDays / 7))}` : 'Client'}</span></span><span class="dd">▾</span></label>
     ${SCENARIO_TABS.includes(ui.tab) || ui.scenario !== 'current' ? `<label class="gs-scn"><span>View as</span><select id="scSel">${scOpts}</select></label>` : ''}
-    ${b('⌂', 'Home', 'data-action="tab" data-id="hub"', ui.tab === 'hub' || ui.tab === 'stage')}
+    ${(() => { const hv = ui.tab === 'hub' ? HX[HX.length - 1] : { v: '', p: {} }; return `${b('⌂', 'Home', 'data-hx="home" data-hxreset="1"', ui.tab === 'hub' && hv.v === 'home')}${b('▦', 'Board', `data-hx="board" data-hxreset="1" data-hp='{}'`, ui.tab === 'hub' && hv.v === 'board' && !hv.p.d, its.filter((i) => i.stage !== 'parked').length)}
     <div class="gs-h">Departments</div>
-    ${ITEM_DEPTS.map(([k, n]) => b(`<i style="--c:var(--gd-${k})"></i>`, esc(n), `data-action="dept" data-id="${k}"`, ui.tab === 'dept' && ui.dept === k, its.filter((i) => splitList(i.depts).includes(k)).length)).join('')}
+    ${ITEM_DEPTS.map(([k, n]) => b(`<i style="--c:var(--gd-${k})"></i>`, esc(n), `data-hx="dept" data-hxreset="1" data-hp='{"d":"${k}"}'`, ui.tab === 'hub' && hv.v === 'dept' && hv.p.d === k, its.filter((i) => splitList(i.depts).includes(k)).length)).join('')}`; })()}
     <div class="gs-h">Whole business</div>
     ${b('⇄', 'How work flows', 'data-action="tab" data-id="processes"', ui.tab === 'processes')}
     ${b('◔', 'Insights &amp; value', 'data-action="tab" data-id="evidence"', ui.tab === 'evidence')}
     <div class="gs-h">Our engagement</div>
+    ${(() => { const hv = ui.tab === 'hub' ? HX[HX.length - 1] : { v: '' }; return b('◷', 'My days', 'data-hx="days" data-hxreset="1"', hv.v === 'days') + b('⇆', 'Waiting on', 'data-hx="people" data-hxreset="1"', hv.v === 'people' || hv.v === 'person', (e.engagement.requests || []).filter((r) => !r.receivedDate && !['Received', 'Not needed', 'Not available'].includes(r.status)).length); })()}
     ${b('◷', 'Our work', 'data-action="tab" data-id="progress" data-sub="progress"', ui.tab === 'progress' && sub('progress') !== 'report')}
     ${b('☺︎', 'Conversations', 'data-action="tab" data-id="talk"', ui.tab === 'talk')}
     ${b('▤', 'Reports', 'data-action="tab" data-id="progress" data-sub="report"', ui.tab === 'progress' && sub('progress') === 'report')}
@@ -52,6 +53,7 @@ function railHTML(e) {
       ${b('⤓', 'Back up', 'data-action="exportJSON"', false)}
       ${b('+', 'New client', 'data-action="newEng"', false)}
       ${b('↺', 'Classic view', 'data-action="classic" title="The earlier layout, kept until the next fortnightly review"', false)}
+      ${b(ui.hxMini ? '⇥' : '⇤', ui.hxMini ? 'Expand menu' : 'Collapse menu', 'data-hxrail="1"', false)}
       <div class="gs-meta"><div id="status">Saved in this browser</div><div>Last backup: ${e.meta.lastExported ? new Date(e.meta.lastExported).toLocaleString('en-GB') : 'never'}</div><div>Studio ${typeof STUDIO_BUILD === 'undefined' ? 'dev' : STUDIO_BUILD}</div></div>
     </div>`;
 }
