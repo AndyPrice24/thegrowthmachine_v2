@@ -99,6 +99,7 @@ function lrSnapshot(e, lr) {
   const elements = [...asks.map((a) => ({ id: a.id, label: a.title, section: 'Needs your decision' })),
     ...found.map((c) => ({ id: c.id, label: c.title, section: 'Leaks & opportunities' })), ...recs.map((c) => ({ id: c.id, label: c.title, section: 'What we suggest' })), ...edList(e, { portal: true }).map((x) => ({ id: x.id, label: x.title || ED_KINDS[x.kind], section: 'Insights' })), ...mvList(e, { portal: true }).map((m) => ({ id: m.id, label: m.title, section: 'Key changes' })),
     ...live((e.engagement || {}).health || []).map((h) => ({ id: h.id, label: h.label, section: 'Company health' })),
+    ...live(e.measures || []).map((m) => ({ id: m.id, label: m.name, section: 'Department efficiency' })),
     ...live(e.items || []).filter((it) => String(it.portal) !== 'false').map((it) => ({ id: it.id, label: it.title, section: ['approved', 'underway', 'live'].includes(it.stage) ? 'Projects' : 'Changes not yet started' })),
     { id: 'report', label: 'The portal as a whole', section: '' }];
   return { kind: 'tgm-founder-portal', v: 2, reportId: lr.id, client: e.client.name, clientSlug: slugify(e.client.name), feedbackFile: lrFeedbackFile(e, lr), appFile: lr.id + '.html',

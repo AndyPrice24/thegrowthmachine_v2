@@ -144,7 +144,7 @@ Then:
 8. **Processes and systems:** client-safe flows, a systems map (owner, cost, users, overlap), and automation
    opportunities shown on the steps they would remove. **Built 24 Nov.**
 5. **Insights:** joined-up views. **Built 24 Nov**: headline figures, department filter, what each view joins and the items acting on it.
-7. **Department efficiency:** for each department, 4–6 measures at team level, never per person.
+7. **Department efficiency:** for each department, 4–6 measures at team level, never per person. **Built 24 Nov** (5 of 31 tracked; targets to agree).
    - Each measure is green/amber/red with a trend.
    - The score is measures on target out of measures tracked, shown next to the measures not tracked yet.
    - Baseline: Mar–Sep 2026 where history exists; otherwise the first four full weeks of data.

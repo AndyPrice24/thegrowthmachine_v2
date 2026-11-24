@@ -126,11 +126,20 @@ const hxSince = (i) => (i.stageSince ? `${hxFd(i.stageSince)}${String(i.stageSin
 /* ---------- measures (department efficiency) ---------- */
 const HX_ST = { have: ['Measured', 'var(--hx-gr)'], partly: ['Partly', 'var(--hx-am)'], missing: ['Not yet', 'var(--hx-dim)'] };
 const hxMeasures = (e, d) => live(e.measures || []).filter((m) => m.dept === d).sort((a, b) => num(a.order) - num(b.order));
+/** A department measure with its value resolved: from the company health measure it points to (healthId), else its own fields. */
+function msrVal(e, m) {
+  const h = m.healthId && live((e.engagement || {}).health || []).find((x) => x.id === m.healthId); const r = Object.assign({}, m);
+  if (h) Object.assign(r, { value: h.value, unit: h.unit, target: h.target || m.target, asAt: h.asAt, trend: h.trend, trendText: h.trendText, sources: h.source ? [{ id: h.source, part: h.part }] : m.sources });
+  const n = (v) => parseFloat(String(v == null ? '' : v).replace(/[^\d.-]/g, '')); r.n = n(r.value); r.t = n(r.target);
+  r.tracked = isFinite(r.n); r.hasT = r.tracked && isFinite(r.t); r.on = r.hasT && (String(r.better) === 'lower' ? r.n <= r.t : r.n >= r.t);
+  r.rag = !r.tracked ? 'grey' : !r.hasT ? 'none' : r.on ? 'green' : Math.abs(r.n - r.t) / Math.abs(r.t || 1) <= 0.1 ? 'amber' : 'red';
+  return r;
+}
 function hxDeptStats(e, d) {
   const M = hxMeasures(e, d); const st = (m) => String(m.status || 'missing').toLowerCase();
   const h = M.filter((m) => st(m) === 'have').length, p = M.filter((m) => st(m) === 'partly').length, mi = M.filter((m) => st(m) === 'missing').length;
-  const scored = M.filter((m) => st(m) === 'have' && m.target !== undefined && m.target !== '' && m.value !== undefined && m.value !== '');
-  const onT = scored.filter((m) => (String(m.better) === 'lower' ? num(m.value) <= num(m.target) : num(m.value) >= num(m.target))).length;
+  const scored = M.map((m) => msrVal(e, m)).filter((m) => m.hasT);
+  const onT = scored.filter((m) => m.on).length;
   const broken = M.filter((m) => String(m.broken) === 'true');
   return { M, h, p, mi, scored, onT, broken, ready: M.length ? (h + 0.5 * p) / M.length : 0 };
 }
@@ -333,8 +342,8 @@ HXV.dept = (e) => { const d = hxCur().p.d; const S = hxDeptStats(e, d); const it
   <div class="hx-two" style="margin-top:18px"><div class="hx-tile"><div class="hx-k" style="color:var(--hx-am)">Still needed to get efficiency tracking over the line</div>${S.M.filter((m) => String(m.status).toLowerCase() !== 'have').map((m) => `<div class="hx-ev"><b style="font-size:12.5px">${esc(m.name)}</b><div class="hx-mut" style="font-size:11.5px">From ${esc(m.source || '—')}${m.note ? ' · ' + esc(m.note) : ''}</div></div>`).join('') || '<p class="hx-note">Every measure is collected.</p>'}</div>
   <div class="hx-tile"><div class="hx-k">This department's board</div>${HX_STAGES.map(([s, n]) => { const L = its.filter((i) => i.stage === s); return L.length ? `<div style="margin-top:8px"><span class="hx-mut" style="font-size:11px">${esc(n)} · ${L.length}</span>${L.map((i) => `<button class="hx-li hx-mini" ${hxP('item', { id: i.id })}><span class="hx-t">${esc(i.title)}</span></button>`).join('')}</div>` : ''; }).join('')}<button class="hx-pl" style="margin-top:10px" ${hxP('board', { d })}>Open as a board ▸</button></div></div>
   ${hxSrc(['Measures: the "measures" collection (Sources &amp; data), from the founders\' view and data plan, section 7.', 'Items: the item table (departments, stage).'])}`; };
-HXV.measure = (e) => { const m = live(e.measures).find((x) => x.id === hxCur().p.id); if (!m) return '<p>This measure no longer exists.</p>'; const st = HX_ST[String(m.status || 'missing').toLowerCase()] || HX_ST.missing;
-  return `<h1 class="hx-pg hx-pgsm">${esc(m.name)}</h1><p class="hx-pgs">${esc(HX_DN[m.dept] || m.dept)}</p><div class="hx-tile hx-narrow"><dl class="hx-kv"><dt>Why it's collected</dt><dd>${esc(m.why || '—')}</dd><dt>Where it's collected</dt><dd>${esc(m.source || '—')}</dd><dt>How often</dt><dd>${esc(m.rhythm || '—')}</dd><dt>Status</dt><dd><span style="color:${st[1]}">${st[0]}</span>${m.note ? ' · ' + esc(m.note) : ''}</dd><dt>Value</dt><dd>${esc(m.value || '—')}${m.asAt ? ' (as at ' + esc(m.asAt) + ')' : ''}</dd><dt>Target</dt><dd>${esc(m.target || 'Not set yet')}</dd><dt>Data points so far</dt><dd>${esc(m.points || (String(m.status).toLowerCase() === 'missing' ? 'None' : 'Not counted yet'))}</dd><dt>Baseline</dt><dd>${esc(m.baseline || 'Mar–Sep 2026 where history exists; otherwise the first four full weeks')}</dd><dt>Level</dt><dd>Team level, never per person</dd></dl>
+HXV.measure = (e) => { const m0 = live(e.measures).find((x) => x.id === hxCur().p.id); const m = m0 && msrVal(e, m0); if (!m) return '<p>This measure no longer exists.</p>'; const st = HX_ST[String(m.status || 'missing').toLowerCase()] || HX_ST.missing;
+  return `<h1 class="hx-pg hx-pgsm">${esc(m.name)}</h1><p class="hx-pgs">${esc(HX_DN[m.dept] || m.dept)}</p><div class="hx-tile hx-narrow"><dl class="hx-kv"><dt>Why it's collected</dt><dd>${esc(m.why || '—')}</dd><dt>Where it's collected</dt><dd>${esc(m.source || '—')}</dd><dt>How often</dt><dd>${esc(m.rhythm || '—')}</dd><dt>Status</dt><dd><span style="color:${st[1]}">${st[0]}</span>${m.note ? ' · ' + esc(m.note) : ''}</dd><dt>Value</dt><dd>${esc(m.value || '—')}${m.unit ? ' ' + esc(m.unit) : ''}${m.asAt ? ' (as at ' + esc(m.asAt) + ')' : ''}${m.healthId ? ' · from the company health measure' : ''}</dd><dt>Target</dt><dd>${esc(m.target || 'Not set yet')}</dd><dt>Data points so far</dt><dd>${esc(m.points || (String(m.status).toLowerCase() === 'missing' ? 'None' : 'Not counted yet'))}</dd><dt>Baseline</dt><dd>${esc(m.baseline || 'Mar–Sep 2026 where history exists; otherwise the first four full weeks')}</dd><dt>Level</dt><dd>Team level, never per person</dd></dl>
   ${hxSrc([`Measure record ${esc(m.id)} (Sources &amp; data → measures).`, m.planRef ? esc(m.planRef) : ''])}</div>`; };
 HXV.nrr = (e) => { const N = hxNrrInfo(e); if (!N) return '<p>No billing per account loaded yet.</p>'; const T = N.B.trend; const W = 640, H = 220, L = 40; const lo = 50, hi = Math.max(130, N.B.target + 5); const y = (v) => 20 + (hi - v) / (hi - lo) * (H - 50), x = (i) => L + i * (W - L - 20) / Math.max(1, T.length - 1);
   const line = (get, c) => `<polyline points="${T.map((t, i) => x(i) + ',' + y(get(t))).join(' ')}" fill="none" stroke="${c}" stroke-width="2.5"/>${T.map((t, i) => `<circle cx="${x(i)}" cy="${y(get(t))}" r="3.5" fill="${c}"><title>${keyLabel(t.k)}: ${get(t).toFixed(1)}%</title></circle>`).join('')}`;

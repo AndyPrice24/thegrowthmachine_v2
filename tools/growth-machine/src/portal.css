@@ -551,3 +551,46 @@ button.ft-inl{cursor:pointer}button.ft-inl:hover{background:rgba(255,255,255,.08
 .ft-inl i.st-underway,.ft-inl i.st-approved{color:#22d3ee}.ft-inl i.st-live{color:#34d399}.ft-inl i.st-proposed{color:#f5b83d}
 @media (max-width:1300px){.ft-its{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media (max-width:640px){.ft-its{grid-template-columns:repeat(2,minmax(0,1fr))}.ft-inf{grid-template-columns:minmax(0,1fr)}}
+/* page 7: department efficiency */
+.ft-dcs{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px}
+.ft-dc{appearance:none;font:inherit;color:inherit;text-align:left;border:0;width:100%;cursor:pointer;padding:16px 18px;display:grid;gap:12px;align-content:start;border-top:3px solid var(--dc)}
+.ft-dc:hover{outline:1px solid var(--dc)}.ft-dc:focus-visible{outline:2px solid var(--dc)}
+.ft-dch{display:flex;justify-content:space-between;align-items:baseline;gap:10px}.ft-dch b{font-size:17px}.ft-dch span{font-size:12px;color:#9aa3b2}
+.ft-dcb{display:grid;grid-template-columns:88px minmax(0,1fr);gap:14px;align-items:center}
+.ft-ring{width:88px;height:88px}.ft-ringn{font-size:22px;font-weight:700;fill:#e6e9ef}.ft-ringl{font-size:10px;fill:#9aa3b2}
+.ft-dcb ul{list-style:none;margin:0;padding:0;display:grid;gap:5px}.ft-dcb li{display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:8px;align-items:center;font-size:12.5px;color:#c9ced8}
+.ft-dcb li b{font-size:12.5px;color:#e6e9ef;white-space:nowrap}
+.ft-dcb li i,.ft-rkey span::before{width:9px;height:9px;border-radius:50%;background:transparent;border:1.5px solid #5b616d;box-sizing:border-box;display:inline-block}
+.r-green i,.ft-rkey .r-green::before{background:#34d399!important;border-color:#34d399!important}.r-amber i,.ft-rkey .r-amber::before{background:#f5b83d!important;border-color:#f5b83d!important}
+.r-red i,.ft-rkey .r-red::before{background:#ff6b4a!important;border-color:#ff6b4a!important}.r-none i,.ft-rkey .r-none::before{background:#c9ced8!important;border-color:#c9ced8!important}
+.ft-rkey span::before{content:'';width:9px!important;height:9px!important;border-radius:50%!important}
+.ft-dcf{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:11.5px;color:#9aa3b2;border-top:1px solid rgba(255,255,255,.06);padding-top:10px}
+.ft-dhd{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.ft-printbtn{appearance:none;font:inherit;font-size:13px;font-weight:600;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);color:#e6e9ef;border-radius:10px;padding:9px 14px;cursor:pointer}
+.ft-printbtn:hover{background:rgba(255,255,255,.1)}.ft-printbtn:focus-visible{outline:2px solid #fff}
+.ft-mcs{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.ft-mc{padding:16px 18px;display:grid;gap:8px;align-content:start;border-left:4px solid #5b616d}.ft-mc.r-green{border-left-color:#34d399}.ft-mc.r-amber{border-left-color:#f5b83d}.ft-mc.r-red{border-left-color:#ff6b4a}.ft-mc.r-none{border-left-color:#c9ced8}
+.ft-mch{display:flex;justify-content:space-between;align-items:center}.ft-rag{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9aa3b2}
+.r-green .ft-rag{color:#34d399}.r-amber .ft-rag{color:#f5b83d}.r-red .ft-rag{color:#ff8a70}
+.ft-mc h3{margin:0;font-size:14.5px;line-height:1.35}.ft-mv{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.ft-mv b{font-size:32px;font-weight:700;letter-spacing:-.02em}.ft-mv span{font-size:12.5px;color:#9aa3b2}
+.ft-mm{display:flex;flex-wrap:wrap;gap:6px 14px;margin:0;font-size:12px;color:#9aa3b2}.ft-mm b{color:#e6e9ef}
+.ft-mt{font-weight:600}.ft-mt.good{color:#34d399}.ft-mt.bad{color:#ff8a70}
+.ft-msp{color:#c9ced8}.ft-msp svg{width:100%;height:40px;display:block}.ft-msp span{font-size:11px;color:#9aa3b2}
+.ft-mx{margin:0;font-size:12.5px;color:#c9ced8;line-height:1.45}.ft-mw{margin:0;font-size:12px;color:#9aa3b2;line-height:1.45}
+.ft-mu{padding:6px 0 14px;overflow-x:auto}.ft-mu .pt-tbl{margin:0 16px;width:calc(100% - 32px)}.ft-mu td{vertical-align:top;font-size:12.5px}.ft-mu td:last-child{display:grid;gap:4px}
+.ft-mst{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}.ms-have{color:#34d399}.ms-partly{color:#f5b83d}.ms-missing{color:#9aa3b2}
+.ft-mbl{margin:10px 16px 0}
+.ft-dw{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:8px}
+@media (max-width:640px){.ft-dcs,.ft-mcs,.ft-dw{grid-template-columns:minmax(0,1fr)}.ft-mu .pt-tbl thead{display:none}.ft-mu .pt-tbl tr{display:grid;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06)}.ft-mu .pt-tbl td{border:0;padding:2px 0}}
+/* one-page print of a department, for its head */
+@media print{
+  @page{size:A4;margin:10mm}
+  html,body{background:#15171b!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .pt-rail,.pt-top,.pt-tabbar,.ft-back,.ft-printbtn,.pt-acts,#pt-modal,.toast,.pt-src{display:none!important}
+  .pt-shell,.pt-main,#main{margin:0!important;padding:0!important;width:auto!important;max-width:none!important;display:block!important}
+  body.ft-printing{zoom:.72}
+  .gs-panel{break-inside:avoid;box-shadow:none!important}
+}
+@media (max-width:640px){.ft-sh{flex-wrap:wrap;row-gap:4px}.ft-shs{white-space:normal}}
+.ft-printonly{display:none}
+@media print{.ft-printonly{display:block;flex-basis:100%;margin:0;font-size:11px;color:#9aa3b2}}

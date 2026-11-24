@@ -7,12 +7,12 @@
    TGM-only notes stay hidden (share mode). Views, comments, red flags and summaries go back through the web app.
    ============================================================ */
 let PORTAL_ON = false;
-const PT = { move: '', mb: '', S: null, R: null, me: null, ev: [], sec: 'home', open: {}, drafts: {}, replyTo: {}, busy: {}, lf: 'all', tab: 'found', modal: '', D: null, dept: '', proc: '', procFull: false, pteam: '' };
+const PT = { move: '', mb: '', S: null, R: null, me: null, ev: [], sec: 'home', open: {}, drafts: {}, replyTo: {}, busy: {}, lf: 'all', tab: 'found', modal: '', D: null, dept: '', proc: '', procFull: false, pteam: '', dk: '' };
 /* Studio actions that only change what is shown. Everything else is blocked in the portal. */
 const PT_ACTIONS = new Set(['sub', 'showAll', 'pvPick', 'pvBack', 'pvFocus', 'pvJourney', 'pvHl', 'pvSet', 'pvTick', 'flowStep', 'flowClear', 'zoom', 'setIntelFilter', 'goSrc', 'tab']);
 const PT_UI_OK = new Set(['compare', 'execView', 'ghosts', 'showCost', 'prioOnly']);
 const PT_SECTIONS = [['home', 'Company health', 'i-pulse', 'Health'], ['concerns', 'Concerns & wins', 'i-leak', 'Concerns'], ['projects', 'Optimisation projects', 'i-move', 'Projects'], ['fruit', 'Lowest-hanging fruit', 'i-fruit', 'Quick wins'],
-  ['work', 'Report', 'i-work', 'Report'], ['ins', 'Insights', 'i-ins', 'Insights'], ['proc', 'Processes & systems', 'i-proc', 'Process'], ['evid', 'Evidence', 'i-evid', 'Evidence']];
+  ['work', 'Report', 'i-work', 'Report'], ['ins', 'Insights', 'i-ins', 'Insights'], ['dept', 'Department efficiency', 'i-dept', 'Depts'], ['proc', 'Processes & systems', 'i-proc', 'Process'], ['evid', 'Evidence', 'i-evid', 'Evidence']];
 /* Pages opened from other pages, not from the menu. */
 const PT_MORE = [['leaks', 'Leaks & opportunities'], ['moves', 'The story so far']];
 /** Short money: R494k, R1.06m. */
@@ -59,6 +59,7 @@ const PT_ICONS = `<svg width="0" height="0" style="position:absolute" aria-hidde
   <symbol id="i-leak" viewBox="0 0 24 24"><path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/></symbol>
   <symbol id="i-proc" viewBox="0 0 24 24"><rect x="3" y="4" width="6" height="5" rx="1"/><rect x="15" y="4" width="6" height="5" rx="1"/><rect x="9" y="15" width="6" height="5" rx="1"/><path d="M6 9v3h12V9"/><path d="M12 12v3"/></symbol>
   <symbol id="i-evid" viewBox="0 0 24 24"><path d="M4 4h12l4 4v12H4z"/><path d="M8 13h8M8 17h5M8 9h4"/></symbol>
+  <symbol id="i-dept" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 18h7M17.5 14.5v7"/></symbol>
   <symbol id="i-ins" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.5-4.5"/><path d="M8 12l2-2 2 2 2-3"/></symbol>
   <symbol id="i-pdf" viewBox="0 0 24 24"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></symbol>
   <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
@@ -153,7 +154,7 @@ function portalRender() {
   try {
     if (sec === 'proc') { ui.tab = 'processes'; html = ftProc(); }
     else if (sec === 'evid') { ui.tab = 'evidence'; html = `<div class="pt-studio">${viewEvidence(E())}</div>`; }
-    else html = ({ home: ftHealth, concerns: ftConcerns, projects: ftProjects, fruit: ftFruitPage, moves: ptMovesSec, work: ftReport, leaks: ptLeaks, ins: ftInsights })[sec]();
+    else html = ({ home: ftHealth, concerns: ftConcerns, projects: ftProjects, fruit: ftFruitPage, moves: ptMovesSec, work: ftReport, leaks: ptLeaks, ins: ftInsights, dept: ftDepts })[sec]();
   } catch (err) { console.error(err); html = `<div class="pt-card"><p>This part of the portal couldn't be shown: ${esc(err.message)}</p></div>`; }
   main.innerHTML = html;
   if ((sec === 'proc' && PT.procFull) || sec === 'evid') { ptLock(main); main.querySelectorAll('.flow-wrap').forEach((w, i) => { if (keep[i]) { w.scrollLeft = keep[i][0]; w.scrollTop = keep[i][1]; } }); }
@@ -167,6 +168,7 @@ function ptLock(root) {
   root.querySelectorAll('.btn-row').forEach((r) => { if (![...r.children].some((c) => !c.classList.contains('pt-hide'))) r.classList.add('pt-hide'); });
 }
 function ptGo(sec, opts = {}) {
+  if (sec === 'dept' && !opts.keepDept) PT.dk = '';
   if (sec === 'proc' && !opts.keepProc) { PT.proc = ''; PT.procFull = false; landProcesses(); }
   PT.sec = sec;
   if (opts.tab) PT.tab = opts.tab;
@@ -282,6 +284,7 @@ function ptMovesSec() {
 /** The founders' page an item or health measure lives on (for links, comments and the owner's "open at" links). */
 function ptPageOf(id) {
   if (ftHealthList().some((h) => h.id === id)) return 'home';
+  const ms = live(E().measures || []).find((m) => m.id === id); if (ms) { PT.dk = ms.dept; return 'dept'; }
   const it = ftItems().find((x) => x.id === id); if (!it) return '';
   if (FT_PROJECT.includes(it.stage)) return 'projects';
   if (ftFruit(true).some((x) => x.it.id === id)) return 'fruit';
@@ -466,6 +469,8 @@ document.addEventListener('click', (ev) => {
   if (d === 'mb') { PT.mb = id || ''; return portalRender(); }
   if (d === 'dept') { PT.dept = id || ''; return portalRender(); }
   if (d === 'ins') { const n = document.getElementById('it-' + id); if (!n) { PT.dept = ''; portalRender(); } return setTimeout(() => ptFocus(id), 30); }
+  if (d === 'dk') { PT.dk = id || ''; portalRender(); return window.scrollTo(0, 0); }
+  if (d === 'print') { document.body.classList.add('ft-printing'); setTimeout(() => { window.print(); document.body.classList.remove('ft-printing'); }, 50); return; }
   if (d === 'pteam') { PT.pteam = id || ''; return portalRender(); }
   if (d === 'proc') { PT.modal = ''; PT.sec = 'proc'; PT.proc = id || ''; PT.procFull = false; portalRender(); return window.scrollTo(0, 0); }
   if (d === 'procfull') { PT.procFull = !!id; if (id) { ui.tab = 'processes'; ui.pv = Object.assign({}, ui.pv, { mode: 'proc', focus: id, pick: '', hl: '' }); ui.stepId = ''; } portalRender(); return window.scrollTo(0, 0); }

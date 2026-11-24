@@ -291,6 +291,14 @@ What each founder sees from their own link, served by TGM's Apps Script web app 
   `tone` on the enhanced view; take the figure from the view's own title so it shares its sources), each jumping to its view; then the
   views with the department filter (`depts`). Each view ends with So what, What it joins (`joins`, separated by `|`) and What we're
   doing about it (`itemIds`, linking to the item on its page, with its stage). "Hover…" sentences in a view's sub are left off.
+- **Department efficiency** (page 7; the portal's `dept` section, `ftDepts`): tiles (measures proposed, tracked, on target out of
+  those with a target, data ready but not measured), then a card per department: a ring of tracked measures and each measure as a
+  dot (green on target, amber within 10%, red off target, light grey tracked without a target, hollow not tracked). A card opens the
+  department: tracked measures (value, target or "to agree", trend, as at, trend line from `points`, sources), the measures not
+  tracked yet (why, from where, how often, where it stands), the baseline rule and the department's items. "Print for the
+  department head" prints that page on one A4 sheet. A measure's value comes from the company health measure named in `healthId`
+  (so the two never drift), else its own `value`, `unit`, `target`, `better`, `asAt`, `trendText`, `sources` (`msrVal`). Measures are
+  portal elements, so founders can comment on and red-flag them.
 - **Report** (page 6; the portal's `work` section, `ftReport`): the plan chart across the top, then days used by calendar month (needed against used, with any days banked
   ahead; from `stats.days`, built by `lrDays`, with no diary text and no reasons for days off; `daysOff` never reaches the portal),
   next to what is coming up, then **week by week**: `engagement.weeks` [{id, start, end, done, next?}], left to right, the latest four (earlier weeks folded),
