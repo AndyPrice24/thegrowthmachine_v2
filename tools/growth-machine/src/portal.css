@@ -453,7 +453,7 @@ body.portal .mv-detail .pt-thread { margin-top: 0; }
 .ft-filter { margin-bottom: 24px; }
 .ft-areas { align-items: start; }
 /* 6. Report */
-.ft-rtop{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.7fr);gap:18px}
+.ft-rtop{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);margin-top:18px;align-items:start;gap:18px}
 .ft-rd,.ft-rp,.ft-rw{padding-bottom:14px}
 .ft-rdm{display:grid;gap:12px;padding:4px 18px 6px}
 .ft-rdr{display:grid;grid-template-columns:78px 1fr 92px;gap:10px;align-items:center;font-size:12.5px}.ft-rdr em{font-style:normal;font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gs-cool);margin-left:4px}
@@ -476,3 +476,4 @@ body.portal .mv-detail .pt-thread { margin-top: 0; }
 @media (max-width:820px){.ft-rtop{grid-template-columns:minmax(0,1fr)}.ft-wks{grid-template-columns:minmax(0,1fr)}.ft-req{grid-template-columns:1fr}.ft-rdr{grid-template-columns:64px 1fr 84px}}
 .ft-gantt{overflow-x:auto;max-width:100%}
 .ft-rcol{display:grid;gap:18px;align-content:start;min-width:0}
+.ft-rp{margin-top:4px}

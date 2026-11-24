@@ -232,7 +232,7 @@ function ftReport() {
   const daysCard = D ? `<section class="gs-panel ft-rd"><div class="gs-ph"><h2>Days used</h2><span class="s">${hxF1(D.used)} of ${D.total}</span></div>
       <div class="ft-rdm">${D.months.map((m) => { const mx = Math.max(m.needed * 1.5, m.used, 1); const cur = today >= m.a && today <= m.b; return `<div class="ft-rdr ${cur ? 'cur' : ''}"><span>${esc(m.name.split(' ')[0])}${cur ? ' <em>now</em>' : ''}</span><span class="ft-rdb"><i style="width:${Math.min(100, m.used / mx * 100)}%" class="${m.used > m.needed ? 'over' : ''}"></i><b style="left:${m.needed / mx * 100}%"></b></span><span><b>${hxF1(m.used)}</b> of ${m.needed}${m.used > m.needed ? ` <em class="ft-bank">+${hxF1(m.used - m.needed)}</em>` : ''}</span></div>`; }).join('')}</div>
       <p class="ft-rdn">${hxF1(D.used)} days used against ${hxF1(D.needToDate)} at an even pace to date.${D.frontLoad ? ' ' + esc(D.frontLoad) : ''}</p></section>` : '';
-  const planCard = `<section class="gs-panel ft-rp"><div class="gs-ph"><h2>The plan</h2><span class="s">${esc(fmtD(g.start, { day: 'numeric', month: 'short' }))} – ${esc(fmtD(g.end, { day: 'numeric', month: 'short', year: 'numeric' }))}</span></div><div class="pt-gantt ft-gantt">${phaseGantt(e, { compact: true })}</div>
+  const planCard = `<section class="gs-panel ft-rp"><div class="gs-ph"><h2>The plan</h2><span class="s">${esc(fmtD(g.start, { day: 'numeric', month: 'short' }))} – ${esc(fmtD(g.end, { day: 'numeric', month: 'short', year: 'numeric' }))}</span></div><div class="pt-gantt ft-gantt">${phaseGantt(e)}</div>
       <div class="ft-revs">${splitList(g.reviewDates).map((d) => `<span class="${d < today ? 'past' : d === splitList(g.reviewDates).find((x) => x >= today) ? 'next' : ''}">Review ${esc(fmtD(d, { day: 'numeric', month: 'short' }))}</span>`).join('')}</div></section>`;
   const winsCard = `<section class="gs-panel ft-rw"><div class="gs-ph"><h2>Wins</h2><span class="s">${wins.length}</span></div><ul class="gs-well ft-wl">${wins.slice().reverse().slice(0, 4).map((x) => `<li class="ft-win"><span class="ft-wd">${esc(x.label || '')}</span><div><p>${esc(x.text)}</p></div></li>`).join('') || '<li class="pt-muted" style="padding:8px">Recorded as they happen.</li>'}</ul></section>`;
   const weekCard = (wk, i) => { const n = Math.floor(daysBetween(g.start, wk.start) / 7) + 1; const cur = today >= wk.start && today <= wk.end;
@@ -242,12 +242,14 @@ function ftReport() {
       ${cur && (wk.next || S.next) ? `<div class="ft-wkn"><b>Next</b><ul>${ptLines(wk.next || S.next).map((l) => `<li>${esc(l)}</li>`).join('')}</ul></div>` : ''}</article>`; };
   const st = engagementStatus(e); const waiting = st.reqs.filter((r) => r._status === 'Waiting' || r._status === 'Overdue').sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''));
   const next = J.next.filter((x) => x.date && x.date >= today).slice(0, 6);
+  const comingCard = `<section class="gs-panel"><div class="gs-ph"><h2>Coming up</h2></div><ul class="gs-well ft-wl">${next.map((x) => `<li class="ft-win"><span class="ft-wd ft-wd-n">${esc(x.label || '')}</span><div><p>${esc(x.text)}</p></div></li>`).join('') || '<li class="pt-muted" style="padding:8px">Nothing dated yet.</li>'}</ul></section>`;
   return `${ftHead(`Report · week ${w.cur} of ${w.weeks}`, 'What we\'ve done, and what\'s next', esc(S.headline || ''))}
-    <div class="ft-rtop">${daysCard}${planCard}</div>
+    ${planCard}
+    <div class="ft-rtop">${daysCard}${comingCard}</div>
     ${ftSh('Week by week', `${W.length} week${W.length === 1 ? '' : 's'}`)}
     ${W.length ? `<div class="ft-wks">${W.map(weekCard).join('')}</div>` : ftEmpty('The weekly report starts with the next update.')}
     <div class="ft-rbot"><div class="ft-rcol">
-      <section class="gs-panel"><div class="gs-ph"><h2>Coming up</h2></div><ul class="gs-well ft-wl">${next.map((x) => `<li class="ft-win"><span class="ft-wd ft-wd-n">${esc(x.label || '')}</span><div><p>${esc(x.text)}</p></div></li>`).join('') || '<li class="pt-muted" style="padding:8px">Nothing dated yet.</li>'}</ul></section>${winsCard}</div>
+      ${winsCard}</div>
       <section class="gs-panel"><div class="gs-ph"><h2>What we need from you</h2><span class="s">${waiting.length} open</span></div><div class="ft-need">
         ${(PT.R.asks || []).length ? `<p class="pt-sub-h">Decisions</p>${PT.R.asks.map((a) => `<button type="button" class="ft-ask2" data-pt="discuss" data-id="${esc(a.id)}">${esc(a.title)}</button>`).join('')}` : ''}
         ${waiting.length ? `<p class="pt-sub-h">Information requested</p>${waiting.slice(0, 8).map((r) => `<div class="ft-req"><span>${esc(r.item)}</span><span class="pt-muted">${esc(r.owner || '')}${r.dueDate ? ` · due ${esc(fmtD(r.dueDate))}` : ''}</span>${r._status === 'Overdue' ? `<em>${Math.max(0, daysBetween(r.dueDate, today))}d late</em>` : ''}</div>`).join('')}${waiting.length > 8 ? `<p class="pt-muted pt-small">and ${waiting.length - 8} more</p>` : ''}` : '<p class="pt-muted">Nothing outstanding.</p>'}</div></section></div>
