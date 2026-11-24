@@ -342,3 +342,25 @@ function ftProc() {
       ${[...new Set(f.list.map((t) => t.overlapNote).filter(Boolean))].map((n) => `<p class="ft-ovn">${esc(n)}</p>`).join('')}</section>`).join('')}</div>
     <p class="pt-muted pt-small ft-note">Consulting fees, outsourced sales support and general computer expenses are services, not systems, so they are not shown here.</p>`;
 }
+
+/* ---------- 5. Insights ---------- */
+const ftJoins = (x) => String(x.joins || '').split('|').map((j) => j.trim()).filter(Boolean);
+const ftNoHover = (t) => String(t || '').replace(/\s*Hover[^.]*\.\s*/gi, ' ').trim();
+function ftInsights() {
+  const e = E(); const all = edList(e, { portal: true }); const list = all.filter(ftDeptOK);
+  const byItem = {}; ftItems().forEach((it) => { byItem[it.id] = it; });
+  const stg = (k) => (ITEM_STAGES.find(([x]) => x === k) || [0, k])[1];
+  if (!all.length) return ftHead('Insights', 'What the numbers say together') + ftEmpty('The first views are being prepared with you.');
+  const tile = (x) => `<button type="button" class="gs-panel ft-it ${esc(x.tone || '')}" data-pt="ins" data-id="${esc(x.id)}"><b>${esc(x.stat || '')}</b><span>${esc(x.statLabel || x.title)}</span><em>${esc(x.eyebrow || '')}</em></button>`;
+  const card = (x) => { const its = splitList(x.itemIds).map((id) => byItem[id] || (live(e.items || []).find((i) => i.id === id))).filter(Boolean);
+    return `<section class="gs-panel ed-card ft-ins ${edWideCls(x)}" id="it-${esc(x.id)}"><div class="pt-ed-top"><div>${edHead(Object.assign({}, x, { sub: ftNoHover(x.sub) }))}</div>${ptActs(x.id)}</div>
+      ${edChart(e, x)}
+      <div class="ft-inf"><div class="ft-inw"><span>So what</span><p>${esc(x.sowhat || '')}</p></div>
+        ${ftJoins(x).length ? `<div class="ft-inj"><span>What it joins</span><p>${ftJoins(x).map((j) => `<em>${esc(j)}</em>`).join('<b>×</b>')}</p></div>` : ''}
+        <div class="ft-ina"><span>What we're doing about it</span>${its.length ? its.map((it) => ptPageOf(it.id) ? `<button type="button" class="ft-inl" data-pt="proj" data-id="${esc(it.id)}"><i class="st-${esc(it.stage)}">${esc(stg(it.stage))}</i>${esc(it.title)} →</button>` : `<span class="ft-inl"><i class="st-${esc(it.stage)}">${esc(stg(it.stage))}</i>${esc(it.title)}</span>`).join('') : '<p class="pt-muted">Not yet linked to an item.</p>'}</div></div>
+      <div class="ed-foot">${ptSrcBtn(x.sources, 'Sources')}${edCoverage(x)}</div></section>`; };
+  return `${ftHead('Insights', 'What the numbers say together', '')}
+    <div class="ft-its">${all.map(tile).join('')}</div>
+    ${ftSh('The views', `${list.length} of ${all.length}`)}${ftDeptBar(all)}
+    ${list.length ? `<div class="ed-grid pt-ed ft-insg">${list.map(card).join('')}</div>` : ftEmpty('No views for this department yet.')}`;
+}

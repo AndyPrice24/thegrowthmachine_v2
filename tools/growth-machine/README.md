@@ -287,6 +287,10 @@ What each founder sees from their own link, served by TGM's Apps Script web app 
   **Go ahead** (`api` op `approve`, events `approve`/`unapprove`; not from the owner link) moves the item to Approved at the next
   ⟳ Updates (`itApplyApprovals`, which notes `approvedBy`, `approvedAt` and the stage it came from; withdrawing reverses it if
   nothing else moved the item).
+- **Insights** (page 5; the portal's `ins` section, `ftInsights`): a row of headline figures, one per view (`stat`, `statLabel`,
+  `tone` on the enhanced view; take the figure from the view's own title so it shares its sources), each jumping to its view; then the
+  views with the department filter (`depts`). Each view ends with So what, What it joins (`joins`, separated by `|`) and What we're
+  doing about it (`itemIds`, linking to the item on its page, with its stage). "Hover…" sentences in a view's sub are left off.
 - **Report** (page 6; the portal's `work` section, `ftReport`): the plan chart across the top, then days used by calendar month (needed against used, with any days banked
   ahead; from `stats.days`, built by `lrDays`, with no diary text and no reasons for days off; `daysOff` never reaches the portal),
   next to what is coming up, then **week by week**: `engagement.weeks` [{id, start, end, done, next?}], left to right, the latest four (earlier weeks folded),

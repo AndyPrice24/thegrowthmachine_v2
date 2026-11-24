@@ -153,7 +153,7 @@ function portalRender() {
   try {
     if (sec === 'proc') { ui.tab = 'processes'; html = ftProc(); }
     else if (sec === 'evid') { ui.tab = 'evidence'; html = `<div class="pt-studio">${viewEvidence(E())}</div>`; }
-    else html = ({ home: ftHealth, concerns: ftConcerns, projects: ftProjects, fruit: ftFruitPage, moves: ptMovesSec, work: ftReport, leaks: ptLeaks, ins: ptInsights })[sec]();
+    else html = ({ home: ftHealth, concerns: ftConcerns, projects: ftProjects, fruit: ftFruitPage, moves: ptMovesSec, work: ftReport, leaks: ptLeaks, ins: ftInsights })[sec]();
   } catch (err) { console.error(err); html = `<div class="pt-card"><p>This part of the portal couldn't be shown: ${esc(err.message)}</p></div>`; }
   main.innerHTML = html;
   if ((sec === 'proc' && PT.procFull) || sec === 'evid') { ptLock(main); main.querySelectorAll('.flow-wrap').forEach((w, i) => { if (keep[i]) { w.scrollLeft = keep[i][0]; w.scrollTop = keep[i][1]; } }); }
@@ -465,6 +465,7 @@ document.addEventListener('click', (ev) => {
   if (d === 'move') { PT.move = id || ''; PT.sec = 'moves'; portalRender(); return window.scrollTo(0, 0); }
   if (d === 'mb') { PT.mb = id || ''; return portalRender(); }
   if (d === 'dept') { PT.dept = id || ''; return portalRender(); }
+  if (d === 'ins') { const n = document.getElementById('it-' + id); if (!n) { PT.dept = ''; portalRender(); } return setTimeout(() => ptFocus(id), 30); }
   if (d === 'pteam') { PT.pteam = id || ''; return portalRender(); }
   if (d === 'proc') { PT.modal = ''; PT.sec = 'proc'; PT.proc = id || ''; PT.procFull = false; portalRender(); return window.scrollTo(0, 0); }
   if (d === 'procfull') { PT.procFull = !!id; if (id) { ui.tab = 'processes'; ui.pv = Object.assign({}, ui.pv, { mode: 'proc', focus: id, pick: '', hl: '' }); ui.stepId = ''; } portalRender(); return window.scrollTo(0, 0); }
