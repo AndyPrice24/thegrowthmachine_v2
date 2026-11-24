@@ -143,7 +143,7 @@ Then:
    cards from `engagement.weeks`, days used by month, the plan and reviews, coming up, wins, and what we need from you.
 8. **Processes and systems:** client-safe flows, a systems map (owner, cost, users, overlap), and automation
    opportunities shown on the steps they would remove. **Built 24 Nov.**
-5. **Insights:** joined-up views.
+5. **Insights:** joined-up views. **Built 24 Nov**: headline figures, department filter, what each view joins and the items acting on it.
 7. **Department efficiency:** for each department, 4–6 measures at team level, never per person.
    - Each measure is green/amber/red with a trend.
    - The score is measures on target out of measures tracked, shown next to the measures not tracked yet.
