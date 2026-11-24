@@ -299,6 +299,16 @@ What each founder sees from their own link, served by TGM's Apps Script web app 
   department head" prints that page on one A4 sheet. A measure's value comes from the company health measure named in `healthId`
   (so the two never drift), else its own `value`, `unit`, `target`, `better`, `asAt`, `trendText`, `sources` (`msrVal`). Measures are
   portal elements, so founders can comment on and red-flag them.
+- **Efficiency model** (`efDiagram`, on the Studio's department view and founders' page 7): measures → six dimensions (output,
+  speed, quality, activity, inputs and cost, improvement) → the department score, drawn as a tree. Each measure has a `dim` and a
+  `phase` ('1' to start with, '2' the full model, drawn dashed). A measure scores 0–100 against its target (100 at target or better);
+  a dimension is the average of its scored measures; improvement is the share of tracked measures whose trend moves the right way;
+  the department score is the average of its scored dimensions and shows once three of six are scored. The department print hides the
+  item list and scales to one A4 page.
+- **Blueprints on items** (`blueprint` on an item, Studio only; stripped from the portal): `bpRender` draws a structured design under
+  the item. Used for the department brain: sources grouped (what matters, how we connect, how often, walls), the brain's parts, how
+  people reach it, the groups of users with their role layers, needs and walls (choose a group to light up its sources), the walls
+  table, a monthly cost estimate against seat licences (sourced to the public price pages), phases and the questions that decide it.
 - **Report** (page 6; the portal's `work` section, `ftReport`): the plan chart across the top, then days used by calendar month (needed against used, with any days banked
   ahead; from `stats.days`, built by `lrDays`, with no diary text and no reasons for days off; `daysOff` never reaches the portal),
   next to what is coming up, then **week by week**: `engagement.weeks` [{id, start, end, done, next?}], left to right, the latest four (earlier weeks folded),

@@ -325,7 +325,7 @@ HXV.board = (e) => { const d = hxCur().p.d || '', hs = hxCur().p.s || ''; const 
   <div class="hx-tabs" style="margin-bottom:14px"><button class="hx-tb ${!d ? 'on' : ''}" data-hxk="d" data-hxv="">Everything<b>${all.length}</b></button>${ITEM_DEPTS.map(([k, n]) => `<button class="hx-tb ${d === k ? 'on' : ''}" data-hxk="d" data-hxv="${k}"><span class="hx-dot" style="--c:var(--gd-${k})"></span> ${esc(n)}<b>${all.filter((i) => splitList(i.depts).includes(k)).length}</b></button>`).join('')}</div>
   <div class="hx-kb">${HX_STAGES.map(([s, n]) => { const L = its.filter((i) => i.stage === s); return `<div class="hx-col hx-well ${hs === s ? 'hx-hl' : ''}"><h4><span>${esc(n)}</span><span>${L.length}</span></h4>${L.map((i) => { const B = hxBehind(e, i); return `<button class="hx-card" ${hxP('item', { id: i.id })} style="--dc:var(--gd-${splitList(i.depts)[0]})"><span class="hx-cedge"></span><div class="hx-ct">${String(i.pinned) === 'true' ? '★ ' : ''}${esc(i.title)}</div><div class="hx-cm">${splitList(i.depts).map((x) => `<span class="hx-dot" style="--c:var(--gd-${x})"></span>`).join('')}${i.label ? `<span>${esc(LABEL_TXT[i.label] || i.label)}</span>` : ''}${B.big ? `<span>R${Math.round(num(B.big.valueMonthly) / 1000)}k</span>` : ''}${i.stageSince ? `<span>· ${daysBetween(i.stageSince, todayISO())}d${String(i.stageSinceSure) === 'true' ? '' : '+'} here</span>` : ''}</div></button>`; }).join('')}</div>`; }).join('')}</div>
   ${park.length ? `<div class="hx-tile" style="margin-top:14px"><span class="hx-k">Parked · ${park.length}</span> ${park.map((i) => `<button class="hx-pl" style="margin-left:8px" ${hxP('item', { id: i.id })}>${esc(i.title)}</button>`).join('')}</div>` : ''}`; };
-HXV.item = (e) => { const i = live(e.items).find((x) => x.id === hxCur().p.id); if (!i) return '<p>This item no longer exists.</p>'; const B = hxBehind(e, i); const ci = HX_STAGES.findIndex(([s]) => s === i.stage);
+HXV._item = (e) => { const i = live(e.items).find((x) => x.id === hxCur().p.id); if (!i) return '<p>This item no longer exists.</p>'; const B = hxBehind(e, i); const ci = HX_STAGES.findIndex(([s]) => s === i.stage);
   const srcs = (f) => dedupeRefs(f.sources || []).map((r) => `<li>${esc(sourceLine(e, r, !ui.share))}</li>`).join('');
   return `<h1 class="hx-pg hx-pgsm">${esc(i.title)}</h1><p class="hx-pgs">${splitList(i.depts).map((d) => `<span class="hx-dot" style="--c:var(--gd-${d})"></span> ${esc(HX_DN[d])}`).join(' &nbsp; ')} · ${esc(ITEM_STAGE_NAME[i.stage] || i.stage)} since ${hxSince(i)}</p>
   <div class="hx-well hx-track">${HX_STAGES.map(([s, n], k) => `<span class="${k < ci ? 'd' : k === ci ? 'n' : ''}">${esc(n)}</span>`).join('')}</div>
@@ -337,6 +337,7 @@ HXV.dept = (e) => { const d = hxCur().p.d; const S = hxDeptStats(e, d); const it
   <div class="hx-tile"><div class="hx-k">Data health</div><div style="margin-top:10px;font-size:14px;font-weight:700"><span class="hx-light" style="--c:${ex || S.broken.length ? 'var(--hx-red)' : S.mi ? 'var(--hx-am)' : 'var(--hx-gr)'}"></span> ${ex ? '1 measure stopped reporting' : S.broken.length ? S.broken.length + ' stopped reporting' : S.mi ? S.mi + (S.mi === 1 ? ' measure' : ' measures') + ' not collected yet' : 'All measures flowing'}</div><div class="hx-note">Red: a measure that was reporting has stopped, or its data points dropped. Amber: not collected yet.</div></div>
   <div class="hx-tile"><div class="hx-k">Ready to score</div><div class="hx-big" style="margin-top:8px">${Math.round(S.ready * 100)}%</div><div class="hx-note">Measured counts 1, partly ½.</div></div>
   <div class="hx-tile"><div class="hx-k">Trend</div><div class="hx-big" style="margin-top:8px">${ex ? '<span class="hx-up">▲</span><small>last 4 weeks vs the 4 before</small>' : '—<small>needs 8 weeks of data</small>'}</div></div></div>
+  <div class="hx-sh"><h3>How the department is measured</h3><i></i></div>${efDiagram(e, d)}
   <div class="hx-sh"><h3>Measures</h3><i></i><button class="hx-tg" data-hxtog="hxExample"><s class="${ex ? 'on' : ''}"></s>Preview with example values</button></div>
   <div class="hx-tile">${ex ? '<span class="hx-ex">EXAMPLE VALUES</span>' : ''}${S.M.length ? `<table class="hx-tbl"><tr><th>Measure</th><th>Source</th><th>Rhythm</th><th>Status</th><th>Data points</th><th>Trend</th></tr>${S.M.map((m, k) => { const st = HX_ST[String(m.status || 'missing').toLowerCase()] || HX_ST.missing; return `<tr class="hx-click" ${hxP('measure', { id: m.id })}><td><b>${esc(m.name)}</b><div class="hx-mut" style="font-size:11px">${esc(m.why || '')}</div></td><td class="hx-mut">${esc(m.source || '')}</td><td class="hx-mut">${esc(m.rhythm || '')}</td><td>${ex ? `<span class="hx-light" style="--c:var(--hx-${exRow(k)[2]})"></span>` : `<span class="hx-chip" style="color:${st[1]};border-color:currentColor">${st[0]}</span>`}</td><td>${ex ? exRow(k)[0] : m.points !== undefined && m.points !== '' ? esc(m.points) : String(m.status).toLowerCase() === 'missing' ? '0' : '—'}</td><td>${ex ? exRow(k)[1] : esc(m.trend || '—')}</td></tr>`; }).join('')}</table>` : '<p class="hx-note">No measures defined for this department yet. They arrive in an update file (collection "measures").</p>'}</div>
   <div class="hx-two" style="margin-top:18px"><div class="hx-tile"><div class="hx-k" style="color:var(--hx-am)">Still needed to get efficiency tracking over the line</div>${S.M.filter((m) => String(m.status).toLowerCase() !== 'have').map((m) => `<div class="hx-ev"><b style="font-size:12.5px">${esc(m.name)}</b><div class="hx-mut" style="font-size:11.5px">From ${esc(m.source || '—')}${m.note ? ' · ' + esc(m.note) : ''}</div></div>`).join('') || '<p class="hx-note">Every measure is collected.</p>'}</div>
@@ -384,3 +385,75 @@ document.addEventListener('click', (ev) => {
 });
 window.addEventListener('popstate', () => { if (!PORTAL_ON && ui.tab === 'hub' && HX.length > 1) { HX.pop(); render(); } });
 document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !PORTAL_ON && ui.tab === 'hub' && HX.length > 1 && !document.querySelector('.modal-back:not([hidden]), #modal:not([hidden])')) { try { history.back(); } catch (err) { hxBack(); } } });
+
+/* ---------- efficiency model: measures → dimensions → department score (Studio department view and founders' page 7) ---------- */
+const EF_DIMS = [['output', 'Output', 'Productive: what the team delivers'], ['speed', 'Speed', 'Expedient: how fast work moves'], ['quality', 'Quality', 'Careful: right first time'],
+  ['activity', 'Activity', 'Active: the work being done and kept up'], ['input', 'Inputs and cost', 'What it takes: people, time, money'], ['improve', 'Improvement', 'Improving: tracked measures moving the right way']];
+const efScore = (m) => (!m.hasT ? null : Math.max(0, Math.min(100, String(m.better) === 'lower' ? (m.n > 0 ? m.t / m.n * 100 : 100) : (m.t > 0 ? m.n / m.t * 100 : 100))));
+const efGood = (m) => (m.trend === 'up' && m.better !== 'lower') || (m.trend === 'down' && m.better === 'lower');
+function efModel(e, d) {
+  const M = hxMeasures(e, d).map((m) => msrVal(e, m)); const avg = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : null);
+  const dims = EF_DIMS.map(([k, n, s]) => { if (k === 'improve') { const tr = M.filter((m) => m.tracked && m.trend); const g = tr.filter(efGood).length; return { k, n, s, list: [], tr, good: g, score: tr.length ? g / tr.length * 100 : null }; }
+    const list = M.filter((m) => (m.dim || 'output') === k); const sc = list.map(efScore).filter((x) => x != null); return { k, n, s, list, score: avg(sc), scored: sc.length }; });
+  const scoredDims = dims.filter((x) => x.score != null); const score = scoredDims.length >= 3 ? avg(scoredDims.map((x) => x.score)) : null;
+  return { M, dims, score, scoredDims: scoredDims.length, tracked: M.filter((m) => m.tracked).length };
+}
+function efDiagram(e, d) {
+  const F = efModel(e, d); const W = 980, bh = 30, gap = 6, gg = 18, top = 30; let y = top; const rows = []; const dn = [];
+  F.dims.forEach((D) => { const items = D.k === 'improve' ? [{ pseudo: true }] : D.list; const y0 = y; items.forEach((m) => { rows.push({ m, y, D }); y += bh + gap; }); const y1 = y - gap; dn.push(Object.assign(D, { cy: (y0 + y1) / 2 })); y += gg; });
+  const H = Math.max(y - gg + 20, 300); const sx = 340, dx = 560, dw = 210, cx = 880, cy = H / 2;
+  const col = (m) => (!m.tracked ? '#6b7280' : { green: '#34d399', amber: '#f5b83d', red: '#ff6b4a', none: '#c9ced8' }[m.rag] || '#c9ced8');
+  const tr = (s, n) => (String(s).length > n ? String(s).slice(0, n - 1) + '…' : String(s));
+  const link = (x1, y1, x2, y2, c, dash) => `<path d="M${x1},${y1} C${(x1 + x2) / 2},${y1} ${(x1 + x2) / 2},${y2} ${x2},${y2}" fill="none" stroke="${c}" stroke-width="${dash ? 1.2 : 1.8}" ${dash ? 'stroke-dasharray="4 4"' : ''} opacity="${dash ? 0.45 : 0.9}"/>`;
+  const fmt = (v) => (v == null ? '—' : Math.round(v));
+  const svg = `<svg class="ef-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="How the department's measures roll up into its score">
+    <text x="0" y="16" class="ef-h">Measures</text><text x="${dx}" y="16" class="ef-h">Dimensions</text><text x="${cx}" y="16" class="ef-h" text-anchor="middle">Department score</text>
+    ${rows.map(({ m, y: ry, D }) => link(sx, ry + bh / 2, dx, D.cy, m.pseudo ? '#a78bfa' : col(m), m.pseudo || !m.tracked)).join('')}
+    ${dn.map((D) => link(dx + dw, D.cy, cx - 70, cy, D.score != null ? '#e6e9ef' : '#6b7280', D.score == null)).join('')}
+    ${rows.map(({ m, y: ry }) => m.pseudo ? `<g><rect x="0" y="${ry}" width="${sx}" height="${bh}" rx="8" class="ef-box ef-pseudo"/><text x="12" y="${ry + 19}" class="ef-t ef-mut">Worked out from the trend of every tracked measure</text></g>`
+      : `<g><title>${esc(m.name)}${m.tracked ? ': ' + esc(m.value) + (m.unit ? ' ' + esc(m.unit) : '') : ' (not tracked yet)'}${m.target ? ' · target ' + esc(m.target) : ''}</title><rect x="0" y="${ry}" width="${sx}" height="${bh}" rx="8" class="ef-box ${m.tracked ? 'on' : ''} ${String(m.phase) === '2' ? 'p2' : ''}" style="--c:${col(m)}"/>
+        <circle cx="14" cy="${ry + bh / 2}" r="5" fill="${m.tracked ? col(m) : 'none'}" stroke="${col(m)}" stroke-width="1.5"/><text x="27" y="${ry + 19}" class="ef-t">${esc(tr(m.name, m.tracked ? 38 : 46))}</text>${m.tracked ? `<text x="${sx - 10}" y="${ry + 19}" class="ef-v" text-anchor="end">${esc(tr(m.value, 10))}</text>` : ''}</g>`).join('')}
+    ${dn.map((D) => `<g><title>${esc(D.s)}</title><rect x="${dx}" y="${D.cy - 26}" width="${dw}" height="52" rx="12" class="ef-dim ${D.score != null ? 'on' : ''}"/><text x="${dx + 14}" y="${D.cy - 5}" class="ef-dn">${esc(D.n)}</text>
+      <text x="${dx + 14}" y="${D.cy + 14}" class="ef-ds">${D.k === 'improve' ? (D.tr.length ? `${D.good} of ${D.tr.length} improving` : 'No trends yet') : `${D.list.filter((m) => m.tracked).length} of ${D.list.length} tracked${D.scored ? ` · ${D.scored} scored` : ''}`}</text>
+      <text x="${dx + dw - 14}" y="${D.cy + 7}" class="ef-dv" text-anchor="end">${fmt(D.score)}</text></g>`).join('')}
+    <circle cx="${cx}" cy="${cy}" r="70" class="ef-sc ${F.score != null ? 'on' : ''}"/><text x="${cx}" y="${cy + (F.score != null ? 12 : 4)}" text-anchor="middle" class="${F.score != null ? 'ef-scv' : 'ef-scn'}">${F.score != null ? Math.round(F.score) : 'Not scored'}</text>
+    <text x="${cx}" y="${cy + 34}" text-anchor="middle" class="ef-ds">${F.score != null ? 'out of 100' : `${F.scoredDims} of 6 dimensions scored`}</text></svg>`;
+  return `<div class="ef-wrap"><div class="ef-scroll">${svg}</div>
+    <div class="ef-legend"><span><i style="background:#34d399"></i>On target</span><span><i style="background:#f5b83d"></i>Near target</span><span><i style="background:#ff6b4a"></i>Off target</span><span><i style="background:#c9ced8"></i>Tracked, no target yet</span><span><i class="o"></i>Not tracked yet</span><span><i class="p2"></i>Full model (later)</span></div>
+    <p class="ef-how">Each measure scores 0 to 100 against its target (100 at target or better). A dimension is the average of its scored measures; improvement is the share of tracked measures moving the right way. The department score is the average of its scored dimensions, each counting equally, and shows once three of the six are scored. ${F.tracked} of ${F.M.length} measures are tracked.</p></div>`;
+}
+
+/* ---------- blueprint on an item: the department brain (Studio only) ---------- */
+function bpRender(e, i) {
+  const B = i.blueprint; if (!B || typeof B !== 'object') return ''; const P = hxCur().p; const sel = (B.depts || []).find((x) => x.k === P.bd) || null;
+  const S = {}; (B.sources || []).forEach((s) => { S[s.id] = s; }); const uses = sel ? new Set(sel.needs.flatMap((n) => splitList(n[1]))) : null;
+  const users = (B.depts || []).reduce((a, x) => a + num(x.users), 0); const usd = (v) => '$' + Math.round(v).toLocaleString('en-GB');
+  const chip = (s) => `<div class="bp-src ${uses ? (uses.has(s.id) ? 'hit' : 'dim') : ''} ${s.wall ? 'walled' : ''}" title="${esc(s.what)}"><b>${esc(s.name)}</b><span>${esc(s.how)}</span>${s.wall ? '<em>Walled</em>' : ''}</div>`;
+  const arrow = (t) => `<div class="bp-arrow"><span>${esc(t)}</span></div>`;
+  const dcard = (x) => `<button class="bp-dept ${P.bd === x.k ? 'on' : ''}" data-hxk="bd" data-hxv="${P.bd === x.k ? '' : esc(x.k)}" style="--c:var(--gd-${esc(x.k)})"><span class="bp-dh"><b>${esc(x.name)}</b><em>Phase ${esc(x.phase)}</em></span>
+    <span class="bp-du">${num(x.users)} people</span><span class="bp-dl">${(x.layers || []).map((l) => `<span><b>${esc(l[0])}</b>${num(l[1]) ? ` ×${num(l[1])}` : ''}<i>${esc(l[2])}</i></span>`).join('')}</span><span class="bp-dw">${esc(x.wall)}</span></button>`;
+  const total = (B.costs.rows || []).reduce((a, r) => a + num(r[2]), 0);
+  return `<div class="hx-sh" style="margin-top:26px"><h3>${esc(B.title || 'Blueprint')}</h3><i></i></div>
+  <div class="hx-tile bp-intro"><p>${esc(B.summary)}</p><div class="bp-kpis"><span><b>${(B.sources || []).length}</b>sources</span><span><b>${(B.depts || []).length}</b>groups of users</span><span><b>${users}</b>people</span><span><b>${(B.walls || []).length}</b>walls</span><span><b>${usd(total)}</b>a month (estimate)</span></div></div>
+  <div class="bp-map">
+    <div class="bp-band"><div class="bp-bl">1 · Where the knowledge is, and how we connect to it</div><div class="bp-groups">${(B.groups || []).map(([g, n]) => { const L = (B.sources || []).filter((s) => s.group === g); return L.length ? `<div class="bp-grp"><div class="bp-gn">${esc(n)}</div>${L.map(chip).join('')}</div>` : ''; }).join('')}</div></div>
+    ${arrow('read on a schedule or when asked; each department only through its own access')}
+    <div class="bp-band bp-core"><div class="bp-bl">2 · The brain</div><div class="bp-cores">${(B.core || []).map((c) => `<div class="bp-c"><b>${esc(c.name)}</b><p>${esc(c.what)}</p><span>${esc(c.how)}</span></div>`).join('')}</div></div>
+    ${arrow('answers come back where people already work')}
+    <div class="bp-band"><div class="bp-bl">3 · How people reach it</div><div class="bp-acc">${(B.access || []).map((a) => `<div class="bp-a"><b>${esc(a.name)}</b><span class="bp-aw">${esc(a.who)}</span><p>${esc(a.what)}</p><em>${esc(a.cost)}</em></div>`).join('')}</div></div>
+    ${arrow('each group sees only what its work needs')}
+    <div class="bp-band"><div class="bp-bl">4 · Who uses it ${sel ? '' : '<span class="bp-tip">Choose a group to light up its sources</span>'}</div><div class="bp-depts">${(B.depts || []).map(dcard).join('')}</div></div>
+  </div>
+  ${sel ? `<div class="hx-tile bp-sel" style="--c:var(--gd-${esc(sel.k)})"><div class="hx-k">${esc(sel.name)}: what the brain does for them</div><ol class="bp-needs">${sel.needs.map((n) => `<li><p>${esc(n[0])}</p><div class="bp-nf">${splitList(n[1]).map((id) => `<span>${esc((S[id] || { name: id }).name)}</span>`).join('')}</div><em>${esc(n[2])}</em></li>`).join('')}</ol><p class="bp-wall"><b>Wall</b> ${esc(sel.wall)}</p></div>` : ''}
+  <div class="hx-two" style="margin-top:18px">
+    <div class="hx-tile"><div class="hx-k">The walls</div><table class="hx-tbl bp-tbl"><tr><th>What</th><th>Who can see it</th></tr>${(B.walls || []).map((w) => `<tr><td><b>${esc(w[0])}</b></td><td class="hx-mut">${esc(w[1])}</td></tr>`).join('')}</table></div>
+    <div class="hx-tile"><div class="hx-k">What it would cost a month (estimate)</div><table class="hx-tbl bp-tbl">${(B.costs.rows || []).map((r) => `<tr><td><b>${esc(r[0])}</b><div class="hx-mut" style="font-size:11px">${esc(r[1])}</div></td><td class="bp-r">${usd(r[2])}</td></tr>`).join('')}<tr class="bp-tot"><td><b>Total</b></td><td class="bp-r"><b>${usd(total)}</b></td></tr></table>
+      <p class="hx-note">${esc(B.costs.oneOff || '')} ${esc(B.costs.note || '')}</p></div></div>
+  <div class="hx-tile" style="margin-top:18px"><div class="hx-k">Against a licence for everyone</div><div class="bp-cmp">${(B.costs.compare || []).map((c, k) => `<div class="${k ? 'best' : ''}"><b>${esc(c[0])}</b><span>${esc(c[1])}</span><strong>${esc(c[2])}</strong><p>${esc(c[3])}</p></div>`).join('')}</div></div>
+  <div class="hx-tile" style="margin-top:18px"><div class="hx-k">Every source: what matters and how we connect</div><table class="hx-tbl bp-tbl"><tr><th>Source</th><th>What matters from it</th><th>How we connect</th><th>How often</th></tr>${(B.sources || []).map((s) => `<tr><td><b>${esc(s.name)}</b>${s.wall ? `<div class="bp-wl">${esc(s.wall)}</div>` : ''}</td><td>${esc(s.what)}</td><td class="hx-mut">${esc(s.how)}</td><td class="hx-mut">${esc(s.when)}</td></tr>`).join('')}</table></div>
+  <div class="hx-two" style="margin-top:18px"><div class="hx-tile"><div class="hx-k">In phases</div>${(B.phases || []).map((p) => `<div class="hx-ev"><b>Phase ${esc(p[0])}</b> · <span class="hx-mut">${esc(p[2])}</span><div style="font-size:12.5px;margin-top:3px">${esc(p[1])}</div></div>`).join('')}</div>
+    <div class="hx-tile"><div class="hx-k">Questions that decide whether it works</div>${(B.questions || []).map((q) => `<div class="hx-ev"><div style="font-size:12.5px">${esc(q[0])}</div><div class="hx-mut" style="font-size:11px;margin-top:2px">${esc(q[1])}</div></div>`).join('')}</div></div>
+  ${hxSrc([`Prices: ${(B.costs.sources || []).map((r) => esc(sourceLine(e, r, !ui.share))).join('; ')}.`, 'Headcount by department from the organogram (roles, not names).', 'Systems from the process maps and the software list.'])}`;
+}
+
+HXV.item = (e) => { const i = live(e.items).find((x) => x.id === hxCur().p.id); return HXV._item(e) + (i ? bpRender(e, i) : ''); };
