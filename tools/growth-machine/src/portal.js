@@ -153,7 +153,7 @@ function portalRender() {
   try {
     if (sec === 'proc') { ui.tab = 'processes'; html = `<div class="pt-studio">${viewProcesses(E())}</div>`; }
     else if (sec === 'evid') { ui.tab = 'evidence'; html = `<div class="pt-studio">${viewEvidence(E())}</div>`; }
-    else html = ({ home: ftHealth, concerns: ftConcerns, projects: ftProjects, fruit: ftFruitPage, moves: ptMovesSec, work: ptWork, leaks: ptLeaks, ins: ptInsights })[sec]();
+    else html = ({ home: ftHealth, concerns: ftConcerns, projects: ftProjects, fruit: ftFruitPage, moves: ptMovesSec, work: ftReport, leaks: ptLeaks, ins: ptInsights })[sec]();
   } catch (err) { console.error(err); html = `<div class="pt-card"><p>This part of the portal couldn't be shown: ${esc(err.message)}</p></div>`; }
   main.innerHTML = html;
   if (sec === 'proc' || sec === 'evid') { ptLock(main); main.querySelectorAll('.flow-wrap').forEach((w, i) => { if (keep[i]) { w.scrollLeft = keep[i][0]; w.scrollTop = keep[i][1]; } }); }
@@ -314,32 +314,6 @@ function ptHomeClassic() {
 const ptLines = (txt) => String(txt || '').split('\n').map((x) => x.trim()).filter(Boolean);
 function ptList(txt, kind) { const l = ptLines(txt); return l.length ? `<ul class="pt-list ${kind}">${l.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : '<p class="pt-muted">—</p>'; }
 
-/* ---------- Our work ---------- */
-function ptWork() {
-  const e = E(); const g = e.engagement; const S = g.status || {}; const st = engagementStatus(e); const sv = savingsTracker(e); const w = ptWeek(e); const R = PT.R;
-  const reviews = splitList(g.reviewDates);
-  const waiting = st.reqs.filter((r) => r._status === 'Waiting' || r._status === 'Overdue').sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''));
-  const rows = sv.rows.filter((r) => r.stage !== 'Rejected' && r.monthlyNet > 0).sort((a, b) => b.monthlyNet - a.monthlyNet);
-  const stageCls = (s) => ({ Identified: 'info', Approved: 'good', 'In progress': 'good', Realised: 'good' })[s] || 'info';
-  const late = (d) => d ? Math.max(0, daysBetween(d, todayISO())) : 0;
-  return `<section class="pt-hello"><div class="pt-eyebrow">Week ${w.cur} of ${w.weeks}</div><h1>Our work</h1>${S.headline ? `<p class="pt-lede">${esc(S.headline)}</p>` : ''}</section>
-  <div class="pt-grid">
-    ${mvList(e, { portal: true }).length ? ptCard('The journey so far', journeyHTML(e, { portal: true, open: (m) => `data-pt="move" data-id="${esc(m.id)}"` }), { cls: 'c12' }) : ''}
-    ${ptCard('Where we are in the plan', `<div class="pt-gantt">${phaseGantt(e, { compact: true })}</div><div class="pt-tl-meta">${reviews.map((d) => `<span class="${d < todayISO() ? 'pt-past' : ''}">Review <b>${esc(fmtD(d, { day: 'numeric', month: 'short' }))}</b></span>`).join('')}</div>`, { note: `${esc(fmtD(g.start, { day: 'numeric', month: 'short' }))} – ${esc(fmtD(g.end, { day: 'numeric', month: 'short', year: 'numeric' }))}`, cls: 'c12' })}
-    ${ptCard('This fortnight', `<div class="pt-two"><div><p class="pt-sub-h">Delivered</p>${ptList(S.delivered, 'done')}</div><div><p class="pt-sub-h">Next</p>${ptList(S.next, 'next')}</div></div>`, { cls: 'c12' })}
-    ${sv.target ? ptCard('Savings against the target', `<div class="pt-sv">
-        <div><span class="pt-kpi-l">Identified</span><span class="pt-kpi-v">${esc(ptMoney(sv.identified))}<small>/ mo</small></span></div>
-        <div><span class="pt-kpi-l">Approved</span><span class="pt-kpi-v">${esc(ptMoney(sv.approved))}<small>/ mo</small></span></div>
-        <div><span class="pt-kpi-l">Realised</span><span class="pt-kpi-v">${esc(ptMoney(sv.realised))}<small>/ mo</small></span></div>
-        <div><span class="pt-kpi-l">Target</span><span class="pt-kpi-v">${esc(ptMoney(sv.target))}<small>/ mo</small></span></div></div>
-      ${rows.length ? `<table class="pt-tbl"><thead><tr><th>Saving</th><th>Stage</th><th class="r">Per month</th></tr></thead><tbody>${rows.map((r) => `<tr><td>${esc(r.rec.title)}</td><td><span class="pt-trend pt-${stageCls(r.stage)}">${esc(r.stage)}</span></td><td class="r">~${esc(ptMoney(r.monthlyNet))}</td></tr>`).join('')}</tbody></table>` : ''}
-      <p class="pt-muted pt-small">Monthly recurring savings, net of new costs. Estimates until validated against the agreed baseline; only approved savings count towards the target.</p>`, { cls: 'c7' }) : ''}
-    ${ptCard('What we need from you', `${(R.asks || []).length ? `<p class="pt-sub-h">Decisions</p><ul class="pt-list next">${R.asks.map((a) => `<li><button type="button" class="pt-link" data-pt="discuss" data-id="${esc(a.id)}">${esc(a.title)}</button></li>`).join('')}</ul>` : ''}
-      ${waiting.length ? `<p class="pt-sub-h" style="margin-top:14px">Information requested (${waiting.length})</p><div class="pt-reqs">${waiting.slice(0, 8).map((r) => `<div class="pt-req"><span>${esc(r.item)}</span><span class="pt-muted pt-small">${esc(r.owner || '')}${r.dueDate ? ` · due ${esc(fmtD(r.dueDate))}` : ''}</span>${r._status === 'Overdue' ? `<span class="pt-trend pt-bad">${late(r.dueDate)} days late</span>` : ''}</div>`).join('')}${waiting.length > 8 ? `<p class="pt-muted pt-small">+ ${waiting.length - 8} more, most of them older requests to the founders and finance.</p>` : ''}</div>` : '<p class="pt-muted">Nothing outstanding.</p>'}`, { cls: sv.target ? 'c5' : 'c12' })}
-    ${(g.delays || []).length ? ptCard('Delays and changes', `<table class="pt-tbl"><thead><tr><th>Raised</th><th>What happened</th><th class="r">Days</th><th>Status</th></tr></thead><tbody>${g.delays.map((d) => `<tr><td>${esc(fmtD(d.dateRaised))}</td><td>${esc(d.description || d.cause || '')}</td><td class="r">${num(d.daysImpact)}</td><td>${esc(d.status || '')}</td></tr>`).join('')}</tbody></table>`, { cls: 'c12' }) : ''}
-    ${ptCard('Capacity', `<p>${esc(R.stats.capacity || '')}</p>${R.stats.cap && (R.stats.cap.over || R.stats.cap.flNote) ? capacityBars(R.stats.cap) : ''}`, { cls: 'c12' })}
-  </div>`;
-}
 
 /* ---------- Leaks & opportunities ---------- */
 function ptLeaks() {

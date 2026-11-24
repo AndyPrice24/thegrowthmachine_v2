@@ -105,8 +105,16 @@ function lrSnapshot(e, lr) {
     title: lr.title || 'Founder portal', preparedFor: lr.preparedFor || '', intro: lr.intro || '', headline: lr.headline || '', version: lr.version || 1, publishedAt: lr.publishedAt || nowISO(),
     ownerToken: lr.ownerToken, recipients: (lr.recipients || []).filter((r) => !r.revoked).map((r) => ({ id: r.id, label: r.label, token: r.token })),
     itemIds: found.map((c) => c.id), recIds: recs.map((c) => c.id), asks, prev: lr.lastValues || {},
-    stats: { conversations: (e.interviews || []).length, processes: procs.length, steps: steps.length, flags: steps.reduce((n, st) => n + (st.flags || []).length, 0), sources: (e.sources || []).length, capacity: lrCapacity(e), cap: (() => { const c = capacityInfo(e); return { per: c.per, by: c.by, over: c.over, flNote: c.flNote, m: c.m }; })() },
+    stats: { days: lrDays(e), conversations: (e.interviews || []).length, processes: procs.length, steps: steps.length, flags: steps.reduce((n, st) => n + (st.flags || []).length, 0), sources: (e.sources || []).length, capacity: lrCapacity(e), cap: (() => { const c = capacityInfo(e); return { per: c.per, by: c.by, over: c.over, flNote: c.flNote, m: c.m }; })() },
     elements, eng: lrPortalEng(e, lr) };
+}
+/** Days used, for the founders: calendar months (needed and used) and days per week. No diary, no reasons for days off. */
+function lrDays(e) {
+  try { const S = hxDays(e); if (!S.total) return null; const g = e.engagement;
+    const weeks = {}; S.log.forEach((l) => { const k = g.start ? addDaysISO(g.start, Math.floor(daysBetween(g.start, l.date) / 7) * 7) : l.date; weeks[k] = (weeks[k] || 0) + l.days; });
+    return { total: S.total, per: S.per, used: S.logged, needToDate: Math.round(S.expC * 10) / 10, months: S.M.map((m, i) => ({ name: m.name, a: m.a, b: m.b, needed: S.per, used: S.byM[i] })), weeks,
+      frontLoad: g.frontLoad && g.frontLoad.note ? `Front-loading agreed with ${g.frontLoad.by || 'the founders'}${g.frontLoad.agreed ? ' on ' + fmtD(g.frontLoad.agreed) : ''}: ${g.frontLoad.note}.` : '' };
+  } catch (err) { return null; }
 }
 /** The portal page: the Studio's own code and styles, plus a slot the web app fills with the viewer's data. */
 function lrPortalHtml() {

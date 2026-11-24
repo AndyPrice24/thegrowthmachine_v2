@@ -139,7 +139,8 @@ Departments become a filter on every page. The pages, in build order:
 
 Then:
 
-6. **Report:** TGM's weekly timeline, wins, finished tasks in plain words, the plan, days used. No private to-dos.
+6. **Report:** TGM's weekly timeline, wins, finished tasks in plain words, the plan, days used. No private to-dos. **Built 24 Nov**: week-by-week
+   cards from `engagement.weeks`, days used by month, the plan and reviews, coming up, wins, and what we need from you.
 8. **Processes and systems:** client-safe flows, a systems map (owner, cost, users, overlap), and automation
    opportunities shown on the steps they would remove.
 5. **Insights:** joined-up views.
