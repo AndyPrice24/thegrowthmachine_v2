@@ -93,26 +93,6 @@ function mvDetail(e, m, { back = '', acts = '', side = '' } = {}) {
     </div></div>`;
 }
 
-/* ---------- Studio ---------- */
-function viewMoves(e) {
-  const founders = !!ui.mvFounder || ui.share;
-  const all = mvList(e, { portal: founders });
-  const m = ui.moveId && all.find((x) => x.id === ui.moveId);
-  if (m) {
-    const priv = !founders && (m.private || m.days) ? `<div class="mv-box mv-private"><h3>TGM only</h3>${m.private ? `<p>${esc(m.private)}</p>` : ''}<p class="muted small">Our time: ${num(m.days) ? `<b>${num(m.days)} day${num(m.days) === 1 ? '' : 's'}</b>` : 'not logged yet'}</p></div>` : '';
-    return mvDetail(e, m, { back: '<button class="link mv-back" data-action="mvOpen" data-id="">← All key changes</button>', side: priv + (refsFor(e, 'finding', m).length ? `<details class="mv-box ed-src"><summary>Sources (${refsFor(e, 'finding', m).length})</summary>${citeBlock(e, 'finding', m, '')}</details>` : '') });
-  }
-  const list = all.filter((x) => !ui.mvBucket || (x.bucket || 'friction') === ui.mvBucket);
-  const lead = mvLeadTile(all);
-  const head = `<div class="page-h mv-page-h"><div><span class="eyebrow">Key changes${founders ? '' : ' · TGM view'}</span><h1>What's changing, and where it stands</h1></div>
-    ${ui.share ? '' : `<div class="mv-seg"><button class="mv-seg-b ${founders ? '' : 'on'}" data-action="mvView" data-id="ours">Our view</button><button class="mv-seg-b ${founders ? 'on' : ''}" data-action="mvView" data-id="founders">As founders see it</button></div>`}</div>`;
-  if (!all.length) return head + card('Key changes', empty('No moves yet. They arrive in an update file (collection "moves") or can be added in Sources & data.'));
-  const extra = (x) => (founders ? '' : `${x.private ? `<div class="mv-private-line"><b>Private</b>${esc(x.private)}</div>` : ''}<div class="mv-meta">Our time: ${num(x.days) ? `<b>${num(x.days)} day${num(x.days) === 1 ? '' : 's'}</b>` : '<span class="mv-tbc">log it</span>'}${mvCounts(e, x) ? ' · ' + esc(mvCounts(e, x)) : ''}${String(x.portal) === 'false' ? ' · <span class="chip">TGM only</span>' : ''}</div>`);
-  return head + mvHero(all, lead) + `<div class="mv-sh"><h2>The key changes</h2>${mvFilters(all, ui.mvBucket || '', (k) => `data-action="mvBucket" data-id="${k}"`)}</div>
-    <div class="mv-grid">${list.map((x) => mvCard(e, x, { open: `data-action="mvOpen" data-id="${esc(x.id)}"`, extra: extra(x) })).join('')}</div>
-    ${card('The journey so far', journeyHTML(e, { portal: founders, open: (m) => `data-action="mvOpen" data-id="${esc(m.id)}"` }), { sub: 'What has happened, by week; what comes next; and the projects starting next.' })}
-    <div class="mv-evid"><span><b>Behind these changes:</b> ${live(e.findings).length} findings, ${live(e.recommendations).length} recommendations and ${live(e.automations).length} automations, each with its sources.</span><button class="link" data-action="tab" data-id="home">Open Leaks &amp; opportunities →</button></div>`;
-}
 
 /* ---------- The journey: what has happened (by week), what's coming, and projects starting next ----------
    Built from each move's dated timeline plus engagement.milestones [{ id, date (ISO), title, detail }]. Move dates are

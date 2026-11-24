@@ -10,6 +10,13 @@ let HX = [{ v: 'home', p: {} }];
 const hxCur = () => HX[HX.length - 1];
 const hxP = (v, p) => `data-hx="${v}" data-hp='${JSON.stringify(p || {}).replace(/'/g, '&#39;')}'`;
 function hxGo(v, p = {}) { ui.tab = 'hub'; if (v === 'home') HX = [{ v: 'home', p: {} }]; else HX.push({ v, p }); try { history.pushState({ hx: HX.length }, ''); } catch (err) { /* file:// */ } render(); window.scrollTo(0, 0); }
+/** Open the item that holds a finding, recommendation, automation, opportunity or key change; else Sources & data. */
+function hxOpenFor(kind, id) {
+  const e = E(); const coll = { finding: 'findings', recommendation: 'recommendations', automation: 'automations', opportunity: 'opportunities', move: 'moves' }[kind];
+  const it = id && live(e.items || []).find((i) => (itemLinks(e, i)[coll] || new Set()).has(id));
+  if (it) { HX = [{ v: 'home', p: {} }]; return hxGo('item', { id: it.id }); }
+  ui.tab = 'data'; ui.coll = coll; render(); window.scrollTo(0, 0); toast('Not in an item yet: shown in Sources & data');
+}
 function hxBack() { if (HX.length > 1) { HX.pop(); render(); window.scrollTo(0, 0); } }
 const HX_STAGES = STAGE_FLOW;
 const HX_DN = ITEM_DEPT_NAME;
@@ -130,44 +137,11 @@ function hxDeptStats(e, d) {
 
 /* ---------- widgets ---------- */
 function hxSrc(lines) { return `<div class="hx-src"><b>Where this comes from</b><ul>${lines.filter(Boolean).map((l) => `<li>${l}</li>`).join('')}</ul></div>`; }
-function wxDays(e) {
-  const S = hxDays(e); if (!S.total) return '';
-  return `<div class="hx-tile hx-click hx-span2 hx-days" ${hxP('days')}><div>${hxDial(S)}</div><div style="min-width:0"><div class="hx-th"><span class="hx-k">My days · ${esc(e.client.name)}</span><span class="hx-knob">↗</span></div>
-    <div style="display:grid;gap:10px;margin-top:12px">
-      <div class="hx-well" style="padding:10px 14px"><div class="hx-k" style="color:var(--hx-gr)">Contract to date</div><div class="hx-big" style="margin-top:6px;font-size:28px">${hxSgn(S.bankC)}<small>${S.bankC >= 0 ? 'banked' : 'behind'}</small></div><div class="hx-note">${hxF1(S.logged)} logged of ${hxF1(S.expC)} needed by today (${S.total} days spread over ${S.all} working days)</div></div>
-      <div class="hx-well" style="padding:10px 14px"><div class="hx-k" style="color:var(--hx-cy)">${esc(S.m.name)}</div><div class="hx-big" style="margin-top:6px;font-size:28px">${S.mlog >= S.per ? hxSgn(S.mlog - S.per) : hxF1(S.per - S.mlog)}<small>${S.mlog >= S.per ? 'banked' : 'still needed'}</small></div><div class="hx-note">${hxF1(S.mlog)} logged of ${S.per} needed this month · ${S.mw - S.mel} working days left</div></div></div>
-    <div style="margin-top:12px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">${hxDayChips(S)}</div>${hxDialKey()}</div></div>`;
-}
-function wxReview(e) {
-  const today = todayISO(); const nx = splitList(e.engagement.reviewDates).filter((d) => d > today).sort()[0]; if (!nx) return '';
-  const left = daysBetween(today, nx); const done = Math.max(0, 14 - left); const r = 56, C = 2 * Math.PI * r; let ticks = '';
-  for (let i = 0; i <= 14; i += 7) { const th = -90 + 360 * i / 14; ticks += `<text x="${70 + (r + 14) * Math.cos(th * Math.PI / 180)}" y="${70 + (r + 14) * Math.sin(th * Math.PI / 180) + 3}" text-anchor="middle" font-size="9" fill="#626a76">${14 - i}</text>`; }
-  const dec = hxItems(e).filter((i) => i.stage === 'proposed').length;
-  return `<div class="hx-tile hx-click" ${hxP('review')}><div class="hx-th"><span class="hx-k">Next fortnightly review</span><span class="hx-knob">↗</span></div>
-    <div style="display:flex;align-items:center;gap:14px;margin-top:6px"><svg width="140" height="140" viewBox="0 0 140 140"><circle cx="70" cy="70" r="${r}" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="9"/><circle cx="70" cy="70" r="${r}" fill="none" stroke="#22c3d6" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(C * done / 14).toFixed(1)} ${C}" transform="rotate(-90 70 70)"/>${ticks}<text x="70" y="74" text-anchor="middle" font-size="30" font-weight="800" fill="#eef1f5">${left}d</text><text x="70" y="91" text-anchor="middle" font-size="10" fill="#9aa2ae">to go</text></svg>
-    <div><div style="font-size:18px;font-weight:800">${hxFd(nx, { weekday: 'short', day: 'numeric', month: 'short' })}</div><div class="hx-mut" style="margin-top:6px;line-height:1.55"><b style="color:var(--hx-ink)">${dec}</b> decision${dec === 1 ? '' : 's'} to put to the founders</div></div></div></div>`;
-}
-function wxPortal(e) {
-  const fb = live(e.reportFeedback || []); const unseen = fb.filter((x) => (x.type === 'comment' || x.type === 'flag') && !x.seen).length;
-  const ok = Object.keys(itApprovals(e)).length; const dec = hxItems(e).filter((i) => i.stage === 'proposed').length;
-  return `<div class="hx-tile hx-click" ${hxP('portal')}><div class="hx-th"><span class="hx-k">Founder portal</span><span class="hx-knob">↗</span></div>
-    <div class="hx-rings3">${[[unseen, 'New comments<br>or flags', 'var(--hx-or)'], [ok, 'Go-aheads', 'var(--hx-cy)'], [dec, 'Decisions<br>waiting', '#8b93a0']].map(([n, l, c]) => `<div><div class="hx-ring" style="border-color:${c};color:${c}">${n}</div><div class="hx-mut" style="font-size:11px;margin-top:7px;line-height:1.3">${l}</div></div>`).join('')}</div></div>`;
-}
 function hxNrrInfo(e) {
   const B = nrrBillingOn(e) ? nrrBill(e) : null; if (!B || B.trend.length < 2) return null; const T = B.trend; const a = T[T.length - 1], b = T[T.length - 2];
   const cfg = e.client.nrr || {}; const src = (e.sources || []).find((s) => s.id === cfg.source) || {};
   const due = cfg.nextDue || ''; const today = todayISO(); const late = due && due < today; const soon = due && !late && daysBetween(today, due) <= 3;
   return { B, a, b, due, late, soon, received: src.received || '', note: cfg.nextNote || '' };
-}
-function wxNrr(e) {
-  const N = hxNrrInfo(e); if (!N) return '';
-  const ring = (cx, v, col, lab, d) => { const r = 44, C = 2 * Math.PI * r; return `<circle cx="${cx}" cy="64" r="${r}" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="10"/><circle cx="${cx}" cy="64" r="${r}" fill="none" stroke="${col}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${(C * Math.min(1, v / N.B.target)).toFixed(1)} ${C}" transform="rotate(-90 ${cx} 64)"/><text x="${cx}" y="62" text-anchor="middle" font-size="18" font-weight="800" fill="#eef1f5">${Math.round(v)}%</text><text x="${cx}" y="77" text-anchor="middle" font-size="9.5" fill="#9aa2ae">${lab}</text><text x="${cx}" y="128" text-anchor="middle" font-size="11" font-weight="700" fill="${d >= 0 ? '#4fd18b' : '#ff8a7a'}">${d >= 0 ? '▲' : '▼'} ${Math.abs(d).toFixed(1)} pts</text>`; };
-  const d = N.a.all - N.b.all; const st = N.late ? ['Data late', 'var(--hx-red)'] : N.soon ? ['Data due soon', 'var(--hx-am)'] : ['On schedule', 'var(--hx-gr)'];
-  const dir = (k) => (N.a.by[k] ?? 0) - (N.b.by[k] ?? 0);
-  return `<div class="hx-tile hx-click" ${hxP('nrr')}><div class="hx-th"><span class="hx-k">Net revenue retention</span><span class="hx-knob">↗</span></div>
-    <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px;flex-wrap:wrap"><span class="hx-big">${Math.round(N.a.all)}%</span><span class="${d >= 0 ? 'hx-up' : 'hx-dn'}" style="font-weight:700">${d >= 0 ? '▲' : '▼'} ${Math.abs(d).toFixed(1)} pts on last month</span></div>
-    <svg width="100%" height="136" viewBox="0 0 240 136">${ring(62, N.a.by.direct ?? 0, '#22c3d6', 'Direct', dir('direct'))}${ring(178, N.a.by.reseller ?? 0, '#ff7a3d', 'Resellers', dir('reseller'))}</svg>
-    <div style="display:flex;align-items:center;gap:7px;font-size:11px;color:var(--hx-muted)"><span class="hx-light" style="--c:${st[1]}"></span>${st[0]} · data to ${esc(keyLabel(N.B.last))}${N.due ? ' · next due ' + esc(hxFd(N.due)) : ''}</div></div>`;
 }
 function hxBucket(n) { return n === 0 ? 0 : n <= 7 ? 1 : n <= 14 ? 2 : 3; }
 function wxFocus(e, full) {
@@ -189,59 +163,124 @@ function wxFocus(e, full) {
     <div class="hx-two"><div><div class="hx-k" style="color:var(--hx-or);margin-bottom:4px">${full ? 'My to-dos, due now or late' : 'Top 5 to do'}</div>${tl.slice(0, n).map(tRow).join('') || '<p class="hx-note">Nothing in this group.</p>'}</div>
     <div><div class="hx-k" style="color:var(--hx-cy);margin-bottom:4px">${full ? 'Late from the client' : 'Top 5 waiting on'}</div>${rl.slice(0, n).map(rRow).join('') || '<p class="hx-note">Nothing waiting in this group.</p>'}</div></div></div>`;
 }
-function wxPeople(e) {
-  const R = hxReqs(e); if (!R.length) return '';
-  return `<div class="hx-tile hx-alert"><div class="hx-th"><span class="hx-k" style="color:#ff8a8a">Waiting on ${esc(e.client.name)}</span><button class="hx-knob hot" ${hxP('people')}>!</button></div>
-    <div class="hx-big" style="margin:10px 0">${R.filter((r) => hxLateBy(r.dueDate)).length}<small>late of ${R.length}</small></div>
-    ${hxByPerson(e).map(([p, L]) => `<button class="hx-li" ${hxP('person', { n: p })}><span class="hx-sq" style="background:linear-gradient(145deg,#3b414b,#2a2e35)">${esc(String(p)[0])}</span><span><div class="hx-t">${esc(hxShow(e, p))}</div><div class="hx-s">${ui.share ? '' : esc(hxRole(e, p))}</div></span><span style="font-weight:800;font-size:15px;white-space:nowrap">${L.length}<span class="hx-late" style="margin-left:6px">${L.filter((r) => hxLateBy(r.dueDate)).length} late</span></span></button>`).join('')}</div>`;
+
+/* ---------- views ---------- */
+const HXV = {};
+/* ---------- Home layout (bento, 24 Nov): each widget has its own shape on a 12-column grid ---------- */
+const bxArea = (a) => `style="grid-area:${a}"`;
+function bxDays(e) {
+  const S = hxDays(e); if (!S.total) return '';
+  return `<div class="hx-tile hx-click bx-days" ${bxArea('days')} ${hxP('days')}><div class="bx-dial">${hxDial(S, 300)}</div><div class="bx-dside"><div class="hx-th"><span class="hx-k">My days</span><span class="hx-knob">↗</span></div>
+    <div class="bx-stat"><span class="hx-k" style="color:var(--hx-gr)">Contract to date</span><b>${hxSgn(S.bankC)}</b><span>${S.bankC >= 0 ? 'banked' : 'behind'} · ${hxF1(S.logged)} of ${hxF1(S.expC)} needed</span></div>
+    <div class="bx-stat"><span class="hx-k" style="color:var(--hx-cy)">${esc(S.m.name.split(' ')[0])}</span><b>${S.mlog >= S.per ? hxSgn(S.mlog - S.per) : hxF1(S.per - S.mlog)}</b><span>${S.mlog >= S.per ? 'banked' : 'still needed'} · ${hxF1(S.mlog)} of ${S.per} · ${S.mw - S.mel} working days left</span></div>
+    <div class="bx-chips">${hxDayChips(S)}</div>${hxDialKey()}</div></div>`;
 }
-function wxAhead(e) {
+function bxReview(e) {
+  const today = todayISO(); const nx = splitList(e.engagement.reviewDates).filter((d) => d > today).sort()[0]; if (!nx) return `<div class="hx-tile" ${bxArea('rev')}><span class="hx-k">Next review</span><p class="hx-note">No review dates set.</p></div>`;
+  const left = daysBetween(today, nx); const dec = hxItems(e).filter((i) => i.stage === 'proposed').length; const c = 62, r = 50; let seg = '';
+  for (let i = 0; i < 14; i++) { const a0 = -90 + i * 360 / 14 + 2, a1 = a0 + 360 / 14 - 4; const P = (a) => [c + r * Math.cos(a * Math.PI / 180), c + r * Math.sin(a * Math.PI / 180)]; const p0 = P(a0), p1 = P(a1); const on = i >= 14 - left;
+    seg += `<path d="M${p0[0].toFixed(1)} ${p0[1].toFixed(1)} A${r} ${r} 0 0 1 ${p1[0].toFixed(1)} ${p1[1].toFixed(1)}" fill="none" stroke="${on ? '#22c3d6' : 'rgba(255,255,255,.09)'}" stroke-width="9" stroke-linecap="round"/>`; }
+  return `<div class="hx-tile hx-click bx-rev" ${bxArea('rev')} ${hxP('review')}><span class="hx-k">Next review</span><svg width="124" height="124" viewBox="0 0 124 124" style="display:block;margin:8px auto 4px;flex:none">${seg}<text x="62" y="62" text-anchor="middle" font-size="28" font-weight="800" fill="#eef1f5">${left}</text><text x="62" y="78" text-anchor="middle" font-size="9.5" fill="#9aa2ae">day${left === 1 ? '' : 's'} to review</text></svg>
+    <div style="text-align:center"><div class="bx-revd">${hxFd(nx, { weekday: 'short', day: 'numeric', month: 'short' })}</div><div class="hx-mut" style="font-size:12px"><b style="color:var(--hx-or)">${dec}</b> decision${dec === 1 ? '' : 's'} to put to the founders</div></div></div>`;
+}
+function bxPortal(e) {
+  const fb = live(e.reportFeedback || []); const unseen = fb.filter((x) => (x.type === 'comment' || x.type === 'flag') && !x.seen).length; const ok = Object.keys(itApprovals(e)).length; const dec = hxItems(e).filter((i) => i.stage === 'proposed').length;
+  return `<div class="hx-tile hx-click bx-portal" ${bxArea('portal')} ${hxP('portal')}><span class="hx-k">Founder portal</span><div class="bx-pc bx-pch">${[[unseen, 'new comments or flags', 'var(--hx-or)'], [ok, 'go-aheads', 'var(--hx-cy)'], [dec, 'decisions waiting', '#8b93a0']].map(([n, l, c]) => `<div><b style="color:${c};border-color:${c}">${n}</b><span>${l}</span></div>`).join('')}</div></div>`;
+}
+function bxNrr(e) {
+  const N = hxNrrInfo(e); if (!N) return `<div class="hx-tile" ${bxArea('nrr')}><span class="hx-k">Net revenue retention</span><p class="hx-note">No billing per account loaded yet.</p></div>`;
+  const T = N.B.trend.slice(-6); const tgt = N.B.target; const lo = 60, hi = 140; const v = N.a.all; const d = v - N.b.all;
+  const cx = 140, cy = 128, r = 86; const ang = (x) => Math.PI * (1 - (Math.min(hi, Math.max(lo, x)) - lo) / (hi - lo)); const pt = (x, rr) => [cx + rr * Math.cos(ang(x)), cy - rr * Math.sin(ang(x))];
+  const arcP = (a, b, rr) => { const p0 = pt(a, rr), p1 = pt(b, rr); return `M${p0[0].toFixed(1)} ${p0[1].toFixed(1)} A${rr} ${rr} 0 0 1 ${p1[0].toFixed(1)} ${p1[1].toFixed(1)}`; };
+  let g = `<path d="${arcP(lo, hi, r)}" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="16"/><path d="${arcP(lo, Math.min(v, 100), r)}" fill="none" stroke="#ff6b5b" stroke-width="16"/>${v > 100 ? `<path d="${arcP(100, v, r)}" fill="none" stroke="#f5b83d" stroke-width="16"/>` : ''}`;
+  for (let x = lo; x <= hi; x += 20) { const a = pt(x, r + 12), b = pt(x, r + 18), t = pt(x, r + 30); g += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#5b636f" stroke-width="1.3"/><text x="${t[0]}" y="${t[1] + 3}" text-anchor="middle" font-size="9" fill="#7d8592">${x}</text>`; }
+  const ta = pt(tgt, r - 12), tb = pt(tgt, r + 12), tt = pt(tgt, r + 26); g += `<line x1="${ta[0]}" y1="${ta[1]}" x2="${tb[0]}" y2="${tb[1]}" stroke="#4fd18b" stroke-width="3"/><text x="${tt[0] + 4}" y="${tt[1]}" font-size="9.5" font-weight="700" fill="#4fd18b">${tgt}%</text>`;
+  const nd = pt(v, r - 30); g += `<line x1="${cx}" y1="${cy}" x2="${nd[0]}" y2="${nd[1]}" stroke="#eef1f5" stroke-width="3" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="7" fill="#2a2e35" stroke="#eef1f5" stroke-width="2"/>`;
+  const bar = (lab, k, col) => { const x = N.a.by[k]; if (x == null) return ''; const dd = x - (N.b.by[k] ?? x); return `<div class="bx-nb"><span>${lab}</span><i><b style="width:${Math.min(100, x / 140 * 100)}%;background:${col}"></b><em style="left:${tgt / 140 * 100}%"></em></i><span><b>${Math.round(x)}%</b> <span class="${dd >= 0 ? 'hx-up' : 'hx-dn'}">${dd >= 0 ? '▲' : '▼'}${Math.abs(dd).toFixed(1)}</span></span></div>`; };
+  const W = 250, H = 46, mn = Math.min(...T.map((t) => t.all)) - 2, mx = Math.max(...T.map((t) => t.all)) + 2; const X = (i) => i * W / Math.max(1, T.length - 1), Y = (x) => H - (x - mn) / (mx - mn || 1) * H;
+  const line = T.map((t, i) => `${X(i).toFixed(1)},${Y(t.all).toFixed(1)}`).join(' ');
+  const st = N.late ? ['Data late', 'var(--hx-red)'] : N.soon ? ['Data due soon', 'var(--hx-am)'] : ['On schedule', 'var(--hx-gr)'];
+  return `<div class="hx-tile hx-click bx-nrr" ${bxArea('nrr')} ${hxP('nrr')}><div class="hx-th"><span class="hx-k">Net revenue retention</span><span class="bx-fresh"><span class="hx-light" style="--c:${st[1]}"></span>${st[0]}</span></div>
+    <div class="bx-gauge"><svg width="280" height="138" viewBox="0 0 280 138">${g}</svg></div><div class="bx-gv"><b>${Math.round(v)}%</b><span class="${d >= 0 ? 'hx-up' : 'hx-dn'}">${d >= 0 ? '▲' : '▼'} ${Math.abs(d).toFixed(1)} pts on last month</span></div>
+    ${bar('Direct', 'direct', 'linear-gradient(90deg,#15a3b8,#5fe0ee)')}${bar('Resellers', 'reseller', 'linear-gradient(90deg,#d9531f,#ff9a6a)')}
+    <div class="bx-spark"><svg width="100%" height="${H + 4}" viewBox="0 -2 ${W} ${H + 4}" preserveAspectRatio="none"><defs><linearGradient id="bxg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff7a3d" stop-opacity=".45"/><stop offset="1" stop-color="#22c3d6" stop-opacity="0"/></linearGradient></defs><polygon points="0,${H} ${line} ${W},${H}" fill="url(#bxg)"/><polyline points="${line}" fill="none" stroke="#ffb08a" stroke-width="2"/></svg><div class="bx-sl">${T.map((t) => `<span>${keyLabel(t.k).split(' ')[0]}</span>`).join('')}</div></div>
+    <div class="hx-note" style="margin-top:4px">Data to ${esc(keyLabel(N.B.last))}${N.due ? ' · next due ' + esc(hxFd(N.due)) : ''}</div></div>`;
+}
+function bxFocus(e) {
+  const f = hxCur().p.f || 'all'; const today = todayISO(); const soon = addDaysISO(today, 2);
+  const T = hxTodos(e).filter((t) => f === 'all' || hxCat(t) === f); const R = hxReqs(e).filter((r) => f === 'all' || hxReqCat(e, r) === f);
+  const tl = T.filter((t) => t.due && t.due <= soon).sort((a, b) => a.due.localeCompare(b.due)); const rl = R.filter((r) => r.dueDate && r.dueDate < today).sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+  const cnt = (k) => hxTodos(e).filter((t) => hxCat(t) === k && hxLateBy(t.due)).length + hxReqs(e).filter((r) => hxReqCat(e, r) === k && hxLateBy(r.dueDate)).length;
+  const tabs = [['all', 'All', hxTodos(e).filter((t) => hxLateBy(t.due)).length + hxReqs(e).filter((r) => hxLateBy(r.dueDate)).length], ['founders', 'Founders', cnt('founders')], ['client', 'Client', cnt('client')], ['ours', 'Ours', cnt('ours')]].concat(ui.share ? [] : [['private', 'Private', cnt('private')]]);
+  const bk = ['due ≤2d', '1–7d late', '8–14d', '15d+']; const mine = bk.map((_, i) => tl.filter((t) => hxBucket(hxLateBy(t.due)) === i).length); const theirs = bk.map((_, i) => R.filter((r) => r.dueDate && (i === 0 ? r.dueDate >= today && r.dueDate <= soon : r.dueDate < today) && hxBucket(hxLateBy(r.dueDate)) === i).length); const mx = Math.max(1, ...mine, ...theirs);
+  const tRow = (t) => { const c = HX_CAT[hxCat(t)]; return `<button class="bx-row" ${hxP('todo', { id: t.id })}><i style="background:${c[1]}"></i><span>${esc(t.title)}</span><em>${hxLateBy(t.due) ? hxLateBy(t.due) + 'd' : 'soon'}</em></button>`; };
+  const rRow = (r) => `<button class="bx-row" ${hxP('req', { id: r.id })}><i style="background:var(--hx-cy)"></i><span>${esc(r.item)} <small>· ${esc(hxShow(e, r._p))}</small></span><em class="hx-lcy">${hxLateBy(r.dueDate)}d</em></button>`;
+  return `<div class="hx-tile bx-focus" ${bxArea('focus')}><div class="hx-th"><span class="hx-k">Needs you now · and what you're waiting on</span><button class="hx-knob" ${hxP('focus', { f })}>↗</button></div>
+    <div class="hx-tabs" style="margin:10px 0 8px">${tabs.map(([k, l, c]) => `<button class="hx-tb ${f === k ? 'on' : ''}" data-hxk="f" data-hxv="${k}">${l}<b>${c}</b></button>`).join('')}</div>
+    <div class="bx-bal"><div class="bx-bh"><span style="color:var(--hx-or)">I owe · ${tl.filter((t) => hxLateBy(t.due)).length} late</span><span></span><span style="color:var(--hx-cy)">Owed to me · ${rl.length} late</span></div>${bk.map((l, i) => `<div class="bx-br"><div><b>${mine[i]}</b><i style="width:${mine[i] / mx * 100}%"></i></div><span>${l}</span><div><i style="width:${theirs[i] / mx * 100}%"></i><b>${theirs[i]}</b></div></div>`).join('')}</div>
+    <div class="bx-lists"><div>${tl.slice(0, 7).map(tRow).join('') || '<p class="hx-note">Nothing here.</p>'}</div><div>${rl.slice(0, 7).map(rRow).join('') || '<p class="hx-note">Nothing waiting.</p>'}</div></div></div>`;
+}
+function bxPeople(e) {
+  const R = hxReqs(e); const P = hxByPerson(e); const mx = Math.max(1, ...P.map(([, L]) => L.length));
+  return `<div class="hx-tile bx-people" ${bxArea('people')}><div class="hx-th"><span class="hx-k" style="color:#ff8a8a">Waiting on ${esc(e.client.name)}</span><button class="hx-knob hot" ${hxP('people')}>!</button></div>
+    <div class="bx-pbig"><b>${R.filter((r) => hxLateBy(r.dueDate)).length}</b><span>late of ${R.length} requests</span></div>
+    ${P.map(([p, L]) => { const late = L.filter((r) => hxLateBy(r.dueDate)).length; return `<button class="bx-pr" ${hxP('person', { n: p })}><span class="bx-pn">${esc(hxShow(e, p))}<small>${ui.share ? '' : esc(hxRole(e, p))}</small></span><span class="bx-pbar"><i style="width:${late / mx * 100}%;background:linear-gradient(90deg,#e8443a,#ff8a7a)"></i><i style="width:${(L.length - late) / mx * 100}%;background:rgba(34,195,214,.55)"></i></span><b>${L.length}</b></button>`; }).join('')}
+    <div class="hx-key" style="margin-top:6px"><span><i style="display:inline-block;width:10px;height:6px;border-radius:2px;background:#ff6b5b;margin-right:5px"></i>Late</span><span><i style="display:inline-block;width:10px;height:6px;border-radius:2px;background:rgba(34,195,214,.55);margin-right:5px"></i>Not due yet</span></div></div>`;
+}
+function bxAhead(e) {
   const today = todayISO(); const g = e.engagement; const L = [];
-  live(g.milestones).forEach((m) => { if (m.date && m.date >= today) L.push([m.date, m.title, m.detail || '', 'Engagement milestones']); });
-  splitList(g.reviewDates).forEach((d) => { if (d >= today && !L.some((x) => x[0] === d)) L.push([d, 'Fortnightly review', '', 'Engagement plan']); });
-  (g.phases || []).forEach((p) => { if (p.start > today) L.push([p.start, p.name + ' starts', 'Engagement phase', 'Engagement plan']); });
-  const N = hxNrrInfo(e); if (N && N.due && N.due >= today) L.push([N.due, 'Billing data due from Finance', N.note || 'Next NRR and health update', 'Data rhythm']);
-  hxItems(e).forEach((i) => { const d = hxItemDate(e, i); if (d && d >= today && d <= addDaysISO(today, 14) && i.stage !== 'live') L.push([d, i.title, i.next || '', 'Item next step']); });
+  live(g.milestones).forEach((m) => { if (m.date && m.date >= today) L.push([m.date, m.title, m.detail || '']); });
+  splitList(g.reviewDates).forEach((d) => { if (d >= today && !L.some((x) => x[0] === d)) L.push([d, 'Fortnightly review', '']); });
+  (g.phases || []).forEach((p) => { if (p.start > today) L.push([p.start, p.name + ' starts', 'Engagement phase']); });
+  const N = hxNrrInfo(e); if (N && N.due && N.due >= today) L.push([N.due, 'Billing data due from Finance', 'Next NRR update']);
+  hxItems(e).forEach((i) => { const d = hxItemDate(e, i); if (d && d >= today && d <= addDaysISO(today, 14) && i.stage !== 'live') L.push([d, i.title, i.next || '']); });
   const S = L.sort((a, b) => a[0].localeCompare(b[0])).slice(0, 5);
-  return `<div class="hx-tile hx-warm"><div class="hx-k" style="color:#f2dcb6;position:relative">Ahead</div>${S.map(([d, t, s, src]) => `<div class="hx-ag"><span class="hx-dd"><b>${hxD(d).getDate()}</b><span>${hxFd(d, { month: 'short' })}</span></span><span>${esc(t)}<small>${esc(s)}${s ? ' · ' : ''}${esc(src)}</small></span></div>`).join('') || '<p class="hx-note" style="position:relative">Nothing dated ahead.</p>'}</div>`;
+  return `<div class="hx-tile hx-warm bx-ahead" ${bxArea('ahead')}><div class="hx-k" style="color:#f2dcb6;position:relative">Ahead</div><div class="bx-tl">${S.map(([d, t, s]) => `<div class="bx-te"><span class="bx-tdot"></span><span class="bx-td">${hxFd(d, { weekday: 'short', day: 'numeric', month: 'short' })} · ${daysBetween(today, d)}d</span><b>${esc(t)}</b>${s ? `<small>${esc(s)}</small>` : ''}</div>`).join('') || '<p class="hx-note">Nothing dated ahead.</p>'}</div></div>`;
 }
-function wxTools(e) {
-  return `<div class="hx-tile"><div class="hx-k">Studio</div><div class="hx-ctl" style="margin-top:12px"><button class="hx-tg" data-hxtog="hxHideNotes"><s class="${ui.hxHideNotes ? '' : 'on'}"></s>TGM notes</button><button class="hx-tg" data-action="share"><s class="${ui.share ? 'on' : ''}"></s>Screen share</button></div>
-    <div class="hx-ctl" style="margin-top:12px">${syncSupported() ? '<button class="hx-pl" data-action="syncCheck">⟳ Updates</button>' : ''}<button class="hx-pl" data-action="exportJSON">Back up</button><button class="hx-pl" data-action="classic">Classic view</button></div><p class="hx-note">TGM notes off hides private to-dos here. Screen share also turns names into roles and hides TGM-only items.</p></div>`;
-}
-function wxWork(e) {
+function bxWork(e) {
   const today = todayISO(); const open = hxItems(e).filter((i) => i.stage !== 'parked');
   const cell = (d, s) => open.filter((i) => splitList(i.depts).includes(d) && i.stage === s).length; const mx = Math.max(1, ...ITEM_DEPTS.flatMap(([d]) => HX_STAGES.map(([s]) => cell(d, s))));
   const soon = open.filter((i) => { const d = hxItemDate(e, i); return d && d <= addDaysISO(today, 7) && i.stage !== 'live'; }).sort((a, b) => hxItemDate(e, a).localeCompare(hxItemDate(e, b)));
   const dec = open.filter((i) => i.stage === 'proposed').sort((a, b) => String(a.stageSince || '9').localeCompare(String(b.stageSince || '9')));
+  const row = (i, tag, col) => `<button class="bx-row" ${hxP('item', { id: i.id })}><i style="background:${col}"></i><span>${esc(i.title)}</span><em style="color:${col}">${tag}</em></button>`;
+  return `<div class="hx-tile bx-work" ${bxArea('work')}><div class="hx-th"><span class="hx-k">The work · department × stage</span><button class="hx-knob" ${hxP('board', {})}>↗</button></div>
+    <div class="bx-wg"><table class="hx-tbl hx-grid"><tr><th></th>${HX_STAGES.map(([, n]) => `<th>${esc(n.slice(0, 5))}</th>`).join('')}</tr>${ITEM_DEPTS.map(([d, n]) => `<tr><td style="white-space:nowrap"><span class="hx-dot" style="--c:var(--gd-${d})"></span> ${esc(n.split(/ [&,]/)[0])}</td>${HX_STAGES.map(([s]) => { const c = cell(d, s); return `<td><button ${hxP('board', { d, s })} class="hx-cell" style="color:${c ? '#0e1114' : 'var(--hx-dim)'};background:${c ? `rgba(255,122,61,${0.25 + 0.75 * c / mx})` : 'rgba(255,255,255,.03)'}">${c || '·'}</button></td>`; }).join('')}</tr>`).join('')}</table>
+    <div class="bx-wl"><div class="hx-k" style="color:var(--hx-am)">Next step due in 7 days · ${soon.length}</div>${soon.slice(0, 4).map((i) => row(i, hxFd(hxItemDate(e, i)), hxItemDate(e, i) < today ? '#ff8a7a' : 'var(--hx-am)')).join('')}
+    <div class="hx-k" style="color:var(--hx-or);margin-top:10px">Waiting for a founder decision · ${dec.length}</div>${dec.slice(0, 3).map((i) => row(i, i.stageSince ? daysBetween(i.stageSince, today) + (String(i.stageSinceSure) === 'true' ? '' : '+') + 'd' : '—', 'var(--hx-or)')).join('')}</div></div></div>`;
+}
+function bxStages(e) {
+  const its = hxItems(e); const cols = { found: '#5b636f', investigating: '#9b7bff', proposed: '#ff7a3d', approved: '#f5b83d', underway: '#22c3d6', live: '#4fd18b', parked: '#3a3f48' };
+  const L = ITEM_STAGES.map(([k, n]) => [k, n, its.filter((i) => i.stage === k).length]).filter((x) => x[2]); const tot = L.reduce((s, x) => s + x[2], 0) || 1; const r = 54, C = 2 * Math.PI * r; let off = 0;
+  const arcs = L.map(([k, , n]) => { const len = C * n / tot; const a = `<circle cx="70" cy="70" r="${r}" fill="none" stroke="${cols[k]}" stroke-width="18" stroke-dasharray="${Math.max(0, len - 2).toFixed(1)} ${C}" stroke-dashoffset="${(-off).toFixed(1)}" transform="rotate(-90 70 70)"/>`; off += len; return a; }).join('');
+  return `<div class="hx-tile hx-click bx-stages" ${bxArea('stages')} ${hxP('board', {})}><span class="hx-k">Items by stage</span><svg width="140" height="140" viewBox="0 0 140 140" style="display:block;margin:8px auto 6px">${arcs}<text x="70" y="70" text-anchor="middle" font-size="26" font-weight="800" fill="#eef1f5">${its.length}</text><text x="70" y="86" text-anchor="middle" font-size="9.5" fill="#9aa2ae">items</text></svg>
+    <div class="bx-leg">${L.map(([k, n, c]) => `<span><i style="background:${cols[k]}"></i>${esc(n)}<b>${c}</b></span>`).join('')}</div></div>`;
+}
+function bxFruit(e) {
   const fr = hxFruit(e);
-  const mini = (i, tag, col) => `<button class="hx-li hx-mini" ${hxP('item', { id: i.id })}><span class="hx-t">${esc(i.title)}</span><span class="hx-chip" style="color:${col};border-color:${col}">${tag}</span></button>`;
-  return `<div class="hx-tile hx-span3"><div class="hx-th"><span class="hx-k">The work at a glance · department × stage</span><button class="hx-knob" ${hxP('board', {})}>↗</button></div>
-    <div class="hx-work"><div><table class="hx-tbl hx-grid"><tr><th></th>${HX_STAGES.map(([, n]) => `<th>${esc(n.slice(0, 5))}</th>`).join('')}</tr>${ITEM_DEPTS.map(([d, n]) => `<tr><td style="white-space:nowrap"><span class="hx-dot" style="--c:var(--gd-${d})"></span> ${esc(n.split(/ [&,]/)[0])}</td>${HX_STAGES.map(([s]) => { const c = cell(d, s); return `<td><button ${hxP('board', { d, s })} class="hx-cell" style="color:${c ? '#0e1114' : 'var(--hx-dim)'};background:${c ? `rgba(255,122,61,${0.25 + 0.75 * c / mx})` : 'rgba(255,255,255,.03)'}">${c || '·'}</button></td>`; }).join('')}</tr>`).join('')}</table></div>
-    <div><div class="hx-k" style="color:var(--hx-am)">Next step due within 7 days · ${soon.length}</div>${soon.slice(0, 5).map((i) => mini(i, hxFd(hxItemDate(e, i)), hxItemDate(e, i) < today ? '#ff8a7a' : 'var(--hx-am)')).join('')}</div>
-    <div><div class="hx-k" style="color:var(--hx-or)">Waiting for a founder decision · ${dec.length}</div>${dec.slice(0, 5).map((i) => mini(i, i.stageSince ? daysBetween(i.stageSince, today) + (String(i.stageSinceSure) === 'true' ? '' : '+') + ' days' : '—', 'var(--hx-or)')).join('')}</div>
-    <div><div class="hx-k" style="color:var(--hx-gr)">Lowest-hanging fruit · ${fr.length}</div>${fr.slice(0, 5).map((x) => mini(x.it, x.b.big ? 'R' + Math.round(num(x.b.big.valueMonthly) / 1000) + 'k' : 'Low effort', 'var(--hx-gr)')).join('')}</div></div></div>`;
+  return `<div class="hx-tile bx-fruit" ${bxArea('fruit')}><div class="hx-th"><span class="hx-k" style="color:var(--hx-gr)">Lowest-hanging fruit · ${fr.length}</span></div>${fr.slice(0, 5).map((x) => `<button class="bx-fr" ${hxP('item', { id: x.it.id })}><span><b class="bx-frt">${esc(x.it.title)}</b><small>${splitList(x.it.depts).map((dd) => `<i class="hx-dot" style="--c:var(--gd-${dd})"></i>`).join(' ')} ${x.b.eff <= 1.25 ? 'Low effort' : 'Low–moderate effort'} · ${x.b.sev >= 3 ? 'high impact' : 'medium impact'}</small></span><b>${x.b.big ? 'R' + Math.round(num(x.b.big.valueMonthly) / 1000) + 'k<small>/mo</small>' : ''}</b></button>`).join('') || '<p class="hx-note">Nothing low-effort waiting.</p>'}</div>`;
 }
-function wxDept(e, d) {
-  const its = hxItems(e).filter((i) => splitList(i.depts).includes(d) && i.stage !== 'parked'); const S = hxDeptStats(e, d); const ex = ui.hxExample;
+function bxDept(e, d, i) {
+  const its = hxItems(e).filter((x) => splitList(x.depts).includes(d) && x.stage !== 'parked'); const S = hxDeptStats(e, d); const ex = ui.hxExample;
   const light = S.broken.length ? 'var(--hx-red)' : (S.mi || S.p) ? 'var(--hx-am)' : S.M.length ? 'var(--hx-gr)' : 'var(--hx-dim)';
-  const exS = { lead: [2, 3, '▲'], sales: [1, 4, '▼'], cs: [3, 5, '▲'], ops: [2, 4, '■'], prod: [0, 2, '▼'], admin: [2, 4, '▲'] }[d] || [0, 0, '■'];
-  return `<div class="hx-tile hx-click hx-dept" ${hxP('dept', { d })} style="--dc:var(--gd-${d})">${ex ? '<span class="hx-ex">EXAMPLE</span>' : ''}<span class="hx-edge"></span>
-    <div class="hx-th"><span style="font-weight:700;font-size:13.5px">${esc(HX_DN[d])}</span>${ex ? '' : `<span class="hx-light" style="--c:${light}"></span>`}</div>
-    <div class="hx-stg">${HX_STAGES.map(([s, n]) => { const c = its.filter((i) => i.stage === s).length; return `<div><b style="background:${c ? `rgba(34,195,214,${0.15 + 0.12 * c})` : 'rgba(255,255,255,.03)'};color:${c ? 'var(--hx-ink)' : 'var(--hx-dim)'}">${c}</b><span>${esc(n.slice(0, 5))}</span></div>`; }).join('')}</div>
-    <div class="hx-well" style="padding:10px 12px;margin-top:12px;display:flex;align-items:center;gap:12px">${ex ? `<div class="hx-big" style="font-size:26px">${exS[0]}<small>of ${exS[1]} on target</small></div><span class="${exS[2] === '▲' ? 'hx-up' : exS[2] === '▼' ? 'hx-dn' : 'hx-mut'}" style="margin-left:auto;font-weight:800">${exS[2]}</span>`
-      : S.scored.length ? `<div class="hx-big" style="font-size:26px">${S.onT}<small>of ${S.scored.length} on target</small></div>` : `<div><div style="font-weight:700">Efficiency: not scored yet</div><div class="hx-mut" style="font-size:11px;margin-top:2px">${S.h} measured · ${S.p} partly · ${S.mi} not yet, of ${S.M.length}</div></div><span style="margin-left:auto;font-size:11px" class="hx-amb">${Math.round(S.ready * 100)}% ready</span>`}</div></div>`;
+  const exS = { lead: [2, 3], sales: [1, 4], cs: [3, 5], ops: [2, 4], prod: [0, 2], admin: [2, 4] }[d] || [0, 0];
+  const pct = ex ? exS[0] / (exS[1] || 1) : S.scored.length ? S.onT / S.scored.length : S.ready; const r = 30, C = 2 * Math.PI * r;
+  const mxs = Math.max(1, ...HX_STAGES.map(([s]) => its.filter((x) => x.stage === s).length));
+  return `<div class="hx-tile hx-click bx-dept" style="grid-area:d${i};--dc:var(--gd-${d})" ${hxP('dept', { d })}>${ex ? '<span class="hx-ex">EXAMPLE</span>' : ''}<span class="hx-edge"></span>
+    <div class="hx-th"><span class="bx-dn">${esc(HX_DN[d].split(/ [&,]/)[0])}</span>${ex ? '' : `<span class="hx-light" style="--c:${light}"></span>`}</div>
+    <div class="bx-dm"><svg width="76" height="76" viewBox="0 0 76 76"><circle cx="38" cy="38" r="${r}" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="8"/><circle cx="38" cy="38" r="${r}" fill="none" stroke="var(--dc)" stroke-width="8" stroke-linecap="round" stroke-dasharray="${(C * pct).toFixed(1)} ${C}" transform="rotate(-90 38 38)"/><text x="38" y="42" text-anchor="middle" font-size="15" font-weight="800" fill="#eef1f5">${Math.round(pct * 100)}%</text></svg>
+      <div><b>${ex ? exS[0] + ' of ' + exS[1] : S.scored.length ? S.onT + ' of ' + S.scored.length : S.h + ' of ' + S.M.length}</b><span>${ex || S.scored.length ? 'on target' : 'measured · not scored yet'}</span></div></div>
+    <div class="bx-ms">${S.M.map((m) => `<i title="${esc(m.name)}: ${esc((HX_ST[String(m.status).toLowerCase()] || HX_ST.missing)[0])}" style="background:${(HX_ST[String(m.status).toLowerCase()] || HX_ST.missing)[1]}"></i>`).join('')}<span>${S.M.length} measures</span></div>
+    ${S.M.filter((m) => String(m.status).toLowerCase() === 'missing').slice(0, 1).map((m) => `<div class="bx-next">Next to set up: ${esc(m.name)}</div>`).join('')}
+    <div class="bx-sb">${HX_STAGES.map(([s, n]) => { const c = its.filter((x) => x.stage === s).length; return `<div title="${esc(n)}: ${c}"><i style="height:${c ? 6 + 20 * c / mxs : 2}px"></i><b>${c}</b><span>${esc(n[0])}</span></div>`; }).join('')}</div></div>`;
 }
-
-/* ---------- views ---------- */
-const HXV = {};
+function bxTools() {
+  return `<div class="bx-tools"><button class="hx-tg" data-hxtog="hxHideNotes"><s class="${ui.hxHideNotes ? '' : 'on'}"></s>TGM notes</button><button class="hx-tg" data-action="share"><s class="${ui.share ? 'on' : ''}"></s>Screen share</button>${syncSupported() ? '<button class="hx-pl" data-action="syncCheck">⟳ Updates</button>' : ''}<button class="hx-pl" data-action="exportJSON">Back up</button></div>`;
+}
 HXV.home = (e) => { const st = e.engagement.phases.length ? engagementStatus(e) : null; const w = st ? Math.max(1, Math.ceil(st.elapsed / 7)) : 0; const today = todayISO();
   const ph = (e.engagement.phases || []).filter((x) => x.start <= today && today <= x.end).sort((a, b) => String(b.start).localeCompare(String(a.start)))[0] || (st && st.current);
-  return `<h1 class="hx-pg">Home</h1><p class="hx-pgs">${esc(e.client.name)}${ph ? ' · ' + esc(ph.name) + ` (${hxFd(ph.start)} – ${hxFd(ph.end)})` : ''}${st ? ` · week ${w} of ${Math.max(1, Math.round(st.termDays / 7))}` : ''}</p>
-  <div class="hx-sh"><h3>At a glance</h3><i></i></div><div class="hx-g4">${wxDays(e)}${wxReview(e)}${wxPortal(e)}</div>
-  <div class="hx-sh"><h3>To do and waiting on</h3><i></i></div><div class="hx-g4">${wxFocus(e)}${wxPeople(e)}${wxNrr(e)}</div>
-  <div class="hx-sh"><h3>The work</h3><i></i></div><div class="hx-g4">${wxWork(e)}<div class="hx-col">${wxAhead(e)}${wxTools(e)}</div></div>
-  <div class="hx-sh"><h3>Departments</h3><i></i><button class="hx-tg" data-hxtog="hxExample"><s class="${ui.hxExample ? 'on' : ''}"></s>Preview with example scores</button></div><div class="hx-g3">${ITEM_DEPTS.map(([d]) => wxDept(e, d)).join('')}</div>`; };
+  return `<div class="bx-head"><div><h1 class="hx-pg">Home</h1><p class="hx-pgs">${esc(e.client.name)}${ph ? ' · ' + esc(ph.name) + ` (${hxFd(ph.start)} – ${hxFd(ph.end)})` : ''}${st ? ` · week ${w} of ${Math.max(1, Math.round(st.termDays / 7))}` : ''}</p></div>${bxTools()}</div>
+  <div class="bx">${bxDays(e)}${bxNrr(e)}${bxReview(e)}${bxPortal(e)}${bxFocus(e)}${bxPeople(e)}${bxAhead(e)}${bxWork(e)}${bxStages(e)}${bxFruit(e)}${ITEM_DEPTS.map(([d], i) => bxDept(e, d, i)).join('')}</div>
+  <div class="bx-foot"><button class="hx-tg" data-hxtog="hxExample"><s class="${ui.hxExample ? 'on' : ''}"></s>Preview department scores with example values</button></div>`; };
 HXV.days = (e) => { const S = hxDays(e); const more = ui.hxPlanRest ? S.mw - S.mel : 0; const rest = S.total - S.logged - more; const left = S.M.length - 1 - S.mi; const perRest = left > 0 ? rest / left : 0;
   const phaseName = (id) => ((e.engagement.phases || []).find((p) => p.id === id) || {}).name || id || '';
   const dayRow = (d) => { const lg = S.log.find((l) => l.date === d), off = S.off.find((o) => o.date === d); const [t, c] = off ? ['off' + (off.why ? ' · ' + off.why : ''), 'var(--hx-dim)'] : lg ? ['logged', 'var(--hx-gr)'] : ['not logged', '#ff8a7a'];

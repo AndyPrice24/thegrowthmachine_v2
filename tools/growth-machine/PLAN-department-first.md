@@ -202,7 +202,7 @@ Each step ships on its own, is tested in Playwright at desktop and phone widths,
    - Founders' ticks, comments and red flags attach to items. Existing ones carry over to the item that now holds them.
    - Republish, and send the links once Andrew has checked it.
 9. **Reports.** The PDF report and the status report are organised by department and keep the source appendix.
-10. **Clean-up.**
+10. **Clean-up.** *Done 24 Nov 2026: Classic view and the old pages removed; docs and the method skill updated.*
     - Remove Classic view and the old Key changes, Leaks & opportunities and Plan pages.
     - Update the README, CLAUDE.md, the growth-machine method skill and the backlog.
     - The skill must say that every new finding goes into an item, with departments, types, a label and a stage.

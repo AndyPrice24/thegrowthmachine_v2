@@ -1,7 +1,8 @@
 /* ============================================================
-   Leaks & opportunities: everything the machine has found, in one ranked list.
-   Sources: findings (kind, valueMonthly, basis, partOf, fixId), opportunities, and the
-   crossover rule engine (signals spotted automatically by combining data).
+   Leaks, weaknesses, holes and opportunities: the lenses, ranking and the crossover rule engine (signals spotted by
+   combining data). Used by the founder portal, the reports and Sources & data; the Studio page that listed them was
+   replaced by Home and the board (clean-up, 24 Nov).
+   Sources: findings (kind, valueMonthly, basis, partOf, fixId), opportunities.
    ============================================================ */
 const LENSES = [
   ['leak', 'Leaks', 'Money, time or customers being lost'],
@@ -76,65 +77,3 @@ function leakFixChip(x) {
   return '<span class="chip lo-nofix">No action yet</span>';
 }
 
-function viewLeaks(e) {
-  const L = ui.lo = Object.assign({ lens: 'all', sort: 'size', signals: true, noFix: false, open: '' }, ui.lo || {});
-  const all = leakItems(e, { signals: L.signals });
-  const tot = leakTotals(all);
-  const count = (k) => all.filter((x) => x.kind === k).length;
-  let list = all.filter((x) => L.lens === 'all' || x.kind === L.lens);
-  if (L.noFix) list = list.filter((x) => !x.fix && !x.next && x.src !== 'signal');
-  if (L.unsized) list = list.filter((x) => !x.value && x.src !== 'signal');
-  if (L.nosrc) list = list.filter((x) => x.src !== 'signal' && x.rec && unsourced(e, x.src === 'opportunity' ? 'opportunity' : 'finding', x.rec));
-  const rankedAll = rankItems(list, L.sort);
-  const tops = rankedAll.filter((x) => !x.nested); const keep = new Set(topN('home', tops).map((x) => x.id));
-  const ranked = rankedAll.filter((x) => keep.has(x.nested ? x.partOf : x.id));
-  const sv = savingsTracker(e);
-  const noFix = all.filter((x) => !x.fix && !x.next && x.src !== 'signal').length, unsized = all.filter((x) => !x.value && x.src !== 'signal').length;
-  const kp = (label, v, sub) => kpi(label, v ? fmtMoney(v) + '/mo' : '—', `<div class="k-delta">${sub}</div>`);
-  const seg = (on, k, v, label) => `<button class="seg ${on ? 'on' : ''}" data-action="loSet" data-k="${k}" data-id="${v}">${label}</button>`;
-  const recOpts = (cur) => `<option value="">— none —</option>${e.recommendations.map((r) => `<option value="${esc(r.id)}" ${cur === r.id ? 'selected' : ''}>${esc(trunc(r.title, 70))}</option>`).join('')}`;
-  const parentOpts = (x) => `<option value="">— top level —</option>${all.filter((y) => y.src === 'finding' && y.id !== x.id && !y.partOf).map((y) => `<option value="${esc(y.id)}" ${x.partOf === y.id ? 'selected' : ''}>${esc(trunc(y.title, 70))}</option>`).join('')}`;
-  const cell = (x, field, html) => (x.src === 'finding' ? html.replace('<select', `<select data-cell data-coll="findings" data-id="${esc(x.id)}" data-field="${field}"`) : '');
-  const editor = (x) => x.src !== 'finding' ? (x.src === 'opportunity' ? '<p class="faint small">Edit this opportunity in Evidence → Market, or in Sources &amp; data.</p>' : '<p class="faint small">Spotted by combining data already in the Studio (crossing finance, people, tools, processes and interviews). Fix the cause, or add a finding if it matters.</p>') : `
-      <div class="lo-edit">
-        <label>Lens ${cell(x, 'kind', `<select>${LENSES.map(([k, n]) => `<option value="${k}" ${x.kind === k ? 'selected' : ''}>${n}</option>`).join('')}<option value="context">Background only (hide)</option></select>`)}</label>
-        <label>Size per month <input type="number" data-cell data-type="num" data-coll="findings" data-id="${esc(x.id)}" data-field="valueMonthly" value="${x.value || ''}" placeholder="R / month"></label>
-        <label>Basis ${cell(x, 'basis', `<select><option value=""></option>${BASES.map((b) => `<option ${x.basis === b ? 'selected' : ''}>${b}</option>`).join('')}</select>`)}</label>
-        <label>Fix ${cell(x, 'fixId', `<select>${recOpts(x.fix && x.fix.id)}</select>`)}</label>
-        <label>Part of ${cell(x, 'partOf', `<select>${parentOpts(x)}</select>`)}</label>
-        <label class="lo-wide">Next step (question or data request) <input type="text" data-cell data-coll="findings" data-id="${esc(x.id)}" data-field="nextStep" value="${esc(x.next)}" placeholder="e.g. Ask Natalie: revenue by partner"></label>
-      </div>`;
-  const row = (x, i) => {
-    const open = L.open === x.id;
-    return `<div class="lo-row ${x.nested ? 'nested' : ''} ${open ? 'open' : ''}">
-      <button class="lo-main" data-action="loOpen" data-id="${esc(x.id)}">
-        <span class="lo-rank">${x.nested ? '↳' : i}</span>
-        <span class="lo-lens lo-${x.kind}" title="${esc((LENSES.find((l) => l[0] === x.kind) || [])[1] || '')}">${LENS_ICON[x.kind] || ''}</span>
-        <span class="lo-title">${x.pinned ? '<span class="chip pin-chip" title="Pinned above the money ranking because the client named it a priority">★ Founder priority</span> ' : ''}${sevChip(x.sev)} ${esc(x.title)}${x.src === 'signal' ? ' <span class="chip lo-auto">auto</span>' : ''}${x.kindSet ? '' : ' <span class="chip lo-auto" title="Lens guessed from the area. Open to set it.">lens?</span>'}</span>
-        <span class="lo-val">${x.value ? `<b>${fmtMoney(x.value)}</b>/mo<em>${esc((x.basis || '').toLowerCase())}</em>` : '<span class="faint">Not sized</span>'}</span>
-        <span class="lo-fixcol">${leakFixChip(x)}</span>
-      </button>
-      ${open ? `<div class="lo-detail"><p>${esc(x.detail)}</p>${x.src !== 'signal' && x.rec ? citeBlock(e, x.src === 'opportunity' ? 'opportunity' : 'finding', x.rec) : ''}<p class="faint small">${esc(x.area)}${x.partOf ? ` · part of: ${esc((all.find((y) => y.id === x.partOf) || {}).title || x.partOf)}` : ''}${x.fix ? ` · fix: ${esc(x.fix.title)} (${esc(x.fix.horizon || '')})` : ''}${x.next ? ` · next: ${esc(x.next)}` : ''}</p>${editor(x)}</div>` : ''}
-    </div>`;
-  };
-  let n = 0;
-  const byLens = LENSES.map(([k, name]) => ({ label: name, value: sum(all.filter((x) => x.kind === k && !x.partOf), (x) => x.value), tip: `${count(k)} items` }));
-  return `<div class="page-h"><div><span class="eyebrow">${esc(e.client.name)}</span><h1>Leaks &amp; opportunities</h1><p class="muted">What's leaking, what it's worth, and what needs you today. Ranked by money at stake; each item says what fixes it.</p></div></div>
-  <div class="kpis">${(() => { if (!e.client.nrr) return ''; const BL = nrrBillingOn(e) ? nrrBill(e) : null; const N = BL ? null : nrrData(e); const v = BL && BL.all.nrr != null ? Math.round(BL.all.nrr) : N && N.ttm.nrr != null ? Math.round(N.ttm.nrr) : num(e.client.nrr.value); if (!v) return ''; const tg = num(e.client.nrr.target) || 125; return kpi(BL ? 'NRR, from billing' : 'NRR, last 12 months', v + '%', `<div class="k-delta ${v < tg ? 'delta-bad' : ''}">target ${tg}% · ${BL ? esc(BL.winNow) + ' against a year earlier' : N ? keyLabel(N.first) + ' to ' + keyLabel(N.last) + ', estimate' : esc(e.client.nrr.note || '')}</div><button class="link small" data-action="tab" data-id="evidence" data-sub="growth">Open the growth view →</button>`); })()}${kp('Leaking now', tot['Leaking'], 'revenue or spend being lost')}${kp('Exposed', tot['At risk'], 'up for renewal or showing risk; not all of it will leave')}${kp('Spend to review', tot['Spend to review'], 'cost base where savings sit')}${kp('Upside', tot['Upside'], 'revenue not yet taken')}${sv.target ? kpi('Savings approved', fmtMoney(sv.approved) + '/mo', `<div class="k-delta">of ${fmtMoney(sv.target)} target · ${fmtMoney(sv.identified)} identified (estimates)</div>`) : ''}</div>
-  ${needsInput(e, all)}
-  <section class="card">
-    <div class="lo-bar">
-      <span class="pv-switch sm">${seg(L.lens === 'all', 'lens', 'all', `All (${all.length})`)}${LENSES.map(([k, name]) => seg(L.lens === k, 'lens', k, `${LENS_ICON[k]} ${name} (${count(k)})`)).join('')}</span>
-      <span class="pv-switch sm">${seg(L.sort === 'size', 'sort', 'size', 'Biggest first')}${seg(L.sort === 'severity', 'sort', 'severity', 'Most severe first')}</span>
-      <label class="small"><input type="checkbox" data-action="loTick" data-k="signals" ${L.signals ? 'checked' : ''}> Include signals spotted automatically</label>
-    </div>
-    ${L.lens !== 'all' ? `<p class="small muted" style="margin:8px 0 0">${esc((LENSES.find((l) => l[0] === L.lens) || [])[2] || '')}</p>` : ''}
-    <div class="lo-head"><span>#</span><span></span><span>What</span><span>At stake</span><span>Fix</span></div>
-    <div class="lo-list">${ranked.length ? ranked.map((x) => row(x, x.nested ? 0 : ++n)).join('') : empty('Nothing here yet.')}</div>
-    ${showAllBtn('home', tops.length)}
-    ${L.noFix || L.unsized || L.nosrc ? `<p class="small" style="margin:8px 0 0">Filtered: ${L.noFix ? 'no action yet' : L.unsized ? 'not sized' : 'figures with no source'}. <button class="link" data-action="loNeed" data-k="clear">Show everything</button></p>` : ''}
-    <p class="faint small" style="margin:10px 0 0">Totals count each item once (parts nested under a bigger item are not added again). Sizes are estimates from the sources named in each item. “Biggest first” counts leaking in full, at risk and upside at half, spend to review at a fifth.</p>
-  </section>
-  ${automationCard(e)}
-  ${card('Where the money is, by lens', hbars(byLens.filter((x) => x.value > 0), { fmt: (v) => fmtMoney(v) + '/mo', color: 'var(--s1)' }), { sub: 'Sized items only, all bases together. Use it to see where the weight sits, not as a single total.' })}`;
-}

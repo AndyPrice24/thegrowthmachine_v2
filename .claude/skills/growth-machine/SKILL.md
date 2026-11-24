@@ -21,6 +21,15 @@ Every automation sits under the recommendation it belongs to (finding → recomm
 if none fits, and never let an automation repeat a recommendation's wording (the recommendation holds the what and why, the
 automation the how).
 
+**Everything goes into an item.** The Studio's Home, board and departments, and the founders' projects, read the `items`
+collection. Every new finding goes into an item (an existing one if it is the same issue, else a new one) with `depts` (lead,
+sales, cs, ops, prod, admin; the first is the owner), `types`, a `label` (leak / opportunity / weakness), one `stage` (found,
+investigating, proposed, approved, underway, live, parked) and `stageSince`, the `next` step, `nextDate` and `owner`, and links
+(`recIds`, `findingIds`, `automationIds`, `opportunityIds`, `moveId`). Project items (approved, under way, live) also carry `why`,
+`knockOn` and `willBe` (an aim, not a promise). When a stage changes in an update file, send `stageSince` with it. Sources & data
+→ "Item coverage" flags any record that sits in no item. Department efficiency measures live in `measures` (dept, name, why,
+source, rhythm, status have/partly/missing, value, target, points, trend, broken).
+
 ## Who we are (from thegrowthmachine.co)
 The Growth Machine is a senior, hands-on fractional growth office run by Andrew and Tarren.
 - Start one level above the job title: what does the business actually need to grow?

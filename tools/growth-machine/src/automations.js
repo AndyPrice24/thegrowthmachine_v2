@@ -22,10 +22,10 @@ function autoFindings(e, a) {
   splitList(a.findingIds).forEach((id) => ids.add(id));
   return e.findings.filter((f) => ids.has(f.id));
 }
-/** Jump to a recommendation on Plan, or to an automation on Leaks & opportunities, and bring it into view. */
+/** Open the item that holds a recommendation or an automation (Home → item), else Sources & data. */
 function focusEl(id) { setTimeout(() => { const el = document.getElementById(id); if (el) { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 1600); } }, 60); }
-function goRec(id) { ui.tab = 'plan'; ui.all = Object.assign({}, ui.all); ['Identified', 'Approved', 'In progress', 'Realised'].forEach((s) => { ui.all['plan_' + s] = true; }); saveUI(); render(); focusEl('rec-' + id); }
-function goAuto(id) { ui.tab = 'home'; ui.auOpen = id; ui.all = Object.assign({}, ui.all, { auto: true }); saveUI(); render(); focusEl('au-' + id); }
+function goRec(id) { hxOpenFor('recommendation', id); }
+function goAuto(id) { hxOpenFor('automation', id); }
 /** Feasibility questions: an array, or one per line when typed in the data editor. */
 function autoQs(a) { return (Array.isArray(a.questions) ? a.questions : String(a.questions || '').split('\n')).map((q) => String(q).trim()).filter(Boolean); }
 function automationCard(e) {

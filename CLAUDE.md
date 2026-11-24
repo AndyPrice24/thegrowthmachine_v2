@@ -24,10 +24,14 @@ Then propose better ways of working: new models, flows, systems and tools, plus 
 The full method is in the `growth-machine` skill (`.claude/skills/growth-machine/SKILL.md`).
 
 ## How to present it
-- Lead with **Key changes** (the `moves` collection; Studio and founder portal): the few changes that matter most, told as before →
-  what has happened → effect → next, in four buckets (Remove friction, Bring light, Unblock & empower, Stop the leaks). Record TGM's
-  alignment and unblocking work there, not only as findings. Keep people dynamics in the move's `private` note (TGM only); be exact
-  about stage (Agreed, Under way, Live, Measured) and mark numbers we don't have yet "to confirm".
+- Everything we find or change is an **item** (the `items` collection): one per issue or change, with departments, types, a label
+  (leak / opportunity / weakness), one stage (Found → Investigating → Proposed → Approved → Under way → Live, or Parked), a
+  `stageSince` date, the next step and owner, and links to its findings, recommendations, automations and key-change story. Items lead
+  the Studio's Home and board and the founders' Projects and Lowest-hanging fruit pages; each project says why, knock-on and
+  will be (an aim). A new finding goes into an item, never on its own.
+- A **key change** (`moves`) is the before → what has happened → next story behind a project item. Record TGM's alignment and
+  unblocking work there, not only as findings. Keep people dynamics in the `private` note (TGM only); be exact about stage and mark
+  numbers we don't have yet "to confirm".
 - **Tone: plain and factual, never salesy.** Say what happened and what's true, with dates and figures. No drama ("back on track
   after months on hold", "many doubted"), no self-credit, no "surprising" tags; let the facts carry the weight.
   Don't narrate the page or tell founders how to read it ("each change shows…", "hover for…"); headings and content are enough.

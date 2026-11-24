@@ -1,12 +1,11 @@
 /* ============================================================
-   The seven pages. Each answers one question for TGM:
-   Home (what's leaking and what needs me), Plan (what we suggest and what it saves), Processes (where work breaks),
+   The pages. Home (home.js: what needs me, the board, departments, my days, waiting on), Processes (where work breaks),
    Evidence (what proves it), Conversations (who we ask what next), Progress & reports (are we on track),
    Sources & data (where every number comes from). Older page ids still work: they redirect here.
    ============================================================ */
 const TAB_ALIAS = {
-  overview: ['home'], leaks: ['home'], crossover: ['home'],
-  recs: ['plan'], scenarios: ['plan'],
+  overview: ['hub'], leaks: ['hub'], crossover: ['hub'], home: ['hub'], moves: ['hub'], plan: ['hub'], dept: ['hub'], stage: ['hub'],
+  recs: ['hub'], scenarios: ['hub'],
   finance: ['evidence', 'money'], business: ['evidence', 'clients'], org: ['evidence', 'people'], tools: ['evidence', 'tools'], competitors: ['evidence', 'market'],
   interviews: ['talk', 'interviews'], discovery: ['talk', 'discovery'],
   report: ['progress', 'report']
@@ -17,13 +16,13 @@ const SUBTABS = {
   progress: [['progress', 'Progress & time'], ['report', 'Reports']]
 };
 /** Pages where "View as" (current state or a scenario) changes what is shown. */
-const SCENARIO_TABS = ['plan', 'evidence', 'processes'];
+const SCENARIO_TABS = ['evidence', 'processes'];
 
 function normaliseTab() {
   ui.sub = ui.sub || {};
   const a = TAB_ALIAS[ui.tab];
   if (a) { ui.tab = a[0]; if (a[1]) ui.sub[a[0]] = a[1]; }
-  if (!TABS.some((t) => t[0] === ui.tab) && !(shellOn() && SHELL_TABS.includes(ui.tab))) ui.tab = shellOn() ? 'hub' : 'home';
+  if (!TABS.some((t) => t[0] === ui.tab)) ui.tab = 'hub';
   Object.keys(SUBTABS).forEach((t) => { if (!SUBTABS[t].some((s) => s[0] === ui.sub[t])) ui.sub[t] = SUBTABS[t][0][0]; });
 }
 const subOf = (t) => { const s = (ui.sub || {})[t] || SUBTABS[t][0][0]; return PORTAL_ON && t === 'evidence' && (s === 'insights' || s === 'value') ? 'growth' : s; };
@@ -62,43 +61,6 @@ function needsInput(e, all) {
   return `<div class="needs"><span class="needs-h">Needs your input</span>${chips.length ? chips.join('') : '<span class="faint small">Nothing right now.</span>'}</div>`;
 }
 
-/* ---------- Plan: recommendations by stage, the savings tracker, scenarios ---------- */
-function viewPlan(e) {
-  const sv = savingsTracker(e); const rows = scoreRecommendations(e);
-  const stageOf = (r) => (REC_STAGES.includes(r.rec.status) ? r.rec.status : 'Identified');
-  const groups = [['Identified', 'Identified: our suggestions, for the client to decide'], ['Approved', 'Approved by the client'], ['In progress', 'In progress'], ['Realised', 'Realised: saving or gain confirmed']];
-  const money = !sv.hidden;
-  const head = `<thead><tr><th>#</th><th>Recommendation</th>${money ? '<th>Score</th><th class="r">Value / yr</th><th class="r">Hours freed / mo</th><th class="r">One-off</th><th class="r">Payback</th>' : ''}<th>Stage</th></tr></thead>`;
-  const autoLine = (rec) => { const au = autosFor(e, rec.id); return au.length ? `<div class="small plan-auto"><b>Runs itself:</b> ${au.map((a) => `<button class="link" data-action="goAuto" data-id="${esc(a.id)}">${(AUTO_APPROACH[a.approach] || AUTO_APPROACH.native)[0]} ${esc(trunc(a.title, 70))}</button> <span class="faint">(${esc(a.status || 'Idea')}${autoQs(a).length ? `, ${autoQs(a).length} to check` : ''})</span>`).join(' · ')}</div>` : ''; };
-  const row = (r, i) => `<tr id="rec-${esc(r.rec.id)}" class="${r.rec.status === 'Rejected' ? 'row-removed' : ''}"><td>${i + 1}</td><td>${r.rec.pinned ? '<span class="chip pin-chip">★ Founder priority</span> ' : ''}<strong>${esc(r.rec.title)}</strong> <span class="chip">${esc(r.rec.type || '—')}</span> <span class="chip">${esc(r.rec.horizon || '—')}</span>
-      <div class="muted small">${esc(trunc(r.rec.description || '', 260))}</div>
-      <div class="small plan-stick">${r.rec.stick ? `<b>How it sticks:</b> ${esc(r.rec.stick)}` : '<span class="chip lo-nofix">How it sticks: not set</span> <span class="faint">system, ease, visibility, incentive, owner</span>'}${r.rec.owner ? ` · <b>Owner:</b> ${esc(r.rec.owner)}` : ''}</div>${autoLine(r.rec)}${citeFold(e, 'recommendation', r.rec)}</td>
-    ${money ? `<td><div class="score-bar"><span style="width:${r.score}%"></span></div><span class="small">${r.score}</span></td>
-    <td class="r">${fmtMoney(r.cash + r.revenue)}</td><td class="r">${Math.round(r.hoursSaved)}</td><td class="r">${fmtMoney(r.oneOff)}</td><td class="r">${r.payback == null ? '—' : r.payback.toFixed(1) + ' mo'}</td>` : ''}
-    <td><select data-cell data-coll="recommendations" data-id="${r.rec.id}" data-field="status">${REC_STAGES.map((s) => `<option ${r.rec.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select></td></tr>`;
-  const block = ([stage, title]) => {
-    const list = rows.filter((r) => stageOf(r) === stage).sort((a, b) => (b.rec.pinned ? 1 : 0) - (a.rec.pinned ? 1 : 0)); if (!list.length) return '';
-    const key = 'plan_' + stage;
-    return card(`${title} (${list.length})`, `<table class="tbl recs">${head}<tbody>${topN(key, list).map(row).join('')}</tbody></table>${showAllBtn(key, list.length)}`, { cls: 'scroll-x' });
-  };
-  const rejected = rows.filter((r) => r.rec.status === 'Rejected');
-  const impacts = e.scenarios.map((s) => ({ s, i: scenarioImpact(e, s.id) }));
-  const scenTable = impacts.length ? `<table class="tbl"><thead><tr><th>Scenario</th><th class="r">Headcount Δ</th><th class="r">Cash saving / yr</th><th class="r">Revenue uplift</th><th class="r">Hours freed / mo</th><th class="r">One-off</th><th class="r">Payback</th><th></th></tr></thead><tbody>
-    ${impacts.map(({ s, i }) => `<tr><td><strong>${esc(s.name)}</strong><div class="muted small">${esc(s.description || '')}</div></td><td class="r">${i.headcountDelta}</td><td class="r">${fmtMoney(i.cashSaving)}</td><td class="r">${fmtMoney(i.revenueUplift)}</td><td class="r">${hrs(i.hoursSaved)}</td><td class="r">${fmtMoney(i.oneOff)}</td><td class="r">${i.paybackMonths == null ? '—' : i.paybackMonths.toFixed(1) + ' mo'}</td><td><button class="btn sm" data-action="setScenario" data-id="${s.id}">View</button></td></tr>`).join('')}</tbody></table>` : empty('No scenarios yet.');
-  const builder = e.scenarios.length ? `<table class="tbl"><thead><tr><th>Recommendation</th>${e.scenarios.map((s) => `<th class="c"><input class="inline" data-cell data-coll="scenarios" data-id="${s.id}" data-field="name" value="${esc(s.name)}"></th>`).join('')}</tr></thead><tbody>
-    ${rows.map((r) => `<tr><td>${esc(r.rec.title)} <span class="faint small">(score ${r.score})</span></td>${e.scenarios.map((s) => `<td class="c"><input type="checkbox" data-action="toggleRecInScenario" data-scenario="${s.id}" data-rec="${r.rec.id}" ${splitList(s.recommendationIds).includes(r.rec.id) ? 'checked' : ''}></td>`).join('')}</tr>`).join('')}
-    <tr><td></td>${e.scenarios.map((s) => `<td class="c"><button class="btn sm ghost" data-action="delScenario" data-id="${s.id}" title="Delete scenario">✕</button></td>`).join('')}</tr></tbody></table>` : '';
-  return `${scenarioBanner(e)}<div class="page-h"><div><span class="eyebrow">Plan</span><h1>${money ? 'What we suggest, and what it saves' : 'What we suggest'}</h1><p class="muted">Recommendations are suggestions for the client to decide, ordered from identified to realised. Each says how it will stick. Only approved and realised savings count towards the target.</p></div>
-    <div class="btn-row"><button class="btn" data-action="addRec">+ Add recommendation</button></div></div>
-  ${sv.target ? card('Savings against the target', savingsBlock(sv, { rows: false }), { sub: 'Monthly recurring savings, net of new recurring costs. Stage comes from each recommendation.' }) : ''}
-  ${groups.map(block).join('')}
-  ${(() => { const parked = rows.filter((r) => r.rec.status === 'Parked'); return parked.length ? `<details class="card"><summary class="small"><b>Parked: the client's decision, not ours to drive (${parked.length})</b></summary><table class="tbl recs">${head}<tbody>${parked.map(row).join('')}</tbody></table></details>` : ''; })()}
-  ${rejected.length ? `<details class="card"><summary class="small"><b>Rejected (${rejected.length})</b></summary><table class="tbl recs">${head}<tbody>${rejected.map(row).join('')}</tbody></table></details>` : ''}
-  ${money ? card('Scenarios: bundles of recommendations', `<div class="scroll-x">${scenTable}</div>
-    <details class="small"><summary><b>Build or edit scenarios</b></summary><div class="btn-row"><button class="btn sm" data-action="addScenario">+ Add scenario</button></div><div class="scroll-x">${builder}</div></details>`,
-    { sub: 'A scenario is the current state with a set of recommendations applied. "View" switches Processes and Evidence to it.' }) : ''}
-  ${money ? `<p class="muted small">Score = 50% value, 20% low effort, 15% low risk, 15% confidence. Value = cash saving + revenue uplift + half the value of freed hours (freed hours are capacity, not cash, unless headcount changes). Edit details, "how it sticks", owner and modelled changes in Sources &amp; data → Recommendations.</p>` : ''}`;
-}
 
 /* ---------- Evidence: the detail behind findings ---------- */
 function viewEvidence(e) {

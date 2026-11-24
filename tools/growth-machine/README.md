@@ -17,30 +17,22 @@ The Growth Machine's internal diagnostic tool, built for use across every client
 - **Scenarios** (Plan). A scenario is a set of recommendations applied to the current state. Plan, Processes and Evidence can switch between "current" and any scenario, with changes flagged as New / Changed / Removed.
 - **A founder report.** Print it to PDF or download it as one self-contained HTML file. It holds no raw data and needs neither this tool nor Claude to open.
 
-## Layout: department-first (graphite)
+## Layout (graphite)
 
-The Studio opens on **Home**, in a graphite shell with a left menu: Home; the six departments (with item counts);
-Whole business (How work flows, Insights & value); Our engagement (Our work, Conversations, Reports, Sources & data).
-The client switcher sits at the top of the menu; Updates, Screen share, Back up, New client and **Classic view** at the
-bottom. Classic view brings back the earlier layout (the seven pages below) until the department-first build is
-finished; **New layout** in its top bar switches back.
+The Studio opens on **Home**, in a graphite shell with a left menu: Home, Board, the six departments (with item counts),
+Whole business (How work flows, Insights & value) and Our engagement (My days, Waiting on, Our work, Conversations,
+Reports, Sources & data). The client switcher sits at the top of the menu; Updates, Screen share, Back up, New client and
+Collapse menu at the bottom. Board, departments, My days and Waiting on open inside Home, with a Back step (see "Home").
+Classic view and its pages (Key changes, Leaks & opportunities, Plan, the first Home and department board) were removed in
+the clean-up on 24 Nov 2026; their old links now open Home, and a link to a finding, recommendation, automation or key
+change opens the item that holds it (else Sources & data).
 
-- **Home** (for TGM): at a glance (my to-dos past their date, the next fortnightly review and the decisions for it,
-  what we're waiting on from the client, my days), Needs you now (overdue and due in two days, oldest first), Key
-  changes in motion (items approved or under way, with their next step and date), the six departments, every item by
-  stage, and Ahead (the next three weeks, the client's headline numbers, the founder portal).
-- **A department** shows its items as a board, one column per stage, with parked items in a strip underneath. Filters,
-  the item detail panel, headline numbers and the other tabs follow in steps 3 to 5 of `PLAN-department-first.md`.
-- **Every item at one stage**, across departments: open it from a stage count on Home. It replaces Key changes.
-- Pages not rebuilt yet open inside the same shell, in graphite colours.
-
-## The seven pages
-Each page answers one question. Older page names still work as links and redirect.
+## The pages
+Each page answers one question. Older page names still work as links and redirect to Home.
 
 | Page | The question it answers | What's on it |
 |---|---|---|
-| **Leaks & opportunities** (home) | What's leaking, what's it worth, and what needs me today? | Money at stake (leaking, at risk, spend to review, upside), savings approved against the target, a **Needs your input** strip (overdue client items, items with no action, items not sized, to-dos past their date), then the ranked list (top 5, "Show all"). |
-| **Plan** | What do we suggest, how will it stick, and what will it save? | Savings against the target, recommendations by stage (Identified → Approved → In progress → Realised; top 5 per stage), each with "How it sticks" and owner; scenarios as bundles of recommendations. |
+| **Home** (hub) | What needs me, what's moving, and where does each department stand? | See "Home" below. |
 | **Processes** | Where does work break? | Department view and Process view (unchanged). |
 | **Evidence** | What proves it? | Tabs: Money (finance), Clients (segments, concentration, revenue leaks, register, health), People (org, department scorecard, who carries which process), Tools, Market (competitors, opportunities, business profile). |
 | **Conversations** | Who do we ask what next? | **By person**: prepared questions in run order (★ first), what they've answered, and the data requests they owe; Start interview. Plus Interviews and Discovery. |
@@ -310,7 +302,7 @@ What each founder sees from their own link, served by TGM's Apps Script web app 
   listeners `google.script.run` needs for comments and flags.
 
 ### Big moves
-The Studio opens on **Big moves**, and they lead the founder portal's Overview (plus a Big moves section with one page per move).
+Key changes (the `moves` collection) are now the story behind an item: the founder portal opens one from its project ("The story so far"). The Studio page for them was removed in the clean-up; edit them in Sources & data.
 A move is a change with the biggest knock-on effect, told as a story: before, what changed (dated timeline), impact, what's next,
 and a stage track (Aligned → Unblocked → Live → Measured). Buckets: `friction` (Remove friction), `light` (Bring light), `empower`
 (Unblock & empower), `leaks` (Stop the leaks). Records live in the `moves` collection: `title`, `bucket`, `pinned`, `stage`

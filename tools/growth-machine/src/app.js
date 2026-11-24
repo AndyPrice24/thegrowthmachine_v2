@@ -2,7 +2,7 @@
    App shell — storage, routing, actions, data editor, Claude bridge
    ============================================================ */
 const STORE_KEY = 'tgm.studio.v1';
-const ui = { tab: 'home', sub: {}, all: {}, share: false, scenario: 'current', processId: '', stepId: '', editStep: '', pv: null, execView: true, review: null, reviewSetup: '', procView: 'flow', flowCols: 0, flowZoom: 0, flowWhole: false, anon: false, ghosts: true, showCost: true, compare: true, zoom: 1, area: 'All', recType: 'All', coll: 'people', theme: '', classic: false, dept: 'cs', stage: 'underway', reportType: 'status', capture: false, draft: null, session: false, sessionId: '', prioOnly: true };
+const ui = { tab: 'hub', sub: {}, all: {}, share: false, scenario: 'current', processId: '', stepId: '', editStep: '', pv: null, execView: true, review: null, reviewSetup: '', procView: 'flow', flowCols: 0, flowZoom: 0, flowWhole: false, anon: false, ghosts: true, showCost: true, compare: true, zoom: 1, area: 'All', recType: 'All', coll: 'people', theme: '', dept: 'cs', stage: 'underway', reportType: 'status', capture: false, draft: null, session: false, sessionId: '', prioOnly: true };
 let db = { activeId: '', engagements: {} };
 
 /* ---------- storage (localStorage, wrapped; the JSON file export is the real backup) ---------- */
@@ -16,7 +16,6 @@ function loadDB() {
   if (db.engagements.eng_demo && (!db.engagements.eng_demo.engagement.phases.length || !db.engagements.eng_demo.competitors.length)) db.engagements.eng_demo = demoEngagement(); // refresh old demo with tracking sample
   if (!db.engagements[db.activeId]) db.activeId = Object.keys(db.engagements)[0];
   try { Object.assign(ui, JSON.parse(localStorage.getItem(STORE_KEY + '.ui') || '{}'), { scenario: 'current' }); } catch (err) { /* ignore */ }
-  if (!ui.classic && ['home', 'moves', 'plan'].includes(ui.tab)) ui.tab = 'hub'; // the department-first shell opens on Home
   ui.flowCols = 0; ui.all = {}; landProcesses();
 }
 let saveTimer = null;
@@ -34,7 +33,7 @@ window.addEventListener('pagehide', flushSave);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
 /** The Processes page always opens on Department view; Process view starts with just the "Choose process" button. */
 function landProcesses() { ui.pv = Object.assign({}, ui.pv, { mode: 'dept', focus: '', pick: '', hl: '', journey: false }); ui.stepId = ''; ui.editStep = ''; }
-function saveUI() { try { localStorage.setItem(STORE_KEY + '.ui', JSON.stringify({ hxMini: ui.hxMini, tab: ui.tab, sub: ui.sub, share: ui.share, anonBefore: ui.anonBefore, talkP: ui.talkP, pv: ui.pv, execView: ui.execView, bpTop: ui.bpTop, lo: ui.lo && { lens: ui.lo.lens, sort: ui.lo.sort, signals: ui.lo.signals, noFix: ui.lo.noFix, unsized: ui.lo.unsized }, anon: ui.anon, showCost: ui.showCost, ghosts: ui.ghosts, compare: ui.compare, coll: ui.coll, theme: ui.theme, classic: ui.classic, dept: ui.dept, stage: ui.stage })); } catch (err) { /* ignore */ } }
+function saveUI() { try { localStorage.setItem(STORE_KEY + '.ui', JSON.stringify({ hxMini: ui.hxMini, tab: ui.tab, sub: ui.sub, share: ui.share, anonBefore: ui.anonBefore, talkP: ui.talkP, pv: ui.pv, execView: ui.execView, bpTop: ui.bpTop, lo: ui.lo && { lens: ui.lo.lens, sort: ui.lo.sort, signals: ui.lo.signals, noFix: ui.lo.noFix, unsized: ui.lo.unsized }, anon: ui.anon, showCost: ui.showCost, ghosts: ui.ghosts, compare: ui.compare, coll: ui.coll, theme: ui.theme, dept: ui.dept, stage: ui.stage })); } catch (err) { /* ignore */ } }
 const E = () => db.engagements[db.activeId];
 function procOfStep(id) { return E().processes.find((p) => (p.steps || []).some((x) => x.id === id)); }
 function reviewCtx() {
@@ -105,19 +104,7 @@ function setPath(obj, path, val) { const ks = path.split('.'); const last = ks.p
 function renderHeader() {
   normaliseTab();
   const e = E();
-  if (shellOn()) { document.getElementById('topbar').innerHTML = ''; document.getElementById('nav').innerHTML = railHTML(e); return; }
-  const engOpts = Object.values(db.engagements).map((x) => `<option value="${x.id}" ${x.id === db.activeId ? 'selected' : ''}>${esc(x.client.name)}</option>`).join('');
-  const scOpts = [['current', 'Current state'], ...e.scenarios.map((s) => [s.id, s.name]), ['all', 'All recommendations']].map(([id, n]) => `<option value="${id}" ${ui.scenario === id ? 'selected' : ''}>${esc(n)}</option>`).join('');
-  document.getElementById('topbar').innerHTML = `
-    <div class="brand"><span class="cog" aria-hidden="true">✹</span><span>THE <strong>GROWTH</strong> MACHINE</span><em>Studio</em></div>
-    <label class="hsel"><span>Client</span><select id="engSel">${engOpts}</select></label>
-    ${SCENARIO_TABS.includes(ui.tab) || ui.scenario !== 'current' ? `<label class="hsel"><span>View as</span><select id="scSel">${scOpts}</select></label>` : ''}
-    ${flagBadge(e)}
-    <div class="hbtns"><button class="btn sm ${ui.share ? 'on share-on' : 'ghost'}" data-action="share" title="Screen-share mode: names become roles, and TGM-only notes (🔒 reminders, the work diary, confidential interview points) are hidden">${ui.share ? '● Screen share on' : 'Screen share'}</button>${syncTopBtn()}<button class="btn sm" data-action="newEng">+ New client</button><button class="btn sm" data-action="exportJSON" title="Download everything saved for ${esc(e.client.name)}: data, interviews, findings, progress, diary and merge history">Back up</button><button class="btn sm ghost" data-action="theme" title="Toggle light/dark">◐</button><button class="btn sm" data-action="classic" title="Back to the department-first layout">New layout</button></div>`;
-  const st = e.engagement.phases.length ? engagementStatus(e) : null;
-  const badge = (id) => id === 'progress' && st && (st.openDelays.length || st.overdue.length) ? `<span class="nav-badge" title="Open delays / overdue client items">⚑ ${st.openDelays.length + st.overdue.length}</span>` : '';
-  document.getElementById('nav').innerHTML = TABS.map(([id, n]) => `<button class="nav-btn ${ui.tab === id ? 'on' : ''}" data-action="tab" data-id="${id}">${n}${badge(id)}</button>`).join('')
-    + `<div class="nav-foot"><div id="status" class="faint small">Saved in this browser</div><div class="faint small">Last backup: ${e.meta.lastExported ? new Date(e.meta.lastExported).toLocaleString('en-GB') : 'never'}</div><div class="faint small">Studio version: ${typeof STUDIO_BUILD === 'undefined' ? 'dev' : STUDIO_BUILD}</div></div>`;
+  document.getElementById('topbar').innerHTML = ''; document.getElementById('nav').innerHTML = railHTML(e);
 }
 /** Scroll the visual so a step sits in the middle of the viewer (horizontally inside the scroll box, vertically on the page). */
 function centreStep(id) {
@@ -132,17 +119,15 @@ function render() {
   const e = E();
   renderHeader();
   normaliseTab();
-  const views = { hub: viewHome, dept: viewDept, stage: viewStage, moves: viewMoves, home: viewLeaks, plan: viewPlan, processes: viewProcesses, evidence: viewEvidence, talk: viewTalk, progress: viewProgressReports, data: viewData };
+  const views = { hub: viewHome, processes: viewProcesses, evidence: viewEvidence, talk: viewTalk, progress: viewProgressReports, data: viewData };
   let html;
-  try { html = (views[ui.tab] || viewLeaks)(e); }
+  try { html = (views[ui.tab] || viewHome)(e); }
   catch (err) { console.error(err); html = `<div class="banner err">Something in this client's data could not be displayed: ${esc(err.message)}. Check Sources &amp; data.</div>`; }
   document.getElementById('main').innerHTML = html;
   document.body.classList.toggle('share', !!ui.share);
   document.querySelectorAll('#main .flow-wrap').forEach((w, i) => { if (keep[i]) { w.scrollLeft = keep[i][0]; w.scrollTop = keep[i][1]; } });
-  document.documentElement.dataset.theme = shellOn() ? 'dark' : ui.theme || '';
-  if (!shellOn() && !ui.theme) delete document.documentElement.dataset.theme;
-  if (shellOn()) document.documentElement.dataset.shell = 'g'; else delete document.documentElement.dataset.shell;
-  if (shellOn() && ui.hxMini) document.documentElement.dataset.rail = 'mini'; else delete document.documentElement.dataset.rail;
+  document.documentElement.dataset.theme = 'dark'; document.documentElement.dataset.shell = 'g';
+  if (ui.hxMini) document.documentElement.dataset.rail = 'mini'; else delete document.documentElement.dataset.rail;
 }
 
 /* ---------- Sources & data view (lives here because it is tied to the editor) ---------- */
@@ -284,7 +269,7 @@ const actions = {
   syncCheck: () => syncCheck(false),
   syncBackup: () => syncBackup(false),
   lrNew: () => lrNew(),
-  mvGo: (el) => { ui.tab = 'moves'; ui.moveId = el.dataset.id || ''; saveUI(); render(); window.scrollTo(0, 0); },
+  mvGo: (el) => hxOpenFor('move', el.dataset.id),
   mvOpen: (el) => { ui.moveId = el.dataset.id || ''; saveUI(); render(); window.scrollTo(0, 0); },
   mvView: (el) => { ui.mvFounder = el.dataset.id === 'founders'; saveUI(); render(); },
   mvBucket: (el) => { ui.mvBucket = el.dataset.id || ''; saveUI(); render(); },
@@ -303,9 +288,8 @@ const actions = {
   lrSeenAll: () => { const lr = lrCur(E()); lrEvents(E(), lr).forEach((x) => { if (!x.seen) { x.seen = true; touch(x); } }); save(); render(); },
   tab: (el) => { if (el.dataset.id === 'processes' && ui.tab !== 'processes') landProcesses(); ui.tab = el.dataset.id; ui.capture = false; ui.session = false; if (el.dataset.sub) { normaliseTab(); ui.sub[ui.tab] = el.dataset.sub; } saveUI(); render(); window.scrollTo(0, 0); },
   sub: (el) => { ui.sub = Object.assign({}, ui.sub, { [el.dataset.tab]: el.dataset.id }); ui.capture = false; ui.session = false; saveUI(); render(); },
-  dept: (el) => { ui.tab = 'dept'; ui.dept = el.dataset.id; saveUI(); render(); window.scrollTo(0, 0); },
-  stage: (el) => { ui.tab = 'stage'; ui.stage = el.dataset.id; saveUI(); render(); window.scrollTo(0, 0); },
-  classic: () => { ui.classic = !ui.classic; ui.tab = ui.classic ? 'moves' : 'hub'; saveUI(); render(); window.scrollTo(0, 0); toast(ui.classic ? 'Classic view: the earlier layout. Switch back from the top bar.' : 'New layout'); },
+  dept: (el) => { HX = [{ v: 'home', p: {} }]; hxGo('dept', { d: el.dataset.id }); },
+  stage: (el) => { HX = [{ v: 'home', p: {} }]; hxGo('board', { s: el.dataset.id }); },
   showAll: (el) => { ui.all = Object.assign({}, ui.all, { [el.dataset.id]: !(ui.all || {})[el.dataset.id] }); render(); },
   loNeed: (el) => { const k = el.dataset.k; const L = ui.lo || {}; ui.lo = Object.assign({}, L, k === 'clear' ? { noFix: false, unsized: false, nosrc: false } : { noFix: k === 'noFix' ? !L.noFix : false, unsized: k === 'unsized' ? !L.unsized : false, nosrc: k === 'nosrc' ? !L.nosrc : false }, { open: '' }); ui.all = Object.assign({}, ui.all, { home: !!(ui.lo.noFix || ui.lo.unsized) }); saveUI(); render(); },
   nrrReport: () => { ui.tab = 'progress'; ui.sub = Object.assign({}, ui.sub, { progress: 'report' }); ui.reportType = 'nrr'; saveUI(); render(); window.scrollTo(0, 0); },
@@ -782,7 +766,7 @@ document.addEventListener('change', (ev) => {
     if (coll === 'engagement.activities' && field === 'status') row.doneDate = v === 'Done' ? (row.doneDate || todayISO()) : '';
     if (coll === 'engagement.phases' && field === 'status' && v === 'Done') { const ps = E().engagement.phases; const i = ps.indexOf(row); if (ps[i + 1] && ps[i + 1].status === 'Not started') ps[i + 1].status = 'In progress'; }
     save();
-    if ((coll === 'recommendations' && ui.tab === 'plan') || ui.tab === 'home' || (ui.tab === 'progress' && (t.tagName === 'SELECT' || t.type === 'date' || t.type === 'number'))) render();
+    if (ui.tab === 'hub' || (ui.tab === 'progress' && (t.tagName === 'SELECT' || t.type === 'date' || t.type === 'number'))) render();
   }
 });
 document.addEventListener('input', (ev) => {
