@@ -300,7 +300,7 @@ What each founder sees from their own link, served by TGM's Apps Script web app 
   would remove (`stepIds` on the automation; the rest show "For the whole process"). "Open the full process map" shows the
   read-only Studio map. Below: automations as a board (Idea, Proposed, Agreed or under way, Live; four per column, low effort first),
   and systems by `family` on each tool (platform, work, ai, sales, comms, listings, finance; `service` = a cost line that is not a
-  system, left off), with a spend bar, data health (owner, users, cost known) and overlaps (`overlapsWith`, `overlapNote`).
+  system, left off), one line on known spend, data health (owner, users, cost known) and overlaps (`overlapsWith`, `overlapNote`).
 - The size shown on an item is its `sizeId` finding, else the main fix's sized findings (at risk, then lost, then spend to review).
 - A department filter (chips) runs across pages 2 to 4. Health measures and items are portal elements, so each can be red-flagged
   and discussed.

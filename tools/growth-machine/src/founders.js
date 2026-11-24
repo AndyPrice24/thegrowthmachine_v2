@@ -260,6 +260,8 @@ function ftReport() {
 const FT_TEAM = { sales: ['Sales', 'var(--gd-sales)'], marketing: ['Marketing', '#facc15'], cs: ['Client Success', 'var(--gd-cs)'], ops_onb: ['Ops: onboarding', 'var(--gd-ops)'],
   ops_tech: ['Ops: tech teams', '#fb923c'], ops: ['Operations', 'var(--gd-ops)'], product: ['Product', 'var(--gd-prod)'], leadership: ['Leadership', 'var(--gd-lead)'], finance: ['Finance', 'var(--gd-admin)'] };
 const ftTeam = (k) => FT_TEAM[k] || [k || 'Other', '#94a3b8'];
+/** A system's name without TGM's working notes (who told us, 'confirm'). */
+const ftTool = (t) => String(t.name || '').replace(/[,;]?\s*(per [A-Z][\w-]*\b|heard as '[^']*'|confirm\b)/g, '').replace(/\(\s*\)/g, '').replace(/\s+\)/g, ')').replace(/\s{2,}/g, ' ').trim();
 const FT_FAMILY = [['platform', 'The platform', '#22d3ee'], ['work', 'Work management', '#ffa23a'], ['ai', 'AI & automation', '#a78bfa'], ['sales', 'Sales & marketing', '#4f9cff'],
   ['comms', 'Communication', '#34d399'], ['listings', 'Listing networks', '#f472b6'], ['finance', 'Finance', '#facc15'], ['', 'Not grouped yet', '#94a3b8']];
 const FT_AU_COLS = [['Idea', ['Idea', '']], ['Proposed', ['Proposed']], ['Agreed or under way', ['Agreed', 'In progress']], ['Live', ['Live']]];
@@ -298,7 +300,7 @@ function ftProcDetail(p, D) {
       <p class="ft-io">${p.inputs ? `<span>${esc(p.inputs)}</span>` : ''}${p.inputs && p.outputs ? '<b>→</b>' : ''}${p.outputs ? `<span>${esc(p.outputs)}</span>` : ''}${p.frequency ? `<em>${esc(p.frequency)}</em>` : ''}</p></section>
     <div class="ft-pd"><section class="gs-panel"><div class="gs-ph"><h2>How it works today</h2><span class="s">${st.length} steps</span></div><ol class="ft-flow">${st.map(step).join('')}</ol>
         <p class="ft-key"><span class="auto">Automatic</span><span class="pain">Pain point</span><span class="opp">Could be automated</span></p></section>
-      <div class="ft-rcol"><section class="gs-panel"><div class="gs-ph"><h2>Systems used</h2><span class="s">${tl.length}</span></div><ul class="ft-tl">${tl.map((t) => { const x = D.tById[t]; return `<li><span>${esc(x.name)}</span><b>${num(x.monthlyCost) ? esc(fmtMoney(x.monthlyCost)) + '/mo' : ''}</b></li>`; }).join('') || '<li class="pt-muted">None recorded.</li>'}</ul></section>
+      <div class="ft-rcol"><section class="gs-panel"><div class="gs-ph"><h2>Systems used</h2><span class="s">${tl.length}</span></div><ul class="ft-tl">${tl.map((t) => { const x = D.tById[t]; return `<li><span>${esc(ftTool(x))}</span><b>${num(x.monthlyCost) ? esc(fmtMoney(x.monthlyCost)) + '/mo' : ''}</b></li>`; }).join('') || '<li class="pt-muted">None recorded.</li>'}</ul></section>
         ${whole.length ? `<section class="gs-panel"><div class="gs-ph"><h2>For the whole process</h2><span class="s">${whole.length}</span></div><div class="ft-aul">${whole.map((a) => ftAuCard(a, D, false)).join('')}</div></section>` : ''}
         <button type="button" class="gs-panel ft-full" data-pt="procfull" data-id="${esc(p.id)}"><b>Open the full process map</b><span>Every hand-off, time and source, read only</span></button></div></div>`;
 }
@@ -308,7 +310,7 @@ function ftProc() {
   const P = PT.proc && D.procs.find((p) => p.id === PT.proc); if (P) return ftProcDetail(P, D);
   const teams = [...new Set(D.mapped.map((p) => p.team))]; const tk = PT.pteam && teams.includes(PT.pteam) ? PT.pteam : '';
   const mp = D.mapped.filter((p) => !tk || p.team === tk).sort((a, b) => b.steps.filter(D.pain).length - a.steps.filter(D.pain).length);
-  const steps = D.mapped.flatMap((p) => p.steps); const auto = steps.filter((s) => s.automated).length; const pains = steps.filter(D.pain).length;
+  const steps = D.mapped.flatMap((p) => p.steps); const auto = steps.filter((s) => s.automated).length; const pains = steps.filter(D.pain).length; const probs = steps.reduce((a, s) => a + (s.painPoint ? 1 : 0) + D.flags(s).length, 0);
   const sys = D.tools.filter((t) => t.family !== 'service'); const spend = sys.reduce((a, t) => a + num(t.monthlyCost), 0); const costed = sys.filter((t) => num(t.monthlyCost)).length;
   const fams = FT_FAMILY.map(([k, n, c]) => ({ k, n, c, list: sys.filter((t) => (t.family || '') === k).sort((a, b) => num(b.monthlyCost) - num(a.monthlyCost)) })).filter((f) => f.list.length);
   fams.forEach((f) => { f.cost = f.list.reduce((a, t) => a + num(t.monthlyCost), 0); });
@@ -322,7 +324,7 @@ function ftProc() {
     <div class="ft-ps">
       <div class="gs-panel ft-st"><span>Processes mapped</span><b>${D.mapped.length}<small> of ${D.procs.length}</small></b><span class="ft-bar"><i style="width:${D.mapped.length / Math.max(1, D.procs.length) * 100}%"></i></span></div>
       <div class="gs-panel ft-st"><span>Steps that run themselves</span><b>${auto}<small> of ${steps.length}</small></b><span class="ft-bar"><i class="ok" style="width:${auto / Math.max(1, steps.length) * 100}%"></i></span></div>
-      <div class="gs-panel ft-st"><span>Steps with a pain point</span><b>${pains}<small> of ${steps.length}</small></b><span class="ft-bar"><i class="bad" style="width:${pains / Math.max(1, steps.length) * 100}%"></i></span></div>
+      <div class="gs-panel ft-st"><span>Steps with a known problem</span><b>${pains}<small> of ${steps.length}</small></b><span class="ft-bar"><i class="bad" style="width:${pains / Math.max(1, steps.length) * 100}%"></i></span><span class="ft-stn">${probs} problems recorded across them</span></div>
       <div class="gs-panel ft-st"><span>Automation ideas</span><b>${D.autos.length}</b><span class="ft-sts">${FT_AU_COLS.map(([n, s]) => `<em>${D.autos.filter((a) => s.includes(a.status || '')).length} ${esc(n.split(' ')[0].toLowerCase())}</em>`).join('')}</span></div>
     </div>
     ${ftSh('Processes', `${mp.length} mapped`)}
@@ -333,12 +335,10 @@ function ftProc() {
     ${ftSh('Automation', `${au.length} ideas${tk ? ' for ' + esc(ftTeam(tk)[0]) : ''}`)}
     <div class="ft-kb">${FT_AU_COLS.map(([n, s]) => { const EF = { Low: 0, Medium: 1, High: 2 }; const l = au.filter((a) => s.includes(a.status || '')).sort((x, y) => (EF[x.effort] ?? 1) - (EF[y.effort] ?? 1)); return `<div class="ft-kbc"><div class="ft-kbh"><b>${esc(n)}</b><span>${l.length}</span></div>${l.slice(0, 4).map((a) => ftAuCard(a, D)).join('') || '<p class="pt-muted pt-small">None yet.</p>'}${l.length > 4 ? `<details class="ft-kbm"><summary>${l.length - 4} more</summary><div>${l.slice(4).map((a) => ftAuCard(a, D)).join('')}</div></details>` : ''}</div>`; }).join('')}</div>
     ${ftSh('Systems', `${sys.length} systems`)}
-    <section class="gs-panel ft-sysw"><div class="gs-ph"><h2>Monthly spend on systems</h2><span class="s">${esc(fmtMoney(spend))} a month · ${costed} of ${sys.length} costed ${srcBtn}</span></div>
-      <div class="ft-spend">${fams.filter((f) => f.cost).map((f) => `<i style="width:${f.cost / Math.max(1, spend) * 100}%;--fc:${f.c}" title="${esc(f.n)}: ${esc(fmtMoney(f.cost))}"></i>`).join('')}</div>
-      <div class="ft-spk">${fams.filter((f) => f.cost).map((f) => `<span style="--fc:${f.c}"><i></i>${esc(f.n)} <b>${esc(fmtMoney(f.cost))}</b></span>`).join('')}</div>
+    <section class="gs-panel ft-sysw"><p class="ft-spl">Known system costs come to about ${esc(fmtMoney(spend))} a month (as at Sep 2026), ${fams[0] && fams[0].cost ? `${Math.round(fams.find((f) => f.k === 'platform') ? fams.find((f) => f.k === 'platform').cost / Math.max(1, spend) * 100 : 0)}% of it the platform's development and hosting` : ''}. ${srcBtn}</p>
       <p class="ft-dh"><span class="${owners ? '' : 'bad'}">Owner named for ${owners} of ${sys.length}</span><span class="${users ? '' : 'bad'}">Users counted for ${users} of ${sys.length}</span><span>Cost known for ${costed} of ${sys.length}</span>${reg ? `<button type="button" class="pt-link" data-pt="proj" data-id="${esc(reg.id)}">${esc(reg.title)} →</button>` : ''}</p></section>
     <div class="ft-fams">${fams.map((f) => `<section class="gs-panel ft-fam" style="--fc:${f.c}"><div class="gs-ph"><h2><i></i>${esc(f.n)}</h2><span class="s">${f.cost ? esc(fmtMoney(f.cost)) + '/mo · ' : ''}${f.list.length}</span></div>
-      <ul class="ft-tl">${f.list.map((t) => `<li><span>${esc(t.name)}${t.overlapNote ? `<em class="ft-ov" title="${esc(t.overlapNote)}">Overlap</em>` : ''}</span><b>${num(t.monthlyCost) ? esc(fmtMoney(t.monthlyCost)) : '<span class="pt-muted">cost to confirm</span>'}</b></li>`).join('')}</ul>
+      <ul class="ft-tl">${f.list.map((t) => `<li><span>${esc(ftTool(t))}${t.overlapNote ? `<em class="ft-ov" title="${esc(t.overlapNote)}">Overlap</em>` : ''}</span><b>${num(t.monthlyCost) ? esc(fmtMoney(t.monthlyCost)) : '<span class="pt-muted">cost to confirm</span>'}</b></li>`).join('')}</ul>
       ${[...new Set(f.list.map((t) => t.overlapNote).filter(Boolean))].map((n) => `<p class="ft-ovn">${esc(n)}</p>`).join('')}</section>`).join('')}</div>
     <p class="pt-muted pt-small ft-note">Consulting fees, outsourced sales support and general computer expenses are services, not systems, so they are not shown here.</p>`;
 }
