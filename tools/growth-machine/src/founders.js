@@ -314,7 +314,7 @@ function ftProc() {
   const teams = [...new Set(D.mapped.map((p) => p.team))]; const tk = PT.pteam && teams.includes(PT.pteam) ? PT.pteam : '';
   const mp = D.mapped.filter((p) => !tk || p.team === tk).sort((a, b) => b.steps.filter(D.pain).length - a.steps.filter(D.pain).length);
   const steps = D.mapped.flatMap((p) => p.steps); const auto = steps.filter((s) => s.automated).length; const pains = steps.filter(D.pain).length; const probs = steps.reduce((a, s) => a + (s.painPoint ? 1 : 0) + D.flags(s).length, 0);
-  const sys = D.tools.filter((t) => t.family !== 'service'); const spend = sys.reduce((a, t) => a + num(t.monthlyCost), 0); const costed = sys.filter((t) => num(t.monthlyCost)).length;
+  const sys = D.tools.filter((t) => t.family !== 'service'); const spend = sys.reduce((a, t) => a + num(t.monthlyCost), 0); const costed = sys.filter((t) => num(t.monthlyCost) || String(t.costKnown) === 'true').length;
   const fams = FT_FAMILY.map(([k, n, c]) => ({ k, n, c, list: sys.filter((t) => (t.family || '') === k).sort((a, b) => num(b.monthlyCost) - num(a.monthlyCost)) })).filter((f) => f.list.length);
   fams.forEach((f) => { f.cost = f.list.reduce((a, t) => a + num(t.monthlyCost), 0); });
   const owners = sys.filter((t) => t.ownerId || t.owner).length, users = sys.filter((t) => num(t.activeUsers) || num(t.seats)).length;
@@ -341,7 +341,7 @@ function ftProc() {
     <section class="gs-panel ft-sysw"><p class="ft-spl">Known system costs come to about ${esc(fmtMoney(spend))} a month (as at Sep 2026), ${fams[0] && fams[0].cost ? `${Math.round(fams.find((f) => f.k === 'platform') ? fams.find((f) => f.k === 'platform').cost / Math.max(1, spend) * 100 : 0)}% of it the platform's development and hosting` : ''}. ${srcBtn}</p>
       <p class="ft-dh"><span class="${owners ? '' : 'bad'}">Owner named for ${owners} of ${sys.length}</span><span class="${users ? '' : 'bad'}">Users counted for ${users} of ${sys.length}</span><span>Cost known for ${costed} of ${sys.length}</span>${reg ? `<button type="button" class="pt-link" data-pt="proj" data-id="${esc(reg.id)}">${esc(reg.title)} →</button>` : ''}</p></section>
     <div class="ft-fams">${fams.map((f) => `<section class="gs-panel ft-fam" style="--fc:${f.c}"><div class="gs-ph"><h2><i></i>${esc(f.n)}</h2><span class="s">${f.cost ? esc(fmtMoney(f.cost)) + '/mo · ' : ''}${f.list.length}</span></div>
-      <ul class="ft-tl">${f.list.map((t) => `<li><span>${esc(ftTool(t))}${t.overlapNote ? `<em class="ft-ov" title="${esc(t.overlapNote)}">Overlap</em>` : ''}</span><b>${num(t.monthlyCost) ? esc(fmtMoney(t.monthlyCost)) : '<span class="pt-muted">cost to confirm</span>'}</b></li>`).join('')}</ul>
+      <ul class="ft-tl">${f.list.map((t) => `<li><span>${esc(ftTool(t))}${t.overlapNote ? `<em class="ft-ov" title="${esc(t.overlapNote)}">Overlap</em>` : ''}</span><b>${num(t.monthlyCost) ? esc(fmtMoney(t.monthlyCost)) : String(t.costKnown) === 'true' ? '<span class="pt-muted">No charge</span>' : '<span class="pt-muted">cost to confirm</span>'}</b></li>`).join('')}</ul>
       ${[...new Set(f.list.map((t) => t.overlapNote).filter(Boolean))].map((n) => `<p class="ft-ovn">${esc(n)}</p>`).join('')}</section>`).join('')}</div>
     <p class="pt-muted pt-small ft-note">Consulting fees, outsourced sales support and general computer expenses are services, not systems, so they are not shown here.</p>`;
 }
