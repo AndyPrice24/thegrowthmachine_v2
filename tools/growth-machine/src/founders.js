@@ -151,9 +151,12 @@ function ftProjectCard(it) {
     ${it.knockOn ? `<p class="ft-ko"><b>Knock-on:</b> ${esc(it.knockOn)}</p>` : ''}
     ${it.measured ? `<p class="ft-meas"><b>Measured:</b> ${esc(it.measured)}</p>` : ''}
     <div class="ft-p-f"><div><span class="k">Who</span>${esc(it.owner || 'To confirm')}</div><div><span class="k">Departments</span>${ftDeptDots(it)}</div>${it.next ? `<div><span class="k">Next</span>${esc(it.next)}${it.nextDate ? ` · <b>${esc(it.nextDate)}</b>` : ''}</div>` : ''}</div>
-    ${m ? `<button type="button" class="pt-more" data-pt="move" data-id="${esc(m.id)}">The story so far →</button>` : ''}</article>`;
+    ${it.blueprint ? `<button type="button" class="pt-more ft-bpbtn" data-pt="bp" data-id="${esc(it.id)}">See the plan →</button>` : ''}${m ? `<button type="button" class="pt-more" data-pt="move" data-id="${esc(m.id)}">The story so far →</button>` : ''}</article>`;
 }
 function ftProjects() {
+  const bpIt = PT.bp && live(E().items || []).find((x) => x.id === PT.bp && x.blueprint);
+  if (bpIt) return `<button type="button" class="ft-back" data-pt="bp" data-id="">◂ All projects</button>${ftHead(esc(ITEM_STAGE_NAME[bpIt.stage] || 'Project') + ' · the plan', esc(bpIt.blueprint.title || bpIt.title), esc(bpIt.title))}
+    <div class="ft-bpacts">${ptActs('bp_' + bpIt.id)}<span class="pt-muted pt-small">Comment or red-flag the plan as a whole</span></div><div class="ft-bp">${bpRender(E(), bpIt, true)}</div>`;
   const all = ftProjectList(true); const L = ftProjectList();
   const by = (s) => L.filter((it) => it.stage === s);
   const grp = (s, t, sub) => (by(s).length ? `${ftSh(`${t} <b class="ft-n">${by(s).length}</b>`, sub)}<div class="ft-pgrid">${by(s).map(ftProjectCard).join('')}</div>` : '');
@@ -367,7 +370,7 @@ function ftInsights() {
 
 /* ---------- 7. Department efficiency ---------- */
 const FT_MSTATE = { have: ['Data exists', 'The data is there; not measured yet'], partly: ['Some data', 'Part of the data is there'], missing: ['Not collected yet', 'The data isn\'t collected yet'] };
-const FT_RAG = { green: 'On target', amber: 'Near target', red: 'Off target', none: 'No target agreed yet', grey: 'Not tracked yet' };
+const FT_RAG = { green: 'On target', amber: 'Near target', red: 'Off target', none: 'No target yet', grey: 'Not tracked yet' };
 const ftDeptName = (k) => ((ITEM_DEPTS.find(([x]) => x === k) || [0, k])[1]).replace(' & direction', '').replace(' & platform', '');
 function ftDeptStats(e, k) {
   const M = hxMeasures(e, k).map((m) => msrVal(e, m)); const tr = M.filter((m) => m.tracked); const tg = tr.filter((m) => m.hasT);
@@ -389,7 +392,7 @@ function ftSparkM(m) {
 }
 function ftDeptCard(e, k) {
   const S = ftDeptStats(e, k); const c = `var(--gd-${k})`;
-  return `<button type="button" class="gs-panel ft-dc" data-pt="dk" data-id="${k}" style="--dc:${c}"><div class="ft-dch"><b>${esc(ftDeptName(k))}</b><span>${S.tg.length ? `${S.on} of ${S.tg.length} on target` : 'No targets agreed yet'}</span></div>
+  return `<button type="button" class="gs-panel ft-dc" data-pt="dk" data-id="${k}" style="--dc:${c}"><div class="ft-dch"><b>${esc(ftDeptName(k))}</b><span>${S.tg.length ? `${S.on} of ${S.tg.length} on target` : 'No targets set yet'}</span></div>
     <div class="ft-dcb">${ftRing(S, c)}<ul>${S.M.filter((m) => String(m.phase) !== '2' || m.tracked).map((m) => `<li class="r-${m.rag}"><i></i><span>${esc(m.name)}</span>${m.tracked ? `<b>${esc(m.value)}</b>` : ''}</li>`).join('')}${S.M.filter((m) => String(m.phase) === '2' && !m.tracked).length ? `<li class="ft-dmore"><span>+ ${S.M.filter((m) => String(m.phase) === '2' && !m.tracked).length} more in the full model</span></li>` : ''}</ul></div>
     <div class="ft-dcf"><span>${S.tr.length} tracked</span><span>${S.untr.filter((m) => m.status === 'have').length} with data ready</span><span>${S.untr.filter((m) => m.status !== 'have').length} to set up</span></div></button>`;
 }
@@ -398,18 +401,18 @@ function ftDeptPage(e, k) {
   const stg = (s) => (ITEM_STAGES.find(([x]) => x === s) || [0, s])[1]; const proj = its.filter((it) => FT_PROJECT.includes(it.stage)), open = its.filter((it) => !FT_PROJECT.includes(it.stage) && it.stage !== 'parked');
   const tracked = (m) => `<article class="gs-panel ft-mc r-${m.rag}" id="it-${esc(m.id)}"><div class="ft-mch"><span class="ft-rag">${esc(FT_RAG[m.rag])}</span>${ptActs(m.id)}</div><h3>${esc(m.name)}</h3>
       <div class="ft-mv"><b>${esc(m.value)}</b><span>${esc(m.unit || '')}</span></div>
-      <p class="ft-mm">${m.target ? `<span>Target <b>${esc(m.target)}</b></span>` : '<span>Target to agree</span>'}${ftMTrend(m)}${m.asAt ? `<span>As at ${esc(m.asAt)}</span>` : ''}</p>
+      <p class="ft-mm">${m.target ? `<span>Target <b>${esc(m.target)}</b></span>` : `<span>${m.targetBy === 'now' ? 'Target to set' : 'Target after a four-week baseline'}</span>`}${ftMTrend(m)}${m.asAt ? `<span>As at ${esc(m.asAt)}</span>` : ''}</p>
       ${ftSparkM(m)}${m.trendText ? `<p class="ft-mx">${esc(m.trendText)}</p>` : ''}
       <p class="ft-mw">${esc(m.why || '')} · ${esc(m.rhythm || '')}</p><div class="ed-foot">${ptSrcBtn((m.sources || []).concat(m.pointsSources || []), 'Sources')}</div></article>`;
   return `<button type="button" class="ft-back" data-pt="dk" data-id="">◂ All departments</button>
     <section class="pt-hello ft-hello ft-dhd" style="--dc:${c}"><div><div class="pt-eyebrow"><span class="ft-pct" style="--tc:${c}"><i></i>Department efficiency</span></div><h1>${esc(ftDeptName(k))}</h1>
-      <p class="pt-lede">${S.tg.length ? `${S.on} of ${S.tg.length} measures with a target are on target.` : 'No targets agreed yet.'} ${S.tr.length} of ${S.M.length} measures tracked; ${S.untr.length} not tracked yet.</p></div>
+      <p class="pt-lede">${S.tg.length ? `${S.on} of ${S.tg.length} measures with a target are on target.` : 'No targets set yet.'} ${S.tr.length} of ${S.M.length} measures tracked; ${S.untr.length} not tracked yet.</p></div>
       <button type="button" class="ft-printbtn" data-pt="print">Print for the department head</button><p class="ft-printonly">${esc(e.client.name || '')} · prepared by The Growth Machine · ${esc(fmtD(todayISO(), { day: 'numeric', month: 'long', year: 'numeric' }))}</p></section>
     ${ftSh('How the department is measured')}<section class="gs-panel ft-efp">${efDiagram(e, k)}</section>
     ${S.tr.length ? `${ftSh('Tracked', String(S.tr.length))}<div class="ft-mcs">${S.tr.map(tracked).join('')}</div>` : ''}
     ${S.untr.length ? `${ftSh('Not tracked yet', String(S.untr.length))}<section class="gs-panel ft-mu"><table class="pt-tbl"><thead><tr><th>Measure</th><th>Why it matters</th><th>From</th><th>How often</th><th>Where it stands</th></tr></thead><tbody>
       ${S.untr.slice().sort((a, b) => String(a.phase || 1).localeCompare(String(b.phase || 1))).map((m) => `<tr id="it-${esc(m.id)}" class="${String(m.phase) === '2' ? 'ft-p2' : ''}"><td><b>${esc(m.name)}</b>${String(m.phase) === '2' ? '<span class="ft-p2t">Full model</span>' : ''}</td><td>${esc(m.why || '')}</td><td>${esc(m.source || '')}</td><td>${esc(m.rhythm || '')}</td><td><span class="ft-mst ms-${esc(m.status || 'missing')}">${esc((FT_MSTATE[m.status] || FT_MSTATE.missing)[0])}</span>${m.note ? `<span class="pt-muted pt-small">${esc(m.note)}</span>` : ''}</td></tr>`).join('')}</tbody></table>
-      <p class="pt-muted pt-small ft-mbl">Baseline: March to September 2026 where the history exists; otherwise the first four full weeks of data.</p></section>` : ''}
+      <p class="pt-muted pt-small ft-mbl">NRR and the money measures get targets now, from their March to September 2026 history. Every other measure runs for four full weeks to set its baseline; its target is then agreed with the department head.</p></section>` : ''}
     ${its.length ? `<div class="ft-dwrap">${ftSh('Work in this department', `${proj.length} under way · ${open.length} not started`)}<div class="ft-dw">${proj.concat(open).slice(0, 8).map((it) => `<button type="button" class="ft-inl" data-pt="proj" data-id="${esc(it.id)}"><i class="st-${esc(it.stage)}">${esc(stg(it.stage))}</i>${esc(it.title)} →</button>`).join('')}</div></div>` : ''}`;
 }
 function ftDepts() {
@@ -421,7 +424,7 @@ function ftDepts() {
     <div class="ft-ps">
       <div class="gs-panel ft-st"><span>Measures proposed</span><b>${M1}<small> to start</small></b><span class="ft-stn">${M} in the full model; team level only; for you to confirm</span></div>
       <div class="gs-panel ft-st"><span>Tracked</span><b>${tr}<small> of ${M}</small></b><span class="ft-bar"><i class="ok" style="width:${tr / Math.max(1, M) * 100}%"></i></span></div>
-      <div class="gs-panel ft-st"><span>On target</span><b>${on}<small> of ${tg} with a target</small></b><span class="ft-stn">${tg ? '' : 'Targets to agree with you'}${tg && tg < tr ? `${tr - tg} tracked without a target yet` : ''}</span></div>
+      <div class="gs-panel ft-st"><span>On target</span><b>${on}<small> of ${tg} with a target</small></b><span class="ft-stn">Money measures get targets now; the rest after a four-week baseline</span></div>
       <div class="gs-panel ft-st"><span>Data ready, not measured yet</span><b>${ready}</b><span class="ft-stn">${M - tr - ready} still to set up</span></div>
     </div>
     ${ftSh('Departments')}<div class="ft-dcs">${ks.map((k) => ftDeptCard(e, k)).join('')}</div>

@@ -318,8 +318,24 @@ HXV.req = (e) => { const r = hxReqs(e).find((x) => x.id === hxCur().p.id) || liv
   const w = r.requestedDate ? daysBetween(r.requestedDate, todayISO()) : null; const c = hxLastConv(e, p); const lr = hxReqs(e).filter((x) => x._p === p).map((x) => x.requestedDate).filter(Boolean).sort().pop();
   return `<h1 class="hx-pg hx-pgsm">${esc(r.item)}</h1><div class="hx-g3 hx-narrow"><div class="hx-tile"><div class="hx-k">Waiting</div><div class="hx-big" style="margin-top:8px">${w ?? '—'}<small>days since asked</small></div></div><div class="hx-tile ${hxLateBy(r.dueDate) ? 'hx-alert' : ''}"><div class="hx-k">Past its date</div><div class="hx-big" style="margin-top:8px">${hxLateBy(r.dueDate)}<small>days</small></div></div><div class="hx-tile"><div class="hx-k">From</div><div style="font-size:18px;font-weight:800;margin-top:8px">${esc(hxShow(e, p))}</div><div class="hx-mut">${esc(ui.share ? '' : r.owner || '')}</div></div></div>
   <div class="hx-tile hx-narrow" style="margin-top:18px"><dl class="hx-kv"><dt>Asked</dt><dd>${hxFd(r.requestedDate, { weekday: 'short', day: 'numeric', month: 'short' }) || '—'}</dd><dt>Due</dt><dd>${hxFd(r.dueDate, { weekday: 'short', day: 'numeric', month: 'short' }) || '—'}</dd><dt>Area</dt><dd>${esc(r.crit || '—')}</dd><dt>Notes and follow-ups</dt><dd>${esc(r.notes || 'None recorded')}</dd><dt>Last request to ${esc(hxShow(e, p))}</dt><dd>${hxFd(lr) || '—'}</dd><dt>Last conversation on record</dt><dd>${c ? `${hxFd(c.date)} · ${esc(trunc(c.summary || c.themes || c.role || '', 160))}` : 'None linked'}</dd></dl>
-  <div class="hx-ctl" style="margin-top:16px"><button class="hx-pl" data-hxdo="reqReceived" data-id="${esc(r.id)}">Mark received</button><button class="hx-pl" data-hxdo="reqNotNeeded" data-id="${esc(r.id)}">Not needed</button></div>
+  <div class="hx-ctl" style="margin-top:16px"><button class="hx-pl" data-hxdo="reqReceived" data-id="${esc(r.id)}">Mark received</button><button class="hx-pl" data-hxdo="reqNotNeeded" data-id="${esc(r.id)}">Not needed</button><button class="hx-pl ${hxCur().p.rp === 'assign' ? 'on' : ''}" data-hxk="rp" data-hxv="${hxCur().p.rp === 'assign' ? '' : 'assign'}">Reassign</button><button class="hx-pl ${hxCur().p.rp === 'query' ? 'on' : ''}" data-hxk="rp" data-hxv="${hxCur().p.rp === 'query' ? '' : 'query'}">Query</button></div>
+  ${hxCur().p.rp === 'assign' ? hxReqAssign(e, r) : ''}${hxCur().p.rp === 'query' ? hxReqQuery(e, r) : ''}
   ${hxSrc([`The Studio's information requests (Our work → What we need), id ${esc(r.id)}.`, c ? `Conversation: interview record ${esc(c.id)} (${esc(c.role || '')}).` : ''])}</div>`; };
+/** Reassign a request to someone else in the organisation. */
+function hxReqAssign(e, r) {
+  const ppl = live(e.people || []).filter((p) => !/confirm/i.test(p.title || '')).slice().sort((a, b) => String(a.departmentId).localeCompare(String(b.departmentId)) || String(a.title).localeCompare(String(b.title)));
+  const dn = {}; live(e.departments || []).forEach((d) => { dn[d.id] = d.name; });
+  return `<div class="hx-rq"><div class="hx-k">Move this request to</div><select id="hx-rq-to" class="hx-sel">${ppl.map((p) => `<option value="${esc(p.id)}">${esc(ui.share ? '' : (p.aka || String(p.name || '').split(' ')[0]) + ', ')}${esc(p.title || '')} · ${esc(dn[p.departmentId] || '')}</option>`).join('')}</select>
+    <input id="hx-rq-why" class="hx-in" placeholder="Why (optional), e.g. she owns the client register now"><button class="hx-pl" data-hxdo="reqReassign" data-id="${esc(r.id)}">Move it</button><p class="hx-note">The note on the request records who it moved from, to whom, and when.</p></div>`;
+}
+/** Why a request exists: what it is for, what it feeds, its history; with a question ready to paste to Claude. */
+function hxReqQuery(e, r) {
+  const its = splitList(r.itemIds).map((id) => live(e.items || []).find((i) => i.id === id)).filter(Boolean);
+  return `<div class="hx-rq"><div class="hx-k">Why this request is here</div><dl class="hx-kv"><dt>What it's for</dt><dd>${esc(r.why || 'Not recorded. Ask below.')}</dd><dt>It feeds</dt><dd>${its.length ? its.map((i) => `<button class="hx-li hx-mini" ${hxP('item', { id: i.id })}><span class="hx-t">${esc(i.title)}</span></button>`).join('') : 'No item linked yet'}</dd>
+    <dt>First asked</dt><dd>${hxFd(r.requestedDate, { day: 'numeric', month: 'short' }) || '—'} · due ${hxFd(r.dueDate, { day: 'numeric', month: 'short' }) || '—'}</dd><dt>History</dt><dd>${esc(r.notes || 'None recorded')}</dd></dl>
+    <div class="hx-k" style="margin-top:14px">Still not sure? Ask Claude</div><textarea id="hx-rq-q" class="hx-in" rows="3" placeholder="e.g. Why do we need this from Daryl rather than Product? Is it still needed?"></textarea>
+    <button class="hx-pl" data-hxdo="reqQuery" data-id="${esc(r.id)}">Copy question for Claude</button><p class="hx-note">Copies your question with this request's details. Paste it into your Claude session; the answer can come back as an update.</p></div>`;
+}
 HXV.board = (e) => { const d = hxCur().p.d || '', hs = hxCur().p.s || ''; const all = hxItems(e); const its = all.filter((i) => !d || splitList(i.depts).includes(d)); const park = its.filter((i) => i.stage === 'parked');
   return `<h1 class="hx-pg">Board${d ? ' · ' + esc(HX_DN[d]) : ''}</h1><p class="hx-pgs">${its.length} items${d ? ' that touch ' + esc(HX_DN[d]) : ''}. An item appears in every department it touches.</p>
   <div class="hx-tabs" style="margin-bottom:14px"><button class="hx-tb ${!d ? 'on' : ''}" data-hxk="d" data-hxv="">Everything<b>${all.length}</b></button>${ITEM_DEPTS.map(([k, n]) => `<button class="hx-tb ${d === k ? 'on' : ''}" data-hxk="d" data-hxv="${k}"><span class="hx-dot" style="--c:var(--gd-${k})"></span> ${esc(n)}<b>${all.filter((i) => splitList(i.depts).includes(k)).length}</b></button>`).join('')}</div>
@@ -380,6 +396,10 @@ document.addEventListener('click', (ev) => {
   const id = t.dataset.id; const e = E();
   if (t.dataset.hxdo === 'todoDone') { const a = e.engagement.activities.find((x) => x.id === id); if (a) { a.status = 'Done'; a.doneDate = todayISO(); touch(a); save(); toast('Done'); hxBack(); } return; }
   if (t.dataset.hxdo === 'todoWeek') { const a = e.engagement.activities.find((x) => x.id === id); if (a) { a.due = addDaysISO(a.due && a.due > todayISO() ? a.due : todayISO(), 7); touch(a); save(); render(); toast('Moved to ' + hxFd(a.due)); } return; }
+  if (t.dataset.hxdo === 'reqReassign') { const r = e.engagement.requests.find((x) => x.id === id); const p = live(e.people || []).find((x) => x.id === (document.getElementById('hx-rq-to') || {}).value); if (r && p) { const was = r.owner || 'nobody'; const to = `${p.aka || String(p.name || '').split(' ')[0]} (${p.title || ''})`; const why = ((document.getElementById('hx-rq-why') || {}).value || '').trim(); r.owner = to; r.notes = `${r.notes ? r.notes + ' ' : ''}Reassigned ${fmtD(todayISO(), { day: 'numeric', month: 'short' })} from ${was} to ${to}${why ? ': ' + why : ''}.`; touch(r); save(); toast('Moved to ' + to); hxCur().p.rp = ''; render(); } return; }
+  if (t.dataset.hxdo === 'reqQuery') { const r = e.engagement.requests.find((x) => x.id === id); if (r) { const q = ((document.getElementById('hx-rq-q') || {}).value || '').trim(); const its = splitList(r.itemIds).map((x) => (live(e.items || []).find((i) => i.id === x) || {}).title).filter(Boolean);
+      const txt = `Query about Studio request ${r.id} (${E().client.name}).\nRequest: ${r.item}\nWaiting on: ${r.owner || '—'} · asked ${r.requestedDate || '—'} · due ${r.dueDate || '—'}\nWhy recorded: ${r.why || 'not recorded'}\nFeeds: ${its.join('; ') || 'nothing linked'}\nHistory: ${r.notes || 'none'}\n\nMy question: ${q || 'Why is this request here, and is it still needed?'}`;
+      (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast('Copied. Paste it into your Claude session.'), () => { window.prompt('Copy this and paste it into your Claude session:', txt); }); } return; }
   if (t.dataset.hxdo === 'reqReceived' || t.dataset.hxdo === 'reqNotNeeded') { const r = e.engagement.requests.find((x) => x.id === id); if (r) { if (t.dataset.hxdo === 'reqReceived') { r.receivedDate = todayISO(); r.status = 'Received'; } else r.status = 'Not needed'; touch(r); save(); toast(t.dataset.hxdo === 'reqReceived' ? 'Marked received' : 'Marked not needed'); hxBack(); } return; }
   if (t.dataset.hxdo === 'editItems') { ui.tab = 'data'; ui.coll = 'items'; render(); window.scrollTo(0, 0); }
 });
@@ -424,16 +444,20 @@ function efDiagram(e, d) {
 }
 
 /* ---------- blueprint on an item: the department brain (Studio only) ---------- */
-function bpRender(e, i) {
-  const B = i.blueprint; if (!B || typeof B !== 'object') return ''; const P = hxCur().p; const sel = (B.depts || []).find((x) => x.k === P.bd) || null;
+function bpRender(e, i, portal = false) {
+  const B = i.blueprint; if (!B || typeof B !== 'object') return ''; const P = portal ? { bd: PT.bpd } : hxCur().p; const sel = (B.depts || []).find((x) => x.k === P.bd) || null;
+  const selAttr = (k) => (portal ? `data-pt="bpd" data-id="${esc(k)}"` : `data-hxk="bd" data-hxv="${esc(k)}"`);
   const S = {}; (B.sources || []).forEach((s) => { S[s.id] = s; }); const uses = sel ? new Set(sel.needs.flatMap((n) => splitList(n[1]))) : null;
   const users = (B.depts || []).reduce((a, x) => a + num(x.users), 0); const usd = (v) => '$' + Math.round(v).toLocaleString('en-GB');
   const chip = (s) => `<div class="bp-src ${uses ? (uses.has(s.id) ? 'hit' : 'dim') : ''} ${s.wall ? 'walled' : ''}" title="${esc(s.what)}"><b>${esc(s.name)}</b><span>${esc(s.how)}</span>${s.wall ? '<em>Walled</em>' : ''}</div>`;
   const arrow = (t) => `<div class="bp-arrow"><span>${esc(t)}</span></div>`;
-  const dcard = (x) => `<button class="bp-dept ${P.bd === x.k ? 'on' : ''}" data-hxk="bd" data-hxv="${P.bd === x.k ? '' : esc(x.k)}" style="--c:var(--gd-${esc(x.k)})"><span class="bp-dh"><b>${esc(x.name)}</b><em>Phase ${esc(x.phase)}</em></span>
+  const dcard = (x) => `<button type="button" class="bp-dept ${P.bd === x.k ? 'on' : ''}" ${selAttr(P.bd === x.k ? '' : x.k)} style="--c:var(--gd-${esc(x.k)})"><span class="bp-dh"><b>${esc(x.name)}</b><em>Phase ${esc(x.phase)}</em></span>
     <span class="bp-du">${num(x.users)} people</span><span class="bp-dl">${(x.layers || []).map((l) => `<span><b>${esc(l[0])}</b>${num(l[1]) ? ` ×${num(l[1])}` : ''}<i>${esc(l[2])}</i></span>`).join('')}</span><span class="bp-dw">${esc(x.wall)}</span></button>`;
   const total = (B.costs.rows || []).reduce((a, r) => a + num(r[2]), 0);
-  return `<div class="hx-sh" style="margin-top:26px"><h3>${esc(B.title || 'Blueprint')}</h3><i></i></div>
+  const ev = hxBehind(e, i).f; const hist = (B.history || []).slice().sort((a, b) => String(a[0]).localeCompare(String(b[0])));
+  const work = (hist.length || ev.length) ? `<div class="hx-two" style="margin-top:18px"><div class="hx-tile"><div class="hx-k">How we got here</div><ol class="bp-hist">${hist.map((h) => `<li><b>${esc(fmtD(h[0], { day: 'numeric', month: 'short' }))}</b><span>${esc(h[1])}</span></li>`).join('')}</ol></div>
+    <div class="hx-tile"><div class="hx-k">The evidence behind it · ${ev.length}</div>${ev.map((f) => `<div class="hx-ev"><div style="font-weight:600;font-size:12.5px">${esc(f.title)}</div><div class="hx-mut" style="font-size:11px;margin-top:2px">${dedupeRefs(f.sources || []).map((r) => esc(sourceLine(e, r, !portal && !ui.share))).join(' · ')}</div></div>`).join('') || '<p class="hx-note">Linked findings appear here.</p>'}</div></div>` : '';
+  return `${portal ? '' : `<div class="hx-sh" style="margin-top:26px"><h3>${esc(B.title || 'Blueprint')}</h3><i></i></div>`}
   <div class="hx-tile bp-intro"><p>${esc(B.summary)}</p><div class="bp-kpis"><span><b>${(B.sources || []).length}</b>sources</span><span><b>${(B.depts || []).length}</b>groups of users</span><span><b>${users}</b>people</span><span><b>${(B.walls || []).length}</b>walls</span><span><b>${usd(total)}</b>a month (estimate)</span></div></div>
   <div class="bp-map">
     <div class="bp-band"><div class="bp-bl">1 · Where the knowledge is, and how we connect to it</div><div class="bp-groups">${(B.groups || []).map(([g, n]) => { const L = (B.sources || []).filter((s) => s.group === g); return L.length ? `<div class="bp-grp"><div class="bp-gn">${esc(n)}</div>${L.map(chip).join('')}</div>` : ''; }).join('')}</div></div>
@@ -453,7 +477,8 @@ function bpRender(e, i) {
   <div class="hx-tile" style="margin-top:18px"><div class="hx-k">Every source: what matters and how we connect</div><table class="hx-tbl bp-tbl"><tr><th>Source</th><th>What matters from it</th><th>How we connect</th><th>How often</th></tr>${(B.sources || []).map((s) => `<tr><td><b>${esc(s.name)}</b>${s.wall ? `<div class="bp-wl">${esc(s.wall)}</div>` : ''}</td><td>${esc(s.what)}</td><td class="hx-mut">${esc(s.how)}</td><td class="hx-mut">${esc(s.when)}</td></tr>`).join('')}</table></div>
   <div class="hx-two" style="margin-top:18px"><div class="hx-tile"><div class="hx-k">In phases</div>${(B.phases || []).map((p) => `<div class="hx-ev"><b>Phase ${esc(p[0])}</b> · <span class="hx-mut">${esc(p[2])}</span><div style="font-size:12.5px;margin-top:3px">${esc(p[1])}</div></div>`).join('')}</div>
     <div class="hx-tile"><div class="hx-k">Questions that decide whether it works</div>${(B.questions || []).map((q) => `<div class="hx-ev"><div style="font-size:12.5px">${esc(q[0])}</div><div class="hx-mut" style="font-size:11px;margin-top:2px">${esc(q[1])}</div></div>`).join('')}</div></div>
-  ${hxSrc([`Prices: ${(B.costs.sources || []).map((r) => esc(sourceLine(e, r, !ui.share))).join('; ')}.`, 'Headcount by department from the organogram (roles, not names).', 'Systems from the process maps and the software list.'])}`;
+  ${work}
+  ${hxSrc([`Prices: ${(B.costs.sources || []).map((r) => esc(sourceLine(e, r, !portal && !ui.share))).join('; ')}.`, 'Headcount by department from the organogram (roles, not names).', 'Systems from the process maps and the software list.'])}`;
 }
 
 HXV.item = (e) => { const i = live(e.items).find((x) => x.id === hxCur().p.id); return HXV._item(e) + (i ? bpRender(e, i) : ''); };

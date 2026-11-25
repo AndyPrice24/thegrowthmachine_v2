@@ -7,7 +7,7 @@
    TGM-only notes stay hidden (share mode). Views, comments, red flags and summaries go back through the web app.
    ============================================================ */
 let PORTAL_ON = false;
-const PT = { move: '', mb: '', S: null, R: null, me: null, ev: [], sec: 'home', open: {}, drafts: {}, replyTo: {}, busy: {}, lf: 'all', tab: 'found', modal: '', D: null, dept: '', proc: '', procFull: false, pteam: '', dk: '' };
+const PT = { move: '', mb: '', S: null, R: null, me: null, ev: [], sec: 'home', open: {}, drafts: {}, replyTo: {}, busy: {}, lf: 'all', tab: 'found', modal: '', D: null, dept: '', proc: '', procFull: false, pteam: '', dk: '', bp: '', bpd: '' };
 /* Studio actions that only change what is shown. Everything else is blocked in the portal. */
 const PT_ACTIONS = new Set(['sub', 'showAll', 'pvPick', 'pvBack', 'pvFocus', 'pvJourney', 'pvHl', 'pvSet', 'pvTick', 'flowStep', 'flowClear', 'zoom', 'setIntelFilter', 'goSrc', 'tab']);
 const PT_UI_OK = new Set(['compare', 'execView', 'ghosts', 'showCost', 'prioOnly']);
@@ -169,6 +169,7 @@ function ptLock(root) {
 }
 function ptGo(sec, opts = {}) {
   if (sec === 'dept' && !opts.keepDept) PT.dk = '';
+  if (sec === 'projects') PT.bp = '';
   if (sec === 'proc' && !opts.keepProc) { PT.proc = ''; PT.procFull = false; landProcesses(); }
   PT.sec = sec;
   if (opts.tab) PT.tab = opts.tab;
@@ -471,6 +472,8 @@ document.addEventListener('click', (ev) => {
   if (d === 'ins') { const n = document.getElementById('it-' + id); if (!n) { PT.dept = ''; portalRender(); } return setTimeout(() => ptFocus(id), 30); }
   if (d === 'dk') { PT.dk = id || ''; portalRender(); return window.scrollTo(0, 0); }
   if (d === 'print') { document.body.classList.add('ft-printing'); setTimeout(() => { window.print(); document.body.classList.remove('ft-printing'); }, 50); return; }
+  if (d === 'bp') { PT.bp = id || ''; PT.bpd = ''; PT.sec = 'projects'; portalRender(); return window.scrollTo(0, 0); }
+  if (d === 'bpd') { PT.bpd = id || ''; return portalRender(); }
   if (d === 'pteam') { PT.pteam = id || ''; return portalRender(); }
   if (d === 'proc') { PT.modal = ''; PT.sec = 'proc'; PT.proc = id || ''; PT.procFull = false; portalRender(); return window.scrollTo(0, 0); }
   if (d === 'procfull') { PT.procFull = !!id; if (id) { ui.tab = 'processes'; ui.pv = Object.assign({}, ui.pv, { mode: 'proc', focus: id, pick: '', hl: '' }); ui.stepId = ''; } portalRender(); return window.scrollTo(0, 0); }

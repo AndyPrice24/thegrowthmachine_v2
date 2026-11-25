@@ -77,7 +77,7 @@ function lrPortalEng(e, lr) {
   x.opportunities = (x.opportunities || []).filter((o) => !sens(o));
   x.automations = (x.automations || []).filter((a) => !a.private && !sens(a));
   x.moves = (x.moves || []).filter((m) => String(m.portal) !== 'false').map((m) => { const c = Object.assign({}, m); delete c.private; delete c.days; return c; });
-  x.items = (x.items || []).filter((m) => String(m.portal) !== 'false').map((m) => { const c = Object.assign({}, m); delete c.private; delete c.blueprint; return c; });
+  x.items = (x.items || []).filter((m) => String(m.portal) !== 'false').map((m) => { const c = Object.assign({}, m); delete c.private; return c; });
   x.people = (x.people || []).map((pp) => (LR_SENSITIVE.test(pp.notes || '') ? Object.assign({}, pp, { notes: '' }) : pp));
   const g = x.engagement || {};
   x.engagement = Object.assign({}, g, { timeLog: [], activities: [], daysOff: [], requests: (g.requests || []).map((r) => ({ id: r.id, item: r.item, crit: r.crit, owner: r.owner, requestedDate: r.requestedDate, dueDate: r.dueDate, receivedDate: r.receivedDate, status: r.status })) });
@@ -100,6 +100,7 @@ function lrSnapshot(e, lr) {
     ...found.map((c) => ({ id: c.id, label: c.title, section: 'Leaks & opportunities' })), ...recs.map((c) => ({ id: c.id, label: c.title, section: 'What we suggest' })), ...edList(e, { portal: true }).map((x) => ({ id: x.id, label: x.title || ED_KINDS[x.kind], section: 'Insights' })), ...mvList(e, { portal: true }).map((m) => ({ id: m.id, label: m.title, section: 'Key changes' })),
     ...live((e.engagement || {}).health || []).map((h) => ({ id: h.id, label: h.label, section: 'Company health' })),
     ...live(e.measures || []).map((m) => ({ id: m.id, label: m.name, section: 'Department efficiency' })),
+    ...live(e.items || []).filter((it) => it.blueprint && String(it.portal) !== 'false').map((it) => ({ id: 'bp_' + it.id, label: ((it.blueprint || {}).title || it.title) + ': the plan', section: 'Projects' })),
     ...live(e.items || []).filter((it) => String(it.portal) !== 'false').map((it) => ({ id: it.id, label: it.title, section: ['approved', 'underway', 'live'].includes(it.stage) ? 'Projects' : 'Changes not yet started' })),
     { id: 'report', label: 'The portal as a whole', section: '' }];
   return { kind: 'tgm-founder-portal', v: 2, reportId: lr.id, client: e.client.name, clientSlug: slugify(e.client.name), feedbackFile: lrFeedbackFile(e, lr), appFile: lr.id + '.html',

@@ -305,10 +305,14 @@ What each founder sees from their own link, served by TGM's Apps Script web app 
   a dimension is the average of its scored measures; improvement is the share of tracked measures whose trend moves the right way;
   the department score is the average of its scored dimensions and shows once three of six are scored. The department print hides the
   item list and scales to one A4 page.
-- **Blueprints on items** (`blueprint` on an item, Studio only; stripped from the portal): `bpRender` draws a structured design under
+- **Blueprints on items** (`blueprint` on an item; in the Studio under the item, and in the founder portal from the project card's "See the plan", with comments and red flags on the plan as `bp_<item id>`): `bpRender` draws a structured design under
   the item. Used for the department brain: sources grouped (what matters, how we connect, how often, walls), the brain's parts, how
   people reach it, the groups of users with their role layers, needs and walls (choose a group to light up its sources), the walls
   table, a monthly cost estimate against seat licences (sourced to the public price pages), phases and the questions that decide it.
+- **Waiting on → a request**: Mark received, Not needed, **Reassign** (move it to anyone in the organogram; the note records from whom,
+  to whom, when and why) and **Query** (why it is here: `why` and the items it feeds, `itemIds`, from the request record, plus its history;
+  a question box copies the request's details for Claude). Measures carry `targetBy`: `now` (NRR and the money measures, which have
+  March to September 2026 history) or `baseline` (four full weeks first, then a target agreed with the department head).
 - **Report** (page 6; the portal's `work` section, `ftReport`): the plan chart across the top, then days used by calendar month (needed against used, with any days banked
   ahead; from `stats.days`, built by `lrDays`, with no diary text and no reasons for days off; `daysOff` never reaches the portal),
   next to what is coming up, then **week by week**: `engagement.weeks` [{id, start, end, done, next?}], left to right, the latest four (earlier weeks folded),
