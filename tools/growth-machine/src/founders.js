@@ -162,7 +162,8 @@ function ftProjects() {
   const grp = (s, t, sub) => (by(s).length ? `${ftSh(`${t} <b class="ft-n">${by(s).length}</b>`, sub)}<div class="ft-pgrid">${by(s).map(ftProjectCard).join('')}</div>` : '');
   return `${ftHead('Optimisation projects', 'What is changing, why, and where it stands')}
     ${ftDeptBar(all)}
-    ${L.length ? grp('underway', 'Under way', '') + grp('approved', 'Approved, starting next', '') + grp('live', 'Live', '') : ftEmpty('No projects in this department yet.')}`;
+    ${L.length ? grp('underway', 'Under way', '') + grp('approved', 'Approved, starting next', '') + grp('live', 'Live', '') : ftEmpty('No projects in this department yet.')}
+    ${(() => { const P = ftItems().filter((it) => it.blueprint && !FT_PROJECT.includes(it.stage) && it.stage !== 'parked' && ftDeptOK(it)); return P.length ? `${ftSh(`Proposed, with a plan ready <b class="ft-n">${P.length}</b>`, 'waiting for your go-ahead')}<div class="ft-pgrid">${P.map(ftProjectCard).join('')}</div>` : ''; })()}`;
 }
 
 /* ---------- 4. Lowest-hanging fruit ---------- */
