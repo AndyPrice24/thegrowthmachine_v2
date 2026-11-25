@@ -313,6 +313,11 @@ What each founder sees from their own link, served by TGM's Apps Script web app 
   to whom, when and why) and **Query** (why it is here: `why` and the items it feeds, `itemIds`, from the request record, plus its history;
   a question box copies the request's details for Claude). Measures carry `targetBy`: `now` (NRR and the money measures, which have
   March to September 2026 history) or `baseline` (four full weeks first, then a target agreed with the department head).
+- **The plan chart** (`phaseGantt`: Studio Progress, the status report, the founders' Report page) draws the work under way beneath the
+  phases on the same dates (`ganttWork`): one row per item at Approved, Under way or Live, from `planStart` (else the earliest dated step
+  of its key change, else its stage date) to today, its milestones from the key change's dated steps and its next-step date (reached,
+  then the next one named), and to `planEnd` when a finish is agreed, otherwise a fading "finish to set". Proposed items sit as dots on
+  the next review.
 - **Report** (page 6; the portal's `work` section, `ftReport`): the plan chart across the top, then days used by calendar month (needed against used, with any days banked
   ahead; from `stats.days`, built by `lrDays`, with no diary text and no reasons for days off; `daysOff` never reaches the portal),
   next to what is coming up, then **week by week**: `engagement.weeks` [{id, start, end, done, next?}], left to right, the latest four (earlier weeks folded),

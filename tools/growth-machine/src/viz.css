@@ -680,3 +680,15 @@ line.ed-today{stroke:var(--ink);stroke-dasharray:3 3}
 .nrr-dot{fill:var(--nrr-ink)}
 .nrr-key i.ln{width:16px;height:0;border-top:3px solid;border-radius:0;background:none!important;display:inline-block;vertical-align:middle}
 .nrr-key i.ln.nrr-l-all{border-color:var(--nrr-ink)} .nrr-key i.ln.nrr-l-direct{border-color:var(--nrr-up)} .nrr-key i.ln.nrr-l-reseller{border-color:var(--nrr-res)} .nrr-key i.ln.nrr-target{border-top:2px dashed var(--nrr-down)}
+/* the work under way, beneath the plan */
+.gantt-svg .g-sep{stroke:var(--grid);stroke-width:1}
+.gantt-svg .g-sh{font-size:9.5px;font-weight:700;letter-spacing:.1em;fill:var(--muted)}
+.gantt-svg .g-shr{font-size:10px;fill:var(--muted)}
+.gantt-svg .g-wname{font-size:11px;fill:var(--ink);font-weight:600}
+.gantt-svg .g-bar.appr{fill:var(--bg,#fff);stroke:var(--red);stroke-width:1.4}
+.gantt-svg .g-plan{fill:none;stroke:var(--faint);stroke-width:1;stroke-dasharray:4 3}
+.gantt-svg .g-tbdl{font-size:9px;font-style:italic;fill:var(--muted)}
+.gantt-svg .g-ms{stroke-width:1.4}.gantt-svg .g-ms.done{fill:var(--ink);stroke:var(--bg,#fff)}.gantt-svg .g-ms.next{fill:var(--bg,#fff);stroke:var(--red)}.gantt-svg .g-ms.plan{fill:var(--bg,#fff);stroke:var(--faint)}
+.gantt-svg .g-nx{font-size:9.5px;font-weight:600;fill:var(--red)}
+.gantt-svg .g-prop{fill:var(--bg,#fff);stroke-width:1.8}
+.legend .lg-ms{width:9px!important;height:9px!important;transform:rotate(45deg);border-radius:0!important}

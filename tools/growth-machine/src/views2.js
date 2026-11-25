@@ -10,13 +10,36 @@ const reqChip = (s) => ({ Received: '<span class="chip st-added">✓ Received</s
 const phaseChip = (s) => ({ Done: '<span class="chip st-added">✓ Done</span>', 'In progress': '<span class="chip sev-high">● In progress</span>', 'On hold': '<span class="chip st-changed">❚❚ On hold</span>' }[s] || '<span class="chip">○ Not started</span>');
 
 /* ---------- Gantt (phases, slips, reviews, today) ---------- */
-function phaseGantt(e, { compact = false } = {}) {
+/** The work under way, drawn beneath the plan on the same dates: one row per project (items at Approved, Under way or Live).
+ * Start: planStart, else the earliest dated step of its key change, else its stage date. Milestones: the key change's dated steps
+ * (reached up to today, then the next one named) and the item's next-step date. Finish: planEnd when agreed; otherwise a fading
+ * "finish to set". Proposals waiting for a decision sit as dots on the next review. */
+const GW_C = { lead: '#7c5cd6', sales: '#2f6fd6', cs: '#1f9d6b', ops: '#e07b16', prod: '#0e9bb5', admin: '#cc4f93' };
+function ganttWork(e, portal) {
+  const g = e.engagement; const today = todayISO(); const ok = (it) => !portal || String(it.portal) !== 'false';
+  const order = { live: 0, underway: 1, approved: 2 };
+  const its = live(e.items || []).filter((it) => order[it.stage] !== undefined && ok(it)).sort((a, b) => order[a.stage] - order[b.stage]);
+  const rows = its.map((it) => {
+    const mv = it.moveId && live(e.moves || []).find((m) => m.id === it.moveId);
+    const ms = (mv && Array.isArray(mv.timeline) ? mv.timeline : []).map((t) => ({ d: mvDate(e, t.date), t: t.text || '' })).filter((x) => x.d);
+    const nd = mvDate(e, it.nextDate); if (nd && !ms.some((x) => x.d === nd)) ms.push({ d: nd, t: it.next || '' });
+    ms.sort((a, b) => a.d.localeCompare(b.d));
+    let start = it.planStart || (ms[0] && ms[0].d <= today ? ms[0].d : '') || it.stageSince || g.start; if (start < g.start) start = g.start;
+    const fut = ms.filter((x) => x.d > today); const next = fut[0] || null;
+    const known = !!it.planEnd; let end = it.planEnd || [addDaysISO(today, 14)].concat(fut.map((x) => x.d)).sort().pop(); if (end > g.end) end = g.end;
+    return { it, start, ms: ms.filter((x) => x.d >= start), next, end, known };
+  });
+  const props = live(e.items || []).filter((it) => it.stage === 'proposed' && ok(it));
+  return { rows, props, rev: splitList(g.reviewDates).find((d) => d >= today) || '' };
+}
+function phaseGantt(e, { compact = false, work = true, portal = false } = {}) {
   const g = e.engagement; if (!g.phases.length || !g.start || !g.end) return '';
   const st = engagementStatus(e);
   const s = new Date(g.start + 'T00:00:00').getTime(), en = new Date(g.end + 'T00:00:00').getTime() + 864e5;
   const W = 900, LW = compact ? 230 : 260, RH = 30, TOP = 22;
   const x = (iso) => LW + (new Date(iso + 'T00:00:00').getTime() - s) / (en - s) * (W - LW - 10);
-  const H = TOP + g.phases.length * RH + 8;
+  const WK = work ? ganttWork(e, portal) : { rows: [], props: [] }; const WR = 38; const wTop = TOP + g.phases.length * RH + 14;
+  const H = TOP + g.phases.length * RH + 8 + (WK.rows.length || WK.props.length ? 44 + WK.rows.length * WR + (WK.props.length ? WR : 0) + 14 : 0);
   let svg = `<svg viewBox="0 0 ${W} ${H}" class="gantt-svg" role="img" aria-label="Engagement timeline">`;
   [0, 1, 2, 3].forEach((k) => { const iso = addMonthsISO(g.start, k); if (iso > g.end) return; svg += `<line class="g-grid" x1="${x(iso)}" x2="${x(iso)}" y1="${TOP - 4}" y2="${H}"/><text class="g-lab" x="${x(iso) + 4}" y="12">Month ${k + 1} · ${fmtD(iso)}</text>`; });
   splitList(g.reviewDates).forEach((r) => { if (r >= g.start && r <= g.end) svg += `<line class="g-review" x1="${x(r)}" x2="${x(r)}" y1="${TOP - 4}" y2="${H}"><title>Fortnightly review ${fmtD(r)}</title></line>`; });
@@ -30,8 +53,29 @@ function phaseGantt(e, { compact = false } = {}) {
       if (slip > 0) { const x3 = x(addDaysISO(p.end, 1 + slip)); const dl = e.engagement.delays.filter((d) => d.phaseId === p.id).map((d) => `${d.cause}: +${num(d.daysImpact)}d`).join(' · '); svg += `<rect class="g-slip" x="${x2}" y="${y + 7}" width="${Math.max(4, x3 - x2)}" height="16" rx="3" data-tip="⚑ Slipped ${slip} days · ${esc(dl)}"/><text class="g-sliplab" x="${x3 + 4}" y="${y + 19}">⚑ +${slip}d</text>`; }
     }
   });
+  if (WK.rows.length || WK.props.length) {
+    const xs = (d) => x(d < g.start ? g.start : d > g.end ? g.end : d); const T = st.today;
+    svg += `<line class="g-sep" x1="0" x2="${W - 10}" y1="${wTop}" y2="${wTop}"/><text class="g-sh" x="0" y="${wTop + 22}">THE WORK UNDER WAY</text><text class="g-shr" x="${W - 10}" y="${wTop + 22}" text-anchor="end">${WK.rows.length} project${WK.rows.length === 1 ? '' : 's'}${WK.props.length ? ` · ${WK.props.length} waiting for a decision` : ''}</text>`;
+    WK.rows.forEach((r, i) => {
+      const y = wTop + 44 + i * WR; const bh = 14, by = y + 12; const c = GW_C[splitList(r.it.depts)[0]] || '#888';
+      const xa = xs(r.start), xt = xs(T), xe = xs(r.end); const cls = r.it.stage === 'live' ? 'done' : r.it.stage === 'approved' ? 'appr' : 'doing';
+      const tip = `${r.it.title} · ${ITEM_STAGE_NAME[r.it.stage] || r.it.stage} since ${fmtD(r.start)}${r.next ? ` · next: ${trunc(r.next.t, 80)} (${fmtD(r.next.d)})` : ''}${r.known ? ` · planned finish ${fmtD(r.end)}` : ' · finish to set'}`;
+      svg += `<circle cx="5" cy="${by + bh / 2}" r="4.5" fill="${c}"/><text class="g-wname" x="15" y="${by + bh / 2 + 4.5}">${esc(trunc(r.it.title, compact ? 30 : 36))}</text>`;
+      if (xt > xa) svg += `<rect class="g-bar g-w ${cls}" x="${xa}" y="${by}" width="${xt - xa}" height="${bh}" rx="4" data-tip="${esc(tip)}"/>`;
+      if (xe > xt) svg += r.known ? `<rect class="g-plan" x="${xt}" y="${by + 1}" width="${xe - xt}" height="${bh - 2}" rx="4"/>` : `<rect class="g-tbd" x="${xt}" y="${by + 4}" width="${xe - xt}" height="${bh - 8}" rx="3" fill="url(#gTbd)"/><text class="g-tbdl" x="${xe + 10}" y="${by + bh / 2 + 4}">finish to set</text>`;
+      r.ms.forEach((m) => { const mx = xs(m.d), cy = by + bh / 2; const k = m.d <= T ? 'done' : m === r.next ? 'next' : 'plan';
+        svg += `<path class="g-ms ${k}" d="M${mx},${cy - 6.5} L${mx + 6.5},${cy} L${mx},${cy + 6.5} L${mx - 6.5},${cy} Z"><title>${esc(m.t)} · ${fmtD(m.d)}</title></path>`; });
+      if (r.next) svg += `<text class="g-nx" x="${xs(r.next.d) + 9}" y="${by - 4}">${esc(trunc(r.next.t, 44))} · ${esc(fmtD(r.next.d, { day: 'numeric', month: 'short' }))}</text>`;
+    });
+    if (WK.props.length) {
+      const y = wTop + 44 + WK.rows.length * WR + 12; const cx0 = WK.rev ? x(WK.rev) : x(st.today);
+      svg += `<text class="g-wname" x="0" y="${y + 13}">Waiting for a decision</text>` + WK.props.map((it, i) => `<circle class="g-prop" cx="${cx0 - (WK.props.length - 1) * 7 + i * 14}" cy="${y + 9}" r="5.5" stroke="${GW_C[splitList(it.depts)[0]] || '#888'}"><title>${esc(it.title)}</title></circle>`).join('')
+        + `<text class="g-nx" x="${cx0 + WK.props.length * 7 + 8}" y="${y + 13}">${WK.props.length} proposal${WK.props.length === 1 ? '' : 's'}${WK.rev ? ` for the ${esc(fmtD(WK.rev, { day: 'numeric', month: 'short' }))} review` : ''}</text>`;
+    }
+    svg += '<defs><linearGradient id="gTbd"><stop offset="0" stop-color="#cfc7ba"/><stop offset="1" stop-color="#cfc7ba" stop-opacity="0"/></linearGradient></defs>';
+  }
   if (st.today >= g.start && st.today <= g.end) svg += `<line class="g-today" x1="${x(st.today)}" x2="${x(st.today)}" y1="${TOP - 8}" y2="${H}"/><text class="g-todaylab" x="${x(st.today) + 3}" y="${H - 2}">Today</text>`;
-  return `<div class="chart gantt-wrap">${svg}</div><div class="legend"><span><i style="background:var(--ink)"></i>Done</span><span><i style="background:var(--red)"></i>In progress</span><span><i style="background:var(--grid);outline:1px solid var(--faint)"></i>Not started</span><span><i class="hatch"></i>⚑ Slip from logged delays</span><span><i style="background:transparent;border-left:2px dashed var(--red);border-radius:0"></i>Fortnightly review</span></div>`;
+  return `<div class="chart gantt-wrap">${svg}</div><div class="legend"><span><i style="background:var(--ink)"></i>Done</span><span><i style="background:var(--red)"></i>In progress</span><span><i style="background:var(--grid);outline:1px solid var(--faint)"></i>Not started</span><span><i class="hatch"></i>⚑ Slip from logged delays</span><span><i style="background:transparent;border-left:2px dashed var(--red);border-radius:0"></i>Fortnightly review</span>${WK.rows.length ? `<span><i style="background:transparent;border:1.4px solid var(--red)"></i>Approved, not started</span><span><i style="background:transparent;border:1px dashed var(--faint)"></i>Planned finish</span><span><i style="background:linear-gradient(90deg,#cfc7ba,transparent)"></i>Finish to set</span><span><i class="lg-ms" style="background:var(--ink)"></i>Milestone reached</span><span><i class="lg-ms" style="background:transparent;border:1.4px solid var(--red)"></i>Next milestone</span>` : ''}</div>`;
 }
 
 /* ---------- Progress & time ---------- */
