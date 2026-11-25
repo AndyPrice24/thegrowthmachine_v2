@@ -168,7 +168,6 @@ function lrAddRecipient() {
 }
 async function lrPublish() {
   const e = E(); const lr = lrCur(e); if (!lr) return;
-  if (!(lr.itemIds || []).length) return toast('Tick what goes in the report first');
   if (!syncState.handle) { toast('Pick the updates folder first; then click Publish again'); return syncConnect(); }
   if (!(await syncPermitted())) return toast('Allow access to the updates folder, then click Publish again');
   lr.version = (lr.version || 0) + 1; lr.publishedAt = nowISO(); touch(lr);

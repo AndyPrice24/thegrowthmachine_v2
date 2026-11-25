@@ -85,7 +85,6 @@ function ptShell() {
         <span class="pt-crumb" id="pt-crumb"></span><span class="pt-spacer"></span>
         <span class="pt-updated"><span class="pt-dot"></span>Updated ${esc(ptDate(R.publishedAt, true))}</span>
         <button type="button" class="pt-btn" data-pt="comments" title="All comments">${ptIcon('i-chat')}<span class="pt-lbl">Comments</span><span class="pt-badge" id="pt-ccount"></span></button>
-        <button type="button" class="pt-btn pt-primary" data-pt="sumOpen" title="Summary PDF for your team">${ptIcon('i-pdf')}<span class="pt-lbl">Summary PDF</span></button>
       </div></header>
       <main id="main" class="pt-main"></main>
     </div></div>
