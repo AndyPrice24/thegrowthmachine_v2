@@ -175,6 +175,7 @@ function cellInput(e, coll, row, [f, type]) {
 
 function viewData(e) {
   const coll = ui.coll; const defs = FIELD_DEFS[coll];
+  const fbLink = coll === 'feedback' ? '<div class="btn-row"><button class="btn sm" data-action="feedbackReport">Open the feedback cheatsheet (written vs practice) →</button></div>' : '';
   const grid = `<table class="tbl grid-edit"><thead><tr>${defs.map(([f]) => `<th>${f}</th>`).join('')}<th></th></tr></thead><tbody>
     ${e[coll].map((row) => `<tr>${defs.map((d) => `<td>${cellInput(e, coll, row, d)}</td>`).join('')}<td><button class="btn sm ghost" data-action="delRow" data-coll="${coll}" data-id="${esc(row.id)}" title="Delete row">✕</button></td></tr>`).join('')}
     </tbody></table>`;
@@ -198,7 +199,7 @@ function viewData(e) {
       <label class="tog small"><input type="checkbox" id="frCase"> Match case</label><button class="btn" data-action="findReplace">Find and replace…</button></div>
       <p class="faint small">Searches every text in ${esc(e.client.name)}: findings, recommendations, processes and steps, interviews, questions, notes. It shows how many it found and where before changing anything. IDs and the merge history are never changed.</p>`)}
   ${card('Edit data', `<div class="toolbar">${Object.keys(FIELD_DEFS).map((c) => `<button class="btn sm ${coll === c ? 'on' : ''}" data-action="coll" data-id="${c}">${COLL_LABELS[c]} (${e[c].length})</button>`).join('')}</div>
-    <div class="scroll-x">${grid}</div>
+    ${fbLink}<div class="scroll-x">${grid}</div>
     <div class="btn-row"><button class="btn" data-action="addRow" data-coll="${coll}">+ Add ${COLL_LABELS[coll].toLowerCase().replace(/s$/, '')}</button></div>
     <p class="faint small">Changes save as you leave each cell. Lists (process steps, recommendation ops, scenario recommendation ids) are edited as JSON. See the README for the format.</p>`)}
   ${card(`Merge history (${(e.meta.mergeLog || []).length})`, (e.meta.mergeLog || []).length ? `<details id="mergeHist" ${ui.mergeOpen ? 'open' : ''}><summary class="small"><b>${ui.mergeOpen ? 'Hide' : 'Show'} history</b> · latest: ${esc(e.meta.mergeLog[0].label)} (${esc(new Date(e.meta.mergeLog[0].mergedAt).toLocaleString('en-GB'))})</summary><table class="tbl" style="margin-top:8px"><thead><tr><th>Merged</th><th>File</th><th>File date</th><th>What changed</th></tr></thead><tbody>${(e.meta.mergeLog || []).slice(0, 30).map((l) => `<tr><td class="nowrap small">${esc(new Date(l.mergedAt).toLocaleString('en-GB'))}</td><td class="small">${esc(l.label)}</td><td class="nowrap small">${l.generatedAt ? esc(new Date(l.generatedAt).toLocaleString('en-GB')) : '<span class="chip sev-medium">● no stamp</span>'}</td><td class="small">${esc(l.summary)}${l.skipped && l.skipped.length ? `<div class="faint">Skipped (newer data kept): ${esc(l.skipped.map((s) => s.coll + (s.id ? ':' + s.id : '')).join(', '))}</div>` : ''}</td></tr>`).join('')}</tbody></table></details>` : '<p class="empty">No merges recorded yet. Every merge from now on is listed here, and merging the same file twice asks you first.</p>', { sub: '+ added · ~ updated · ✕ skipped because the Studio already had newer data. Hand edits always count as newer than earlier files.' })}
@@ -292,6 +293,7 @@ const actions = {
   stage: (el) => { HX = [{ v: 'home', p: {} }]; hxGo('board', { s: el.dataset.id }); },
   showAll: (el) => { ui.all = Object.assign({}, ui.all, { [el.dataset.id]: !(ui.all || {})[el.dataset.id] }); render(); },
   loNeed: (el) => { const k = el.dataset.k; const L = ui.lo || {}; ui.lo = Object.assign({}, L, k === 'clear' ? { noFix: false, unsized: false, nosrc: false } : { noFix: k === 'noFix' ? !L.noFix : false, unsized: k === 'unsized' ? !L.unsized : false, nosrc: k === 'nosrc' ? !L.nosrc : false }, { open: '' }); ui.all = Object.assign({}, ui.all, { home: !!(ui.lo.noFix || ui.lo.unsized) }); saveUI(); render(); },
+  feedbackReport: () => { ui.tab = 'progress'; ui.sub = Object.assign({}, ui.sub, { progress: 'report' }); ui.reportType = 'feedback'; saveUI(); render(); window.scrollTo(0, 0); },
   nrrReport: () => { ui.tab = 'progress'; ui.sub = Object.assign({}, ui.sub, { progress: 'report' }); ui.reportType = 'nrr'; saveUI(); render(); window.scrollTo(0, 0); },
   talkP: (el) => { ui.talkP = el.dataset.id; render(); },
   share: () => { if (!ui.share) { ui.anonBefore = !!ui.anon; ui.anon = true; ui.share = true; } else { ui.share = false; ui.anon = !!ui.anonBefore; } saveUI(); render(); toast(ui.share ? 'Screen share on: names show as roles; TGM-only notes are hidden' : 'Screen share off'); },

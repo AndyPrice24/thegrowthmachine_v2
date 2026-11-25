@@ -65,7 +65,7 @@ function ftHealth() {
   const cnt = (s) => H.filter((h) => (FT_STATUS[h.status] ? h.status : 'grey') === s).length;
   const areas = [...FT_AREAS, ...[...new Set(H.map((h) => h.area))].filter((a) => a && !FT_AREAS.includes(a))].filter((a) => H.some((h) => h.area === a));
   const asks = R.asks || []; const fruit = ftFruit(true); const appr = fruit.filter((x) => (PT.D.approve[x.it.id] || []).length).length;
-  const lede = esc(R.intro || '');
+  const lede = esc(((E().engagement || {}).status || {}).headline || '');
   const head = ftHead(`Week ${w.cur} of ${w.weeks}${next ? ` · next review ${esc(fmtD(next, { weekday: 'short', day: 'numeric', month: 'short' }))}` : ''}`, `${esc(e.client.name)}: company health`, lede);
   if (!H.length) return head + ftEmpty('The health measures are being set up.');
   return `${head}

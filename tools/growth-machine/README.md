@@ -318,6 +318,12 @@ What each founder sees from their own link, served by TGM's Apps Script web app 
   of its key change, else its stage date) to today, its milestones from the key change's dated steps and its next-step date (reached,
   then the next one named), and to `planEnd` when a finish is agreed, otherwise a fading "finish to set". Proposed items sit as dots on
   the next review.
+- **Reports → Founder portal (the Studio screen)**: one line of status (published when, what's new) with **Preview as a founder** (the
+  owner link) and **Publish**; then What's new from them (New / All), Decisions to ask for (the one content box), Who can see it (each
+  person's link, last opened, Copy / Email / Stop link) and Set-up (once), folded. Everything else in the portal comes from the Studio's
+  own data. The old tick-list, name, prepared-for, headline and opening line are gone; Company health's lead sentence is the weekly
+  status headline. The Reports menu is Founder portal and Status report (PDF); the feedback cheatsheet opens from Sources & data →
+  feedback, and the NRR report from its own button.
 - **Report** (page 6; the portal's `work` section, `ftReport`): the plan chart across the top, then days used by calendar month (needed against used, with any days banked
   ahead; from `stats.days`, built by `lrDays`, with no diary text and no reasons for days off; `daysOff` never reaches the portal),
   next to what is coming up, then **week by week**: `engagement.weeks` [{id, start, end, done, next?}], left to right, the latest four (earlier weeks folded),

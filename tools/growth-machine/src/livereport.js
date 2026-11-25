@@ -243,59 +243,46 @@ function lrFeedbackCard(e, lr) {
     { sub: 'Views, comments and red flags arrive with ⟳ Updates. Each keeps what it was attached to (item, section, version), so the trail survives later edits. “Open in live report” jumps to that item.' });
 }
 
-/* ---------- the page ---------- */
+/* ---------- the page: one portal, four parts ---------- */
+const lrWhen = (iso) => new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 function viewLiveReport(e, toggle) {
   const lrs = lrList(e); const lr = lrCur(e);
-  const head = `<div class="page-h"><div><span class="eyebrow">Report</span><h1>Founder portal</h1><p class="muted">What each founder sees from their own link: an overview, our work, the leaks and opportunities you tick, and read-only Processes and Evidence. They can comment, red-flag and download a summary for their team. You see who opened it and when, and every comment, below.</p></div>
-    <div class="btn-row">${lrs.length > 1 ? `<select id="lrSel" class="inline">${lrs.map((x) => `<option value="${esc(x.id)}" ${lr && x.id === lr.id ? 'selected' : ''}>${esc(x.title)}</option>`).join('')}</select>` : ''}<button class="btn ${lrs.length ? 'ghost' : ''}" data-action="lrNew">+ New founder portal</button>${lrs.length ? '<button class="btn ghost" data-action="lrDelete" title="Delete this portal from the Studio">Delete</button>' : ''}</div></div>`;
-  if (!lr) return head + toggle + empty('No founder portal yet. Click “New founder portal” to choose what goes in it and who gets a link.');
-  const C = lrCandidates(e); const sel = new Set(lr.itemIds || []);
-  const evs = lrEvents(e, lr); const flags = lrFlagState(evs); const talk = {}; evs.filter((x) => x.type === 'comment').forEach((x) => { talk[x.elementId] = (talk[x.elementId] || 0) + 1; });
-  const tab = ui.lrPick || 'found';
-  const list = C.filter((c) => (tab === 'recs' ? c.src === 'recommendation' : c.src !== 'recommendation')).sort(lrRank);
-  const q = String(ui.lrQ || '').toLowerCase();
-  const rows = list.filter((c) => !q || (c.title + ' ' + (c.o.evidence || c.o.description || '')).toLowerCase().includes(q));
-  const pick = (c) => `<label class="lr-pick ${sel.has(c.id) ? 'on' : ''}"><input type="checkbox" data-action="lrItem" data-id="${esc(c.id)}" ${sel.has(c.id) ? 'checked' : ''}>
-    <span>${c.pinned ? '<span class="chip pin-chip">★</span> ' : ''}${c.src === 'recommendation' ? `<span class="chip">${esc(c.o.status || 'Identified')}</span>` : `<span class="chip">${esc(LR_TAG[c.kind] || c.kind)}</span>`} ${esc(c.title)}
-    ${c.value ? `<span class="faint small"> · ${fmtMoney(c.value)}${c.src === 'recommendation' ? '/yr' : '/mo'}</span>` : ''}${c.sensitive ? ' <span class="chip lo-nofix" title="The text mentions something sensitive (pay, commission, related parties, personal accounts or a confidential remark). Quick-add skips it; read it before ticking.">⚠ check before sharing</span>' : ''}${flags[c.id] ? ` <span class="chip lo-nofix">🚩 ${flags[c.id].length}</span>` : ''}${talk[c.id] ? ` <span class="chip">💬 ${talk[c.id]}</span>` : ''}</span></label>`;
-  const nSens = C.filter((c) => sel.has(c.id) && c.sensitive).length;
-  const nF = C.filter((c) => sel.has(c.id) && c.src !== 'recommendation').length, nR = C.filter((c) => sel.has(c.id) && c.src === 'recommendation').length;
-  const url = (e.meta || {}).liveReportUrl;
+  if (!lr) return `<div class="page-h"><div><span class="eyebrow">Report</span><h1>Founder portal</h1></div></div>${toggle}<section class="card"><p>No founder portal yet.</p><div class="btn-row"><button class="btn" data-action="lrNew">Create the founder portal</button></div></section>`;
+  const url = (e.meta || {}).liveReportUrl; const evs = lrEvents(e, lr).slice().sort((a, b) => String(b.at).localeCompare(String(a.at)));
   const changed = lr.publishedAt && lr.updatedAt && lr.updatedAt > lr.publishedAt;
-  const rc = (r) => {
-    const link = lrLink(e, lr, r.token);
-    return `<tr class="${r.revoked ? 'row-removed' : ''}"><td><input class="inline" data-lrrcp="${esc(r.id)}|label" value="${esc(r.label)}" style="min-width:260px"></td><td><input class="inline" type="email" data-lrrcp="${esc(r.id)}|email" value="${esc(r.email || '')}" placeholder="email (optional)"></td>
-      <td>${link && !r.revoked ? `<button class="btn sm" data-action="lrCopy" data-id="${esc(r.id)}">Copy link</button> <a class="btn sm ghost" href="${esc(lrMail(e, lr, r))}">Email</a>` : r.revoked ? '<span class="faint small">Stopped</span>' : '<span class="faint small">Add the web app address first</span>'}</td>
-      <td><button class="btn sm ghost" data-action="lrRevoke" data-id="${esc(r.id)}" title="${r.revoked ? 'Give this person access again (after you publish)' : 'Stop this link working (after you publish)'}">${r.revoked ? 'Restore' : 'Stop link'}</button></td></tr>`;
-  };
-  return `${head}${toggle}
-  ${lrFeedbackCard(e, lr)}
-  ${card('1. What goes in', `
-    <div class="grid-2"><label class="fld"><span>Name (shown under the client's name)</span><input data-lr="title" value="${esc(lr.title)}"></label><label class="fld"><span>Prepared for</span><input data-lr="preparedFor" value="${esc(lr.preparedFor || '')}" placeholder="e.g. the founders"></label></div>
-    <label class="fld"><span>Headline on the overview (one sentence; if empty, a greeting is used)</span><input data-lr="headline" value="${esc(lr.headline || '')}"></label>
-    <label class="fld"><span>Opening line on the overview (two or three sentences; if empty, the status report's headline is used)</span><textarea data-lr="intro" rows="3">${esc(lr.intro || '')}</textarea></label>
-    <label class="fld"><span>Needs your decision (one per line: what you need | a short line of detail)</span><textarea data-lr="asks" rows="4" placeholder="Pulse sign-off criteria | What you and Neil want to see before it runs on a schedule">${esc(lr.asks || '')}</textarea></label>
-    <p class="faint small">The overview also shows: the engagement timeline, savings identified, the headline numbers (Sources &amp; data → Headline numbers), this fortnight from the status report, and links into Processes and Evidence (read only).</p>
-    <h5>Items: ${nF} finding${nF === 1 ? '' : 's'} and ${nR} recommendation${nR === 1 ? '' : 's'} ticked${nSens ? ` · <span class="warn-t">${nSens} marked “check before sharing”</span>` : ''}</h5>
-    <div class="toolbar"><button class="btn sm ${tab === 'found' ? 'on' : ''}" data-action="lrPick" data-id="found">Findings &amp; opportunities</button><button class="btn sm ${tab === 'recs' ? 'on' : ''}" data-action="lrPick" data-id="recs">Recommendations</button>
-      <input class="inline" id="lrQ" placeholder="Filter" value="${esc(ui.lrQ || '')}" style="max-width:180px">
-      <button class="btn sm ghost" data-action="lrQuick" data-id="pinned">+ Founder priorities</button><button class="btn sm ghost" data-action="lrQuick" data-id="top">+ Top 10 by size</button><button class="btn sm ghost" data-action="lrQuick" data-id="fixes">+ Fixes for ticked findings</button><button class="btn sm ghost" data-action="lrQuick" data-id="clear">Clear</button></div>
-    <div class="lr-list">${rows.map(pick).join('') || '<p class="faint small">Nothing matches.</p>'}</div>`,
-    { sub: 'Only what you tick goes in. Quick-add skips anything marked “check before sharing”. Founder priorities lead; findings are grouped by kind and ranked by size; recommendations by score.' })}
-  ${card('2. Who gets a link', `
-    <div class="scroll-x"><table class="tbl"><thead><tr><th>Name shown on their comments</th><th>Email</th><th>Their link</th><th></th></tr></thead><tbody>${(lr.recipients || []).map(rc).join('')}
-      <tr><td><input class="inline" id="lrNewLabel" placeholder="e.g. Sam (Managing Director)" style="min-width:260px"></td><td><input class="inline" id="lrNewEmail" type="email" placeholder="email (optional)"></td><td><button class="btn sm" data-action="lrAddRcp">+ Add recipient</button></td><td></td></tr></tbody></table></div>
-    <p class="faint small">Each person gets their own link, so views and comments show who they came from. A forwarded link shows as the original recipient. “Email” opens a draft in your mail app. Your own owner link: ${url ? `<button class="link" data-action="lrCopy" data-id="owner">copy</button> · <a class="link" href="${esc(lrLink(e, lr, lr.ownerToken))}" target="_blank" rel="noopener">open ↗</a>` : 'add the web app address first'}.</p>`)}
-  ${card('3. Publish', `
-    <p class="small">${lr.publishedAt ? `Version <b>${lr.version}</b> published ${esc(new Date(lr.publishedAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }))}.${changed ? ' <span class="warn-t">Changed since then: publish again so recipients see it.</span>' : ''}` : 'Not published yet.'} Publishing writes the report into the updates folder (reports/${esc(lr.id)}.json); recipients' links always show the latest version, and comments stay on their items.</p>
-    <div class="btn-row"><button class="btn" data-action="lrPublish">${lr.publishedAt ? 'Publish again' : 'Publish'}</button>${syncState.handle ? '' : '<span class="faint small">You will be asked to pick the updates folder.</span>'}</div>
-    <details class="small lr-setup" ${url ? '' : 'open'}><summary><b>Set-up (once): the web app</b></summary>
-      <ol>
-        <li>Paste the updates folder's ID (the part of its Google Drive address after <code>/folders/</code>): <input class="inline" data-bind="meta.liveReportFolderId" value="${esc((e.meta || {}).liveReportFolderId || '')}" style="max-width:320px"></li>
-        <li>Download <button class="link" data-action="lrDl" data-id="code">Code.gs</button> and <button class="link" data-action="lrDl" data-id="html">Report.html</button>.</li>
-        <li>At script.google.com, create a project called “TGM live report”. Replace Code.gs with the downloaded one; add an HTML file named <b>Report</b> and paste Report.html into it.</li>
-        <li>Deploy → New deployment → Web app. Execute as: <b>Me</b>. Who has access: <b>Anyone</b>. Approve the Drive access it asks for.</li>
-        <li>Paste the web app address here: <input class="inline" data-bind="meta.liveReportUrl" value="${esc(url || '')}" placeholder="https://script.google.com/macros/s/…/exec" style="max-width:420px"></li>
-      </ol>
-      <p class="faint">The folder stays private: the web app reads and writes it on your behalf. After changing the script, use Deploy → Manage deployments → Edit → New version, so the address stays the same.</p></details>`)}`;
+  const items = evs.filter((x) => ['comment', 'flag', 'approve', 'pdf'].includes(x.type)); const fresh = items.filter((x) => !x.seen);
+  const nAppr = fresh.filter((x) => x.type === 'approve').length;
+  const status = lr.publishedAt ? `Published ${esc(lrWhen(lr.publishedAt))}${changed ? ' · <span class="warn-t">changed since: publish again so they see it</span>' : ''}` : 'Not published yet';
+  const head = `<div class="page-h"><div><span class="eyebrow">Report</span><h1>Founder portal</h1><p class="muted">${status}${fresh.length ? ` · <b>${fresh.length} new from them</b>${nAppr ? ` (${nAppr} go-ahead${nAppr === 1 ? '' : 's'})` : ''}` : ''}</p></div>
+    <div class="btn-row">${lrs.length > 1 ? `<select id="lrSel" class="inline">${lrs.map((x) => `<option value="${esc(x.id)}" ${x.id === lr.id ? 'selected' : ''}>${esc(x.title)}</option>`).join('')}</select>` : ''}
+      ${url ? `<a class="btn ghost" href="${esc(lrLink(e, lr, lr.ownerToken))}" target="_blank" rel="noopener" title="Opens the portal with your owner link: what they see, without counting as their visit">Preview as a founder ↗</a>` : ''}<button class="btn" data-action="lrPublish">${lr.publishedAt ? 'Publish again' : 'Publish'}</button></div></div>`;
+  // 1. what's new from them
+  const F = ui.lrFb === 'all' ? 'all' : 'new'; const shown = F === 'all' ? items : fresh; const parent = byId(items);
+  const open = (id) => (url && id ? `<a class="btn sm ghost" href="${esc(lrLink(e, lr, lr.ownerToken, id))}" target="_blank" rel="noopener">Open ↗</a>` : '');
+  const row = (x) => `<div class="lr-fb ${x.seen ? 'seen' : ''} lr-fb-${x.type}"><div class="lr-fb-i" aria-hidden="true">${x.type === 'comment' ? '💬' : x.type === 'flag' ? '🚩' : x.type === 'pdf' ? '📄' : '✓'}</div>
+    <div class="lr-fb-b"><div class="small"><b>${esc(x.byLabel)}</b> ${x.type === 'pdf' ? 'downloaded a summary for their team' : `${x.type === 'flag' ? 'red-flagged' : x.type === 'approve' ? 'gave the go-ahead for' : x.parentId ? 'replied on' : 'commented on'} <b>${esc(x.elementLabel || x.elementId)}</b>`} <span class="faint">· ${esc(lrWhen(x.at))}</span></div>
+      ${x.parentId && parent[x.parentId] ? `<div class="faint small">↳ replying to ${esc(parent[x.parentId].byLabel)}: “${esc(trunc(parent[x.parentId].text, 120))}”</div>` : ''}${x.text ? `<p class="lr-fb-t">${esc(x.text)}</p>` : ''}
+      <div class="btn-row">${x.type === 'pdf' ? '' : open(x.elementId)}<button class="btn sm ghost" data-action="lrSeen" data-id="${esc(x.id)}">${x.seen ? 'Mark as new' : 'Mark seen'}</button></div></div></div>`;
+  const news = card(`What's new from them${fresh.length ? ` <span class="chip lo-nofix">${fresh.length}</span>` : ''}`, `<div class="toolbar"><button class="btn sm ${F === 'new' ? 'on' : ''}" data-action="lrFb" data-id="new">New</button><button class="btn sm ${F === 'all' ? 'on' : ''}" data-action="lrFb" data-id="all">All</button>${fresh.length ? '<button class="btn sm ghost" data-action="lrSeenAll">Mark all seen</button>' : ''}</div>
+    ${shown.length ? shown.map(row).join('') : `<p class="faint small">${items.length ? 'Nothing new. Earlier comments are under All.' : 'Nothing yet. Comments, red flags and go-aheads arrive with ⟳ Updates.'}</p>`}`);
+  // 2. decisions to ask for
+  const asks = card('Decisions to ask for', `<label class="fld"><span>One per line: the decision | a short line of detail. They show on Company health and the Report page.</span><textarea data-lr="asks" rows="4" placeholder="Pulse sign-off | What you and Neil want to see before it runs on a schedule">${esc(lr.asks || '')}</textarea></label>`);
+  // 3. who can see it
+  const rc = (r) => { const link = lrLink(e, lr, r.token); const v = evs.filter((x) => x.by === r.id && x.type === 'view');
+    return `<tr class="${r.revoked ? 'row-removed' : ''}"><td><input class="inline" data-lrrcp="${esc(r.id)}|label" value="${esc(r.label)}" style="min-width:220px"></td><td class="small">${v.length ? `Last opened ${esc(lrWhen(v[0].at))} · ${v.length} visit${v.length === 1 ? '' : 's'}` : '<span class="faint">Not opened yet</span>'}</td>
+      <td>${link && !r.revoked ? `<button class="btn sm" data-action="lrCopy" data-id="${esc(r.id)}">Copy link</button> <a class="btn sm ghost" href="${esc(lrMail(e, lr, r))}">Email</a>` : r.revoked ? '<span class="faint small">Stopped</span>' : ''}</td>
+      <td><button class="btn sm ghost" data-action="lrRevoke" data-id="${esc(r.id)}">${r.revoked ? 'Restore' : 'Stop link'}</button></td></tr>`; };
+  const who = card('Who can see it', `<div class="scroll-x"><table class="tbl"><tbody>${(lr.recipients || []).map(rc).join('')}
+      <tr><td><input class="inline" id="lrNewLabel" placeholder="Name and role, e.g. Neil (Co-Founding Director)" style="min-width:220px"></td><td><input class="inline" id="lrNewEmail" type="email" placeholder="email (optional)"></td><td><button class="btn sm" data-action="lrAddRcp">+ Add a person</button></td><td></td></tr></tbody></table></div>
+    <p class="faint small">Each person has their own link, so their comments show who they came from. Stopping a link takes effect when you publish.</p>`);
+  // 4. set-up, once
+  const setup = `<details class="card lr-setup" ${url ? '' : 'open'}><summary><b>Set-up (once)</b> <span class="faint small">${url ? 'done' : 'needed before anyone can open it'}</span></summary>
+      <ol class="small">
+        <li>The updates folder's ID (the part of its Google Drive address after <code>/folders/</code>): <input class="inline" data-bind="meta.liveReportFolderId" value="${esc((e.meta || {}).liveReportFolderId || '')}" style="max-width:320px"></li>
+        <li>Download <button class="link" data-action="lrDl" data-id="code">Code.gs</button> and <button class="link" data-action="lrDl" data-id="html">Report.html</button>, paste them into a script.google.com project, and deploy it as a web app (Execute as: Me; Who has access: Anyone).</li>
+        <li>The web app address: <input class="inline" data-bind="meta.liveReportUrl" value="${esc(url || '')}" placeholder="https://script.google.com/macros/s/…/exec" style="max-width:420px"></li>
+      </ol><p class="faint small">After changing the script: Deploy → Manage deployments → Edit → New version, so the address stays the same. The folder stays private.</p></details>`;
+  return `${head}${toggle}${news}${asks}${who}${setup}
+    <p class="faint small">Everything else in the portal comes from the Studio itself: the items (each can be set to TGM only), company health, the department measures, insights and the weekly status headline.</p>`;
 }
+
