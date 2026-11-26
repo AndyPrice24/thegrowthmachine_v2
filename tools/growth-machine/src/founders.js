@@ -50,13 +50,42 @@ const ftEmpty = (t) => `<div class="gs-panel ft-empty"><p class="pt-muted">${t}<
 
 /* ---------- 1. Company health ---------- */
 function ftHealthList() { return live((E().engagement || {}).health || []).sort((a, b) => num(a.order) - num(b.order)); }
+/* Visuals on the health cards (26 Nov): a trend line from points, progress to a target, or a share of a whole. */
+const ftNum = (v) => { const s = String(v == null ? '' : v).replace(/,/g, ''); const x = parseFloat(s.replace(/[^\d.-]/g, '')); return !isFinite(x) ? NaN : /m\b/i.test(s) ? x * 1e6 : /k\b/i.test(s) ? x * 1e3 : x; };
+function ftHViz(h) {
+  const pts = splitList(h.points).map(Number).filter((x) => isFinite(x));
+  if (pts.length >= 3) { const lo = Math.min(...pts), hi = Math.max(...pts), sp = hi - lo || 1, W = 240, H = 46;
+    const xy = pts.map((v, i) => [i / (pts.length - 1) * W, H - 4 - (v - lo) / sp * (H - 10)]); const line = xy.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
+    const [ex, ey] = xy[xy.length - 1];
+    return `<div class="ft-hv"><div class="ft-spw"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" class="ft-spk" aria-hidden="true"><polygon points="0,${H} ${line} ${W},${H}" class="a"/><polyline points="${line}" class="l" vector-effect="non-scaling-stroke"/><line x1="${ex.toFixed(1)}" y1="${ey.toFixed(1)}" x2="${ex.toFixed(1)}" y2="${ey.toFixed(1)}" class="d" vector-effect="non-scaling-stroke"/></svg></div>${h.pointsSpan ? `<span class="ft-hvs">${esc(h.pointsSpan)}</span>` : ''}</div>`; }
+  const v = ftNum(h.value), tg = ftNum(h.target), of = ftNum(h.barOf);
+  if (isFinite(v) && isFinite(tg) && tg > 0) { const mx = Math.max(v, tg) * 1.08;
+    return `<div class="ft-hv"><div class="ft-hbar"><i style="width:${(v / mx * 100).toFixed(1)}%"></i><b style="left:${(tg / mx * 100).toFixed(1)}%" title="Target ${esc(h.target)}"></b></div><span class="ft-hvs"><span>${esc(h.value)} now</span><span>Target ${esc(h.target)}</span></span></div>`; }
+  if (isFinite(v) && isFinite(of) && of > 0) return `<div class="ft-hv"><div class="ft-hbar"><i style="width:${Math.min(100, v / of * 100).toFixed(1)}%"></i></div><span class="ft-hvs"><span>${Math.round(v / of * 100)}% of ${esc(h.barOf)}</span></span></div>`;
+  return '';
+}
+/** Profit and loss visuals: where each R1 of revenue goes (this year and a year earlier), and operating profit by month. */
+function ftPLViz(L) {
+  const g = (r) => L.find((h) => h.plRole === r); const pc = (s) => { const m = String(s || '').match(/(\d+(?:\.\d+)?)%/); return m ? +m[1] : NaN; };
+  const cost = g('cost'), prof = g('profit'), pay = L.find((h) => /payroll/i.test(h.label)), sw = L.find((h) => /software/i.test(h.label));
+  if (!cost || !prof) return '';
+  const now = { pay: pc(pay && pay.pct), sw: pc(sw && sw.pct), prof: pc(prof.pct), cost: pc(cost.pct) }, was = { pay: pc(pay && pay.trendText), prof: pc(prof.trendText), cost: pc(cost.trendText) };
+  const seg = (w, c, lbl) => (isFinite(w) && w > 0 ? `<i class="${c}" style="width:${w}%" title="${esc(lbl)} ${w}%">${w >= 7 ? `<span>${w}%</span>` : ''}</i>` : '');
+  const bar = (o, sw0) => `${seg(o.pay, 'pay', 'Payroll')}${sw0 ? seg(o.sw, 'sw', 'Software and AI tools') : ''}${seg(o.cost - (o.pay || 0) - (sw0 ? (o.sw || 0) : 0), 'oth', 'Other operating costs')}${seg(o.prof, 'prof', 'Operating profit')}`;
+  const ms = splitList(prof.points).map(Number).filter((x) => isFinite(x)); const mx = Math.max(1, ...ms.map(Math.abs));
+  return `<div class="ft-plviz"><div class="ft-plv-h">Where each R1 of revenue goes</div>
+    <div class="ft-r1"><span>Jul–Sep 2026</span><div class="ft-r1b">${bar(now, true)}</div></div>
+    ${isFinite(was.cost) ? `<div class="ft-r1"><span>A year earlier</span><div class="ft-r1b">${bar(was, false)}</div></div>` : ''}
+    <div class="ft-r1k"><span><i class="pay"></i>Payroll</span><span><i class="sw"></i>Software and AI</span><span><i class="oth"></i>Other costs</span><span><i class="prof"></i>Operating profit</span></div>
+    ${ms.length >= 3 ? `<div class="ft-plv-h">Operating profit by month${prof.pointsSpan ? ` <em>${esc(prof.pointsSpan)}</em>` : ''}</div><div class="ft-cols">${ms.map((x) => `<i class="${x < 0 ? 'neg' : ''}" style="height:${Math.max(4, Math.abs(x) / mx * 100).toFixed(0)}%" title="${esc(ptMoney(x))}"></i>`).join('')}</div>` : ''}</div>`;
+}
 function ftMeasure(h) {
   const st = FT_STATUS[h.status] ? h.status : 'grey'; const arrow = h.trend === 'up' ? '▲' : h.trend === 'down' ? '▼' : h.trend === 'flat' ? '■' : '';
   const tracked = st !== 'grey';
   return `<div class="ft-m ft-${st}" id="it-${esc(h.id)}">
     <div class="ft-m-h"><span class="ft-light" title="${esc(FT_STATUS[st])}"></span><span class="ft-m-l">${esc(h.label)}</span>${ptActs(h.id)}</div>
     <div class="ft-m-v ${tracked ? '' : 'ft-nt'}">${esc(h.value || '—')}${h.unit && tracked ? `<small>${esc(h.unit)}</small>` : ''}</div>
-    ${h.trendText ? `<div class="ft-m-t">${arrow ? `<b class="ft-arrow ft-a-${esc(h.trend)}">${arrow}</b>` : ''}${esc(h.trendText)}</div>` : ''}
+    ${ftHViz(h)}${h.trendText ? `<div class="ft-m-t">${arrow ? `<b class="ft-arrow ft-a-${esc(h.trend)}">${arrow}</b>` : ''}${esc(h.trendText)}</div>` : ''}
     <div class="ft-m-f"><span>${h.asAt ? 'As at ' + esc(h.asAt) : ''}</span>${ptSrcBtn(h.source ? [{ id: h.source, part: h.part || '' }] : [], 'Source')}</div></div>`;
 }
 const ftWorst = (L) => (L.some((h) => h.status === 'red') ? 'red' : L.some((h) => h.status === 'amber') ? 'amber' : L.every((h) => h.status === 'grey' || !FT_STATUS[h.status]) ? 'grey' : 'green');
@@ -74,7 +103,7 @@ function ftPL(L) {
       <span class="ft-pll">${esc(h.label)}</span><b class="ft-plv">${esc(h.value || '—')}</b><span class="ft-plp">${esc(h.pct || '')}</span>
       <span class="ft-ply">${h.trendText ? esc(h.trendText) : ''}</span><span class="ft-pla">${ptActs(h.id)}${ptSrcBtn(h.source ? [{ id: h.source, part: h.part || '' }] : [], '')}</span></div>`; };
   return `<section class="gs-panel ft-area ft-${worst} ft-plc"><div class="ft-area-h"><h2>Profit and loss</h2><span class="ft-area-s">${esc(FT_STATUS[worst])}</span></div>
-    <div class="gs-well ft-plt"><div class="ft-plr ft-plhd"><span></span><span></span><b>A month</b><span>Of revenue</span><span>A year earlier</span><span></span></div>${rows.concat(rest).map(row).join('')}</div>
+    ${ftPLViz(L)}<div class="gs-well ft-plt"><div class="ft-plr ft-plhd"><span></span><span></span><b>A month</b><span>Of revenue</span><span>A year earlier</span><span></span></div>${rows.concat(rest).map(row).join('')}</div>
     <p class="ft-plf">${[asAt, ...L.filter((h) => h.plNote).map((h) => h.plNote)].filter(Boolean).map(esc).join('. ')}.</p></section>`;
 }
 /** Company health: one tile per scored department, opening its department page. */
