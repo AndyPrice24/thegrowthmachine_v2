@@ -11,7 +11,7 @@ const PT = { move: '', mb: '', S: null, R: null, me: null, ev: [], sec: 'home', 
 /* Studio actions that only change what is shown. Everything else is blocked in the portal. */
 const PT_ACTIONS = new Set(['sub', 'showAll', 'pvPick', 'pvBack', 'pvFocus', 'pvJourney', 'pvHl', 'pvSet', 'pvTick', 'flowStep', 'flowClear', 'zoom', 'setIntelFilter', 'goSrc', 'tab']);
 const PT_UI_OK = new Set(['compare', 'execView', 'ghosts', 'showCost', 'prioOnly']);
-const PT_SECTIONS = [['home', 'Company health', 'i-pulse', 'Health'], ['concerns', 'Concerns & wins', 'i-leak', 'Concerns'], ['projects', 'Optimisation projects', 'i-move', 'Projects'], ['fruit', 'Lowest-hanging fruit', 'i-fruit', 'Quick wins'],
+const PT_SECTIONS = [['home', 'Company health', 'i-pulse', 'Health'], ['projects', 'Optimisation projects', 'i-move', 'Projects'], ['fruit', 'Lowest-hanging fruit', 'i-fruit', 'Quick wins'],
   ['work', 'Report', 'i-work', 'Report'], ['ins', 'Insights', 'i-ins', 'Insights'], ['dept', 'Department efficiency', 'i-dept', 'Depts'], ['proc', 'Processes & systems', 'i-proc', 'Process'], ['evid', 'Evidence', 'i-evid', 'Evidence']];
 /* Pages opened from other pages, not from the menu. */
 const PT_MORE = [['leaks', 'Leaks & opportunities'], ['moves', 'The story so far']];
@@ -146,17 +146,17 @@ function ptItems() {
 function portalRender() {
   const sec = PT.sec; const main = document.getElementById('main');
   document.querySelectorAll('[data-pt="go"]').forEach((b) => { if (b.dataset.sec === sec) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
-  const crumb = document.getElementById('pt-crumb'); if (crumb) crumb.innerHTML = `<b>${esc(ptName(sec))}</b>${(sec === 'proc' && PT.procFull) || sec === 'evid' ? ' <span class="pt-ro">Read only</span>' : ''}`;
+  const crumb = document.getElementById('pt-crumb'); if (crumb) crumb.innerHTML = `<b>${esc(ptName(sec))}</b>${sec === 'proc' || sec === 'evid' ? ' <span class="pt-ro">Read only</span>' : ''}`;
   const n = PT.ev.filter((x) => x.type === 'comment').length; const cc = document.getElementById('pt-ccount'); if (cc) { cc.textContent = n || ''; cc.hidden = !n; }
   const keep = [...main.querySelectorAll('.flow-wrap')].map((w) => [w.scrollLeft, w.scrollTop]);
   let html;
   try {
     if (sec === 'proc') { ui.tab = 'processes'; html = ftProc(); }
     else if (sec === 'evid') { ui.tab = 'evidence'; html = `<div class="pt-studio">${viewEvidence(E())}</div>`; }
-    else html = ({ home: ftHealth, concerns: ftConcerns, projects: ftProjects, fruit: ftFruitPage, moves: ptMovesSec, work: ftReport, leaks: ptLeaks, ins: ftInsights, dept: ftDepts })[sec]();
+    else html = ({ home: ftHealth, concerns: ftHealth, projects: ftProjects, fruit: ftFruitPage, moves: ptMovesSec, work: ftReport, leaks: ptLeaks, ins: ftInsights, dept: ftDepts })[sec]();
   } catch (err) { console.error(err); html = `<div class="pt-card"><p>This part of the portal couldn't be shown: ${esc(err.message)}</p></div>`; }
   main.innerHTML = html;
-  if ((sec === 'proc' && PT.procFull) || sec === 'evid') { ptLock(main); main.querySelectorAll('.flow-wrap').forEach((w, i) => { if (keep[i]) { w.scrollLeft = keep[i][0]; w.scrollTop = keep[i][1]; } }); }
+  if (sec === 'proc' || sec === 'evid') { ptLock(main); main.querySelectorAll('.flow-wrap').forEach((w, i) => { if (keep[i]) { w.scrollLeft = keep[i][0]; w.scrollTop = keep[i][1]; } }); }
   ptModalRender();
 }
 /** Read only: hide controls that change data, disable inputs that would edit it. */
@@ -169,7 +169,7 @@ function ptLock(root) {
 function ptGo(sec, opts = {}) {
   if (sec === 'dept' && !opts.keepDept) PT.dk = '';
   if (sec === 'projects') PT.bp = '';
-  if (sec === 'proc' && !opts.keepProc) { PT.proc = ''; PT.procFull = false; landProcesses(); }
+  if (sec === 'proc' && !opts.keepProc) { PT.proc = ''; PT.procFull = false; landProcesses(); ui.pv = Object.assign({}, ui.pv, { layout: 'lanes' }); }
   PT.sec = sec;
   if (opts.tab) PT.tab = opts.tab;
   portalRender(); if (!opts.keepScroll) window.scrollTo(0, 0);
@@ -288,7 +288,7 @@ function ptPageOf(id) {
   const it = ftItems().find((x) => x.id === id); if (!it) return '';
   if (FT_PROJECT.includes(it.stage)) return 'projects';
   if (ftFruit(true).some((x) => x.it.id === id)) return 'fruit';
-  return 'concerns';
+  return 'leaks';
 }
 const ptIsMove = (id) => mvList(E(), { portal: true }).some((x) => x.id === id);
 function ptHomeClassic() {
@@ -470,6 +470,7 @@ document.addEventListener('click', (ev) => {
   if (d === 'dept') { PT.dept = id || ''; return portalRender(); }
   if (d === 'ins') { const n = document.getElementById('it-' + id); if (!n) { PT.dept = ''; portalRender(); } return setTimeout(() => ptFocus(id), 30); }
   if (d === 'dk') { PT.dk = id || ''; portalRender(); return window.scrollTo(0, 0); }
+  if (d === 'dkgo') { PT.dk = id || ''; return ptGo('dept', { keepDept: true }); }
   if (d === 'print') { document.body.classList.add('ft-printing'); setTimeout(() => { window.print(); document.body.classList.remove('ft-printing'); }, 50); return; }
   if (d === 'bp') { PT.bp = id || ''; PT.bpd = ''; PT.sec = 'projects'; portalRender(); return window.scrollTo(0, 0); }
   if (d === 'bpd') { PT.bpd = id || ''; return portalRender(); }

@@ -6,7 +6,8 @@
    Data: engagement.health (measures), items (why, knockOn, willBe, owner, next, nextDate), the findings behind each
    item (size and sources), and the key changes' dated timelines (wins).
    ============================================================ */
-const FT_AREAS = ['Revenue', 'Clients', 'Delivery', 'People', 'Cost'];
+const FT_AREAS = ['Profit and loss', 'Growth', 'Revenue', 'Clients', 'People', 'Cost']; // the first two have their own cards on Company health
+const FT_EF_DEPTS = ['ops', 'cs', 'sales', 'prod']; // the departments scored on Company health
 const FT_STATUS = { green: 'On track', amber: 'Watch', red: 'Off track', grey: 'Not tracked yet' };
 const FT_PROJECT = ['approved', 'underway', 'live'];
 const FT_OPEN = ['found', 'investigating', 'proposed'];
@@ -59,6 +60,46 @@ function ftMeasure(h) {
     ${h.trendText ? `<div class="ft-m-t">${arrow ? `<b class="ft-arrow ft-a-${esc(h.trend)}">${arrow}</b>` : ''}${esc(h.trendText)}</div>` : ''}
     <div class="ft-m-f"><span>${h.asAt ? 'As at ' + esc(h.asAt) : ''}</span>${ptSrcBtn(h.source ? [{ id: h.source, part: h.part || '' }] : [], 'Source')}</div></div>`;
 }
+const ftWorst = (L) => (L.some((h) => h.status === 'red') ? 'red' : L.some((h) => h.status === 'amber') ? 'amber' : L.every((h) => h.status === 'grey' || !FT_STATUS[h.status]) ? 'grey' : 'green');
+function ftAreaCard(a, L, cls = '') {
+  if (!L.length) return ''; const worst = ftWorst(L);
+  return `<section class="gs-panel ft-area ft-${worst} ${cls}"><div class="ft-area-h"><h2>${esc(a)}</h2><span class="ft-area-s">${esc(FT_STATUS[worst])}</span></div><div class="gs-well ft-ms">${L.map(ftMeasure).join('')}</div></section>`;
+}
+/** Profit and loss as one statement: revenue, costs (with their main parts), operating profit. Rows are health measures with plRole. */
+function ftPL(L) {
+  if (!L.length) return '';
+  const role = (r) => L.filter((h) => h.plRole === r); const rows = [...role('revenue'), ...role('cost'), ...role('sub'), ...role('profit')];
+  const rest = L.filter((h) => !rows.includes(h)); const worst = ftWorst(L); const asAt = (role('revenue')[0] || L[0]).asAt;
+  const row = (h) => { const st = FT_STATUS[h.status] ? h.status : 'grey';
+    return `<div class="ft-plr ft-pl-${esc(h.plRole || 'cost')} ft-${st}" id="it-${esc(h.id)}"><span class="ft-light" title="${esc(FT_STATUS[st])}"></span>
+      <span class="ft-pll">${esc(h.label)}</span><b class="ft-plv">${esc(h.value || '—')}</b><span class="ft-plp">${esc(h.pct || '')}</span>
+      <span class="ft-ply">${h.trendText ? esc(h.trendText) : ''}</span><span class="ft-pla">${ptActs(h.id)}${ptSrcBtn(h.source ? [{ id: h.source, part: h.part || '' }] : [], '')}</span></div>`; };
+  return `<section class="gs-panel ft-area ft-${worst} ft-plc"><div class="ft-area-h"><h2>Profit and loss</h2><span class="ft-area-s">${esc(FT_STATUS[worst])}</span></div>
+    <div class="gs-well ft-plt"><div class="ft-plr ft-plhd"><span></span><span></span><b>A month</b><span>Of revenue</span><span>A year earlier</span><span></span></div>${rows.concat(rest).map(row).join('')}</div>
+    <p class="ft-plf">${[asAt, ...L.filter((h) => h.plNote).map((h) => h.plNote)].filter(Boolean).map(esc).join('. ')}.</p></section>`;
+}
+/** Company health: one tile per scored department, opening its department page. */
+function ftDeptWidget(e) {
+  const ks = FT_EF_DEPTS.filter((k) => hxMeasures(e, k).length); if (!ks.length) return '';
+  const tile = (k) => { const F = efModel(e, k); const M = F.M.length;
+    return `<button type="button" class="ft-dt" data-pt="dkgo" data-id="${k}" style="--dc:var(--gd-${k})"><span class="ft-dtn"><i></i>${esc(ftDeptName(k))}</span>
+      ${F.score != null ? `<b class="ft-dts">${Math.round(F.score)}<small>/100</small></b>` : '<b class="ft-dts ft-dtn0">Not scored yet</b>'}
+      <span class="ft-dtf">${F.score != null ? `${F.tracked} of ${M} measures tracked` : `Score after the four-week baseline · ${F.tracked} of ${M} measures tracked`}</span><em>→</em></button>`; };
+  return `<section class="gs-panel ft-area ft-grey ft-dw"><div class="ft-area-h"><h2>Department efficiency</h2><button type="button" class="pt-link" data-pt="go" data-sec="dept">All departments →</button></div>
+    <div class="gs-well ft-dts-g">${ks.map(tile).join('')}</div></section>`;
+}
+/** Company health: what we are working on now, opening the projects page. */
+function ftProjWidget() {
+  const its = ftItems().filter((it) => it.stage !== 'parked'); const U = ftUnderway(its), Lv = its.filter((it) => it.stage === 'live'), P = its.filter((it) => it.stage === 'proposed');
+  const late = U.filter(ftLate).length;
+  return `<section class="gs-panel ft-area ft-green ft-pw"><div class="ft-area-h"><h2>Optimisation projects</h2><button type="button" class="pt-link" data-pt="go" data-sec="projects">All projects →</button></div>
+    <button type="button" class="gs-well ft-pwb" data-pt="go" data-sec="projects">
+      <span class="ft-pwn"><span><b>${U.length}</b>under way</span><span><b>${Lv.length}</b>live</span><span><b>${P.length}</b>proposed</span></span>
+      <ul class="ft-pwl">${U.slice(0, 7).map((it) => `<li><i style="background:var(--gd-${esc(splitList(it.depts)[0] || 'lead')})"></i>${esc(it.title)}${it.stage === 'approved' ? ' <em>starting</em>' : ''}${ftLate(it) ? ' <em class="late">overdue</em>' : ''}</li>`).join('')}${U.length > 7 ? `<li class="pt-muted">+ ${U.length - 7} more</li>` : ''}</ul>
+      ${late ? `<span class="ft-pwlate">${late} next step${late === 1 ? '' : 's'} overdue</span>` : ''}</button></section>`;
+}
+/** Under way includes approved projects (go-ahead given, work starting). */
+const ftUnderway = (its) => its.filter((it) => it.stage === 'underway' || it.stage === 'approved').sort((a, b) => (ftOn(b.pinned) - ftOn(a.pinned)) || (a.stage === 'underway' ? 0 : 1) - (b.stage === 'underway' ? 0 : 1) || num(a.order) - num(b.order));
 function ftHealth() {
   const e = E(); const H = ftHealthList(); const R = PT.R; const w = ptWeek(e); const g = e.engagement || {};
   const next = splitList(g.reviewDates).find((d) => d > todayISO());
@@ -70,8 +111,9 @@ function ftHealth() {
   if (!H.length) return head + ftEmpty('The health measures are being set up.');
   return `${head}
     <div class="ft-score">${['green', 'amber', 'red', 'grey'].filter(cnt).map((s) => `<span class="ft-sc ft-${s}"><span class="ft-light"></span><b>${cnt(s)}</b> ${esc(FT_STATUS[s].toLowerCase())}</span>`).join('')}</div>
-    <div class="ft-areas">${areas.map((a) => { const L = H.filter((h) => h.area === a); const worst = L.some((h) => h.status === 'red') ? 'red' : L.some((h) => h.status === 'amber') ? 'amber' : L.every((h) => h.status === 'grey' || !FT_STATUS[h.status]) ? 'grey' : 'green';
-      return `<section class="gs-panel ft-area ft-${worst}"><div class="ft-area-h"><h2>${esc(a)}</h2><span class="ft-area-s">${esc(FT_STATUS[worst])}</span></div><div class="gs-well ft-ms">${L.map(ftMeasure).join('')}</div></section>`; }).join('')}</div>
+    <div class="ft-hgrid">${ftPL(H.filter((h) => h.area === 'Profit and loss'))}${ftAreaCard('Growth', H.filter((h) => h.area === 'Growth'), 'ft-grow')}</div>
+    <div class="ft-hgrid ft-hgrid2">${ftDeptWidget(e)}${ftProjWidget()}</div>
+    ${(() => { const rest = areas.filter((a) => a !== 'Profit and loss' && a !== 'Growth'); return rest.length ? `<div class="ft-areas">${rest.map((a) => ftAreaCard(a, H.filter((h) => h.area === a))).join('')}</div>` : ''; })()}
     <div class="ft-row2">
       ${asks.length || fruit.length ? `<section class="gs-panel ft-for"><div class="gs-ph"><h2>For you</h2></div><div class="ft-for-b">
         ${fruit.length ? `<button type="button" class="ft-for-i" data-pt="go" data-sec="fruit"><b>${fruit.length}</b><span>low-effort change${fruit.length === 1 ? '' : 's'} ready for a decision${appr ? ` · ${appr} approved` : ''}</span><em>→</em></button>` : ''}
@@ -81,17 +123,7 @@ function ftHealth() {
     ${PT.me.owner ? '' : `<p class="pt-foot">Anything missing or wrong? <button type="button" class="pt-link" data-pt="discuss" data-id="report">Comment on the portal as a whole</button>.</p>`}`;
 }
 
-/* ---------- 2. Concerns and wins ---------- */
-function ftConcernList(all = false) {
-  const its = ftItems().filter((it) => it.stage !== 'parked' && String(it.concern) !== 'false');
-  const rows = its.map((it) => { const b = ftBehind(it);
-    const isC = (it.label === 'leak' || it.label === 'weakness') && FT_OPEN.concat(['approved']).includes(it.stage) && (b.sev >= 2 || b.big);
-    return isC ? { it, b, late: ftLate(it), rank: num(it.concern) || 99 } : null; }).filter(Boolean)
-    .sort((x, y) => x.rank - y.rank || (ftOn(y.it.pinned) - ftOn(x.it.pinned)) || (y.b.sev - x.b.sev) || (num((y.b.big || {}).valueMonthly) - num((x.b.big || {}).valueMonthly)) || num(x.it.order) - num(y.it.order));
-  return all ? rows : rows.filter((x) => ftDeptOK(x.it));
-}
-/** Projects whose next step date has passed. */
-const ftLateList = (all = false) => ftItems().filter((it) => ftLate(it) && (all || ftDeptOK(it)));
+/* ---------- 2. Wins (the Concerns and wins page was removed 26 Nov: wins open from Company health, overdue steps show on Projects, open problems on Leaks & opportunities) ---------- */
 function ftWins() {
   const J = journey(E(), { portal: true }); const today = todayISO();
   const w = J.past.filter((x) => x.win).map((x) => ({ date: x.date, label: x.label, text: x.text, move: x.move }));
@@ -102,33 +134,8 @@ function ftWinsPanel(n) {
   const W = ftWins(); if (!W.length) return '';
   const it = (x) => { const item = x.move && ftItems().find((i) => i.moveId === x.move.id);
     return `<li class="ft-win"><span class="ft-wd">${esc(x.label || '')}</span><div><p>${esc(x.text)}</p>${item ? `<button type="button" class="ft-wlink" data-pt="proj" data-id="${esc(item.id)}">${esc(trunc(item.title, 60))}</button>` : ''}</div></li>`; };
-  return `<section class="gs-panel ft-wins"><div class="gs-ph"><h2>Latest wins</h2><span class="s">${W.length} dated</span></div><ul class="gs-well ft-wl">${W.slice(0, n).map(it).join('')}</ul>${W.length > n ? `<div class="ft-more">${ptLinkTo('concerns', 'All wins')}</div>` : ''}</section>`;
+  return `<section class="gs-panel ft-wins"><div class="gs-ph"><h2>Latest wins</h2><span class="s">${W.length} dated</span></div><ul class="gs-well ft-wl">${W.slice(0, n).map(it).join('')}</ul>${W.length > n ? `<details class="ft-wall"><summary>See all ${W.length} wins</summary><ul class="gs-well ft-wl ft-wl-all">${W.slice(n).map(it).join('')}</ul></details>` : ''}</section>`;
 }
-function ftConcernCard(x, i) {
-  const it = x.it; const b = x.b;
-  return `<article class="gs-panel ft-c ${x.late ? 'ft-late' : ''}" id="it-${esc(it.id)}"><span class="gs-knob ${i < 3 ? 'hot' : ''}">${i + 1}</span>
-    <div class="ft-c-top">${it.label ? `<span class="ft-lab ft-l-${esc(it.label)}">${esc(LABEL_TXT[it.label] || it.label)}</span>` : ''}${x.late ? `<span class="ft-lab ft-l-late">Next step overdue · ${esc(it.nextDate)}</span>` : ''}${ftStage(it)}</div>
-    <h3>${esc(it.title)}</h3>
-    <p class="ft-line">${esc(it.line || '')}</p>
-    <div class="ft-c-f">${ftSize(b)}${!b.big && ftSevTxt(b.sev) ? `<span class="ft-size ft-sev">${esc(ftSevTxt(b.sev))}</span>` : ''}${ftDeptDots(it)}${ptActs(it.id)}</div>
-    ${it.next ? `<p class="ft-next"><b>Next:</b> ${esc(it.next)}${it.nextDate ? ' · ' + esc(it.nextDate) : ''}${it.owner ? ` <span class="pt-muted">(${esc(it.owner)})</span>` : ''}</p>` : ''}</article>`;
-}
-function ftConcerns() {
-  const all = ftConcernList(true); const C = ftConcernList(); const W = ftWins(); const late = ftLateList();
-  const top = C.slice(0, 5); const rest = C.slice(5);
-  const row = (x) => `<li class="ft-rest"><span>${esc(x.it.title)}</span>${x.b.big ? `<span class="ft-rv">${esc(ptMoney(x.b.big.valueMonthly))} <small>${esc(FT_BASIS[x.b.big.basis])}</small></span>` : `<span class="ft-rv pt-muted">${esc(ftSevTxt(x.b.sev))}</span>`}${ftStage(x.it)}</li>`;
-  return `${ftHead('Concerns and wins', 'What needs attention, and what has moved')}
-    ${ftDeptBar(all.map((x) => x.it))}
-    ${ftSh('Top concerns', 'by size and impact')}
-    ${top.length ? `<div class="ft-cgrid">${top.map(ftConcernCard).join('')}</div>` : ftEmpty('No concerns in this department.')}
-    ${rest.length ? `<details class="gs-panel ft-also"><summary>${rest.length} more concern${rest.length === 1 ? '' : 's'}</summary><ul class="gs-well">${rest.map(row).join('')}</ul></details>` : ''}
-    <div class="ft-also-l">${ptLinkTo('leaks', 'Every leak and opportunity, with sources')}</div>
-    ${late.length ? `${ftSh('Behind schedule', `${late.length} project${late.length === 1 ? '' : 's'}`)}<section class="gs-panel"><ul class="gs-well ft-latel">${late.map((it) => `<li class="ft-rest"><button type="button" class="ft-wlink" data-pt="proj" data-id="${esc(it.id)}">${esc(it.title)}</button><span class="ft-rv"><span class="ft-lab ft-l-late">Due ${esc(it.nextDate)}</span></span><span class="pt-muted ft-lnx">${esc(it.next || '')}</span></li>`).join('')}</ul></section>` : ''}
-    ${ftSh('Wins', `${W.length} so far`)}
-    ${W.length ? `<section class="gs-panel"><ul class="gs-well ft-wl ft-wl-all">${W.map((x) => { const item = x.move && ftItems().find((i) => i.moveId === x.move.id);
-      return `<li class="ft-win"><span class="ft-wd">${esc(x.label || '')}</span><div><p>${esc(x.text)}</p>${item ? `<button type="button" class="ft-wlink" data-pt="proj" data-id="${esc(item.id)}">${esc(item.title)}</button>` : ''}</div></li>`; }).join('')}</ul></section>` : ftEmpty('Wins are recorded as they happen.')}`;
-}
-
 /* ---------- 3. Optimisation projects ---------- */
 function ftProjectList(all = false) {
   const order = { underway: 0, approved: 1, live: 2 };
@@ -143,7 +150,7 @@ function ftProjectCard(it) {
   const m = it.moveId && mvList(E(), { portal: true }).find((x) => x.id === it.moveId);
   const was = m ? m.before : ''; const now = m ? m.now : it.line;
   return `<article class="gs-panel ft-p ${ftOn(it.pinned) ? 'ft-pin' : ''}" id="it-${esc(it.id)}" style="--dc:var(--gd-${esc(splitList(it.depts)[0] || 'lead')})"><span class="gs-edge"></span>
-    <div class="ft-c-top">${ftOn(it.pinned) ? '<span class="ft-lab ft-l-pin">★ Your priority</span>' : ''}${ftLate(it) ? `<span class="ft-lab ft-l-late">Next step overdue</span>` : ''}${ptActs(it.id)}</div>
+    <div class="ft-c-top">${it.stage === 'approved' ? `<span class="ft-lab ft-l-start">Starting${it.approvedAt ? ' · go-ahead ' + esc(ptDate(it.approvedAt)) : ''}</span>` : ''}${ftOn(it.pinned) ? '<span class="ft-lab ft-l-pin">★ Your priority</span>' : ''}${ftLate(it) ? `<span class="ft-lab ft-l-late">Next step overdue · ${esc(it.nextDate)}</span>` : ''}${ptActs(it.id)}</div>
     <h3>${esc(it.title)}</h3>
     ${ftTrack(it)}
     ${it.why ? `<p class="ft-why"><b>Why:</b> ${esc(it.why)}</p>` : ''}
@@ -157,13 +164,22 @@ function ftProjects() {
   const bpIt = PT.bp && live(E().items || []).find((x) => x.id === PT.bp && x.blueprint);
   if (bpIt) return `<button type="button" class="ft-back" data-pt="bp" data-id="">◂ All projects</button>${ftHead(esc(ITEM_STAGE_NAME[bpIt.stage] || 'Project') + ' · the plan', esc(bpIt.blueprint.title || bpIt.title), esc(bpIt.title))}
     <div class="ft-bpacts">${ptActs('bp_' + bpIt.id)}<span class="pt-muted pt-small">Comment or red-flag the plan as a whole</span></div><div class="ft-bp">${bpRender(E(), bpIt, true)}</div>`;
-  const all = ftProjectList(true); const L = ftProjectList();
-  const by = (s) => L.filter((it) => it.stage === s);
-  const grp = (s, t, sub) => (by(s).length ? `${ftSh(`${t} <b class="ft-n">${by(s).length}</b>`, sub)}<div class="ft-pgrid">${by(s).map(ftProjectCard).join('')}</div>` : '');
-  return `${ftHead('Optimisation projects', 'What is changing, why, and where it stands')}
+  const all = ftItems().filter((it) => it.stage !== 'parked' && (FT_PROJECT.includes(it.stage) || it.stage === 'proposed'));
+  const L = all.filter(ftDeptOK); const U = ftUnderway(L), Lv = L.filter((it) => it.stage === 'live'), P = L.filter((it) => it.stage === 'proposed').sort((a, b) => (ftOn(b.pinned) - ftOn(a.pinned)) || num(a.order) - num(b.order));
+  const grp = (k, t, list, card) => (list.length ? `<section class="ft-pgrp ft-pg-${k}">${ftSh(`${t} <b class="ft-n">${list.length}</b>`)}<div class="ft-pgrid">${list.map(card).join('')}</div></section>` : '');
+  return `${ftHead(`${U.length} under way · ${Lv.length} live · ${P.length} proposed`, 'Company optimisation projects')}
+    <p class="ft-pkey"><span class="k-u"><b>Under way</b> being worked on now</span><span class="k-l"><b>Live</b> done and in use; now being measured</span><span class="k-p"><b>Proposed</b> waiting for your go-ahead</span></p>
     ${ftDeptBar(all)}
-    ${L.length ? grp('underway', 'Under way', '') + grp('approved', 'Approved, starting next', '') + grp('live', 'Live', '') : ftEmpty('No projects in this department yet.')}
-    ${(() => { const P = ftItems().filter((it) => it.blueprint && !FT_PROJECT.includes(it.stage) && it.stage !== 'parked' && ftDeptOK(it)); return P.length ? `${ftSh(`Proposed, with a plan ready <b class="ft-n">${P.length}</b>`, 'waiting for your go-ahead')}<div class="ft-pgrid">${P.map(ftProjectCard).join('')}</div>` : ''; })()}`;
+    ${L.length ? grp('u', 'Under way', U, ftProjectCard) + grp('l', 'Live', Lv, ftProjectCard) + grp('p', 'Proposed', P, ftProposedCard) : ftEmpty('No projects in this department yet.')}`;
+}
+/** A proposed project: what it is, why, and the go-ahead. */
+function ftProposedCard(it) {
+  return `<article class="gs-panel ft-p ft-pp" id="it-${esc(it.id)}" style="--dc:var(--gd-${esc(splitList(it.depts)[0] || 'lead')})">
+    <div class="ft-c-top"><span class="ft-lab ft-l-prop">Proposed</span>${ftOn(it.pinned) ? '<span class="ft-lab ft-l-pin">★ Your priority</span>' : ''}${ptActs(it.id)}</div>
+    <h3>${esc(it.title)}</h3>${it.line ? `<p class="ft-line">${esc(it.line)}</p>` : ''}
+    ${it.why ? `<p class="ft-why"><b>Why:</b> ${esc(it.why)}</p>` : ''}${it.willBe ? `<p class="ft-why"><b>Will be (aim):</b> ${esc(it.willBe)}</p>` : ''}
+    <div class="ft-p-f"><div><span class="k">Who</span>${esc(it.owner || 'To confirm')}</div><div><span class="k">Departments</span>${ftDeptDots(it)}</div>${it.next ? `<div><span class="k">Next</span>${esc(it.next)}${it.nextDate ? ` · <b>${esc(it.nextDate)}</b>` : ''}</div>` : ''}</div>
+    ${it.blueprint ? `<button type="button" class="pt-more ft-bpbtn" data-pt="bp" data-id="${esc(it.id)}">See the plan →</button>` : ''}${ftGo(it.id)}</article>`;
 }
 
 /* ---------- 4. Lowest-hanging fruit ---------- */
@@ -183,7 +199,7 @@ function ftGo(id, compact) {
 function ftFruitCard(x, i) {
   const it = x.it; const b = x.b; const A = (PT.D.approve[it.id] || []).length;
   return `<article class="gs-panel ft-f ${A ? 'ft-ok' : ''}" id="it-${esc(it.id)}"><span class="gs-knob ${A ? '' : 'hot'}">${A ? '✓' : i + 1}</span>
-    <div class="ft-c-top"><span class="ft-lab ft-l-eff">${esc(ftEffTxt(b.eff))}</span>${ftSevTxt(b.sev) ? `<span class="ft-lab">${esc(ftSevTxt(b.sev))}</span>` : ''}</div>
+    <div class="ft-c-top"><span class="ft-lab ft-l-ns">Not started</span><span class="ft-lab ft-l-eff">${esc(ftEffTxt(b.eff))}</span>${ftSevTxt(b.sev) ? `<span class="ft-lab">${esc(ftSevTxt(b.sev))}</span>` : ''}</div>
     <h3>${esc(it.title)}</h3>
     <p class="ft-line">${esc(it.line || '')}</p>
     ${it.why ? `<p class="ft-why"><b>Why:</b> ${esc(it.why)}</p>` : ''}
@@ -197,6 +213,7 @@ function ftFruitPage() {
   const top = L.slice(0, 5); const rest = L.slice(5, 10);
   const row = (x) => `<li class="ft-rest ft-frow" id="it-${esc(x.it.id)}"><div><b>${esc(x.it.title)}</b><span class="pt-muted"> · ${esc(ftEffTxt(x.b.eff))}${ftSevTxt(x.b.sev) ? ', ' + esc(ftSevTxt(x.b.sev).toLowerCase()) : ''}</span>${x.it.line ? `<p>${esc(trunc(x.it.line, 160))}</p>` : ''}</div>${x.b.big ? `<span class="ft-rv">${esc(ptMoney(x.b.big.valueMonthly))} <small>${esc(FT_BASIS[x.b.big.basis])}</small></span>` : '<span></span>'}<span class="ft-fr-a">${ptActs(x.it.id)}${ftGo(x.it.id, true)}</span></li>`;
   return `${ftHead('Lowest-hanging fruit', 'Low effort, clear benefit: ready for your go-ahead')}
+    <p class="ft-fexp"><b>Not started yet.</b> These are the open opportunities that take little effort and are quick to put in place, picked out so you can say go ahead on them now. The full list is on <button type="button" class="pt-link" data-pt="go" data-sec="leaks">Leaks &amp; opportunities</button>.</p>
     ${ftDeptBar(all.map((x) => x.it))}
     ${top.length ? `<div class="ft-fgrid">${top.map(ftFruitCard).join('')}</div>` : ftEmpty('Nothing waiting for a decision in this department.')}
     ${rest.length ? `${ftSh('Next in line')}<section class="gs-panel"><ul class="gs-well ft-latel">${rest.map(row).join('')}</ul></section>` : ''}`;
@@ -309,34 +326,19 @@ function ftProcDetail(p, D) {
         <button type="button" class="gs-panel ft-full" data-pt="procfull" data-id="${esc(p.id)}"><b>Open the full process map</b><span>Every hand-off, time and source, read only</span></button></div></div>`;
 }
 function ftProc() {
-  const D = ftProcData();
-  if (PT.proc && PT.procFull) return `<button type="button" class="ft-back" data-pt="procfull" data-id="">◂ Back to ${esc((D.procs.find((p) => p.id === PT.proc) || {}).name || 'the process')}</button><div class="pt-studio">${viewProcesses(E())}</div>`;
-  const P = PT.proc && D.procs.find((p) => p.id === PT.proc); if (P) return ftProcDetail(P, D);
-  const teams = [...new Set(D.mapped.map((p) => p.team))]; const tk = PT.pteam && teams.includes(PT.pteam) ? PT.pteam : '';
-  const mp = D.mapped.filter((p) => !tk || p.team === tk).sort((a, b) => b.steps.filter(D.pain).length - a.steps.filter(D.pain).length);
-  const steps = D.mapped.flatMap((p) => p.steps); const auto = steps.filter((s) => s.automated).length; const pains = steps.filter(D.pain).length; const probs = steps.reduce((a, s) => a + (s.painPoint ? 1 : 0) + D.flags(s).length, 0);
+  const D = ftProcData(); ui.tab = 'processes';
+  if (!PT.procInit) { ui.pv = Object.assign({}, ui.pv, { layout: 'lanes' }); PT.procInit = true; } // founders open on the swimlanes
+  // A link from another page opens that process's map; otherwise the Studio's own landing view (department lanes).
+  if (PT.proc) { ui.pv = Object.assign({}, ui.pv, { mode: 'proc', focus: PT.proc, pick: '', hl: '', journey: false }); ui.stepId = ''; PT.proc = ''; PT.procFull = false; }
   const sys = D.tools.filter((t) => t.family !== 'service'); const spend = sys.reduce((a, t) => a + num(t.monthlyCost), 0); const costed = sys.filter((t) => num(t.monthlyCost) || String(t.costKnown) === 'true').length;
   const fams = FT_FAMILY.map(([k, n, c]) => ({ k, n, c, list: sys.filter((t) => (t.family || '') === k).sort((a, b) => num(b.monthlyCost) - num(a.monthlyCost)) })).filter((f) => f.list.length);
   fams.forEach((f) => { f.cost = f.list.reduce((a, t) => a + num(t.monthlyCost), 0); });
   const owners = sys.filter((t) => t.ownerId || t.owner).length, users = sys.filter((t) => num(t.activeUsers) || num(t.seats)).length;
   const reg = live(E().items || []).find((it) => /^Software/i.test(it.title || ''));
-  const au = D.autos.filter((a) => { const p = D.procs.find((x) => x.id === a.processId); return !tk || (p && p.team === tk); });
-  const unm = D.procs.filter((p) => !(p.steps || []).length);
-  const chip = (k, n, c, cnt) => `<button type="button" class="ft-chip ${tk === k ? 'on' : ''}" data-pt="pteam" data-id="${k}" ${c ? `style="--dc:${c}"` : ''}>${c ? '<i></i>' : ''}${esc(n)} <b>${cnt}</b></button>`;
+  const au = D.autos;
   const srcBtn = ptSrcBtn([{ id: 'src_mgmt', part: 'P&L by month, Mar to Sep 2026' }, { id: 'src_subs_2611', part: "'Monthly costs' tab, Jan to Oct 2026" }, { id: 'src_invoices_2611', part: 'Supplier invoices' }], 'Sources');
-  return `${ftHead('Processes &amp; systems', 'How the work flows, and what it runs on', '')}
-    <div class="ft-ps">
-      <div class="gs-panel ft-st"><span>Processes mapped</span><b>${D.mapped.length}<small> of ${D.procs.length}</small></b><span class="ft-bar"><i style="width:${D.mapped.length / Math.max(1, D.procs.length) * 100}%"></i></span></div>
-      <div class="gs-panel ft-st"><span>Steps that run themselves</span><b>${auto}<small> of ${steps.length}</small></b><span class="ft-bar"><i class="ok" style="width:${auto / Math.max(1, steps.length) * 100}%"></i></span></div>
-      <div class="gs-panel ft-st"><span>Steps with a known problem</span><b>${pains}<small> of ${steps.length}</small></b><span class="ft-bar"><i class="bad" style="width:${pains / Math.max(1, steps.length) * 100}%"></i></span><span class="ft-stn">${probs} problems recorded across them</span></div>
-      <div class="gs-panel ft-st"><span>Automation ideas</span><b>${D.autos.length}</b><span class="ft-sts">${FT_AU_COLS.map(([n, s]) => `<em>${D.autos.filter((a) => s.includes(a.status || '')).length} ${esc(n.split(' ')[0].toLowerCase())}</em>`).join('')}</span></div>
-    </div>
-    ${ftSh('Processes', `${mp.length} mapped`)}
-    <div class="ft-filter" role="group" aria-label="Team">${chip('', 'All', '', D.mapped.length)}${teams.map((k) => chip(k, ftTeam(k)[0], ftTeam(k)[1], D.mapped.filter((p) => p.team === k).length)).join('')}</div>
-    <div class="ft-pcs">${mp.map((p) => ftProcCard(p, D)).join('')}</div>
-    <p class="ft-key"><span class="auto">Automatic</span><span class="pain">Pain point</span><span class="opp">Could be automated</span><span class="plain">Done by hand</span></p>
-    ${unm.length && !tk ? `<div class="ft-unm"><span>Not mapped yet</span>${unm.map((p) => `<em>${esc(p.name)}</em>`).join('')}</div>` : ''}
-    ${ftSh('Automation', `${au.length} ideas${tk ? ' for ' + esc(ftTeam(tk)[0]) : ''}`)}
+  return `<div class="pt-studio ft-procmap">${viewProcesses(E())}</div>
+    ${ftSh('Automation', `${au.length} ideas`)}
     <div class="ft-kb">${FT_AU_COLS.map(([n, s]) => { const EF = { Low: 0, Medium: 1, High: 2 }; const l = au.filter((a) => s.includes(a.status || '')).sort((x, y) => (EF[x.effort] ?? 1) - (EF[y.effort] ?? 1)); return `<div class="ft-kbc"><div class="ft-kbh"><b>${esc(n)}</b><span>${l.length}</span></div>${l.slice(0, 4).map((a) => ftAuCard(a, D)).join('') || '<p class="pt-muted pt-small">None yet.</p>'}${l.length > 4 ? `<details class="ft-kbm"><summary>${l.length - 4} more</summary><div>${l.slice(4).map((a) => ftAuCard(a, D)).join('')}</div></details>` : ''}</div>`; }).join('')}</div>
     ${ftSh('Systems', `${sys.length} systems`)}
     <section class="gs-panel ft-sysw"><p class="ft-spl">Known system costs come to about ${esc(fmtMoney(spend))} a month (as at Sep 2026), ${fams[0] && fams[0].cost ? `${Math.round(fams.find((f) => f.k === 'platform') ? fams.find((f) => f.k === 'platform').cost / Math.max(1, spend) * 100 : 0)}% of it the platform's development and hosting` : ''}. ${srcBtn}</p>

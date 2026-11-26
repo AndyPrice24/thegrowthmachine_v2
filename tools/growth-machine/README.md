@@ -347,6 +347,14 @@ What each founder sees from their own link, served by TGM's Apps Script web app 
 - **Publishing** writes `reports/<id>.json` (data) and `reports/<id>.html` (the portal page, built from this Studio's own code), so the
   portal's look and features update with the Studio, with no need to redeploy the web app. Code.gs serves the page if present, else
   the older Report page. Both the page and the data are written as plain ASCII (non-ASCII characters escaped).
+- **Founders' view, 26 Nov walk-through:** Company health = Profit and loss (one statement: revenue, operating costs with payroll and
+  software, operating profit; rand and % of revenue, a year earlier; all from the management accounts, health rows with `plRole`/`pct`/`plNote`),
+  Growth (recurring revenue, NRR, resellers, accounts, renewals at risk), Department efficiency (Ops, Client Success, Sales, Product scores,
+  each opening its department page) and Optimisation projects (under way / live / proposed). Latest wins expand to all wins.
+  The Concerns and wins page is gone: overdue steps show on project cards, open problems on Leaks & opportunities.
+  Projects page: "Company optimisation projects", Under way (approved folded in, tagged Starting) → Live → Proposed (with Go ahead), one-line key.
+  Lowest-hanging fruit says "Not started yet" and tags each card. Processes & systems is the Studio's own process view (read only,
+  opening on the swimlanes), with the automation board and systems underneath; tool names lose TGM's working notes in the portal copy.
 - **Auto-publish** (on by default; the switch is under the Founder portal heading, remembered per browser): when ⟳ Updates merges
   anything, every portal that has been published before is published again straight after, so the founders see what the Studio
   shows without a second click. Nothing is published when no new update came in, or when the switch is off; if the folder can't be
