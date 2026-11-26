@@ -347,6 +347,10 @@ What each founder sees from their own link, served by TGM's Apps Script web app 
 - **Publishing** writes `reports/<id>.json` (data) and `reports/<id>.html` (the portal page, built from this Studio's own code), so the
   portal's look and features update with the Studio, with no need to redeploy the web app. Code.gs serves the page if present, else
   the older Report page. Both the page and the data are written as plain ASCII (non-ASCII characters escaped).
+- **Auto-publish** (on by default; the switch is under the Founder portal heading, remembered per browser): when ⟳ Updates merges
+  anything, every portal that has been published before is published again straight after, so the founders see what the Studio
+  shows without a second click. Nothing is published when no new update came in, or when the switch is off; if the folder can't be
+  written, the toast says so and Publish still works by hand.
   A portal page is large (about 1.6 MB with the data), and Google garbled it when served directly ("Invalid or unexpected token").
   So Code.gs (v4+) serves a tiny loader; the loader fetches the full page through `google.script.run` (`api` op `page`) and draws
   it into itself (styles to the head, scripts re-created in order). It does not use `document.write`, which would drop the

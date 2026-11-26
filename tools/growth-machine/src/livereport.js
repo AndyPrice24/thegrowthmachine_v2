@@ -166,10 +166,14 @@ function lrAddRecipient() {
   if (!label) return toast('Add the name people will see on their comments');
   lr.recipients = (lr.recipients || []).concat([{ id: 'rc_' + lrToken().slice(0, 8), label, email, token: lrToken(), revoked: false }]); touch(lr); save(); render();
 }
-async function lrPublish() {
-  const e = E(); const lr = lrCur(e); if (!lr) return;
-  if (!syncState.handle) { toast('Pick the updates folder first; then click Publish again'); return syncConnect(); }
-  if (!(await syncPermitted())) return toast('Allow access to the updates folder, then click Publish again');
+/* Auto-publish: after ⟳ Updates merges anything, every founder portal that has been published before is published
+   again, so the founders see the same thing as the Studio without a second click. On by default; the switch is on
+   the Founder portal screen and is remembered in this browser only. */
+const LR_AUTO_KEY = 'tgm.studio.autoPublish';
+const lrAutoOn = () => { try { return localStorage.getItem(LR_AUTO_KEY) !== 'off'; } catch (err) { return true; } };
+function lrAutoToggle() { try { localStorage.setItem(LR_AUTO_KEY, lrAutoOn() ? 'off' : 'on'); } catch (err) { /* ignore */ } render(); toast(lrAutoOn() ? 'The founder portal now publishes itself after each ⟳ Updates' : 'Auto-publish off: click Publish after ⟳ Updates'); }
+/** Write one portal's page and snapshot into <folder>/reports/. Throws if the folder can't be written. */
+async function lrPublishOne(e, lr) {
   lr.version = (lr.version || 0) + 1; lr.publishedAt = nowISO(); touch(lr);
   const snap = lrSnapshot(e, lr);
   try {
@@ -177,10 +181,26 @@ async function lrPublish() {
     const put = async (name, body) => { const fh = await dir.getFileHandle(name, { create: true }); const w = await fh.createWritable(); await w.write(body); await w.close(); };
     await put(lr.id + '.html', lrPortalHtml());
     await put(lr.id + '.json', JSON.stringify(snap));
-  } catch (err) { lr.version -= 1; return toast('Could not write the portal: ' + err.message); }
+  } catch (err) { lr.version -= 1; throw err; }
   // Remember this version's values, so the next one can show what went up or down.
   const rows = {}; savingsTracker(e).rows.forEach((r) => { rows[r.rec.id] = Math.max(0, r.monthlyNet); });
   lr.lastValues = {}; lrCandidates(e).filter((c) => (lr.itemIds || []).includes(c.id)).forEach((c) => { lr.lastValues[c.id] = c.src === 'recommendation' ? (rows[c.id] || 0) : num(c.value); });
+  return lr.version;
+}
+/** Called by ⟳ Updates for the active client after a merge. Returns how many portals were published. */
+async function lrAutoPublish(e) {
+  if (!lrAutoOn()) return { n: 0, failed: '' };
+  let n = 0, failed = '';
+  for (const lr of (e.liveReports || []).filter((x) => x.publishedAt)) {
+    try { await lrPublishOne(e, lr); n++; } catch (err) { failed = err.message; }
+  }
+  return { n, failed };
+}
+async function lrPublish() {
+  const e = E(); const lr = lrCur(e); if (!lr) return;
+  if (!syncState.handle) { toast('Pick the updates folder first; then click Publish again'); return syncConnect(); }
+  if (!(await syncPermitted())) return toast('Allow access to the updates folder, then click Publish again');
+  try { await lrPublishOne(e, lr); } catch (err) { return toast('Could not write the portal: ' + err.message); }
   save(); render(); toast(`Published version ${lr.version} to ${syncState.name}/reports. Links work once Google Drive has synced it (usually under a minute).`);
 }
 function lrDelete() {
@@ -254,7 +274,8 @@ function viewLiveReport(e, toggle) {
   const status = lr.publishedAt ? `Published ${esc(lrWhen(lr.publishedAt))}${changed ? ' · <span class="warn-t">changed since: publish again so they see it</span>' : ''}` : 'Not published yet';
   const head = `<div class="page-h"><div><span class="eyebrow">Report</span><h1>Founder portal</h1><p class="muted">${status}${fresh.length ? ` · <b>${fresh.length} new from them</b>${nAppr ? ` (${nAppr} go-ahead${nAppr === 1 ? '' : 's'})` : ''}` : ''}</p></div>
     <div class="btn-row">${lrs.length > 1 ? `<select id="lrSel" class="inline">${lrs.map((x) => `<option value="${esc(x.id)}" ${x.id === lr.id ? 'selected' : ''}>${esc(x.title)}</option>`).join('')}</select>` : ''}
-      ${url ? `<a class="btn ghost" href="${esc(lrLink(e, lr, lr.ownerToken))}" target="_blank" rel="noopener" title="Opens the portal with your owner link: what they see, without counting as their visit">Preview as a founder ↗</a>` : ''}<button class="btn" data-action="lrPublish">${lr.publishedAt ? 'Publish again' : 'Publish'}</button></div></div>`;
+      ${url ? `<a class="btn ghost" href="${esc(lrLink(e, lr, lr.ownerToken))}" target="_blank" rel="noopener" title="Opens the portal with your owner link: what they see, without counting as their visit">Preview as a founder ↗</a>` : ''}<button class="btn" data-action="lrPublish">${lr.publishedAt ? 'Publish again' : 'Publish'}</button></div></div>
+    <p class="small muted" style="margin:-6px 0 12px"><label style="cursor:pointer"><input type="checkbox" data-action="lrAutoToggle" ${lrAutoOn() ? 'checked' : ''}> Publish automatically after ⟳ Updates</label></p>`;
   // 1. what's new from them
   const F = ui.lrFb === 'all' ? 'all' : 'new'; const shown = F === 'all' ? items : fresh; const parent = byId(items);
   const open = (id) => (url && id ? `<a class="btn sm ghost" href="${esc(lrLink(e, lr, lr.ownerToken, id))}" target="_blank" rel="noopener">Open ↗</a>` : '');

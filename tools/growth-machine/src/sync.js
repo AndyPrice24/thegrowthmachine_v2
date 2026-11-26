@@ -49,11 +49,12 @@ async function syncCheck(auto) {
     found.sort((a, b) => String(a.obj._meta.generatedAt).localeCompare(String(b.obj._meta.generatedAt)) || a.name.localeCompare(b.name));
     const back = db.activeId; const touched = new Set();
     found.forEach((f) => { db.activeId = f.engId; doMerge(f.obj, f.name, true); touched.add(f.engId); });
-    for (const id of touched) { db.activeId = id; await syncBackup(true); }
+    let pub = 0, pubErr = '';
+    for (const id of touched) { db.activeId = id; await syncBackup(true); const r = await lrAutoPublish(E()); pub += r.n; pubErr = pubErr || r.failed; }
     db.activeId = back; save();
     syncState.last = { at: nowISO(), merged: found.map((f) => f.name), already, other, bad };
     render();
-    if (found.length || !auto) toast(found.length ? `Merged ${found.length} update${found.length > 1 ? 's' : ''} from the folder, oldest first, and saved a backup there` : 'No new updates in the folder');
+    if (found.length || !auto) toast(found.length ? `Merged ${found.length} update${found.length > 1 ? 's' : ''} from the folder, oldest first, and saved a backup there${pub ? '; the founder portal is published too' : ''}${pubErr ? '. The portal could not be published (' + pubErr + '): click Publish on the Founder portal screen' : ''}` : 'No new updates in the folder');
   } catch (err) { toast('Could not read the updates folder: ' + err.message); }
   finally { syncState.busy = false; }
 }

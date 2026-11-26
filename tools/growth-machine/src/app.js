@@ -284,6 +284,7 @@ const actions = {
   lrRevoke: (el) => { const lr = lrCur(E()); const r = lr && (lr.recipients || []).find((x) => x.id === el.dataset.id); if (!r) return; r.revoked = !r.revoked; touch(lr); save(); render(); toast(r.revoked ? 'Link stops working when you publish again' : 'Link works again when you publish again'); },
   lrCopy: (el) => { const e = E(); const lr = lrCur(e); if (!lr) return; const r = el.dataset.id === 'owner' ? { token: lr.ownerToken } : (lr.recipients || []).find((x) => x.id === el.dataset.id); if (r) copyText(lrLink(e, lr, r.token), el.dataset.id === 'owner' ? 'Your owner link is copied' : 'Link copied'); },
   lrPublish: () => lrPublish(),
+  lrAutoToggle: () => lrAutoToggle(),
   lrDl: (el) => lrDownload(el.dataset.id),
   lrSeen: (el) => { const x = (E().reportFeedback || []).find((y) => y.id === el.dataset.id); if (!x) return; x.seen = !x.seen; touch(x); save(); render(); },
   lrSeenAll: () => { const lr = lrCur(E()); lrEvents(E(), lr).forEach((x) => { if (!x.seen) { x.seen = true; touch(x); } }); save(); render(); },
