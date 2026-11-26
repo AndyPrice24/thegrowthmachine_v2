@@ -525,3 +525,9 @@ tr.hx-click:hover{transform:none;box-shadow:none}tr.hx-click:hover td{background
 .hx-pl.on{outline:2px solid var(--hx-cy,#22d3ee)}
 .bp-hist{list-style:none;margin:0;padding:0;display:grid;gap:8px}.bp-hist li{display:grid;grid-template-columns:64px minmax(0,1fr);gap:10px;font-size:12.5px;line-height:1.45}.bp-hist b{color:#22d3ee}
 .req-closed{margin-top:12px}.req-closed summary{cursor:pointer;font-size:13px;color:var(--muted);padding:6px 2px}.req-closed table{margin-top:8px;opacity:.75}
+/* Studio: everything clickable shifts slightly under the mouse (26 Nov; same as the founder portal) */
+body:not(.portal) :is(button, a[href], summary, [role="button"], [data-action], [data-hx], [data-hxback], [data-hxto], [data-hxk], [data-hxtog], [data-hxdo], [data-hxoff], [data-hxrail], [data-hxv]):not(:disabled):not(svg *):not(svg):not([draggable="true"]):not(input):not(select):not(textarea):not(tr) { transition: transform .14s ease, filter .14s ease, box-shadow .14s ease; }
+body:not(.portal) :is(button, a[href], summary, [role="button"], [data-action], [data-hx], [data-hxback], [data-hxto], [data-hxk], [data-hxtog], [data-hxdo], [data-hxoff], [data-hxrail], [data-hxv]):not(:disabled):not(svg *):not(svg):not([draggable="true"]):not(input):not(select):not(textarea):not(tr):hover { transform: translateY(-1px); filter: brightness(1.12); }
+body:not(.portal) tr[data-action]:hover, body:not(.portal) tr[data-hxk]:hover { filter: brightness(1.15); }
+@media (prefers-reduced-motion: reduce) { body:not(.portal) * { transform: none !important; } }
+@media print { body * { transform: none !important; filter: none !important; } }
