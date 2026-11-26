@@ -127,12 +127,28 @@ const hxSince = (i) => (i.stageSince ? `${hxFd(i.stageSince)}${String(i.stageSin
 
 /* ---------- measures (department efficiency) ---------- */
 const HX_ST = { have: ['Measured', 'var(--hx-gr)'], partly: ['Partly', 'var(--hx-am)'], missing: ['Not yet', 'var(--hx-dim)'] };
+/** A measure's dated entries (log: [{date, value, note}], JSON), oldest first. */
+function msrLog(m) { let L = m.log; if (typeof L === 'string') { try { L = JSON.parse(L || '[]'); } catch (err) { L = []; } }
+  return (Array.isArray(L) ? L : []).filter((x) => x && x.date && x.value !== '' && x.value != null).slice().sort((a, b) => String(a.date).localeCompare(String(b.date))); }
+/** The measure as it stood on a date: its last entry on or before that date. */
+function msrAt(e, m, date) { const L = msrLog(m).filter((x) => String(x.date) <= date); return msrVal(e, Object.assign({}, m, { healthId: '', value: L.length ? L[L.length - 1].value : '', log: L })); }
+/* Efficiency units: Operations is scored as two teams (measure.team: onboarding, tech). */
+const EF_UNITS = [['sales', 'sales', '', 'Sales'], ['cs', 'cs', '', 'Client Success'], ['onb', 'ops', 'onboarding', 'Onboarding'], ['tech', 'ops', 'tech', 'Technical teams'], ['prod', 'prod', '', 'Product'], ['lead', 'lead', '', 'Leadership'], ['admin', 'admin', '', 'Admin & finance']];
+const EF_TEAMS = ['sales', 'cs', 'onb', 'tech', 'prod']; // the operational units shown on Company health
+const efUnit = (k) => { const u = EF_UNITS.find((x) => x[0] === k); return u ? { k: u[0], d: u[1], team: u[2], name: u[3] } : null; };
+const efMeasures = (e, k) => { const u = efUnit(k); return u ? hxMeasures(e, u.d).filter((m) => !u.team || (m.team || 'tech') === u.team) : hxMeasures(e, k); };
+/** The unit a measure belongs to. */
+const efUnitOf = (m) => (m.dept === 'ops' ? ((m.team || 'tech') === 'onboarding' ? 'onb' : 'tech') : m.dept);
 const hxMeasures = (e, d) => live(e.measures || []).filter((m) => m.dept === d).sort((a, b) => num(a.order) - num(b.order));
 /** A department measure with its value resolved: from the company health measure it points to (healthId), else its own fields. */
 function msrVal(e, m) {
   const h = m.healthId && live((e.engagement || {}).health || []).find((x) => x.id === m.healthId); const r = Object.assign({}, m);
   if (h) Object.assign(r, { value: h.value, unit: h.unit, target: h.target || m.target, asAt: h.asAt, trend: h.trend, trendText: h.trendText, sources: h.source ? [{ id: h.source, part: h.part }] : m.sources });
-  const n = (v) => parseFloat(String(v == null ? '' : v).replace(/[^\d.-]/g, '')); r.n = n(r.value); r.t = n(r.target);
+  const n = (v) => parseFloat(String(v == null ? '' : v).replace(/[^\d.-]/g, ''));
+  const L = msrLog(m); r.log = L;
+  if (L.length && !h) { const last = L[L.length - 1]; if (m.value === '' || m.value == null) { r.value = last.value; r.asAt = r.asAt || last.date; }
+    if (L.length >= 2) { const a = n(L[L.length - 2].value), b = n(last.value); if (isFinite(a) && isFinite(b)) { r.trend = b > a ? 'up' : b < a ? 'down' : 'flat'; r.prev = L[L.length - 2]; } } }
+  r.n = n(r.value); r.t = n(r.target);
   r.tracked = isFinite(r.n); r.hasT = r.tracked && isFinite(r.t); r.on = r.hasT && (String(r.better) === 'lower' ? r.n <= r.t : r.n >= r.t);
   r.rag = !r.tracked ? 'grey' : !r.hasT ? 'none' : r.on ? 'green' : Math.abs(r.n - r.t) / Math.abs(r.t || 1) <= 0.1 ? 'amber' : 'red';
   return r;
@@ -413,12 +429,18 @@ const EF_DIMS = [['output', 'Output', 'Productive: what the team delivers'], ['s
   ['activity', 'Activity', 'Active: the work being done and kept up'], ['input', 'Inputs and cost', 'What it takes: people, time, money'], ['improve', 'Improvement', 'Improving: tracked measures moving the right way']];
 const efScore = (m) => (!m.hasT ? null : Math.max(0, Math.min(100, String(m.better) === 'lower' ? (m.n > 0 ? m.t / m.n * 100 : 100) : (m.t > 0 ? m.n / m.t * 100 : 100))));
 const efGood = (m) => (m.trend === 'up' && m.better !== 'lower') || (m.trend === 'down' && m.better === 'lower');
-function efModel(e, d) {
-  const M = hxMeasures(e, d).map((m) => msrVal(e, m)); const avg = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : null);
+function efModel(e, d, at) {
+  const M = efMeasures(e, d).map((m) => (at ? msrAt(e, m, at) : msrVal(e, m))); const avg = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : null);
   const dims = EF_DIMS.map(([k, n, s]) => { if (k === 'improve') { const tr = M.filter((m) => m.tracked && m.trend); const g = tr.filter(efGood).length; return { k, n, s, list: [], tr, good: g, score: tr.length ? g / tr.length * 100 : null }; }
     const list = M.filter((m) => (m.dim || 'output') === k); const sc = list.map(efScore).filter((x) => x != null); return { k, n, s, list, score: avg(sc), scored: sc.length }; });
   const scoredDims = dims.filter((x) => x.score != null); const score = scoredDims.length >= 3 ? avg(scoredDims.map((x) => x.score)) : null;
   return { M, dims, score, scoredDims: scoredDims.length, tracked: M.filter((m) => m.tracked).length };
+}
+/** The unit's score now against the previous measurement date (the second-latest entry date across its measures). */
+function efTrend(e, k) {
+  const dates = [...new Set(efMeasures(e, k).flatMap((m) => msrLog(m).map((x) => String(x.date))))].sort(); if (dates.length < 2) return null;
+  const cur = efModel(e, k).score, prev = efModel(e, k, dates[dates.length - 2]).score; if (cur == null || prev == null) return null;
+  return { cur, prev, delta: cur - prev, since: dates[dates.length - 2] };
 }
 function efDiagram(e, d) {
   const F = efModel(e, d); const W = 980, bh = 30, gap = 6, gg = 18, top = 30; let y = top; const rows = []; const dn = [];

@@ -355,6 +355,12 @@ What each founder sees from their own link, served by TGM's Apps Script web app 
   Projects page: "Company optimisation projects", Under way (approved folded in, tagged Starting) → Live → Proposed (with Go ahead), one-line key.
   Lowest-hanging fruit says "Not started yet" and tags each card. Processes & systems is the Studio's own process view (read only,
   opening on the swimlanes), with the automation board and systems underneath; tool names lose TGM's working notes in the portal copy.
+- **Department efficiency (26 Nov):** the landing shows each unit first (Sales, Client Success, Onboarding, Technical teams, Product,
+  Leadership, Admin & finance; Operations measures carry `team`: onboarding / tech): its score out of 100 (or "—" until the four-week
+  baseline gives targets), the change since the previous measurement date, and its key measures with ▲▼■ against their previous entry.
+  A unit opens to its score, key-measure tiles (each opens to its dated history: sparkline and entries) and, below, how the score comes
+  together. Measures keep dated entries in `log` (JSON: [{date, value, note}]); value, trend and the unit's score at a past date
+  (`msrAt`, `efTrend`) come from it. Company health shows the five operational units.
 - **Auto-publish** (on by default; the switch is under the Founder portal heading, remembered per browser): when ⟳ Updates merges
   anything, every portal that has been published before is published again straight after, so the founders see what the Studio
   shows without a second click. Nothing is published when no new update came in, or when the switch is off; if the folder can't be
