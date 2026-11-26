@@ -720,3 +720,10 @@ button.ft-inl{cursor:pointer}button.ft-inl:hover{background:rgba(255,255,255,.08
 .ft-dt { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dc) 22%, transparent); }
 .ft-dt:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dc) 55%, transparent), 0 0 18px -6px var(--dc); }
 @media print { .ft-go-chip { display: none !important; } .ft-uc, .ft-km { box-shadow: none !important; } }
+/* Everything clickable in the portal shifts slightly under the mouse (26 Nov) */
+body.portal :is(button, a[href], summary, [role="button"], [data-pt], [data-action]):not(:disabled):not(.pt-hide):not(svg *) { transition: transform .14s ease, filter .14s ease, box-shadow .14s ease; }
+body.portal :is(button, a[href], summary, [role="button"], [data-pt], [data-action]):not(:disabled):not(.pt-hide):not(svg *):not(.ft-uc):not(.ft-km):hover { transform: translateY(-1px); filter: brightness(1.15); }
+body.portal .pt-link { display: inline-block; }
+body.portal .ft-kmh:hover { transform: none; filter: none; }
+body.portal .ft-km:has(.ft-kmh:hover) { transform: translateY(-2px); }
+@media (prefers-reduced-motion: reduce) { body.portal * { transform: none !important; } }
