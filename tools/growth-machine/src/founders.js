@@ -82,7 +82,7 @@ function ftDeptWidget(e) {
   const ks = EF_TEAMS.filter((k) => efMeasures(e, k).length); if (!ks.length) return '';
   const tile = (k) => { const F = efModel(e, k); const T = efTrend(e, k);
     return `<button type="button" class="ft-dt" data-pt="dkgo" data-id="${k}" style="--dc:${ftUC(k)}"><span class="ft-dtn"><i></i>${esc(ftUName(k))}</span>
-      ${F.score != null ? `<b class="ft-dts">${Math.round(F.score)}<small>/100</small></b>` : '<b class="ft-dts ft-dtn0">—</b>'}
+      ${F.score != null ? `<b class="ft-dts">${Math.round(F.score)}<small>/100</small></b>` : '<b class="ft-dts zero">0<small>/100 · not scored yet</small></b>'}
       ${ftScoreChip(F, T)}<span class="ft-dtf">${F.tracked} of ${F.M.length} measures tracked</span><em>→</em></button>`; };
   return `<section class="gs-panel ft-area ft-grey ft-dw"><div class="ft-area-h"><h2>Department efficiency</h2><button type="button" class="pt-link" data-pt="go" data-sec="dept">All departments →</button></div>
     <div class="gs-well ft-dts-g">${ks.map(tile).join('')}</div></section>`;
@@ -406,6 +406,8 @@ function ftArrow(m) {
   if (!m.trend) return ''; const good = (m.trend === 'up' && m.better !== 'lower') || (m.trend === 'down' && m.better === 'lower');
   return `<span class="ft-ar ${m.trend === 'flat' ? 'flat' : good ? 'good' : 'bad'}" title="${esc(m.trend === 'flat' ? 'Same as the previous entry' : (good ? 'Better' : 'Worse') + ' than the previous entry')}">${m.trend === 'up' ? '▲' : m.trend === 'down' ? '▼' : '■'}</span>`;
 }
+/** The score, or a 0 placeholder in the department's colour until it can be scored. */
+const ftScoreBig = (F) => (F.score != null ? `<b>${Math.round(F.score)}</b><small>out of 100</small>` : `<b class="zero">0</b><small>out of 100<br>not scored yet</small>`);
 function ftScoreChip(F, T) {
   if (T) { const d = Math.round(T.delta); return `<span class="ft-tch ${d > 0 ? 'good' : d < 0 ? 'bad' : ''}">${d > 0 ? '▲' : d < 0 ? '▼' : '■'} ${d > 0 ? '+' : ''}${d} since ${esc(fmtD(T.since, { day: 'numeric', month: 'short' }))}</span>`; }
   return `<span class="ft-tch none">${F.score != null ? 'First scored cycle' : 'First score after the four-week baseline'}</span>`;
@@ -413,9 +415,9 @@ function ftScoreChip(F, T) {
 function ftUnitCard(e, k) {
   const F = efModel(e, k); const T = efTrend(e, k); const M = F.M; const key = M.filter((m) => String(m.phase) !== '2' || m.tracked); const more = M.length - key.length;
   return `<button type="button" class="gs-panel ft-uc" data-pt="dk" data-id="${k}" style="--dc:${ftUC(k)}"><div class="ft-uch"><b><i></i>${esc(ftUName(k))}</b><em>→</em></div>
-    <div class="ft-usc"><b class="${F.score != null ? '' : 'na'}">${F.score != null ? Math.round(F.score) : '—'}</b><small>${F.score != null ? 'out of 100' : 'score'}</small>${ftScoreChip(F, T)}</div>
+    <div class="ft-usc">${ftScoreBig(F)}${ftScoreChip(F, T)}</div>
     <ul class="ft-ukm">${key.map((m) => `<li><span>${esc(m.name)}</span><b class="${m.tracked ? '' : 'na'}">${m.tracked ? esc(m.value) : '—'}</b>${ftArrow(m)}</li>`).join('')}</ul>
-    <div class="ft-ucf">${F.tracked} of ${M.length} measures tracked${more ? ` · ${more} more in the full model` : ''}</div></button>`;
+    <div class="ft-ucf"><span>${F.tracked} of ${M.length} measures tracked${more ? ` · ${more} more in the full model` : ''}</span><span class="ft-go-chip">View department →</span></div></button>`;
 }
 function ftLineage(m) {
   const L = m.log || []; const pv = splitList(m.points).map(Number).filter((x) => isFinite(x));
@@ -437,7 +439,7 @@ function ftKM(m) {
     <span class="ft-kmd">${esc(dim)}</span><span class="ft-kmn">${esc(m.name)}</span>
     <span class="ft-kmv">${m.tracked ? `<b>${esc(m.value)}</b>${m.unit ? `<small>${esc(m.unit)}</small>` : ''}` : '<b class="na">—</b>'}${ftArrow(m)}</span>
     <span class="ft-kmf"><span>${m.tracked ? (m.prev ? `Previous ${esc(m.prev.value)} · ${esc(fmtD(m.prev.date, { day: 'numeric', month: 'short' }))}` : m.asAt ? 'As at ' + esc(m.asAt) : 'One entry so far') : 'Not tracked yet'}</span><span>${tgt}</span></span>
-    <span class="ft-kmo">${open ? 'Hide history ▴' : 'History ▾'}</span></div>${ptActs(m.id)}${open ? ftLineage(m) : ''}</article>`;
+    <span class="ft-kmo">${open ? 'Hide history ▴' : 'See history ▾'}</span></div>${ptActs(m.id)}${open ? ftLineage(m) : ''}</article>`;
 }
 function ftDeptPage(e, k) {
   const u = efUnit(k) || { d: k }; const F = efModel(e, k); const T = efTrend(e, k); const c = ftUC(k);
@@ -447,10 +449,10 @@ function ftDeptPage(e, k) {
   return `<button type="button" class="ft-back" data-pt="dk" data-id="">◂ All departments</button>
     <section class="pt-hello ft-hello ft-dhd" style="--dc:${c}"><div><div class="pt-eyebrow"><span class="ft-pct" style="--tc:${c}"><i></i>Department efficiency</span></div><h1>${esc(ftUName(k))}</h1></div>
       <button type="button" class="ft-printbtn" data-pt="print">Print for the department head</button><p class="ft-printonly">${esc(e.client.name || '')} · prepared by The Growth Machine · ${esc(fmtD(todayISO(), { day: 'numeric', month: 'long', year: 'numeric' }))}</p></section>
-    <section class="gs-panel ft-uhero" style="--dc:${c}"><div class="ft-usc big"><b class="${F.score != null ? '' : 'na'}">${F.score != null ? Math.round(F.score) : '—'}</b><small>${F.score != null ? 'out of 100' : 'score'}</small>${ftScoreChip(F, T)}</div>
+    <section class="gs-panel ft-uhero" style="--dc:${c}"><div class="ft-usc big">${ftScoreBig(F)}${ftScoreChip(F, T)}</div>
       <p>${F.score != null ? `From ${F.scoredDims} of 6 dimensions; ${F.tracked} of ${M.length} measures tracked.` : `The score appears once three of its six dimensions can be scored: after the four-week baseline sets each measure's target. ${F.tracked} of ${M.length} measures tracked so far.`}</p></section>
-    ${ftSh('Key measures', 'what makes up the score · ▲▼ against the previous entry')}<div class="ft-kms">${key.map(ftKM).join('')}</div>
-    ${more.length ? `<details class="ft-kmore" ${more.some((m) => m.id === PT.ml) ? 'open' : ''}><summary>${more.length} more in the full model</summary><div class="ft-kms">${more.map(ftKM).join('')}</div></details>` : ''}
+    ${ftSh('Key measures', 'what makes up the score · open any measure for its history')}<div class="ft-kms" style="--dc:${c}">${key.map(ftKM).join('')}</div>
+    ${more.length ? `<details class="ft-kmore" ${more.some((m) => m.id === PT.ml) ? 'open' : ''}><summary>${more.length} more in the full model</summary><div class="ft-kms" style="--dc:${c}">${more.map(ftKM).join('')}</div></details>` : ''}
     <p class="pt-muted pt-small ft-mbl">NRR and the money measures get targets now, from their March to September 2026 history. Every other measure runs for four full weeks to set its baseline; its target is then agreed with the department head.</p>
     ${ftSh('How the score comes together')}<section class="gs-panel ft-efp">${efDiagram(e, k)}</section>
     ${its.length ? `<div class="ft-dwrap">${ftSh('Work in this department', `${proj.length} under way · ${open.length} not started`)}<div class="ft-dw">${proj.concat(open).slice(0, 8).map((it) => `<button type="button" class="ft-inl" data-pt="proj" data-id="${esc(it.id)}"><i class="st-${esc(it.stage)}">${esc(stg(it.stage))}</i>${esc(it.title)} →</button>`).join('')}</div></div>` : ''}`;
@@ -459,7 +461,7 @@ function ftDepts() {
   const e = E(); const ks = EF_UNITS.map(([k]) => k).filter((k) => efMeasures(e, k).length);
   const dk = PT.dk === 'ops' ? 'tech' : PT.dk; if (dk && ks.includes(dk)) return ftDeptPage(e, dk);
   const all = ks.map((k) => efModel(e, k)); const M = all.reduce((a, F) => a + F.M.length, 0), tr = all.reduce((a, F) => a + F.tracked, 0);
-  return `${ftHead('Department efficiency', 'How each department is running', '')}
+  return `${ftHead('Department efficiency', 'How each department is running', 'Data and measurements are still being implemented across departments.')}
     <div class="ft-ucs">${ks.map((k) => ftUnitCard(e, k)).join('')}</div>
     <p class="ft-ukey"><span><span class="ft-ar good">▲</span> better than the previous entry</span><span><span class="ft-ar bad">▼</span> worse</span><span><span class="ft-ar flat">■</span> the same</span><span><b>—</b> not tracked yet</span></p>
     <p class="pt-muted pt-small">${tr} of ${M} measures tracked. Scores appear after the four-week baseline; money measures have targets now. Open a department for its measures, their history, and how its score comes together.</p>`;
