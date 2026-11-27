@@ -290,8 +290,9 @@ function ftReport() {
       <ul class="ft-wkl">${ptLines(wk.done).map((l) => `<li>${esc(l)}</li>`).join('')}</ul>
       ${cur && (wk.next || S.next) ? `<div class="ft-wkn"><b>Next</b><ul>${ptLines(wk.next || S.next).map((l) => `<li>${esc(l)}</li>`).join('')}</ul></div>` : ''}</article>`; };
   const st = engagementStatus(e); const waiting = st.reqs.filter((r) => r._status === 'Waiting' || r._status === 'Overdue').sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''));
-  const next = J.next.filter((x) => x.date && x.date >= today).slice(0, 6);
-  const comingCard = `<section class="gs-panel"><div class="gs-ph"><h2>Coming up</h2></div><ul class="gs-well ft-wl">${next.map((x) => `<li class="ft-win"><span class="ft-wd ft-wd-n">${esc(x.label || '')}</span><div><p>${esc(x.text)}</p></div></li>`).join('') || '<li class="pt-muted" style="padding:8px">Nothing dated yet.</li>'}</ul></section>`;
+  // Coming up: one row per date (the next four dates), up to three items each, so a busy day doesn't hide the weeks after it.
+  const nx = J.next.filter((x) => x.date && x.date >= today); const byDate = []; nx.forEach((x) => { const g0 = byDate.find((d) => d.date === x.date); if (g0) g0.list.push(x); else byDate.push({ date: x.date, label: x.label, list: [x] }); });
+  const comingCard = `<section class="gs-panel"><div class="gs-ph"><h2>Coming up</h2><span class="s">${nx.length} dated</span></div><ul class="gs-well ft-wl">${byDate.slice(0, 4).map((d) => `<li class="ft-win"><span class="ft-wd ft-wd-n">${esc(d.label || '')}</span><div>${d.list.slice(0, 3).map((x) => `<p>${esc(x.text)}</p>`).join('')}${d.list.length > 3 ? `<p class="pt-muted pt-small">+ ${d.list.length - 3} more that day</p>` : ''}</div></li>`).join('') || '<li class="pt-muted" style="padding:8px">Nothing dated yet.</li>'}</ul></section>`;
   return `${ftHead(`Report · week ${w.cur} of ${w.weeks}`, 'What we\'ve done, and what\'s next', esc(S.headline || ''))}
     ${planCard}
     <div class="ft-rtop">${daysCard}${comingCard}</div>

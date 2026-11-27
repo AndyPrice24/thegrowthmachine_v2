@@ -749,3 +749,4 @@ body.portal .ft-km:has(.ft-kmh:hover) { transform: translateY(-2px); }
 .ft-spw { position: relative; height: 46px; }
 .ft-spw .ft-spk { width: 100% !important; max-width: none !important; height: 46px !important; }
 .ft-spk .d { stroke: var(--sc); stroke-width: 8; stroke-linecap: round; filter: drop-shadow(0 0 4px var(--sc)); } .ft-spk { overflow: visible; }
+.ft-wl .ft-win div p + p { margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,.05); }
